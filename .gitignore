@@ -1,0 +1,16 @@
+*.DS_Store
+*~
+build/
+*.tmproj
+.classpath
+.project
+.scala_dependencies
+.settings
+nbproject/
+.~*
+target/
+build.properties
+*.iml
+bin
+.idea
+.metadata
