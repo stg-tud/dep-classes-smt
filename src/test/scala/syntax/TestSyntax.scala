@@ -1,6 +1,6 @@
 package syntax
 
-import jdk.nashorn.internal.codegen.CompilerConstants.FieldAccess
+import Util._
 
 class TestSyntax {
   // Paths
@@ -9,13 +9,13 @@ class TestSyntax {
   val pq: Path = FieldPath(q, Id('f))
 
   // Expressions
-  val varExpr: Expression = Id('x) // x
-  val field1: Expression = FieldAccess(Id('x), Id('f)) // x.f
-  val field2: Expression = FieldAccess(FieldAccess(Id('x), Id('f)), Id('g)) //x.f.g
-  val method1: Expression = MethodCall(Id('m), Id('x)) // m(x)
-  val method2: Expression = MethodCall(Id('m), FieldAccess(Id('x), Id('f))) // m(x.f)
+  val varExpr: Expression = 'x // x
+  val field1: Expression = FieldAccess('x, 'f) // x.f
+  val field2: Expression = FieldAccess(FieldAccess('x, 'f), 'g) //x.f.g
+  val method1: Expression = MethodCall('m, 'x) // m(x)
+  val method2: Expression = MethodCall('m, FieldAccess('x, 'f)) // m(x.f)
   val obj: Expression = ObjectConstruction(Id('Class), List( // new Class
-    (Id('arg1), varExpr)                                     // arg1 = x
-  , (Id('arg2), field2),                                     // arg2 = x.f.g
-    (Id('arg3), method2)))                                   // arg3 = m(x.f)
+    ('arg1, varExpr)                                     // arg1 = x
+  , ('arg2, field2),                                     // arg2 = x.f.g
+    ('arg3, method2)))                                   // arg3 = m(x.f)
 }
