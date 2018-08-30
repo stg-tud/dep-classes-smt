@@ -1,7 +1,10 @@
 package syntax
 
-//case class Type(x: VariableName, constraints: List[Constraint])
-object Type {
-//  type Type = (VariableName, List[Constraint])
-  type Type = (Id, List[Constraint])
+import Util.commaSeparate
+
+case class Type(x: Id, constraints: List[Constraint]) {
+  override def toString: String = s"[$x. ${commaSeparate(constraints)}]"
 }
+//object Type {
+//  type Type = (Id, List[Constraint])
+//}
