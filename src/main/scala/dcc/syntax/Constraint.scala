@@ -12,6 +12,6 @@ case class PathEquivalence(p: Path, q: Path) extends Constraint {
 case class InstanceOf(p: Path, C: Id) extends Constraint {
   override def toString: String = s"$p :: $C"
 }
-case class InstantiatedBy(p: Path, C: Id) {
+case class InstantiatedBy(p: Path, C: Id) extends Constraint {
   override def toString: String = s"$p.cls ≡ $C"
 }
