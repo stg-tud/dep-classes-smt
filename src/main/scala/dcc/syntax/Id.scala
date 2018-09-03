@@ -1,4 +1,4 @@
-package syntax
+package dcc.syntax
 
 //trait Identifier
 //
