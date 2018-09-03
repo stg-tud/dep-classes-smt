@@ -20,9 +20,14 @@ class DCC {
     case (_, _) => false
   }
 
-  def interp(heap: Heap, expr: Expression): (Heap, Expression) = {
-    //
-    (Map(), 'x)
+  // TODO: implement
+  def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
+    // new
+    case ObjectConstruction(cls, args) => _
+    // field
+    case FieldAccess(e, f) => _
+    // call
+    case MethodCall(m, e) => _
   }
 
   // Heap Constraints
