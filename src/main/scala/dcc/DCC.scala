@@ -1,7 +1,6 @@
 package dcc
 
 import dcc.syntax._
-import Util._
 
 class DCC {
   // Class(field = value, ...)
@@ -11,7 +10,7 @@ class DCC {
   // constraint entailment
   def entails(ctx: List[Constraint], c: Constraint): Boolean = (ctx, c) match {
     // C-Ident
-    case (_, _) if ctx.contains(c) => true
+    case _ if ctx.contains(c) => true
     // C-Refl
     case (_, PathEquivalence(p, q)) if p == q => true
     // C-Class
@@ -24,10 +23,23 @@ class DCC {
   def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
     // new
     case ObjectConstruction(cls, args) => _
-    // field
-    case FieldAccess(e, f) => _
-    // call
-    case MethodCall(m, e) => _
+    // R-Field
+    case FieldAccess(x@Id(_), f) =>
+      HC(heap).filter{case PathEquivalence(FieldPath(x, f), Id(_)) => true case PathEquivalence(Id(_), FieldPath(x, f)) => true} match {
+        case PathEquivalence(FieldPath(x, f), y@Id(_)) :: rst => (heap, y)
+        case PathEquivalence(y@Id(_), FieldPath(x, f)) :: rst => (heap, y)
+        case Nil => (heap, expr) // var not bound to proper object?
+      }
+    // RC-Field
+    case FieldAccess(e, f) =>
+      val (h1, e1) = interp(heap, e)
+      (h1, FieldAccess(e1, f))
+    // R-Call
+    case MethodCall(m, x@Id(_)) => _
+    // RC-Call
+    case MethodCall(m, e) =>
+      val (h1, e1) = interp(heap, e)
+      (h1, MethodCall(m, e1))
   }
 
   // Heap Constraints
