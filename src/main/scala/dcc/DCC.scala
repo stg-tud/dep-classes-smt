@@ -36,7 +36,12 @@ class DCC {
     // R-Call
     case MethodCall(m, x@Id(_)) => (heap, expr) // _
     // R-New
-    case ObjectConstruction(cls, args) /* if args are values */ => (heap, expr) // _
+    case ObjectConstruction(cls, args)
+      if args.foldRight(true){ // if args are values
+        case ((_, Id(_)), rst) => true && rst
+        case (_, rst) => false && rst // could be reduced to false, but makes no difference runtimewise
+      } =>
+      (heap, expr)
     // RC-Field
     case FieldAccess(e, f) =>
       val (h1, e1) = interp(heap, e)
@@ -47,8 +52,6 @@ class DCC {
       (h1, MethodCall(m, e1))
     // RC-New
     case ObjectConstruction(cls, args) =>
-//      val args1 = objArgsInterp(heap, args)
-//      (heap, ObjectConstruction(cls, args1)) // TODO: return updated heap in objargsinterp
       val (h1, args1) = objArgsInterp2(heap, args)
       (h1, ObjectConstruction(cls, args1))
   }
@@ -59,6 +62,14 @@ class DCC {
     case (f, e) :: rst =>
       val (h1, e1) = interp(heap, e)
       (f, e1) :: objArgsInterp(h1, rst)
+  }
+
+  private def tailObjArgsInterp(heap: Heap, args: List[(Id, Expression)], tail: List[(Id, Expression)]): List[(Id, Expression)] = args match {
+    case Nil => tail
+    case (f, x@Id(_)) :: rst => tailObjArgsInterp(heap, rst, (f, x) :: tail)
+    case (f, e) :: rst =>
+      val (h1, e1) = interp(heap, e)
+      tailObjArgsInterp(h1, rst, (f, e1) :: tail)
   }
 
   private def objArgsInterp1(heap: Heap, args: List[(Id, Expression)]): List[(Heap, (Id, Expression))] = args match {
@@ -96,6 +107,7 @@ class DCC {
   def freshname(x: Symbol): Symbol = x
 }
 
+//import Util._
 //object Main extends App {
 //  val l: List[Int] = List(1, 1, 1, 1, 1)
 //  def plus1(i: Int): Int = i+1
