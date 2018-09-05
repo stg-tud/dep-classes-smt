@@ -23,15 +23,20 @@ class DCC {
   def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
     // R-Field
     case FieldAccess(x@Id(_), f) =>
-      HC(heap).filter{case PathEquivalence(FieldPath(x, f), Id(_)) => true case PathEquivalence(Id(_), FieldPath(x, f)) => true} match {
+      HC(heap).filter{
+          case PathEquivalence(FieldPath(x, f), Id(_)) => true
+          case PathEquivalence(Id(_), FieldPath(x, f)) => true
+          case _ => false
+          } match {
         case PathEquivalence(FieldPath(x, f), y@Id(_)) :: rst => (heap, y)
         case PathEquivalence(y@Id(_), FieldPath(x, f)) :: rst => (heap, y)
         case Nil => (heap, expr) // var not bound to proper object?
+        case _ => (heap, expr) // match not exhaustive waring without this, but cannot happen because of filter, remove Nil case?
       }
     // R-Call
-    case MethodCall(m, x@Id(_)) => _
+    case MethodCall(m, x@Id(_)) => (heap, expr) // _
     // R-New
-    case ObjectConstruction(cls, args) /* if args are values */ => _
+    case ObjectConstruction(cls, args) /* if args are values */ => (heap, expr) // _
     // RC-Field
     case FieldAccess(e, f) =>
       val (h1, e1) = interp(heap, e)
@@ -92,8 +97,22 @@ class DCC {
 }
 
 //object Main extends App {
-//  val o: (Id, List[(Id, Id)]) = ('Cls, List(('f, 'x), ('g, 'y)))
-//  val h: Map[Id, (Id, List[(Id, Id)])] = Map(Id('z) -> o, Id('zz)->o)
-//  val dcc = new DCC
-//  println(dcc.HC(h))
+//  val l: List[Int] = List(1, 1, 1, 1, 1)
+//  def plus1(i: Int): Int = i+1
+//
+//  val m = l.foldLeft(Nil: List[Int]){
+//    case (rst@j::is, i) => i+j :: rst
+//    case (is, i) => i :: is
+//  }
+//
+//  val n = l.foldRight(Nil: List[Int]){
+//    case (i, rst@j::is) =>
+//      println(s"rst ++ List($i+$j)")
+//      rst ++ List(i+j)
+//    case (i, is) => is ++ List(i)
+//  }
+//
+//  println(m)
+//  println(n)
+//  println(l.filter(_ => false))
 //}
