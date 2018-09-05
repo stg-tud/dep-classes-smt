@@ -1,6 +1,6 @@
 package dcc
 
-import dcc.syntax._
+import dcc.syntax.{Expression, _}
 
 class DCC {
   // Class(field = value, ...)
@@ -21,8 +21,6 @@ class DCC {
 
   // TODO: implement
   def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
-    // new
-    case ObjectConstruction(cls, args) => _
     // R-Field
     case FieldAccess(x@Id(_), f) =>
       HC(heap).filter{case PathEquivalence(FieldPath(x, f), Id(_)) => true case PathEquivalence(Id(_), FieldPath(x, f)) => true} match {
@@ -30,16 +28,51 @@ class DCC {
         case PathEquivalence(y@Id(_), FieldPath(x, f)) :: rst => (heap, y)
         case Nil => (heap, expr) // var not bound to proper object?
       }
+    // R-Call
+    case MethodCall(m, x@Id(_)) => _
+    // R-New
+    case ObjectConstruction(cls, args) /* if args are values */ => _
     // RC-Field
     case FieldAccess(e, f) =>
       val (h1, e1) = interp(heap, e)
       (h1, FieldAccess(e1, f))
-    // R-Call
-    case MethodCall(m, x@Id(_)) => _
     // RC-Call
     case MethodCall(m, e) =>
       val (h1, e1) = interp(heap, e)
       (h1, MethodCall(m, e1))
+    // RC-New
+    case ObjectConstruction(cls, args) =>
+//      val args1 = objArgsInterp(heap, args)
+//      (heap, ObjectConstruction(cls, args1)) // TODO: return updated heap in objargsinterp
+      val (h1, args1) = objArgsInterp2(heap, args)
+      (h1, ObjectConstruction(cls, args1))
+  }
+
+  private def objArgsInterp(heap: Heap, args: List[(Id, Expression)]): List[(Id, Expression)] = args match {
+    case Nil => Nil
+    case (f, x@Id(_)) :: rst => (f, x) :: objArgsInterp(heap, rst)
+    case (f, e) :: rst =>
+      val (h1, e1) = interp(heap, e)
+      (f, e1) :: objArgsInterp(h1, rst)
+  }
+
+  private def objArgsInterp1(heap: Heap, args: List[(Id, Expression)]): List[(Heap, (Id, Expression))] = args match {
+    case Nil => Nil
+    case (f, x@Id(_)) :: rst => (heap, (f, x)) :: objArgsInterp1(heap, rst)
+    case (f, e) :: rst =>
+      val (h1, e1) = interp(heap, e)
+      (h1, (f, e1)) :: objArgsInterp1(h1, rst)
+  }
+
+  private def objArgsInterp2(heap: Heap, args: List[(Id, Expression)]): (Heap, List[(Id, Expression)]) = args match {
+    case Nil => (heap, Nil)
+    case (f, x@Id(_)) :: rst =>
+      val (h1, args1) = objArgsInterp2(heap, rst)
+      (h1, (f, x) :: args1)
+    case (f, e) :: rst =>
+      val (h1, e1) = interp(heap, e)
+      val (h2, args1) = objArgsInterp2(h1, rst)
+      (h2, (f, e1) :: args1)
   }
 
   // Heap Constraints
