@@ -1,11 +1,14 @@
 package dcc
 
-import dcc.syntax.{Expression, _}
+import dcc.syntax.Program.Program
+import dcc.syntax._
 
-class DCC {
+class DCC(P: Program) {
   // Class(field = value, ...)
   type Obj = (Id, List[(Id, Id)])
   type Heap = Map[Id, Obj]
+
+  def entails(ctx: List[Constraint], cs: List[Constraint]): Boolean = cs.map(c => entails(ctx, c)).fold(true){_ && _}
 
   // constraint entailment
   def entails(ctx: List[Constraint], c: Constraint): Boolean = (ctx, c) match {
@@ -19,7 +22,7 @@ class DCC {
     case (_, _) => false
   }
 
-  // TODO: implement
+  // TODO: change return type to Either or Option?
   def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
     // R-Field
     case FieldAccess(x@Id(_), f) =>
@@ -30,7 +33,7 @@ class DCC {
           } match {
         case PathEquivalence(FieldPath(x, f), y@Id(_)) :: rst => (heap, y)
         case PathEquivalence(y@Id(_), FieldPath(x, f)) :: rst => (heap, y)
-        case _ => (heap, expr) // field not bound to proper object?
+        case _ => (heap, expr) // x does not have field f TODO: return type
       }
     // R-Call
     case MethodCall(m, x@Id(_)) => (heap, expr) // TODO
@@ -43,9 +46,13 @@ class DCC {
       val x: Id  = Id(freshname('x))
       val args1: List[(Id, Id)] = args.map{case (f, Id(x)) => (f, Id(x))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
       val o: Obj = (cls, args1)
-      // TODO: cls in Program
-      // TODO: heap constraints entail cls constraints
-      (heap + (x -> o), x)
+      // cls in Program
+      val (y: Id, b: List[Constraint]) = constructorInProgram(cls).getOrElse() // TODO: orElse
+      // heap constraints entail cls constraints
+      if (entails(HC(heap) ++ OC(x, o), b))
+        (heap + (x -> o), x)
+      else
+        (heap, expr) // stuck TODO: return type
     // RC-Field
     case FieldAccess(e, f) =>
       val (h1, e1) = interp(heap, e)
@@ -58,6 +65,12 @@ class DCC {
     case ObjectConstruction(cls, args) =>
       val (h1, args1) = objArgsInterp2(heap, args)
       (h1, ObjectConstruction(cls, args1))
+  }
+
+  private def constructorInProgram(Cls: Id): Option[(Id, List[Constraint])] = P match {
+    case Nil => None
+    case ConstructorDeclaration(Cls, x, a) :: _ => Some(x, a)
+    case _ :: rst => constructorInProgram(Cls)
   }
 
   private def objArgsInterp(heap: Heap, args: List[(Id, Expression)]): List[(Id, Expression)] = args match {
