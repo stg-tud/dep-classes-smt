@@ -8,7 +8,9 @@ class DCC(P: Program) {
   type Obj = (Id, List[(Id, Id)])
   type Heap = Map[Id, Obj]
 
-  def entails(ctx: List[Constraint], cs: List[Constraint]): Boolean = cs.map(c => entails(ctx, c)).fold(true){_ && _}
+  def entails(ctx: List[Constraint], cs: List[Constraint]): Boolean =
+    cs.forall(c => entails(ctx, c))
+    //cs.map(c => entails(ctx, c)).fold(true){_ && _}
 
   // constraint entailment
   def entails(ctx: List[Constraint], c: Constraint): Boolean = (ctx, c) match {
@@ -25,14 +27,14 @@ class DCC(P: Program) {
   // TODO: change return type to Either or Option?
   def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
     // R-Field
-    case FieldAccess(x@Id(_), f) =>
+    case FieldAccess(X@Id(_), F@Id(_)) =>
       HC(heap).filter{
-          case PathEquivalence(FieldPath(x, f), Id(_)) => true
-          case PathEquivalence(Id(_), FieldPath(x, f)) => true
+          case PathEquivalence(FieldPath(X, F), Id(_)) => true
+          case PathEquivalence(Id(_), FieldPath(X, F)) => true
           case _ => false
           } match {
-        case PathEquivalence(FieldPath(x, f), y@Id(_)) :: rst => (heap, y)
-        case PathEquivalence(y@Id(_), FieldPath(x, f)) :: rst => (heap, y)
+        case PathEquivalence(FieldPath(X, F), y@Id(_)) :: _ => (heap, y)
+        case PathEquivalence(y@Id(_), FieldPath(X, F)) :: _ => (heap, y)
         case _ => (heap, expr) // x does not have field f TODO: return type
       }
     // R-Call
@@ -40,14 +42,14 @@ class DCC(P: Program) {
     // R-New
     case ObjectConstruction(cls, args)
       if args.foldRight(true){ // if args are values (Id)
-        case ((_, Id(_)), rst) => true && rst
-        case (_, rst) => false && rst // could be reduced to false, but makes no difference runtime wise
+        case ((_, Id(_)), rst) => rst // true && rst
+        case _ => false // false && rst
       } => // TODO: extend guard with other non-interp prerequisites like entailment? implement body
       val x: Id  = Id(freshname('x))
-      val args1: List[(Id, Id)] = args.map{case (f, Id(x)) => (f, Id(x))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
+      val args1: List[(Id, Id)] = args.map{case (f, Id(z)) => (f, Id(z))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
       val o: Obj = (cls, args1)
       // cls in Program
-      val (y: Id, b: List[Constraint]) = constructorInProgram(cls).getOrElse() // TODO: orElse
+      val (y: Id, b: List[Constraint]) = classInProgram(cls, P).getOrElse() // TODO: alpha renaming y to x and orElse
       // heap constraints entail cls constraints
       if (entails(HC(heap) ++ OC(x, o), b))
         (heap + (x -> o), x)
@@ -67,10 +69,10 @@ class DCC(P: Program) {
       (h1, ObjectConstruction(cls, args1))
   }
 
-  private def constructorInProgram(Cls: Id): Option[(Id, List[Constraint])] = P match {
+  private def classInProgram(Cls: Id, p: Program): Option[(Id, List[Constraint])] = p match {
     case Nil => None
     case ConstructorDeclaration(Cls, x, a) :: _ => Some(x, a)
-    case _ :: rst => constructorInProgram(Cls)
+    case _ :: rst => classInProgram(Cls, rst)
   }
 
   private def objArgsInterp(heap: Heap, args: List[(Id, Expression)]): List[(Id, Expression)] = args match {
@@ -109,7 +111,8 @@ class DCC(P: Program) {
   }
 
   // Heap Constraints
-  def HC(heap: Heap): List[Constraint] = heap.map{case (x, o) => OC(x, o)}.flatten.toList
+  def HC(heap: Heap): List[Constraint] = heap.flatMap{case (x, o) => OC(x, o)}.toList
+    //heap.map{case (x, o) => OC(x, o)}.flatten.toList
 
   // Object Constraints
   def OC(x: Id, o: Obj): List[Constraint] = o match {
