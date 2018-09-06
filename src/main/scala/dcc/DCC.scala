@@ -30,8 +30,7 @@ class DCC {
           } match {
         case PathEquivalence(FieldPath(x, f), y@Id(_)) :: rst => (heap, y)
         case PathEquivalence(y@Id(_), FieldPath(x, f)) :: rst => (heap, y)
-        case Nil => (heap, expr) // var not bound to proper object?
-        case _ => (heap, expr) // match not exhaustive waring without this, but cannot happen because of filter, remove Nil case?
+        case _ => (heap, expr) // field not bound to proper object?
       }
     // R-Call
     case MethodCall(m, x@Id(_)) => (heap, expr) // TODO
@@ -42,7 +41,7 @@ class DCC {
         case (_, rst) => false && rst // could be reduced to false, but makes no difference runtime wise
       } => // TODO: extend guard with other non-interp prerequisites like entailment? implement body
       val x: Id  = Id(freshname('x))
-      val args1: List[(Id, Id)] = args.map{case (f, Id(x)) => (f, Id(x))} // case (f, _) => (f, Id('notPossible)) guard makes sure everything is an Id
+      val args1: List[(Id, Id)] = args.map{case (f, Id(x)) => (f, Id(x))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
       val o: Obj = (cls, args1)
       // TODO: cls in Program
       // TODO: heap constraints entail cls constraints
