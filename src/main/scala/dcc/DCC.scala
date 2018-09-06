@@ -34,14 +34,19 @@ class DCC {
         case _ => (heap, expr) // match not exhaustive waring without this, but cannot happen because of filter, remove Nil case?
       }
     // R-Call
-    case MethodCall(m, x@Id(_)) => (heap, expr) // _
+    case MethodCall(m, x@Id(_)) => (heap, expr) // TODO
     // R-New
     case ObjectConstruction(cls, args)
-      if args.foldRight(true){ // if args are values
+      if args.foldRight(true){ // if args are values (Id)
         case ((_, Id(_)), rst) => true && rst
-        case (_, rst) => false && rst // could be reduced to false, but makes no difference runtimewise
-      } =>
-      (heap, expr)
+        case (_, rst) => false && rst // could be reduced to false, but makes no difference runtime wise
+      } => // TODO: extend guard with other non-interp prerequisites like entailment? implement body
+      val x: Id  = Id(freshname('x))
+      val args1: List[(Id, Id)] = args.map{case (f, Id(x)) => (f, Id(x))} // case (f, _) => (f, Id('notPossible)) guard makes sure everything is an Id
+      val o: Obj = (cls, args1)
+      // TODO: cls in Program
+      // TODO: heap constraints entail cls constraints
+      (heap + (x -> o), x)
     // RC-Field
     case FieldAccess(e, f) =>
       val (h1, e1) = interp(heap, e)
