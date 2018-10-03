@@ -45,7 +45,7 @@ case class SMTLibString(s: String) extends SMTLibFormatter with SpecConstant {
   override def format(): String = s
 }
 
-trait SMTLibSymbol extends SMTLibFormatter with SExpr with Index with Identifier
+trait SMTLibSymbol extends SMTLibFormatter with SExpr with Index with Identifier with AttributeValue
 
 case class SimpleSymbol(symbol: String) extends SMTLibSymbol {
   require(symbol.nonEmpty &&
@@ -84,7 +84,7 @@ case class QuotedSymbol(symbol: String) extends SMTLibSymbol {
   override def format(): String = s"|$symbol|"
 }
 
-case class Keyword(symbol: String) extends SMTLibFormatter with SExpr {
+case class Keyword(symbol: String) extends SMTLibFormatter with SExpr with Attribute {
   require(SimpleSymbol(symbol).symbol == symbol)
   override def format(): String = s":${symbol}"
 }

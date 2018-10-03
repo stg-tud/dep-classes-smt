@@ -9,7 +9,7 @@ case class SExprs(exprs: Seq[SExpr] = Nil) extends SExpr {
 }
 
 // TODO: remove SMTLibFormatter? SExpr... inherits fromt it anyways
-trait SpecConstant extends SMTLibFormatter with SExpr
+trait SpecConstant extends SMTLibFormatter with SExpr with AttributeValue
 
 //case class SpecConstant(s: String) extends SMTLibFormatter with SExpr {
 //  override def format(): String = s
