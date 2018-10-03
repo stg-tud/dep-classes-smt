@@ -8,5 +8,5 @@ package dcc.syntax
 //case class MethodName(m: Symbol) extends Identifier
 
 case class Id(name: Symbol) extends Path with Expression {
-  override def toString: String = name.toString().drop(1)
+  override def toString: String = name.name
 }
