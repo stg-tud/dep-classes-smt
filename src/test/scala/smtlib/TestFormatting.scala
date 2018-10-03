@@ -10,10 +10,10 @@ class TestFormatting extends FunSuite{
     val num2 = Numeral(1256432)
     val dec1 = Decimal(123.456)
     val dec2 = Decimal(123.0123)
-    val hex1 = Hexadecimal("0a1b54ff")
-    val hex2 = Hexadecimal(0x1a2b.toHexString)
-    val bin1 = Binary("00111100")
-    val bin2 = Binary(0xff.toBinaryString)
+    val hex1 = Hexadecimal(0x0a1b54ff)
+    val hex2 = Hexadecimal(0x1a2b)
+    val bin1 = Binary(Integer.parseInt("00111100", 2))
+    val bin2 = Binary(0xff)
     val str1 = StringLiteral("foo")
     val str2 = StringLiteral("bar")
 
@@ -21,28 +21,28 @@ class TestFormatting extends FunSuite{
     assert(num2.format() == "1256432")
     assert(dec1.format() == "123.456")
     assert(dec2.format() == "123.0123")
-    assert(hex1.format() == "#x0A1B54FF")
+    assert(hex1.format() == "#xA1B54FF")
     assert(hex2.format() == "#x1A2B")
-    assert(bin1.format() == "#b00111100")
+    assert(bin1.format() == "#b111100")
     assert(bin2.format() == "#b11111111")
     assert(str1.format() == "foo")
     assert(str2.format() == "bar")
 
-    assertThrows[IllegalArgumentException]{
-      Hexadecimal("#xFF")
-    }
+//    assertThrows[IllegalArgumentException]{
+//      Hexadecimal("#xFF")
+//    }
+//
+//    assertThrows[IllegalArgumentException]{
+//      Hexadecimal("0xFF")
+//    }
 
-    assertThrows[IllegalArgumentException]{
-      Hexadecimal("0xFF")
-    }
-
-    assertThrows[IllegalArgumentException] {
-      Binary("123456")
-    }
-
-    assertThrows[IllegalArgumentException] {
-      Binary("0b111")
-    }
+//    assertThrows[IllegalArgumentException] {
+//      Binary("123456")
+//    }
+//
+//    assertThrows[IllegalArgumentException] {
+//      Binary("0b111")
+//    }
   }
 
   test("Sort") {
