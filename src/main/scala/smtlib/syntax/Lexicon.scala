@@ -3,15 +3,15 @@ package smtlib.syntax
 import smtlib.SMTLibFormatter
 
 // TODO: long?
-case class Numeral(num: Int) extends SMTLibFormatter {
+case class Numeral(num: Int) extends SMTLibFormatter with SpecConstant {
   override def format(): String = num.toString
 }
 
-case class Decimal(dec: Double) extends SMTLibFormatter {
+case class Decimal(dec: Double) extends SMTLibFormatter with SpecConstant {
   override def format(): String = dec.toString
 }
 
-case class Hexadecimal(hex: String) extends SMTLibFormatter {
+case class Hexadecimal(hex: String) extends SMTLibFormatter with SpecConstant {
   require(hex.filter(c => !c.isDigit && !aToF(c)).isEmpty, "Hexadecimals: only digits or letters from a/A to f/F")
 
 //  def this(hex: Int) = this(hex.toHexString)
@@ -32,7 +32,7 @@ object Hexadecimal {
   def apply(hex: Int): Hexadecimal = Hexadecimal(hex.toHexString)
 }
 
-case class Binary(bin: String) extends SMTLibFormatter {
+case class Binary(bin: String) extends SMTLibFormatter with SpecConstant {
   require(bin.filter(c => c != '0' && c != '1').isEmpty, "Binary: only digits 0 or 1")
   override def format(): String = s"#b$bin"
 }
@@ -41,11 +41,11 @@ object Binary {
   def apply(bin: Int): Binary = Binary(bin.toBinaryString)
 }
 
-case class SMTLibString(s: String) extends SMTLibFormatter {
+case class SMTLibString(s: String) extends SMTLibFormatter with SpecConstant {
   override def format(): String = s
 }
 
-trait SMTLibSymbol extends SMTLibFormatter
+trait SMTLibSymbol extends SMTLibFormatter with SExpr
 
 case class SimpleSymbol(symbol: String) extends SMTLibSymbol {
   require(symbol.nonEmpty &&
@@ -84,7 +84,7 @@ case class QuotedSymbol(symbol: String) extends SMTLibSymbol {
   override def format(): String = s"|$symbol|"
 }
 
-case class Keyword(symbol: String) extends SMTLibFormatter {
+case class Keyword(symbol: String) extends SMTLibFormatter with SExpr {
   require(SimpleSymbol(symbol).symbol == symbol)
   override def format(): String = s":${symbol}"
 }
