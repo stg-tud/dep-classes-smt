@@ -131,21 +131,21 @@ class TestFormatting extends FunSuite{
   }
 
   test("Term.QualifiedIdentifier") {
-    assert(QualifiedIdentifier("x").format() == "x")
-    assert(QualifiedIdentifier("x", Sort(SimpleSymbol("Bool"))).format() == "(as x Bool)")
+    assert(SimpleSymbol("x").format() == "x")
+    assert(IdentifierAs(SimpleSymbol("x"), Sort(SimpleSymbol("Bool"))).format() == "(as x Bool)")
   }
 
   test("Term.Application") {
-    assert(Apply(QualifiedIdentifier("append"), Seq(QualifiedIdentifier("x"), QualifiedIdentifier("y"))).format() == "(append x y)")
+    assert(Apply(SimpleSymbol("append"), Seq(SimpleSymbol("x"), SimpleSymbol("y"))).format() == "(append x y)")
   }
 
-  val binding1 = VarBinding("h", Apply(QualifiedIdentifier("head"), Seq(QualifiedIdentifier("x"))))
-  val binding2 = VarBinding("t", Apply(QualifiedIdentifier("tail"), Seq(QualifiedIdentifier("x"))))
+  val binding1 = VarBinding(SimpleSymbol("h"), Apply(SimpleSymbol("head"), Seq(SimpleSymbol("x"))))
+  val binding2 = VarBinding(SimpleSymbol("t"), Apply(SimpleSymbol("tail"), Seq(SimpleSymbol("x"))))
   val let = Let(Seq(binding1, binding2),
-    Apply(QualifiedIdentifier("insert"),
-      Seq(QualifiedIdentifier("h"),
-        Apply(QualifiedIdentifier("append"),
-          Seq(QualifiedIdentifier("t"), QualifiedIdentifier("y"))))))
+    Apply(SimpleSymbol("insert"),
+      Seq(SimpleSymbol("h"),
+        Apply(SimpleSymbol("append"),
+          Seq(SimpleSymbol("t"), SimpleSymbol("y"))))))
 
   test("Term.Let") {
     assert(binding1.format() == "(h (head x))")
@@ -153,8 +153,8 @@ class TestFormatting extends FunSuite{
     assert(let.format() == "(let ((h (head x)) (t (tail x))) (insert h (append t y)))")
   }
 
-  val var1 = SortedVar("x", Sort(SimpleSymbol("List"), Seq(Sort(SimpleSymbol("Int")))))
-  val var2 = SortedVar("y", Sort(SimpleSymbol("List"), Seq(Sort(SimpleSymbol("Int")))))
+  val var1 = SortedVar(SimpleSymbol("x"), Sort(SimpleSymbol("List"), Seq(Sort(SimpleSymbol("Int")))))
+  val var2 = SortedVar(SimpleSymbol("y"), Sort(SimpleSymbol("List"), Seq(Sort(SimpleSymbol("Int")))))
 
   test("Term.Forall") {
     assert(var1.format() == "(x (List Int))")
