@@ -35,22 +35,6 @@ class TestFormatting extends FunSuite{
     assert(bin4.format() == "#b11111111")
     assert(str1.format() == "foo")
     assert(str2.format() == "bar")
-
-//    assertThrows[IllegalArgumentException]{
-//      Hexadecimal("#xFF")
-//    }
-//
-//    assertThrows[IllegalArgumentException]{
-//      Hexadecimal("0xFF")
-//    }
-
-//    assertThrows[IllegalArgumentException] {
-//      Binary("123456")
-//    }
-//
-//    assertThrows[IllegalArgumentException] {
-//      Binary("0b111")
-//    }
   }
 
   test("Sort") {

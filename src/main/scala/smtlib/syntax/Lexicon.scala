@@ -2,10 +2,6 @@ package smtlib.syntax
 
 import smtlib.SMTLibFormatter
 
-trait Lexicon {
-
-}
-
 // TODO: long?
 case class Numeral(num: Int) extends SMTLibFormatter {
   override def format(): String = num.toString
