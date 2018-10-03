@@ -3,7 +3,7 @@ package smtlib.syntax
 import smtlib.SMTLibFormatter
 
 // TODO: long?
-case class Numeral(num: Int) extends SMTLibFormatter with SpecConstant {
+case class Numeral(num: Int) extends SMTLibFormatter with SpecConstant with Index {
   override def format(): String = num.toString
 }
 
@@ -45,7 +45,7 @@ case class SMTLibString(s: String) extends SMTLibFormatter with SpecConstant {
   override def format(): String = s
 }
 
-trait SMTLibSymbol extends SMTLibFormatter with SExpr
+trait SMTLibSymbol extends SMTLibFormatter with SExpr with Index with Identifier
 
 case class SimpleSymbol(symbol: String) extends SMTLibSymbol {
   require(symbol.nonEmpty &&

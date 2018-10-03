@@ -5,35 +5,35 @@ import syntax._
 import syntax.Implicit._
 
 class TestFormatting extends FunSuite{
-  test("Lexicon") {
-    val num1 = Numeral(0)
-    val num2 = Numeral(1256432)
-    val dec1 = Decimal(123.456)
-    val dec2 = Decimal(123.0123)
-    val hex1 = Hexadecimal(0x0a1b54ff)
-    val hex2 = Hexadecimal("0a1b54ff")
-    val hex3 = Hexadecimal(0x1a2b)
-    val hex4 = Hexadecimal("1a2b")
-    val bin1 = Binary(Integer.parseInt("00111100", 2))
-    val bin2 = Binary("00111100")
-    val bin3 = Binary(0xff)
-    val bin4 = Binary("11111111")
-    val str1 = SMTLibString("foo")
-    val str2 = SMTLibString("bar")
-    val symbol1 = SimpleSymbol("<=")
-    val symbol2 = SimpleSymbol("plus")
-    val symbol3 = SimpleSymbol("*$s&6")
-    val symbol4 = SimpleSymbol(".8")
-    val symbol5 = SimpleSymbol("+34-32")
-    val symbol6 = QuotedSymbol("this is a quoted symbol")
-    val symbol7 = QuotedSymbol("so is\nthis  one")
-    val symbol8 = QuotedSymbol(" \" can occur too")
-    val symbol9 = QuotedSymbol("")
-    val symbol0 = QuotedSymbol("af klj ^*0 asfe2 (&*)&(#^$>> >?\" ’]]984")
-    val keyword1 = Keyword("foo-bar")
-    val keyword2 = Keyword("<=")
-    val keyword3 = Keyword("->")
+  val num1 = Numeral(0)
+  val num2 = Numeral(1256432)
+  val dec1 = Decimal(123.456)
+  val dec2 = Decimal(123.0123)
+  val hex1 = Hexadecimal(0x0a1b54ff)
+  val hex2 = Hexadecimal("0a1b54ff")
+  val hex3 = Hexadecimal(0x1a2b)
+  val hex4 = Hexadecimal("1a2b")
+  val bin1 = Binary(Integer.parseInt("00111100", 2))
+  val bin2 = Binary("00111100")
+  val bin3 = Binary(0xff)
+  val bin4 = Binary("11111111")
+  val str1 = SMTLibString("foo")
+  val str2 = SMTLibString("bar")
+  val symbol1 = SimpleSymbol("<=")
+  val symbol2 = SimpleSymbol("plus")
+  val symbol3 = SimpleSymbol("*$s&6")
+  val symbol4 = SimpleSymbol(".8")
+  val symbol5 = SimpleSymbol("+34-32")
+  val symbol6 = QuotedSymbol("this is a quoted symbol")
+  val symbol7 = QuotedSymbol("so is\nthis  one")
+  val symbol8 = QuotedSymbol(" \" can occur too")
+  val symbol9 = QuotedSymbol("")
+  val symbol0 = QuotedSymbol("af klj ^*0 asfe2 (&*)&(#^$>> >?\" ’]]984")
+  val keyword1 = Keyword("foo-bar")
+  val keyword2 = Keyword("<=")
+  val keyword3 = Keyword("->")
 
+  test("Lexicon") {
     assert(num1.format() == "0")
     assert(num2.format() == "1256432")
     assert(dec1.format() == "123.456")
@@ -89,6 +89,24 @@ class TestFormatting extends FunSuite{
     assertThrows[IllegalArgumentException] {
       SimpleSymbol("a0b1(")
     }
+  }
+
+  test("SExpr") {
+    val sexpr1: SExpr = Numeral(123)
+    val sexpr2 = SExprs(Seq(num1, dec1, hex1, bin1, str1, symbol1, keyword1))
+
+    assert(sexpr1.format() == "123")
+    assert(sexpr2.format() == "(0 123.456 #xA1B54FF #b111100 foo <= :foo-bar)")
+  }
+
+  test("Identifier") {
+    val identifier1 = ComposedIdentifier(SimpleSymbol("vector-add"), Seq(Numeral(4), Numeral(5)))
+    val identifier2 = ComposedIdentifier(SimpleSymbol("move"), Seq(syntax.SimpleSymbol("down")))
+    val identifier3 = ComposedIdentifier(SimpleSymbol("move-length"), Seq(syntax.SimpleSymbol("left"), Numeral(2)))
+
+    assert(identifier1.format() == "(_ vector-add 4 5)")
+    assert(identifier2.format() == "(_ move down)")
+    assert(identifier3.format() == "(_ move-length left 2)")
   }
 
   test("Sort") {
