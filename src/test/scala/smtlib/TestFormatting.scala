@@ -2,7 +2,6 @@ package smtlib
 
 import org.scalatest.FunSuite
 import syntax._
-import syntax.Implicit._
 
 class TestFormatting extends FunSuite{
   val num1 = Numeral(0)
