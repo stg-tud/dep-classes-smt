@@ -1,8 +1,8 @@
 package smtlib.syntax
 
-import smtlib.{SMTLibCommand, SMTLibFormatter}
+import smtlib.SMTLibFormatter
 
-trait Term extends SMTLibCommand
+trait Term extends SMTLibFormatter
 
 trait QualifiedIdentifier extends Term
 
