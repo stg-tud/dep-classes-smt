@@ -1,8 +1,8 @@
 package smtlib.syntax
 
-import smtlib.{SMTLib, SMTLibFormatter}
+import smtlib.{SMTLibCommand, SMTLibFormatter}
 
-trait Term extends SMTLib with SMTLibFormatter
+trait Term extends SMTLibCommand
 
 case object True extends Term {
   override def format(): String = "true"
@@ -12,7 +12,10 @@ case object False extends Term {
   override def format(): String = "false"
 }
 
-// TODO: spec-constant
+// spec-constant
+case class BaseTerm(s: String) extends Term {
+  override def format(): String = s
+}
 
 case class QualifiedIdentifier(id: String, sort: Option[Sort] = None) extends Term {
   override def format(): String = sort match {
