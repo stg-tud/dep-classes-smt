@@ -32,11 +32,6 @@ object Hexadecimal {
   def apply(hex: Int): Hexadecimal = Hexadecimal(hex.toHexString)
 }
 
-// no leading zeroes with this representation
-//case class Hexadecimal(hex: Int) extends SMTLibFormatter {
-//  override def format(): String = s"#x${hex.toHexString.toUpperCase}"
-//}
-
 case class Binary(bin: String) extends SMTLibFormatter {
   require(bin.filter(c => c != '0' && c != '1').isEmpty, "Binary: only digits 0 or 1")
   override def format(): String = s"#b$bin"
@@ -46,11 +41,50 @@ object Binary {
   def apply(bin: Int): Binary = Binary(bin.toBinaryString)
 }
 
-// no leading zeroes with this representation
-//case class Binary(bin: Int) extends SMTLibFormatter {
-//  override def format(): String = s"#b${bin.toBinaryString}"
-//}
-
-case class StringLiteral(s: String) extends SMTLibFormatter {
+case class SMTLibString(s: String) extends SMTLibFormatter {
   override def format(): String = s
+}
+
+trait SMTLibSymbol extends SMTLibFormatter
+
+case class SimpleSymbol(symbol: String) extends SMTLibSymbol {
+  require(symbol.nonEmpty &&
+    !symbol.charAt(0).isDigit &&
+    symbol.filter(c => !c.isLetterOrDigit && !isAllowedChar(c)).isEmpty,
+  s"SimpleSymbol $symbol: nonempty, doesnt start with digit and only contains letters, digits and ~ ! @ $$ % ^ & * _ - + = < > . ?")
+
+  override def format(): String = symbol
+
+  private def isAllowedChar(c: Char): Boolean = c match {
+    case '~' => true
+    case '!' => true
+    case '@' => true
+    case '$' => true
+    case '%' => true
+    case '^' => true
+    case '&' => true
+    case '*' => true
+    case '_' => true
+    case '-' => true
+    case '+' => true
+    case '=' => true
+    case '<' => true
+    case '>' => true
+    case '.' => true
+    case '?' => true
+    case '/' => true
+    case  _  => false
+  }
+}
+
+case class QuotedSymbol(symbol: String) extends SMTLibSymbol {
+  require(symbol.filter(c => c == '|' && c == '\\').isEmpty,
+  s"QuotedSymbol $symbol: must not contain | or \\")
+
+  override def format(): String = s"|$symbol|"
+}
+
+case class Keyword(symbol: String) extends SMTLibFormatter {
+  require(SimpleSymbol(symbol).symbol == symbol)
+  override def format(): String = s":${symbol}"
 }

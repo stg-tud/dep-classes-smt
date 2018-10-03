@@ -18,8 +18,21 @@ class TestFormatting extends FunSuite{
     val bin2 = Binary("00111100")
     val bin3 = Binary(0xff)
     val bin4 = Binary("11111111")
-    val str1 = StringLiteral("foo")
-    val str2 = StringLiteral("bar")
+    val str1 = SMTLibString("foo")
+    val str2 = SMTLibString("bar")
+    val symbol1 = SimpleSymbol("<=")
+    val symbol2 = SimpleSymbol("plus")
+    val symbol3 = SimpleSymbol("*$s&6")
+    val symbol4 = SimpleSymbol(".8")
+    val symbol5 = SimpleSymbol("+34-32")
+    val symbol6 = QuotedSymbol("this is a quoted symbol")
+    val symbol7 = QuotedSymbol("so is\nthis  one")
+    val symbol8 = QuotedSymbol(" \" can occur too")
+    val symbol9 = QuotedSymbol("")
+    val symbol0 = QuotedSymbol("af klj ^*0 asfe2 (&*)&(#^$>> >?\" ’]]984")
+    val keyword1 = Keyword("foo-bar")
+    val keyword2 = Keyword("<=")
+    val keyword3 = Keyword("->")
 
     assert(num1.format() == "0")
     assert(num2.format() == "1256432")
@@ -35,6 +48,47 @@ class TestFormatting extends FunSuite{
     assert(bin4.format() == "#b11111111")
     assert(str1.format() == "foo")
     assert(str2.format() == "bar")
+    assert(symbol1.format() == "<=")
+    assert(symbol2.format() == "plus")
+    assert(symbol3.format() == "*$s&6")
+    assert(symbol4.format() == ".8")
+    assert(symbol5.format() == "+34-32")
+    assert(symbol6.format() == "|this is a quoted symbol|")
+    assert(symbol7.format() == "|so is\nthis  one|")
+    assert(symbol8.format() == "| \" can occur too|")
+    assert(symbol9.format() == "||")
+    assert(symbol0.format() == "|af klj ^*0 asfe2 (&*)&(#^$>> >?\" ’]]984|")
+    assert(keyword1.format() == ":foo-bar")
+    assert(keyword2.format() == ":<=")
+    assert(keyword3.format() == ":->")
+
+    assertThrows[IllegalArgumentException]{
+      Hexadecimal("#xFF")
+    }
+
+    assertThrows[IllegalArgumentException]{
+      Hexadecimal("0xFF")
+    }
+
+    assertThrows[IllegalArgumentException] {
+      Binary("123456")
+    }
+
+    assertThrows[IllegalArgumentException] {
+      Binary("0b111")
+    }
+
+    assertThrows[IllegalArgumentException] {
+      SimpleSymbol("")
+    }
+
+    assertThrows[IllegalArgumentException] {
+      SimpleSymbol("0asdf")
+    }
+
+    assertThrows[IllegalArgumentException] {
+      SimpleSymbol("a0b1(")
+    }
   }
 
   test("Sort") {
