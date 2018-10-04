@@ -26,10 +26,3 @@ case class FunctionDec(symbol: SMTLibSymbol, args: Seq[SortedVar], ret: Sort) ex
 case class FunctionDef(symbol: SMTLibSymbol, args: Seq[SortedVar], ret: Sort, body: Term) extends SMTLibFormatter {
   override def format(): String = s"${symbol.format()} (${SMTLibFormatter.format(args)}) ${ret.format()} ${body.format()}"
 }
-
-trait PropLiteral extends SMTLibFormatter
-
-// TODO: possible clash with Not sugar object?
-case class NotLiteral(symbol: SMTLibSymbol) extends PropLiteral {
-  override def format(): String = s"(not ${symbol.format()})"
-}
