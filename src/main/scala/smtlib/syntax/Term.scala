@@ -54,9 +54,47 @@ case class Annotate(term: Term, attributes: Seq[Attribute]) extends Term {
   override def format(): String = s"(! ${term.format()} ${SMTLibFormatter.format(attributes)})"
 }
 
-// Sugar
-
-object Ite{
-  def apply(i: Term, t: Term, e: Term): Term = Apply(SimpleSymbol("Ite"), Seq(i, t, e))
+// Sugar for core
+object True {
+  def apply(): Term = SimpleSymbol("true")
 }
 
+object False {
+  def apply(): Term = SimpleSymbol("false")
+}
+
+object Not {
+  def apply(term: Term): Term = Apply(SimpleSymbol("not"), Seq(term))
+}
+
+object Op2 {
+  def apply(identifier: QualifiedIdentifier, left: Term, right: Term): Term = Apply(identifier, Seq(left, right))
+}
+
+object Impl {
+  def apply(left: Term, right: Term): Term = Op2(SimpleSymbol("=>"), left, right)
+}
+
+object And {
+  def apply(left: Term, right: Term): Term = Op2(SimpleSymbol("and"), left, right)
+}
+
+object Or {
+  def apply(left: Term, right: Term): Term = Op2(SimpleSymbol("or"), left, right)
+}
+
+object Xor {
+  def apply(left: Term, right: Term): Term = Op2(SimpleSymbol("xor"), left, right)
+}
+
+object Eq {
+  def apply(left: Term, right: Term): Term = Op2(SimpleSymbol("="), left, right)
+}
+
+object Distinct {
+  def apply(left: Term, right: Term): Term = Op2(SimpleSymbol("distinct"), left, right)
+}
+
+object Ite {
+  def apply(i: Term, t: Term, e: Term): Term = Apply(SimpleSymbol("Ite"), Seq(i, t, e))
+}

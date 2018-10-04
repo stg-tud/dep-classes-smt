@@ -167,4 +167,14 @@ class TestFormatting extends FunSuite{
     val exists = Exists(Seq(var1, var2), let)
     assert(exists.format() == "(exists ((x (List Int)) (y (List Int))) (let ((h (head x)) (t (tail x))) (insert h (append t y))))")
   }
+
+  test("Term.Sugar") {
+    assert(True().format() == "true")
+    assert(False().format() == "false")
+    assert(Not(True()).format() == "(not true)")
+    assert(Impl(False(), True()).format() == "(=> false true)")
+    assert(And(Not(False()), True()).format() == "(and (not false) true)")
+    assert(Xor(Distinct(SimpleSymbol("x"), SimpleSymbol("y")), Distinct(SimpleSymbol("x"), SimpleSymbol("z"))).format() == "(xor (distinct x y) (distinct x z))")
+    assert(Ite(Not(False()), Or(True(), False()), Eq(SimpleSymbol("y"), SimpleSymbol("z"))).format() == "(Ite (not false) (or true false) (= y z))")
+  }
 }
