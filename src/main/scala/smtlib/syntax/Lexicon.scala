@@ -45,7 +45,7 @@ case class SMTLibString(s: String) extends SMTLibFormatter with SpecConstant {
   override def format(): String = s
 }
 
-trait SMTLibSymbol extends SMTLibFormatter with SExpr with Index with Identifier with AttributeValue
+trait SMTLibSymbol extends SMTLibFormatter with SExpr with Index with Identifier with AttributeValue with PropLiteral
 
 case class SimpleSymbol(symbol: String) extends SMTLibSymbol {
   require(symbol.nonEmpty &&
