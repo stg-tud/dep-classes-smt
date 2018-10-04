@@ -9,6 +9,9 @@ case class Sort(identifier: Identifier, sorts: Seq[Sort] = Nil) extends SMTLibFo
   }
 }
 
+// Exists in every theory
+object Bool extends Sort(SimpleSymbol("Bool"))
+
 //trait Sort extends SMTLibFormatter
 //
 //case class SortTerm(identifier: Identifier, sorts: Seq[Sort]) extends Sort {

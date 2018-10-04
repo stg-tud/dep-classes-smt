@@ -53,3 +53,10 @@ case class Match(term: Term, cases: Seq[MatchCase]) extends Term {
 case class Annotate(term: Term, attributes: Seq[Attribute]) extends Term {
   override def format(): String = s"(! ${term.format()} ${SMTLibFormatter.format(attributes)})"
 }
+
+// Sugar
+
+object Ite{
+  def apply(i: Term, t: Term, e: Term): Term = Apply(SimpleSymbol("Ite"), Seq(i, t, e))
+}
+

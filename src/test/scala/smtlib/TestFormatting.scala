@@ -109,7 +109,7 @@ class TestFormatting extends FunSuite{
   }
 
   test("Sort") {
-    assert(Sort(SimpleSymbol("Bool")).format() == "Bool")
+    assert(Bool.format() == "Bool")
     assert(Sort(SimpleSymbol("Int")).format() == "Int")
     assert(Sort(SimpleSymbol("String")).format() == "String")
 
@@ -131,7 +131,7 @@ class TestFormatting extends FunSuite{
 
   test("Term.QualifiedIdentifier") {
     assert(SimpleSymbol("x").format() == "x")
-    assert(IdentifierAs(SimpleSymbol("x"), Sort(SimpleSymbol("Bool"))).format() == "(as x Bool)")
+    assert(IdentifierAs(SimpleSymbol("x"), Bool).format() == "(as x Bool)")
   }
 
   test("Term.Application") {
