@@ -2,7 +2,7 @@ package smtlib.syntax
 
 import smtlib.SMTLibFormatter
 
-trait Attribute extends SMTLibFormatter
+trait Attribute extends SMTLibFormatter with Option
 
 case class KeyValueAttribute(key: Keyword, value: AttributeValue) extends Attribute {
   override def format(): String = s"${key.format()} ${value.format()}"
