@@ -84,7 +84,7 @@ case class QuotedSymbol(symbol: String) extends SMTLibSymbol {
   override def format(): String = s"|$symbol|"
 }
 
-case class Keyword(symbol: String) extends SMTLibFormatter with SExpr with Attribute {
+case class Keyword(symbol: String) extends SMTLibFormatter with SExpr with Attribute with InfoFlag {
   require(SimpleSymbol(symbol).symbol == symbol)
-  override def format(): String = s":${symbol}"
+  override def format(): String = s":$symbol"
 }
