@@ -4,30 +4,30 @@ import smtlib.SMTLibFormatter
 
 trait InfoFlag extends SMTLibFormatter
 
-case object AllStatistics extends InfoFlag {
+case object AllStatisticsFlag extends InfoFlag {
   override def format(): String = ":all-statistics"
 }
 
-case object AssertionStackLevels extends InfoFlag {
+case object AssertionStackLevelsFlag extends InfoFlag {
   override def format(): String = ":assertion-stack-levels"
 }
 
-case object Authors extends InfoFlag {
+case object AuthorsFlag extends InfoFlag {
   override def format(): String = ":authors"
 }
 
-case object ErrorBehavior extends InfoFlag {
+case object ErrorBehaviorFlag extends InfoFlag {
   override def format(): String = ":error-behavior"
 }
 
-case object Name extends InfoFlag {
+case object NameFlag extends InfoFlag {
   override def format(): String = ":name"
 }
 
-case object ReasonUnknown extends InfoFlag {
+case object ReasonUnknownFlag extends InfoFlag {
   override def format(): String = ":reason-unknown"
 }
 
-case object Version extends InfoFlag {
+case object VersionFlag extends InfoFlag {
   override def format(): String = ":version"
 }

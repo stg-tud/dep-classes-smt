@@ -41,7 +41,7 @@ object Binary {
   def apply(bin: Int): Binary = Binary(bin.toBinaryString)
 }
 
-case class SMTLibString(s: String) extends SMTLibFormatter with SpecConstant {
+case class SMTLibString(s: String) extends SMTLibFormatter with SpecConstant with EchoResponse {
   override def format(): String = s
 }
 

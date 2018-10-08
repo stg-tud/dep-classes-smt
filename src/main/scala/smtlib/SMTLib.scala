@@ -17,3 +17,5 @@ trait SMTLibCommand extends SMTLibFormatter
 case class SMTLibScript(commands: Seq[SMTLibCommand]) extends SMTLibFormatter {
   override def format(): String = SMTLibFormatter.format(commands)
 }
+
+trait SMTLibResponse extends SMTLibFormatter

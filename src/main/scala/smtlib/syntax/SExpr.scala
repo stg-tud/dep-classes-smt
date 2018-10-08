@@ -4,7 +4,7 @@ import smtlib.SMTLibFormatter
 
 trait SExpr extends SMTLibFormatter
 
-case class SExprs(exprs: Seq[SExpr] = Nil) extends SExpr {
+case class SExprs(exprs: Seq[SExpr] = Nil) extends SExpr with ReasonUnknown with GetProofResponse {
   override def format(): String = s"(${SMTLibFormatter.format(exprs)})"
 }
 

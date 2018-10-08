@@ -2,15 +2,15 @@ package smtlib.syntax
 
 import smtlib.{SMTLibCommand, SMTLibFormatter}
 
-case class DefineFun(fun: FunctionDef) extends SMTLibCommand {
+case class DefineFun(fun: FunctionDef) extends SMTLibCommand with ModelResponse {
   override def format(): String = s"(define-fun ${fun.format()})"
 }
 
-case class DefineFunRec(fun: FunctionDef) extends SMTLibCommand {
+case class DefineFunRec(fun: FunctionDef) extends SMTLibCommand with ModelResponse {
   override def format(): String = s"(define-fun-rec ${fun.format()})"
 }
 
-case class DefineFunsRec(declarations: Seq[FunctionDec], terms: Seq[Term]) extends SMTLibCommand {
+case class DefineFunsRec(declarations: Seq[FunctionDec], terms: Seq[Term]) extends SMTLibCommand with ModelResponse {
   override def format(): String = s"(define-funs-rec (${SMTLibFormatter.format(declarations)}) (${SMTLibFormatter.format(terms)}))"
 }
 
