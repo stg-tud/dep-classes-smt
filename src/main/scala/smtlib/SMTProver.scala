@@ -27,11 +27,11 @@ object SMTProver extends App{
   val checksat = CheckSat
   val script = SMTLibScript(Seq(const1, const2, const3, distinct, assert1, assert2, assert3, checksat))
 
-  script.commands.foreach(c => println(c.format))
+  script.commands.foreach(c => println(c.format()))
 
   new PrintWriter(tempInFile) {
     script.commands.foreach(c => write(c.format() ++ "\n"))
-    close
+    close()
   }
 
   import scala.sys.process._
@@ -69,7 +69,7 @@ object SMTProver extends App{
   }
 
   private def findeBinary(): File = {
-    for (p <- System.getenv(("PATH")).split(File.pathSeparator);
+    for (p <- System.getenv("PATH").split(File.pathSeparator);
          f = new File(p, "z3") if f.exists && f.canExecute)
       return f
     null
