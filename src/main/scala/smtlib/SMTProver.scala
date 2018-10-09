@@ -11,9 +11,9 @@ object SMTProver extends App{
   val tempInFile = File.createTempFile("smtfile", "in")
   val tempOutFile = File.createTempFile("smtfile", "out")
 
-  val const1 = DeclareConst("a", Sort("Int"))
-  val const2 = DeclareConst("b", Sort("Int"))
-  val const3 = DeclareConst("c", Sort("Int"))
+  val const1 = DeclareConst("a", "Int")
+  val const2 = DeclareConst("b", "Int")
+  val const3 = DeclareConst("c", "Int")
   val ab = Apply("+", Seq("a", "b"))
   val aa = Apply("+", Seq("a", "a"))
   val bb = Apply("+", Seq("b", "b"))

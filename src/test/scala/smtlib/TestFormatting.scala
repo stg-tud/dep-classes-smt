@@ -110,22 +110,22 @@ class TestFormatting extends FunSuite{
 
   test("Sort") {
     assert(Bool.format() == "Bool")
-    assert(Sort(SimpleSymbol("Int")).format() == "Int")
-    assert(Sort(SimpleSymbol("String")).format() == "String")
+    assert(SimpleSymbol("Int").format() == "Int")
+    assert(SimpleSymbol("String").format() == "String")
 
-    val array = Sort(SimpleSymbol("Array"), Seq(Sort(SimpleSymbol("Int")), Sort(SimpleSymbol("Real"))))
+    val array = Sorts(SimpleSymbol("Array"), Seq(SimpleSymbol("Int"), SimpleSymbol("Real")))
     assert(array.format() == "(Array Int Real)")
 
-    val listArray = Sort(SimpleSymbol("List"), Seq(array))
+    val listArray = Sorts(SimpleSymbol("List"), Seq(array))
     assert(listArray.format() == "(List (Array Int Real))")
 
-    val bitVec = Sort(ComposedIdentifier(SimpleSymbol("BitVec"), Seq(Numeral(3))))
+    val bitVec = ComposedIdentifier(SimpleSymbol("BitVec"), Seq(Numeral(3)))
     assert(bitVec.format() == "(_ BitVec 3)")
 
-    val fixedList = Sort(ComposedIdentifier(SimpleSymbol("FixedSizeList"), Seq(Numeral(4))), Seq(Sort(SimpleSymbol("Real"))))
+    val fixedList = Sorts(ComposedIdentifier(SimpleSymbol("FixedSizeList"), Seq(Numeral(4))), Seq(SimpleSymbol("Real")))
     assert(fixedList.format() == "((_ FixedSizeList 4) Real)")
 
-    val set = Sort(SimpleSymbol("Set"), Seq(Sort(ComposedIdentifier(SimpleSymbol("BitVec"), Seq(Numeral(3))))))
+    val set = Sorts(SimpleSymbol("Set"), Seq(ComposedIdentifier(SimpleSymbol("BitVec"), Seq(Numeral(3)))))
     assert(set.format() == "(Set (_ BitVec 3))")
   }
 
@@ -152,8 +152,8 @@ class TestFormatting extends FunSuite{
     assert(let.format() == "(let ((h (head x)) (t (tail x))) (insert h (append t y)))")
   }
 
-  val var1 = SortedVar(SimpleSymbol("x"), Sort(SimpleSymbol("List"), Seq(Sort(SimpleSymbol("Int")))))
-  val var2 = SortedVar(SimpleSymbol("y"), Sort(SimpleSymbol("List"), Seq(Sort(SimpleSymbol("Int")))))
+  val var1 = SortedVar(SimpleSymbol("x"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Int"))))
+  val var2 = SortedVar(SimpleSymbol("y"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Int"))))
 
   test("Term.Forall") {
     assert(var1.format() == "(x (List Int))")
