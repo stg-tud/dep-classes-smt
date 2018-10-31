@@ -83,19 +83,19 @@ object DCCVariableEncodingTest extends App {
 
 // (declare-datatypes (T1 T2) ((Pair (mk-pair (first T1) (second T2)))))
 // (declare-datatypes (T1 T2) ((     (mk-pair (first T1) (second T2)))))
-  val recordType = DeclareDatatypes(Seq("T1", "T2"),
-    Seq(ConstructorDatatype(Seq(
-      ConstructorDec("mk-pair", Seq(
-        SelectorDec("first", "T1"),
-        SelectorDec("second", "T2")
-      ))
-    )
-    )))
+//  val recordType = DeclareDatatypes(Seq("T1", "T2"),
+//    Seq(ConstructorDatatype(Seq(
+//      ConstructorDec("mk-pair", Seq(
+//        SelectorDec("first", "T1"),
+//        SelectorDec("second", "T2")
+//      ))
+//    )
+//    )))
 
 //  (declare-datatypes ( (List 1) ) ((par (T) ( (nil) (cons (hd T) (tl (List T)) )))))
 //  (declare-datatypes ( (List 1) ) ((par (T) ( (nil) (cons (hd T) (tl (List T)) )))))
   val listType = DeclareDatatypes(
-                  Seq(Sorts("Lst", Seq("1"))),
+                  Seq(SortDec("Lst", 1)),
                   Seq(ParDatatype(
                     Seq("T"), Seq(
                       ConstructorDec("nil", Seq()),
@@ -110,10 +110,14 @@ object DCCVariableEncodingTest extends App {
   val l1 = DeclareConst("l1", Sorts("Lst", Seq("Int")))
   val l2 = DeclareConst("l1", Sorts("Lst", Seq(Bool)))
 
+  val l1NotEmtpy = Assert(Not(Eq(IdentifierAs("l1", Sorts("Lst", Seq("Int"))), IdentifierAs("nil", Sorts("Lst", Seq("Int"))))))
+
   solver.addCommand(listType)
   solver.addCommand(l1)
   solver.addCommand(l2)
+  solver.addCommand(l1NotEmtpy)
   solver.addCommand(CheckSat)
+  solver.addCommand(GetModel)
   solver.execute()
 }
 

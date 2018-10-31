@@ -10,7 +10,7 @@ case class DeclareDatatype(symbol: SMTLibSymbol, datatype: DatatypeDec) extends 
   override def format(): String = s"(declare-datatype ${symbol.format()} ${datatype.format()})"
 }
 
-case class DeclareDatatypes(sorts: Seq[Sort], datatypes: Seq[DatatypeDec]) extends SMTLibCommand {
+case class DeclareDatatypes(sorts: Seq[SortDec], datatypes: Seq[DatatypeDec]) extends SMTLibCommand {
   override def format(): String = s"(declare-datatypes (${SMTLibFormatter.format(sorts)}) (${SMTLibFormatter.format(datatypes)}))"
 }
 

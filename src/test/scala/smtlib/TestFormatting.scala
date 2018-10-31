@@ -81,10 +81,9 @@ class TestFormatting extends FunSuite{
       SimpleSymbol("")
     }
 
-// removed due to relaxed symbol definition
-//    assertThrows[IllegalArgumentException] {
-//      SimpleSymbol("0asdf")
-//    }
+    assertThrows[IllegalArgumentException] {
+      SimpleSymbol("0asdf")
+    }
 
     assertThrows[IllegalArgumentException] {
       SimpleSymbol("a0b1(")
