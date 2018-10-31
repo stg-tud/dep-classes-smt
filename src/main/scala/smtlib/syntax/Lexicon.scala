@@ -49,7 +49,7 @@ trait SMTLibSymbol extends SMTLibFormatter with SExpr with Index with Identifier
 
 case class SimpleSymbol(symbol: String) extends SMTLibSymbol {
   require(symbol.nonEmpty &&
-    !symbol.charAt(0).isDigit &&
+    //!symbol.charAt(0).isDigit && TODO: relaxed beaucse of Sorts("List", "1") for the time being, how to generate this otherwise? AttributeValues("List", 1), but is no sort
     symbol.filter(c => !c.isLetterOrDigit && !isAllowedChar(c)).isEmpty,
   s"SimpleSymbol $symbol: nonempty, doesnt start with digit and only contains letters, digits and ~ ! @ $$ % ^ & * _ - + = < > . ?")
 

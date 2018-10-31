@@ -32,7 +32,7 @@ case class SelectorDec(symbol: SMTLibSymbol, sort: Sort) extends SMTLibFormatter
 }
 
 case class ConstructorDec(symbol: SMTLibSymbol, selectors: Seq[SelectorDec]) extends SMTLibFormatter {
-  override def format(): String = s"(${symbol.format()} ${SMTLibFormatter.format(selectors)})"
+  override def format(): String = if (selectors.isEmpty) s"(${symbol.format()})" else s"(${symbol.format()} ${SMTLibFormatter.format(selectors)})"
 }
 
 trait DatatypeDec extends SMTLibFormatter

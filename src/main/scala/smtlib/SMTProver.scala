@@ -6,7 +6,7 @@ import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
 object SMTProver extends App{
-  val proverCommand = findeBinary()
+  val proverCommand = findBinary()
   val start = System.nanoTime
   val tempInFile = File.createTempFile("smtfile", "in")
   val tempOutFile = File.createTempFile("smtfile", "out")
@@ -37,7 +37,8 @@ object SMTProver extends App{
   import scala.sys.process._
 
   val call = makeCall(tempInFile, 1000)
-  val p = call.run()
+  val io = BasicIO.standard(true)
+  val p = call.run(io)
 
   import scala.concurrent._
   import ExecutionContext.Implicits.global
@@ -64,11 +65,13 @@ object SMTProver extends App{
 
     call = call :+ "-smt2"
 
+    call = call :+ "--"
+
     call = call :+ file.getAbsolutePath
     call
   }
 
-  private def findeBinary(): File = {
+  private def findBinary(): File = {
     for (p <- System.getenv("PATH").split(File.pathSeparator);
          f = new File(p, "z3") if f.exists && f.canExecute)
       return f
