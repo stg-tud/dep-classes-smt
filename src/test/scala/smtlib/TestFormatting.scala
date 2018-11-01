@@ -45,8 +45,8 @@ class TestFormatting extends FunSuite{
     assert(bin2.format() == "#b00111100")
     assert(bin3.format() == "#b11111111")
     assert(bin4.format() == "#b11111111")
-    assert(str1.format() == "foo")
-    assert(str2.format() == "bar")
+    assert(str1.format() == "\"foo\"")
+    assert(str2.format() == "\"bar\"")
     assert(symbol1.format() == "<=")
     assert(symbol2.format() == "plus")
     assert(symbol3.format() == "*$s&6")
@@ -95,7 +95,7 @@ class TestFormatting extends FunSuite{
     val sexpr2 = SExprs(Seq(num1, dec1, hex1, bin1, str1, symbol1, keyword1))
 
     assert(sexpr1.format() == "123")
-    assert(sexpr2.format() == "(0 123.456 #xA1B54FF #b111100 foo <= :foo-bar)")
+    assert(sexpr2.format() == "(0 123.456 #xA1B54FF #b111100 \"foo\" <= :foo-bar)")
   }
 
   test("Identifier") {
