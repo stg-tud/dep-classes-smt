@@ -76,6 +76,10 @@ object DCCVariableEncodingTest extends App {
   val distinctE = Assert(Distinct("pE1", "pE2"))
   val pE1NonEmpty = Assert(Not(Eq("pE1", "empty")))
   val pE2NonEmpty = Assert(Not(Eq("pE2", "empty")))
+  val pE2ObjIsy = Assert(Eq(Apply("consE", Seq("empty", SMTLibString("y"))),
+                            Apply("objE", Seq("pE2"))))
+  val pE2FieldIsf = Assert(Eq(SMTLibString("f"),
+                              Apply("fieldE", Seq("pE2"))))
 
   solver.addCommands(Seq(
     pathType,
@@ -92,6 +96,8 @@ object DCCVariableEncodingTest extends App {
     p2ObjIsy,
     pE1NonEmpty,
     pE2NonEmpty,
+    pE2ObjIsy,
+    pE2FieldIsf,
     CheckSat,
     GetModel
   ))
