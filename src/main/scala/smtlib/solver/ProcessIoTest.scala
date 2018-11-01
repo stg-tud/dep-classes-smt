@@ -44,21 +44,65 @@ object ProcessIoTest extends App {
 object DCCVariableEncodingTest extends App {
   val solver: SMTSolver = new Z3Solver
 
-//  (declare-datatypes (T)
-//    ( (Lst
-//        nil
-//        (cons
-//          (hd T)
-//          (tl Lst)
-//        )
-//      )
-//    )
-//  )
+//  (declare-datatype Path ((empty) (cons (obj Path) (field String))))
+  val pathTypeE = DeclareDatatype("PathE", ConstructorDatatype(Seq(
+                  ConstructorDec("empty", Seq()),
+                  ConstructorDec("consE", Seq(
+                    SelectorDec("objE", "PathE"),
+                    SelectorDec("fieldE", "String")
+                  ))
+  )))
 
+  val pathType = DeclareDatatype("Path", ConstructorDatatype(Seq(
+    ConstructorDec("var", Seq(SelectorDec("id", "String"))),
+    ConstructorDec("cons", Seq(
+      SelectorDec("obj", "Path"),
+      SelectorDec("field", "String")
+    ))
+  )))
+
+  val p1 = DeclareConst("p1", "Path")
+  val p2 = DeclareConst("p2", "Path")
+
+  val distinct = Assert(Distinct("p1", "p2"))
+
+  val p1Var = Assert(Eq("p1", Apply("var", Seq(SMTLibString("x")))))
+  val p2Obj = Assert(Forall(Seq(SortedVar("x", "String")), Not(Eq("p2", Apply("var", Seq("x"))))))
+  val p2yf = Assert(Eq("p2", Apply("cons", Seq(Apply("var", Seq(SMTLibString("y"))), SMTLibString("f")))))
+  val p2ObjIsy = Assert(Eq(Apply("var", Seq(SMTLibString("y"))), Apply("obj", Seq("p2"))))
+
+  val pE1 = DeclareConst("pE1", "PathE")
+  val pE2 = DeclareConst("pE2", "PathE")
+  val distinctE = Assert(Distinct("pE1", "pE2"))
+  val pE1NonEmpty = Assert(Not(Eq("pE1", "empty")))
+  val pE2NonEmpty = Assert(Not(Eq("pE2", "empty")))
+
+  solver.addCommands(Seq(
+    pathType,
+    pathTypeE,
+    p1,
+    p2,
+    pE1,
+    pE2,
+    distinct,
+    distinctE,
+    p1Var,
+    p2Obj,
+    p2yf,
+    p2ObjIsy,
+    pE1NonEmpty,
+    pE2NonEmpty,
+    CheckSat,
+    GetModel
+  ))
+  solver.execute()
+}
+
+object DatatypeDeclarationTest extends App {
+  val solver: SMTSolver = new Z3Solver
 
 // (declare-datatypes (T) (( Lst   nil  (cons (hd T) (tl Lst)) )))
 // (declare-datatypes (T) (( Lst   nil  (cons (hd T) (tl Lst)) )))
-// (declare-datatypes (T) ((      (nil) (cons (hd T) (tl Lst)))))
 //(declare-const l1 (Lst Int))
 //(declare-const l2 (Lst Bool))
 //  val listType: SMTLibCommand = DeclareDatatypes(Seq("T"),

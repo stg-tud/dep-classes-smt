@@ -42,7 +42,7 @@ object Binary {
 }
 
 case class SMTLibString(s: String) extends SMTLibFormatter with SpecConstant with EchoResponse {
-  override def format(): String = s
+  override def format(): String = "\"" ++ s ++ "\""
 }
 
 trait SMTLibSymbol extends SMTLibFormatter with SExpr with Index with Identifier with AttributeValue with PropLiteral
