@@ -35,7 +35,7 @@ class Z3Solver extends SMTSolver {
   }
 
   override def execute(timeout: Int): Int = {
-    val call = makeCall()
+    val call = makeCall(timeout)
     val io = BasicIO.standard(in => {
       val writer = new PrintWriter(in)
       commands.foreach(command => writer.println(command.format()))
@@ -45,7 +45,7 @@ class Z3Solver extends SMTSolver {
 
     val f = Future(blocking(p.exitValue()))
     try {
-      Await.result(f, duration.Duration(timeout, "sec"))
+      Await.result(f, duration.Duration(timeout*commands.size+100, "ms"))
     } catch {
       case _: TimeoutException =>
         p.destroy()
