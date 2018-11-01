@@ -2,6 +2,7 @@ package smtlib.solver
 
 import java.io.File
 
+import dcc.syntax.{FieldPath, Id, Path}
 import smtlib.{SMTLibCommand, SMTLibScript, syntax}
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
@@ -102,6 +103,26 @@ object DCCVariableEncodingTest extends App {
     GetModel
   ))
   solver.execute()
+}
+
+object PathSubstTest extends App {
+  val p1: Path = Id('x)
+  val p2: Path = FieldPath(Id('y), Id('f))
+
+  def subst(p1: Path, X: Id, p2: Path): Path = p1 match {
+    case X => p2
+    case Id(_)  => p1
+    case FieldPath(p, f) => FieldPath(subst(p, X, p2), f)
+  }
+
+  println(subst(p1, Id('x), p2))
+
+  // x.f.f1
+  val xff1 = subst(FieldPath(Id('x), Id('f1)), Id('x), FieldPath(Id('x), Id('f)))
+  // y.f1
+  val yf1 = subst(FieldPath(Id('x), Id('f1)), Id('x), Id('y))
+  println(xff1)
+  println(yf1)
 }
 
 object DatatypeDeclarationTest extends App {
