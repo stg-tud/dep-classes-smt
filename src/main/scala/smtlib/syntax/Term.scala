@@ -71,7 +71,7 @@ object Op2 {
   def apply(identifier: QualifiedIdentifier, left: Term, right: Term): Term = Apply(identifier, Seq(left, right))
 }
 
-object Impl {
+object Implies {
   def apply(left: Term, right: Term): Term = Op2(SimpleSymbol("=>"), left, right)
 }
 
