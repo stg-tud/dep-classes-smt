@@ -1,5 +1,6 @@
 package smtlib.solver
 
+import smtlib.SMTLibScript
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
@@ -21,14 +22,20 @@ object Axioms {
                                                        SelectorDec(SimpleSymbol("classname"), SimpleSymbol("String"))))
   )))
 
-  // TODO: isPathEq (...) proposition
+  val isPathEqProp = DeclareFun(SimpleSymbol("isPathEq"), Seq(SimpleSymbol("Constraint")), Bool)
+//  val isPathEqProp = DefineFun(FunctionDef(SimpleSymbol("isPathEq"), Seq(SortedVar(SimpleSymbol("c"), SimpleSymbol("Constraint"))), Bool,
+//    Exists(Seq(SortedVar(SimpleSymbol("p1"), SimpleSymbol("Path")), SortedVar(SimpleSymbol("p2"), SimpleSymbol("Path"))),
+//      Eq("c", Apply(SimpleSymbol("pathEq"), Seq(SimpleSymbol("p1"), SimpleSymbol("p2")))))))
+  val isInstanceOfProp = DeclareFun(SimpleSymbol("isInstanceOf"), Seq(SimpleSymbol("Constraint")), Bool)
+  val isInstantiatedByProp = DeclareFun(SimpleSymbol("isInstantiatedBy"), Seq(SimpleSymbol("Constraint")), Bool)
+
+  def asSMTLib: SMTLibScript = SMTLibScript(Seq(pathDatatype, constraintDatatype, isPathEqProp, isInstanceOfProp, isInstantiatedByProp))
 }
 
 object AxiomsTest extends App {
   val solver = new Z3Solver
 
-  solver.addCommand(Axioms.pathDatatype)
-  solver.addCommand(Axioms.constraintDatatype)
+  solver.addScript(Axioms.asSMTLib)
 
   val p1 = DeclareConst("p1", "Path")
   val p2 = DeclareConst("p2", "Path")
@@ -37,8 +44,11 @@ object AxiomsTest extends App {
   val c1 = DeclareConst("c1", "Constraint")
   val c2 = DeclareConst("c2", "Constraint")
 
-  val distinct = Seq(Assert(Distinct("p1", "p2")), Assert(Distinct("c1", "c2")), Assert(Distinct("p2", "p3")))
+  val distinct = Seq(Assert(Distinct("p1", "p2")), Assert(Distinct("p2", "p3")), Assert(Distinct("p1", "p3")), Assert(Distinct("c1", "c2")))
 
-  solver.addCommands(Seq(p1, p2, p3, c1, c2) ++ distinct ++ Seq(CheckSat, GetModel))
+  val consArePathEq = Seq(Assert(Apply("isPathEq", Seq("c1"))), Assert(Apply("isPathEq", Seq("c2"))))
+  val cons = Seq(Assert(Eq(Apply("pathEq", Seq("p1", "p2")), "c1")), Assert(Eq(Apply("pathEq", Seq("p2", "p3")), "c2")))
+
+  solver.addCommands(Seq(p1, p2, p3, c1, c2) ++ distinct ++ cons ++ consArePathEq ++ Seq(CheckSat, GetModel))
   solver.execute()
 }
