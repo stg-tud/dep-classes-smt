@@ -13,31 +13,44 @@ object Axioms {
     ))
   )))
 
-  val pathEqDatatype = DeclareDatatype("PathEq", ConstructorDatatype(Seq(
-    ConstructorDec("PathEq", Seq(
-      SelectorDec("left", "Path"),
-      SelectorDec("right", "Path")
-    ))
-  )))
+  val pathEq = DeclareFun("pathEq", Seq("Path", "Path"), Bool)
+  val instanceOf = DeclareFun("instanceOf", Seq("Path", "String"), Bool)
+  val instantiatedBy = DeclareFun("instantiatedBy", Seq("Path", "String"), Bool)
 
-  val instanceOfDatatype = DeclareDatatype("InstanceOf", ConstructorDatatype(Seq(
-    ConstructorDec("InstanceOf", Seq(
-      SelectorDec("path", "Path"),
-      SelectorDec("class", "String")
-    ))
-  )))
+  val pathEqRefl = Assert(Forall(Seq(SortedVar("p", "Path")), Apply("pathEq", Seq("p", "p"))))
+  val pathEqSym = Assert(Forall(Seq(SortedVar("p1", "Path"), SortedVar("p2", "Path")),
+                          Implies(Apply("pathEq", Seq("p1", "p2")), Apply("pathEq", Seq("p2", "p1")))))
+  val pathEqTrans = Assert(Forall(Seq(SortedVar("p1", "Path"), SortedVar("p2", "Path"), SortedVar("p3", "Path")),
+                          Implies(And(Apply("pathEq", Seq("p1", "p2")), Apply("pathEq", Seq("p2", "p3"))), Apply("pathEq", Seq("p1", "p3")))))
 
-  val instantiatedByDatatype = DeclareDatatype("InstantiatedBy", ConstructorDatatype(Seq(
-    ConstructorDec("InstantiatedBy", Seq(
-      SelectorDec("path", "Path"),
-      SelectorDec("class", "String")
-    ))
-  )))
+  def asSMTLib: SMTLibScript = SMTLibScript(Seq(pathDatatype, pathEq, instanceOf, instantiatedBy, pathEqRefl, pathEqSym, pathEqTrans))
 
-  // TODO: body must be boolean
-  val pathEqRefl = Assert(Forall(Seq(SortedVar("p", "Path")), Apply("PathEq", Seq("p", "p"))))
-
-  def asSMTLib: SMTLibScript = SMTLibScript(Seq(pathDatatype, pathEqDatatype, instanceOfDatatype, instantiatedByDatatype, pathEqRefl))
+//  TODO: also old: hard to use as proposition
+//  val pathEqDatatype = DeclareDatatype("PathEq", ConstructorDatatype(Seq(
+//    ConstructorDec("PathEq", Seq(
+//      SelectorDec("left", "Path"),
+//      SelectorDec("right", "Path")
+//    ))
+//  )))
+//
+//  val instanceOfDatatype = DeclareDatatype("InstanceOf", ConstructorDatatype(Seq(
+//    ConstructorDec("InstanceOf", Seq(
+//      SelectorDec("path", "Path"),
+//      SelectorDec("class", "String")
+//    ))
+//  )))
+//
+//  val instantiatedByDatatype = DeclareDatatype("InstantiatedBy", ConstructorDatatype(Seq(
+//    ConstructorDec("InstantiatedBy", Seq(
+//      SelectorDec("path", "Path"),
+//      SelectorDec("class", "String")
+//    ))
+//  )))
+//
+//  // TODO: body must be boolean
+//  val pathEqRefl = Assert(Forall(Seq(SortedVar("p", "Path")), Apply("PathEq", Seq("p", "p"))))
+//
+//  def asSMTLib: SMTLibScript = SMTLibScript(Seq(pathDatatype, pathEqDatatype, instanceOfDatatype, instantiatedByDatatype, pathEqRefl))
 
 //  TODO: old: constraint as sort. remove?
 //  val constraintDatatype = DeclareDatatype(SimpleSymbol("Constraint"), ConstructorDatatype(Seq(
@@ -68,19 +81,19 @@ object AxiomsTest extends App {
   val p2 = DeclareConst("p2", "Path")
   val p3 = DeclareConst("p3", "Path")
 
+  val distinct = Seq(Assert(Distinct("p1", "p2")), Assert(Distinct("p2", "p3")), Assert(Distinct("p1", "p3")))
+
   val paths = Seq(
     Assert(Eq("p1", Apply("var", Seq(SMTLibString("x"))))),
     Assert(Eq("p2", Apply("var", Seq(SMTLibString("y"))))),
     Assert(Eq("p3", Apply("var", Seq(SMTLibString("z")))))
   )
 
-  val c1 = DeclareConst("c1", "PathEq")
-  val c2 = DeclareConst("c2", "PathEq")
+  val p1EqP2 = Apply("pathEq", Seq("p1", "p2"))
+  val p3EqP2 = Apply("pathEq", Seq("p3", "p2"))
+  val p1EqP3 = Apply("pathEq", Seq("p1", "p3"))
+  val goal = Assert(Implies(And(p1EqP2, p3EqP2), p1EqP3))
 
-  val distinct = Seq(Assert(Distinct("p1", "p2")), Assert(Distinct("p2", "p3")), Assert(Distinct("p1", "p3")), Assert(Distinct("c1", "c2")))
-
-  val cons = Seq(Assert(Eq(Apply("PathEq", Seq("p1", "p2")), "c1")), Assert(Eq(Apply("PathEq", Seq("p2", "p3")), "c2")))
-
-  solver.addCommands(Seq(p1, p2, p3, c1, c2) ++ distinct ++ paths ++ cons ++ Seq(CheckSat, GetModel))
+  solver.addCommands(Seq(p1, p2, p3) ++ distinct ++ paths ++ Seq(goal, CheckSat, GetModel))
   solver.execute()
 }
