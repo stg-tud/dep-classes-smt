@@ -14,8 +14,6 @@ object Axioms {
   )))
 
   val pathEq = DeclareFun("pathEq", Seq("Path", "Path"), Bool)
-  val instanceOf = DeclareFun("instanceOf", Seq("Path", "String"), Bool)
-  val instantiatedBy = DeclareFun("instantiatedBy", Seq("Path", "String"), Bool)
 
   val pathEqRefl = Assert(Forall(Seq(SortedVar("p", "Path")), Apply("pathEq", Seq("p", "p"))))
   val pathEqSym = Assert(Forall(Seq(SortedVar("p1", "Path"), SortedVar("p2", "Path")),
@@ -23,7 +21,10 @@ object Axioms {
   val pathEqTrans = Assert(Forall(Seq(SortedVar("p1", "Path"), SortedVar("p2", "Path"), SortedVar("p3", "Path")),
                           Implies(And(Apply("pathEq", Seq("p1", "p2")), Apply("pathEq", Seq("p2", "p3"))), Apply("pathEq", Seq("p1", "p3")))))
 
-  def asSMTLib: SMTLibScript = SMTLibScript(Seq(pathDatatype, pathEq, instanceOf, instantiatedBy, pathEqRefl, pathEqSym, pathEqTrans))
+  val instanceOf = DeclareFun("instanceOf", Seq("Path", "String"), Bool)
+  val instantiatedBy = DeclareFun("instantiatedBy", Seq("Path", "String"), Bool)
+
+  def asSMTLib: SMTLibScript = SMTLibScript(Seq(pathDatatype, pathEq, pathEqRefl, pathEqSym, pathEqTrans, instanceOf, instantiatedBy))
 
 //  TODO: also old: hard to use as proposition
 //  val pathEqDatatype = DeclareDatatype("PathEq", ConstructorDatatype(Seq(
@@ -94,6 +95,11 @@ object AxiomsTest extends App {
   val p1EqP3 = Apply("pathEq", Seq("p1", "p3"))
   val goal = Assert(Implies(And(p1EqP2, p3EqP2), p1EqP3))
 
-  solver.addCommands(Seq(p1, p2, p3) ++ distinct ++ paths ++ Seq(goal, CheckSat, GetModel))
+  val insts = Seq(Assert(Apply("instanceOf", Seq("p1", SMTLibString("Foo")))),
+//                  Assert(Apply("instanceOf", Seq("p2", SMTLibString("Foo")))),
+//                  Assert(Apply("instanceOf", Seq("p3", SMTLibString("Bar")))),
+                  Assert(Apply("instantiatedBy", Seq("p2", SMTLibString("Bar")))))
+
+  solver.addCommands(Seq(p1, p2, p3) ++ distinct ++ paths ++ insts ++ Seq(goal, CheckSat, GetModel))
   solver.execute()
 }
