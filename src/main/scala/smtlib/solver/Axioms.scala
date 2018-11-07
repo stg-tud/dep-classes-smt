@@ -35,6 +35,40 @@ object Axioms {
                                 Apply("instantiated-by", Seq("p", "c")),
                                 Apply("instance-of", Seq("p", "c")))))
 
+  // substitution
+  // val substProp = DefineFun(
+  //                    FunctionDef(
+  //                      "subst",
+  //                      Seq(SortedVar("c1", "Consraint"), // ???
+  //                          SortedVar("x", "String"), // identifier
+  //                          SortedVar("p", "Path"), // substitutee
+  //                          SortedVar("c2", "Constraint")), // "result"
+  //                      Bool,
+  //                      ???))
+  val substProp = DefineFun(
+                    FunctionDef(
+                      "subst",
+                      Seq(SortedVar("p1", "Path"), // replace in this
+                          SortedVar("x", "String"), // identifier
+                          SortedVar("p2", "Path"), // replacement
+                          SortedVar("p3", "Path")), // "result"
+                      Bool,
+                      Eq(Apply("subst-path", Seq("p1", "x", "p2")), "p3")
+                    ))
+
+  val substPath = DefineFun(
+                    FunctionDef(
+                      "subst-path",
+                      Seq(
+                        SortedVar("p1", "Path"),
+                        SortedVar("x", "String"),
+                        SortedVar("p2", "Path")
+                      ),
+                      "Path",
+                      "p1" // TODO: implement proper body
+                    ))
+
+
   def asSMTLib: SMTLibScript = SMTLibScript(
     Seq(pathDatatype) ++
     pathEqAxioms ++
