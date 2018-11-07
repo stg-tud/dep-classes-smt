@@ -1,6 +1,6 @@
 package smtlib.solver
 
-import smtlib.SMTLibScript
+import smtlib.{SMTLibScript, syntax}
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
@@ -13,18 +13,33 @@ object Axioms {
     ))
   )))
 
-  val pathEq = DeclareFun("pathEq", Seq("Path", "Path"), Bool)
-
-  val pathEqRefl = Assert(Forall(Seq(SortedVar("p", "Path")), Apply("pathEq", Seq("p", "p"))))
+  val pathEqProp = DeclareFun("path-eq", Seq("Path", "Path"), Bool)
+  val pathEqRefl = Assert(Forall(Seq(SortedVar("p", "Path")), Apply("path-eq", Seq("p", "p"))))
   val pathEqSym = Assert(Forall(Seq(SortedVar("p1", "Path"), SortedVar("p2", "Path")),
-                          Implies(Apply("pathEq", Seq("p1", "p2")), Apply("pathEq", Seq("p2", "p1")))))
+                          Implies(Apply("path-eq", Seq("p1", "p2")), Apply("path-eq", Seq("p2", "p1")))))
   val pathEqTrans = Assert(Forall(Seq(SortedVar("p1", "Path"), SortedVar("p2", "Path"), SortedVar("p3", "Path")),
-                          Implies(And(Apply("pathEq", Seq("p1", "p2")), Apply("pathEq", Seq("p2", "p3"))), Apply("pathEq", Seq("p1", "p3")))))
+                          Implies(And(Apply("path-eq", Seq("p1", "p2")), Apply("path-eq", Seq("p2", "p3"))), Apply("path-eq", Seq("p1", "p3")))))
 
-  val instanceOf = DeclareFun("instanceOf", Seq("Path", "String"), Bool)
-  val instantiatedBy = DeclareFun("instantiatedBy", Seq("Path", "String"), Bool)
+  /**
+    * Path equivalency axioms in order.
+    * path-eq is equivalence relation: reflexive, symmetric, transitive
+    * Requires Path datatype.
+     */
+  val pathEqAxioms = Seq(pathEqProp, pathEqRefl, pathEqSym, pathEqTrans)
 
-  def asSMTLib: SMTLibScript = SMTLibScript(Seq(pathDatatype, pathEq, pathEqRefl, pathEqSym, pathEqTrans, instanceOf, instantiatedBy))
+  val instanceOf = DeclareFun("instance-of", Seq("Path", "String"), Bool)
+  val instantiatedBy = DeclareFun("instantiated-by", Seq("Path", "String"), Bool)
+
+  val objIsInstance = Assert(Forall(Seq(SortedVar("p", "Path"), SortedVar("c", "String")),
+                              Implies(
+                                Apply("instantiated-by", Seq("p", "c")),
+                                Apply("instance-of", Seq("p", "c")))))
+
+  def asSMTLib: SMTLibScript = SMTLibScript(
+    Seq(pathDatatype) ++
+    pathEqAxioms ++
+    Seq(instanceOf, instantiatedBy, objIsInstance)
+  )
 
 //  TODO: also old: hard to use as proposition
 //  val pathEqDatatype = DeclareDatatype("PathEq", ConstructorDatatype(Seq(
@@ -90,15 +105,15 @@ object AxiomsTest extends App {
     Assert(Eq("p3", Apply("var", Seq(SMTLibString("z")))))
   )
 
-  val p1EqP2 = Apply("pathEq", Seq("p1", "p2"))
-  val p3EqP2 = Apply("pathEq", Seq("p3", "p2"))
-  val p1EqP3 = Apply("pathEq", Seq("p1", "p3"))
+  val p1EqP2 = Apply("path-eq", Seq("p1", "p2"))
+  val p3EqP2 = Apply("path-eq", Seq("p3", "p2"))
+  val p1EqP3 = Apply("path-eq", Seq("p1", "p3"))
   val goal = Assert(Implies(And(p1EqP2, p3EqP2), p1EqP3))
 
-  val insts = Seq(Assert(Apply("instanceOf", Seq("p1", SMTLibString("Foo")))),
-//                  Assert(Apply("instanceOf", Seq("p2", SMTLibString("Foo")))),
-//                  Assert(Apply("instanceOf", Seq("p3", SMTLibString("Bar")))),
-                  Assert(Apply("instantiatedBy", Seq("p2", SMTLibString("Bar")))))
+  val insts = Seq(Assert(Apply("instantiated-by", Seq("p2", SMTLibString("Bar")))),
+                  Assert(Not(Apply("instance-of", Seq("p1", SMTLibString("Foo"))))),
+                  Assert(Implies(Apply("instantiated-by", Seq("p2", SMTLibString("Bar"))),
+                                 Apply("instance-of", Seq("p2", SMTLibString("Bar"))))))
 
   solver.addCommands(Seq(p1, p2, p3) ++ distinct ++ paths ++ insts ++ Seq(goal, CheckSat, GetModel))
   solver.execute()
