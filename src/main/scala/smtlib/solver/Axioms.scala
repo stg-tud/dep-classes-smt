@@ -94,13 +94,36 @@ object Axioms {
     */
   val substAxioms = Seq(substPath, substProp)
 
+  val bigAnd = DefineFunRec(
+                FunctionDef("big-and",
+                  Seq(
+                    SortedVar("bs", Sorts("List", Seq(Bool)))
+                  ),
+                  Bool,
+                  Match("bs", Seq(
+                    MatchCase(Pattern("nil"), True()),
+                    MatchCase(Pattern("insert", Seq("hd", "tl")), And("hd", Apply("big-and", Seq("tl"))))
+                  ))))
+
+  // dcc's sequent calculus judgement
+  val dccProp = DefineFun(
+                  FunctionDef("entails",
+                    Seq(
+                      SortedVar("premise", Sorts("List", Seq(Bool))),
+                      SortedVar("conclusion", Bool)
+                    ),
+                    Bool,
+                    Implies(
+                      Apply("big-and", Seq("premise")),
+                      "conclusion")))
 
   def asSMTLib: SMTLibScript = SMTLibScript(
     Seq(pathDatatype) ++
     pathEqAxioms ++
     instanceOfAxioms ++
     instantiatedByAxioms ++
-    substAxioms
+    substAxioms ++
+    Seq(bigAnd, dccProp)
   )
 
 //  TODO: also old: hard to use as proposition
@@ -190,5 +213,20 @@ object AxiomsTest extends App {
   val subst = Assert(Apply("subst", Seq("p1", SMTLibString("x"), "p2", "p3")))
 
   solver.addCommands(Seq(p1, p2, p3, p1xf1, p2xf, p3xff1, subst, CheckSat, GetModel))
+  solver.execute()
+
+
+  solver.flush()
+
+  val l1 = DeclareConst("l1", Sorts("List", Seq(Bool)))
+  val l2 = DeclareConst("l2", Sorts("List", Seq(Bool)))
+
+  val l1Cnt = Assert(Eq("l1", Apply("insert", Seq(True(), Apply("insert", Seq(True(), Apply("insert", Seq(True(), "nil"))))))))
+  val l2Cnt = Assert(Eq("l2", Apply("insert", Seq(True(), Apply("insert", Seq(False(), Apply("insert", Seq(True(), "nil"))))))))
+
+  val l1True = Assert(Apply("big-and", Seq("l1")))
+  val l2False = Assert(Not(Apply("big-and", Seq("l2"))))
+
+  solver.addCommands(Seq(l1, l2, l1Cnt, l2Cnt, l1True, l2False, CheckSat, GetModel))
   solver.execute()
 }
