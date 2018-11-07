@@ -179,4 +179,19 @@ object AxiomsTest extends App {
 
   solver.addCommands(Seq(p1, p2, p3) ++ distinct ++ paths ++ insts ++ Seq(goal, CheckSat, GetModel))
   solver.execute()
+
+  solver.flush()
+  solver.addScript(Axioms.asSMTLib)
+
+  val p1xf1 = Assert(Eq("p1", Apply("pth", Seq(Apply("var", Seq(SMTLibString("x"))), SMTLibString("f1")))))
+  val p2xf = Assert(Eq("p2", Apply("pth", Seq(Apply("var", Seq(SMTLibString("x"))), SMTLibString("f")))))
+  val p3xff1 = Assert(Eq("p3", Apply("pth",
+                                        Seq(
+                                          Apply("pth", Seq(Apply("var", Seq(SMTLibString("x"))), SMTLibString("f"))),
+                                          SMTLibString("f1")))))
+
+  val subst = Assert(Apply("subst", Seq("p1", SMTLibString("x"), "p2", "p3")))
+
+  solver.addCommands(Seq(p1, p2, p3, p1xf1, p2xf, p3xff1, subst, CheckSat, GetModel))
+  solver.execute()
 }
