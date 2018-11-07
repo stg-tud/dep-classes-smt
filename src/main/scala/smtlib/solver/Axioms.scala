@@ -105,7 +105,10 @@ object Axioms {
                     MatchCase(Pattern("insert", Seq("hd", "tl")), And("hd", Apply("big-and", Seq("tl"))))
                   ))))
 
-  // dcc's sequent calculus judgement
+  /**
+    * dcc's sequent calculus judgement
+    * Alternative to big-and: forall b: Bool. b \in l => b
+    */
   val dccProp = DefineFun(
                   FunctionDef("entails",
                     Seq(
