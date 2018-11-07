@@ -7,7 +7,7 @@ import smtlib.syntax.Implicit._
 object Axioms {
   val pathDatatype = DeclareDatatype("Path", ConstructorDatatype(Seq(
     ConstructorDec("var", Seq(SelectorDec("id", "String"))),
-    ConstructorDec("cons", Seq(
+    ConstructorDec("pth", Seq(
       SelectorDec("obj", "Path"),
       SelectorDec("field", "String")
     ))
@@ -69,16 +69,23 @@ object Axioms {
                       Eq(Apply("subst-path", Seq("p1", "x", "p2")), "p3")
                     ))
 
-  val substPath = DefineFun(
+  val substPath = DefineFunRec(
                     FunctionDef(
                       "subst-path",
                       Seq(
                         SortedVar("p1", "Path"),
-                        SortedVar("x", "String"),
+                        SortedVar("id", "String"),
                         SortedVar("p2", "Path")
                       ),
                       "Path",
-                      "p1" // TODO: implement proper body
+                      Match("p1",
+                        Seq(
+                          MatchCase(Pattern("var", Seq("x")),
+                            Ite(Eq("id", "x"), "p2", "p1")),
+                          MatchCase(Pattern("pth", Seq("p", "f")),
+                            Apply("pth", Seq(Apply("subst-path", Seq("p", "id", "p2")), "f"))
+                          )
+                        ))
                     ))
 
   /**
