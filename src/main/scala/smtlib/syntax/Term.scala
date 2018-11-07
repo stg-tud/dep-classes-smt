@@ -96,5 +96,5 @@ object Distinct {
 }
 
 object Ite {
-  def apply(i: Term, t: Term, e: Term): Term = Apply(SimpleSymbol("Ite"), Seq(i, t, e))
+  def apply(i: Term, t: Term, e: Term): Term = Apply(SimpleSymbol("ite"), Seq(i, t, e))
 }
