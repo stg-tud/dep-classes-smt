@@ -1,6 +1,6 @@
 package smtlib.solver
 
-import smtlib.{SMTLibScript, syntax}
+import smtlib.SMTLibScript
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
@@ -27,13 +27,18 @@ object Axioms {
      */
   val pathEqAxioms = Seq(pathEqProp, pathEqRefl, pathEqSym, pathEqTrans)
 
-  val instanceOf = DeclareFun("instance-of", Seq("Path", "String"), Bool)
-  val instantiatedBy = DeclareFun("instantiated-by", Seq("Path", "String"), Bool)
+  val instanceOfProp = DeclareFun("instance-of", Seq("Path", "String"), Bool)
+
+  val instanceOfAxioms = Seq(instanceOfProp)
+
+  val instantiatedByProp = DeclareFun("instantiated-by", Seq("Path", "String"), Bool)
 
   val objIsInstance = Assert(Forall(Seq(SortedVar("p", "Path"), SortedVar("c", "String")),
                               Implies(
                                 Apply("instantiated-by", Seq("p", "c")),
                                 Apply("instance-of", Seq("p", "c")))))
+
+  val instantiatedByAxioms = Seq(instantiatedByProp, objIsInstance)
 
   // substitution
   // val substProp = DefineFun(
@@ -68,11 +73,15 @@ object Axioms {
                       "p1" // TODO: implement proper body
                     ))
 
+  val substAxioms = Seq(substPath, substProp)
+
 
   def asSMTLib: SMTLibScript = SMTLibScript(
     Seq(pathDatatype) ++
     pathEqAxioms ++
-    Seq(instanceOf, instantiatedBy, objIsInstance)
+    instanceOfAxioms ++
+    instantiatedByAxioms ++
+    substAxioms
   )
 
 //  TODO: also old: hard to use as proposition
