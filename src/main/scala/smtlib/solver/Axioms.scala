@@ -29,6 +29,10 @@ object Axioms {
 
   val instanceOfProp = DeclareFun("instance-of", Seq("Path", "String"), Bool)
 
+  /**
+    * instance of axioms in order.
+    * Requires Path datatype.
+    */
   val instanceOfAxioms = Seq(instanceOfProp)
 
   val instantiatedByProp = DeclareFun("instantiated-by", Seq("Path", "String"), Bool)
@@ -38,6 +42,10 @@ object Axioms {
                                 Apply("instantiated-by", Seq("p", "c")),
                                 Apply("instance-of", Seq("p", "c")))))
 
+  /**
+    * instantiated by axioms in order.
+    * Requires Path datatype.
+    */
   val instantiatedByAxioms = Seq(instantiatedByProp, objIsInstance)
 
   // substitution
@@ -73,6 +81,10 @@ object Axioms {
                       "p1" // TODO: implement proper body
                     ))
 
+  /**
+    * path substitution axioms in order.
+    * Requires Path datatype.
+    */
   val substAxioms = Seq(substPath, substProp)
 
 
