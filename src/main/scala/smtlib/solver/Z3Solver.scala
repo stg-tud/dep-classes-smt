@@ -8,7 +8,7 @@ import scala.concurrent._
 import scala.sys.process._
 import ExecutionContext.Implicits.global
 
-class Z3Solver extends SMTSolver {
+class Z3Solver(val axioms: SMTLibScript) extends SMTSolver {
   // commands to send to the solver
   var commands: Seq[SMTLibCommand] = Seq()
 
@@ -38,6 +38,7 @@ class Z3Solver extends SMTSolver {
     val call = makeCall(timeout)
     val io = BasicIO.standard(in => {
       val writer = new PrintWriter(in)
+      axioms.commands.foreach(command => writer.println(command.format()))
       commands.foreach(command => writer.println(command.format()))
       writer.close()
     })

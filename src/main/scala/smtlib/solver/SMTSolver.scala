@@ -4,6 +4,11 @@ import smtlib.{SMTLibCommand, SMTLibScript}
 
 trait SMTSolver {
   /**
+    * The Axioms that are true for all queries to the solver.
+    */
+  val axioms: SMTLibScript
+
+  /**
     * Add a `SMTLibCommand` to be solved.
     * @param command A `SMTLibCommand` to be added.
     * @return True if the command has been added successfully .
@@ -26,7 +31,7 @@ trait SMTSolver {
 
   //def getResponse(command: SMTLibCommand): GeneralResponse
 
-  /** Flush the currently held commands */
+  /** Flush the currently held commands. Axioms are kept. */
   def flush(): Unit
 
   /**

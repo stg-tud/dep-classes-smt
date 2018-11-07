@@ -151,9 +151,7 @@ object Axioms {
 }
 
 object AxiomsTest extends App {
-  val solver = new Z3Solver
-
-  solver.addScript(Axioms.asSMTLib)
+  val solver = new Z3Solver(Axioms.asSMTLib)
 
   val p1 = DeclareConst("p1", "Path")
   val p2 = DeclareConst("p2", "Path")
@@ -181,7 +179,6 @@ object AxiomsTest extends App {
   solver.execute()
 
   solver.flush()
-  solver.addScript(Axioms.asSMTLib)
 
   val p1xf1 = Assert(Eq("p1", Apply("pth", Seq(Apply("var", Seq(SMTLibString("x"))), SMTLibString("f1")))))
   val p2xf = Assert(Eq("p2", Apply("pth", Seq(Apply("var", Seq(SMTLibString("x"))), SMTLibString("f")))))
