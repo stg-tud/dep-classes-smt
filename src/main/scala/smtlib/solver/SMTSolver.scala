@@ -48,5 +48,5 @@ trait SMTSolver {
     * @param timeout The timeout for each query to the SMTSolver in milliseconds.
     * @return The return code of the SMTSolver or -1 in case of a timeout.
     */
-  def execute(timeout: Int = 1000): Int
+  def execute(timeout: Int = 1000): (Int, Seq[String])
 }

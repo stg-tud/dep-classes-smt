@@ -11,7 +11,7 @@ import scala.io.Source
 
 class Z3Solver(val axioms: SMTLibScript, var debug: Boolean = false) extends SMTSolver {
   // commands to send to the solver
-  var commands: Seq[SMTLibCommand] = Seq()
+  var commands: Seq[SMTLibCommand] = Seq.empty
 
   override def makeCall(timeout: Int = 1000): Seq[String] = {
 //    var call = Seq("z3")
@@ -35,8 +35,9 @@ class Z3Solver(val axioms: SMTLibScript, var debug: Boolean = false) extends SMT
     Seq("z3", "-smt2", s"-t:${timeout.toString}", "-in")
   }
 
-  override def execute(timeout: Int): Int = {
+  override def execute(timeout: Int): (Int, Seq[String]) = {
     val call = makeCall(timeout)
+    var output: Seq[String] = Seq.empty
 //    val io = BasicIO.standard(in => {
 //      val writer = new PrintWriter(in)
 //      axioms.commands.foreach(command => {
@@ -68,8 +69,10 @@ class Z3Solver(val axioms: SMTLibScript, var debug: Boolean = false) extends SMT
       },
       out => {
         val src = Source.fromInputStream(out)
-        for (line <- src.getLines())
+        for (line <- src.getLines()) {
           if (debug) println(s"> $line")
+          output = output :+ line
+        }
         src.close()
       },
       BasicIO.toStdErr)
@@ -77,12 +80,13 @@ class Z3Solver(val axioms: SMTLibScript, var debug: Boolean = false) extends SMT
 
     val f = Future(blocking(p.exitValue()))
     try {
-      Await.result(f, duration.Duration(timeout*commands.size+100, "ms"))
+      (Await.result(f, duration.Duration(timeout*commands.size+100, "ms")),
+       output)
     } catch {
       case _: TimeoutException =>
         p.destroy()
         println("z3 timeout")
-        -1
+        (-1, output)
     }
   }
 
