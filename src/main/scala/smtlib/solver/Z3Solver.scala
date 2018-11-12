@@ -7,6 +7,7 @@ import smtlib.{SMTLibCommand, SMTLibScript}
 import scala.concurrent._
 import scala.sys.process._
 import ExecutionContext.Implicits.global
+import scala.io.Source
 
 class Z3Solver(val axioms: SMTLibScript, var debug: Boolean = false) extends SMTSolver {
   // commands to send to the solver
@@ -36,20 +37,42 @@ class Z3Solver(val axioms: SMTLibScript, var debug: Boolean = false) extends SMT
 
   override def execute(timeout: Int): Int = {
     val call = makeCall(timeout)
-    val io = BasicIO.standard(in => {
-      val writer = new PrintWriter(in)
-      axioms.commands.foreach(command => {
-        val format = command.format()
-        if (debug) println(s"< $format")
-        writer.println(format)
-      })
-      commands.foreach(command => {
-        val format = command.format()
-        if (debug) println(s"< $format")
-        writer.println(format)
-      })
-      writer.close()
-    })
+//    val io = BasicIO.standard(in => {
+//      val writer = new PrintWriter(in)
+//      axioms.commands.foreach(command => {
+//        val format = command.format()
+//        if (debug) println(s"< $format")
+//        writer.println(format)
+//      })
+//      commands.foreach(command => {
+//        val format = command.format()
+//        if (debug) println(s"< $format")
+//        writer.println(format)
+//      })
+//      writer.close()
+//    })
+    val io = new ProcessIO(
+      in => {
+        val writer = new PrintWriter(in)
+        axioms.commands.foreach(command => {
+          val format = command.format()
+          if (debug) println(s"< $format")
+          writer.println(format)
+        })
+        commands.foreach(command => {
+          val format = command.format()
+          if (debug) println(s"< $format")
+          writer.println(format)
+        })
+        writer.close()
+      },
+      out => {
+        val src = Source.fromInputStream(out)
+        for (line <- src.getLines())
+          if (debug) println(s"> $line")
+        src.close()
+      },
+      BasicIO.toStdErr)
     val p = call.run(io)
 
     val f = Future(blocking(p.exitValue()))
