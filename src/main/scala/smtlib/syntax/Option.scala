@@ -8,40 +8,40 @@ case class DiagnosticOutputChannel(string: SMTLibString) extends Option {
   override def format(): String = s":diagnostic-output-channel ${string.format()}"
 }
 
-case class GlobalDeclarations(b: BValue) extends Option {
-  override def format(): String = s":global-declarations ${b.format()}"
+case class GlobalDeclarations(b: Boolean) extends Option {
+  override def format(): String = s":global-declarations $b"
 }
 
-case class InteractiveMode(b: BValue) extends Option {
-  override def format(): String = s":interactive-mode ${b.format()}"
+case class InteractiveMode(b: Boolean) extends Option {
+  override def format(): String = s":interactive-mode $b"
 }
 
-case class PrintSuccess(b: BValue) extends Option {
-  override def format(): String = s":print-success ${b.format()}"
+case class PrintSuccess(b: Boolean) extends Option {
+  override def format(): String = s":print-success $b"
 }
 
-case class ProduceAssertions(b: BValue) extends Option {
-override def format(): String = s":produce-assertions ${b.format()}"
+case class ProduceAssertions(b: Boolean) extends Option {
+override def format(): String = s":produce-assertions $b"
 }
 
-case class ProduceAssignments(b: BValue) extends Option {
-override def format(): String = s":produce-assignments ${b.format()}"
+case class ProduceAssignments(b: Boolean) extends Option {
+override def format(): String = s":produce-assignments $b"
 }
 
-case class ProduceModels(b: BValue) extends Option {
-override def format(): String = s":produce-models ${b.format()}"
+case class ProduceModels(b: Boolean) extends Option {
+override def format(): String = s":produce-models $b"
 }
 
-case class ProduceProofs(b: BValue) extends Option {
-override def format(): String = s":produce-proofs ${b.format()}"
+case class ProduceProofs(b: Boolean) extends Option {
+override def format(): String = s":produce-proofs $b"
 }
 
-case class ProduceUnsatAssumptions(b: BValue) extends Option {
-override def format(): String = s":produce-unsat-assumptions ${b.format()}"
+case class ProduceUnsatAssumptions(b: Boolean) extends Option {
+override def format(): String = s":produce-unsat-assumptions $b"
 }
 
-case class ProduceUnsatCores(b: BValue) extends Option {
-override def format(): String = s":produce-unsat-cores ${b.format()}"
+case class ProduceUnsatCores(b: Boolean) extends Option {
+override def format(): String = s":produce-unsat-cores $b"
 }
 
 case class RandomSeed(numeral: Numeral) extends Option {
@@ -60,12 +60,12 @@ case class Verbosity(numeral: Numeral) extends Option {
   override def format(): String = s":verbosity ${numeral.format()}"
 }
 
-trait BValue extends SMTLibFormatter
-
-case object True extends BValue {
-  override def format(): String = s"true"
-}
-
-case object False extends BValue {
-  override def format(): String = s"false"
-}
+//trait BValue extends SMTLibFormatter
+//
+//case object True extends BValue {
+//  override def format(): String = s"true"
+//}
+//
+//case object False extends BValue {
+//  override def format(): String = s"false"
+//}

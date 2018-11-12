@@ -5,6 +5,8 @@ import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
 object Axioms {
+  val printSucces = SetOption(PrintSuccess(true))
+
   val pathDatatype = DeclareDatatype("Path", ConstructorDatatype(Seq(
     ConstructorDec("var", Seq(SelectorDec("id", "String"))),
     ConstructorDec("pth", Seq(
@@ -121,7 +123,7 @@ object Axioms {
                       "conclusion")))
 
   def asSMTLib: SMTLibScript = SMTLibScript(
-    Seq(pathDatatype) ++
+    Seq(printSucces, pathDatatype) ++
     pathEqAxioms ++
     instanceOfAxioms ++
     instantiatedByAxioms ++
