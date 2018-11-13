@@ -1,6 +1,6 @@
 package smtlib.solver
 
-import java.io.File
+import java.io._
 
 import dcc.syntax.{FieldPath, Id, Path}
 import smtlib.{SMTLibCommand, SMTLibScript, syntax}
@@ -221,6 +221,32 @@ object TestProcessIO extends App {
 
 }
 
+// TODO: connect IN and OUT?
+object TestProcessIO1 extends App {
+  val OUT: PipedOutputStream = new PipedOutputStream()
+  val IN: PipedInputStream = new PipedInputStream(OUT)
+
+  def feedInput(in: OutputStream): Unit = {
+    for (ln <- io.Source.fromInputStream(IN).getLines()) {
+      print("> ")
+      in.write((ln + "\n").toCharArray().map(_.toByte))
+      in.flush // very important
+    }
+  }
+  def processOutput(pref: String)(os: InputStream): Unit = {
+    val sc = new Scanner(os)
+    while (true) {
+      println(pref + sc.nextLine)
+    }
+  }
+  val pb = Process("/bin/bash")
+  val pio = new ProcessIO(feedInput,
+    processOutput("OUT:"), processOutput("ERR:"))
+  pb.run(pio) // don't wait
+
+  val out = new DataOutputStream(OUT)
+  out.writeChars("echo foo")
+}
 
 import scala.io.Source
 

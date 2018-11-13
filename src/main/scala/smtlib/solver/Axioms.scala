@@ -15,6 +15,12 @@ object Axioms {
     ))
   )))
 
+  /** String is a class name  */
+  val classProp = DeclareFun("class", Seq("String"), Bool)
+
+  /** String is a variable name  */
+  val varProp = DeclareFun("variable", Seq("String"), Bool)
+
   val pathEqProp = DeclareFun("path-eq", Seq("Path", "Path"), Bool)
   val pathEqRefl = Assert(Forall(Seq(SortedVar("p", "Path")), Apply("path-eq", Seq("p", "p"))))
   val pathEqSym = Assert(Forall(Seq(SortedVar("p1", "Path"), SortedVar("p2", "Path")),
@@ -123,7 +129,7 @@ object Axioms {
                       "conclusion")))
 
   def asSMTLib: SMTLibScript = SMTLibScript(
-    Seq(printSucces, pathDatatype) ++
+    Seq(printSucces, pathDatatype, classProp, varProp) ++
     pathEqAxioms ++
     instanceOfAxioms ++
     instantiatedByAxioms ++
@@ -234,4 +240,21 @@ object AxiomsTest extends App {
 
   solver.addCommands(Seq(l1, l2, l1Cnt, l2Cnt, l1True, l2False, CheckSat, GetModel))
   solver.execute()
+//
+//  solver.flush()
+//
+//  val vars = Seq(Assert(Apply("class", Seq(SMTLibString("x")))), Assert(Apply("class", Seq(SMTLibString("y")))), Assert(Apply("class", Seq(SMTLibString("z")))))
+//  val exists = Assert(Forall(Seq(SortedVar("x", "String"), SortedVar("y", "String"), SortedVar("z", "String")),
+//    Implies(And(Apply("class", Seq("x")), And(Apply("class", Seq("y")), Apply("class", Seq("z")))),
+//      And(Apply("instance-of", Seq("p1", "x")),
+//        And(Apply("instance-of", Seq("p1", "y")),
+//          Apply("instance-of", Seq("p1", "z"))))
+//    )))
+//
+//  solver.addCommands(Seq(p1, p2, p3))
+//  solver.addCommands(distinct)
+//  solver.addCommands(vars)
+//  solver.addCommand(exists)
+//  solver.addCommands(Seq(CheckSat, GetModel))
+//  solver.execute()
 }
