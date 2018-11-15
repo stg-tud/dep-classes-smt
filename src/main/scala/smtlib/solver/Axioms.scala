@@ -102,6 +102,8 @@ object Axioms {
     */
   val substAxioms = Seq(substPath, substProp)
 
+  // sequent calculus
+
   val bigAnd = DefineFunRec(
                 FunctionDef("big-and",
                   Seq(
@@ -117,7 +119,7 @@ object Axioms {
     * dcc's sequent calculus judgement
     * Alternative to big-and: forall b: Bool. b \in l => b
     */
-  val dccProp = DefineFun(
+  val entails = DefineFun(
                   FunctionDef("entails",
                     Seq(
                       SortedVar("premise", Sorts("List", Seq(Bool))),
@@ -128,13 +130,44 @@ object Axioms {
                       Apply("big-and", Seq("premise")),
                       "conclusion")))
 
+  // C-Ident TODO: class(c)?
+  val identPath = Assert(Forall(Seq(SortedVar("p1", "Path"), SortedVar("p2", "Path")),
+                          Apply("entails", Seq(
+                            Apply("insert", Seq(Apply("path-eq", Seq("p1", "p2")), "nil")),
+                            Apply("path-eq", Seq("p1", "p2"))))))
+  val identInstOf = Assert(Forall(Seq(SortedVar("p", "Path"), SortedVar("c", "String")),
+                            Apply("entails", Seq(
+                              Apply("insert", Seq(Apply("instance-of", Seq("p", "c")), "nil")),
+                              Apply("instance-of", Seq("p", "c"))))))
+  val identInstBy = Assert(Forall(Seq(SortedVar("p", "Path"), SortedVar("c", "String")),
+                            Apply("entails", Seq(
+                              Apply("insert", Seq(Apply("instantiated-by", Seq("p", "c")), "nil")),
+                              Apply("instantiated-by", Seq("p", "c"))))))
+  val cIdent = Seq(identPath, identInstOf, identInstBy)
+
+  // C-Refl
+  val cRefl = Assert(Forall(Seq(SortedVar("p", "Path")),
+                      Apply("entails", Seq("nil", Apply("path-eq", Seq("p", "p"))))))
+
+  // C-Class
+  val cClass = Assert(Forall(Seq(SortedVar("as", Sorts("List", Seq(Bool))), SortedVar("p", "Path"), SortedVar("x", "String")),
+                        Implies(
+                          Apply("entails", Seq(
+                            "as",
+                            Apply("instantiated-by", Seq("p", "c")))),
+                          Apply("entails", Seq(
+                            "as",
+                            Apply("instance-of", Seq("p", "c")))))))
+
+  val sequentCalculusRules = cIdent :+ cRefl :+ cClass
+
   def asSMTLib: SMTLibScript = SMTLibScript(
     Seq(printSucces, pathDatatype, classProp, varProp) ++
     pathEqAxioms ++
     instanceOfAxioms ++
     instantiatedByAxioms ++
     substAxioms ++
-    Seq(bigAnd, dccProp)
+    Seq(bigAnd, entails)
   )
 
 //  TODO: also old: hard to use as proposition
