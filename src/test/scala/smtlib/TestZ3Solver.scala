@@ -1,7 +1,7 @@
 package smtlib
 
 import org.scalatest.FunSuite
-import smtlib.solver.{OldAxioms, Z3Solver}
+import smtlib.solver.Z3Solver
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
