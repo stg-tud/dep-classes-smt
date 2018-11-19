@@ -113,6 +113,13 @@ object Axioms {
     */
   val entails = DeclareFun("entails", Seq( Sorts("List", Seq("Constraint")), "Constraint"), Bool)
 
+  // C-Ident
+  private val identTerm = Forall(Seq(SortedVar("c", "Constraint")),
+                            Apply("entails", Seq(
+                              Apply("insert", Seq("c", "nil")),
+                              "c"
+                            )))
+
 //  val isPathEqProp = DeclareFun(SimpleSymbol("isPathEq"), Seq(SimpleSymbol("Constraint")), Bool)
 ////  val isPathEqProp = DefineFun(FunctionDef(SimpleSymbol("isPathEq"), Seq(SortedVar(SimpleSymbol("c"), SimpleSymbol("Constraint"))), Bool,
 ////    Exists(Seq(SortedVar(SimpleSymbol("p1"), SimpleSymbol("Path")), SortedVar(SimpleSymbol("p2"), SimpleSymbol("Path"))),
@@ -125,4 +132,8 @@ object Axioms {
   val subst = Seq(substPath, substConstraint)
 
   def all: SMTLibScript = SMTLibScript(datatypes ++ baseProps ++ subst)
+}
+
+object AxiomsTest extends App {
+  val solver = new Z3Solver(Axioms.all)
 }

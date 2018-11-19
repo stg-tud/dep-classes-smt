@@ -4,7 +4,7 @@ import smtlib.SMTLibScript
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
-object Axioms {
+object OldAxioms {
   val printSucces = SetOption(PrintSuccess(true))
 
   val pathDatatype = DeclareDatatype("Path", ConstructorDatatype(Seq(
@@ -217,8 +217,8 @@ object Axioms {
 //  def asSMTLib: SMTLibScript = SMTLibScript(Seq(pathDatatype, constraintDatatype, isPathEqProp, isInstanceOfProp, isInstantiatedByProp))
 }
 
-object AxiomsTest extends App {
-  val solver = new Z3Solver(Axioms.asSMTLib, true)
+object OldAxiomsTest extends App {
+  val solver = new Z3Solver(OldAxioms.asSMTLib, true)
 
   val p1 = DeclareConst("p1", "Path")
   val p2 = DeclareConst("p2", "Path")

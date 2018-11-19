@@ -26,7 +26,7 @@ object ProcessIoTest extends App {
   val checksat = CheckSat
   val script = SMTLibScript(Seq(const1, const2, const3, distinct, assert1, assert2, assert3, checksat))
 
-  val z3Solver: Z3Solver = new Z3Solver(Axioms.asSMTLib)
+  val z3Solver: Z3Solver = new Z3Solver(OldAxioms.asSMTLib)
   z3Solver.addScript(script)
   z3Solver.execute()
 
@@ -43,7 +43,7 @@ object ProcessIoTest extends App {
 }
 
 object DCCVariableEncodingTest extends App {
-  val solver: SMTSolver = new Z3Solver(Axioms.asSMTLib)
+  val solver: SMTSolver = new Z3Solver(OldAxioms.asSMTLib)
 
 //  (declare-datatype Path ((empty) (cons (obj Path) (field String))))
   val pathTypeE = DeclareDatatype("PathE", ConstructorDatatype(Seq(
@@ -126,7 +126,7 @@ object PathSubstTest extends App {
 }
 
 object DatatypeDeclarationTest extends App {
-  val solver: SMTSolver = new Z3Solver(Axioms.asSMTLib)
+  val solver: SMTSolver = new Z3Solver(OldAxioms.asSMTLib)
 
 // (declare-datatypes (T) (( Lst   nil  (cons (hd T) (tl Lst)) )))
 // (declare-datatypes (T) (( Lst   nil  (cons (hd T) (tl Lst)) )))

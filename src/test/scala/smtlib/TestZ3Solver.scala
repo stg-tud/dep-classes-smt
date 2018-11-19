@@ -1,7 +1,7 @@
 package smtlib
 
 import org.scalatest.FunSuite
-import smtlib.solver.{Axioms, Z3Solver}
+import smtlib.solver.{OldAxioms, Z3Solver}
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
@@ -22,7 +22,7 @@ class TestZ3Solver extends FunSuite {
   val checksat = CheckSat
   val script = SMTLibScript(Seq(const1, const2, const3, distinct, assert1, assert2, assert3, checksat))
 
-  val z3: Z3Solver = new Z3Solver(Axioms.asSMTLib)
+  val z3: Z3Solver = new Z3Solver(OldAxioms.asSMTLib) // TODO: update axioms
 
   test("AddCommand") {
     val preSize = z3.commands.size
