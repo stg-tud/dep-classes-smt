@@ -105,10 +105,10 @@ class TestZ3Solver extends FunSuite {
   }
 
   // TODO: remove timeout part in Z3Solver?
-  test("Timeout") {
-    val (status, output) = z3.execute(0)
-
-    println(status)
-    output.foreach(println(_))
-  }
+//  test("Timeout") {
+//    val (status, output) = z3.execute(0)
+//
+//    println(status)
+//    output.foreach(println(_))
+//  }
 }

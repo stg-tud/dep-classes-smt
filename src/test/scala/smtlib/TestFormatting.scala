@@ -12,6 +12,7 @@ class TestFormatting extends FunSuite{
   val hex2 = Hexadecimal("0a1b54ff")
   val hex3 = Hexadecimal(0x1a2b)
   val hex4 = Hexadecimal("1a2b")
+  val hex5 = Hexadecimal(0xabcdef)
   val bin1 = Binary(Integer.parseInt("00111100", 2))
   val bin2 = Binary("00111100")
   val bin3 = Binary(0xff)
@@ -41,6 +42,7 @@ class TestFormatting extends FunSuite{
     assert(hex2.format() == "#x0A1B54FF")
     assert(hex3.format() == "#x1A2B")
     assert(hex4.format() == "#x1A2B")
+    assert(hex5.format() == "#xABCDEF")
     assert(bin1.format() == "#b111100")
     assert(bin2.format() == "#b00111100")
     assert(bin3.format() == "#b11111111")
@@ -175,6 +177,6 @@ class TestFormatting extends FunSuite{
     assert(Implies(False(), True()).format() == "(=> false true)")
     assert(And(Not(False()), True()).format() == "(and (not false) true)")
     assert(Xor(Distinct(SimpleSymbol("x"), SimpleSymbol("y")), Distinct(SimpleSymbol("x"), SimpleSymbol("z"))).format() == "(xor (distinct x y) (distinct x z))")
-    assert(Ite(Not(False()), Or(True(), False()), Eq(SimpleSymbol("y"), SimpleSymbol("z"))).format() == "(Ite (not false) (or true false) (= y z))")
+    assert(Ite(Not(False()), Or(True(), False()), Eq(SimpleSymbol("y"), SimpleSymbol("z"))).format() == "(ite (not false) (or true false) (= y z))")
   }
 }
