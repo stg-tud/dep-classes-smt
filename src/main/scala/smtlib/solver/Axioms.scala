@@ -46,10 +46,10 @@ object Axioms {
 
   /**
     * Substitution function for paths.
-    * @param p1 Base path for the substitution
-    * @param id Variable name to be substituted
-    * @param p2 Path to be substituted
-    * @return `id` substituted with `p2` in `p1`
+    * param p1 Base path for the substitution
+    * param id Variable name to be substituted
+    * param p2 Path to be substituted
+    * return `id` substituted with `p2` in `p1`
     */
   val substPath = DefineFunRec(
                     FunctionDef(
@@ -72,10 +72,10 @@ object Axioms {
 
   /**
     * Substitution function for constraints.
-    * @param c Base constraint for the substitution
-    * @param id Variable name to be substituted
-    * @param p Path to be substituted
-    * @return `id` substituted with `p` in `c`
+    * param c Base constraint for the substitution
+    * param id Variable name to be substituted
+    * param p Path to be substituted
+    * return `id` substituted with `p` in `c`
     */
   val substConstraint = DefineFun(
                           FunctionDef(
@@ -112,5 +112,9 @@ object Axioms {
 //  val isInstanceOfProp = DeclareFun(SimpleSymbol("isInstanceOf"), Seq(SimpleSymbol("Constraint")), Bool)
 //  val isInstantiatedByProp = DeclareFun(SimpleSymbol("isInstantiatedBy"), Seq(SimpleSymbol("Constraint")), Bool)
 
-  def all: SMTLibScript = SMTLibScript(Seq(pathDatatype, constraintDatatype, classProp, varProp))
+  val datatypes = Seq(pathDatatype, constraintDatatype)
+  val baseProps = Seq(classProp, varProp)
+  val subst = Seq(substPath, substConstraint)
+
+  def all: SMTLibScript = SMTLibScript(datatypes ++ baseProps ++ subst)
 }
