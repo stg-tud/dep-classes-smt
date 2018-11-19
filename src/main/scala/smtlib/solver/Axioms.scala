@@ -105,6 +105,14 @@ object Axioms {
                               ))
                           ))
 
+  // DCC
+
+  /**
+    * dcc's sequent calculus judgement
+    * entails :: List Constraint -> Constraint -> Bool
+    */
+  val entails = DeclareFun("entails", Seq( Sorts("List", Seq("Constraint")), "Constraint"), Bool)
+
 //  val isPathEqProp = DeclareFun(SimpleSymbol("isPathEq"), Seq(SimpleSymbol("Constraint")), Bool)
 ////  val isPathEqProp = DefineFun(FunctionDef(SimpleSymbol("isPathEq"), Seq(SortedVar(SimpleSymbol("c"), SimpleSymbol("Constraint"))), Bool,
 ////    Exists(Seq(SortedVar(SimpleSymbol("p1"), SimpleSymbol("Path")), SortedVar(SimpleSymbol("p2"), SimpleSymbol("Path"))),
