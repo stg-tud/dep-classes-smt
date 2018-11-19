@@ -22,7 +22,7 @@ class TestZ3Solver extends FunSuite {
   val checksat = CheckSat
   val script = SMTLibScript(Seq(const1, const2, const3, distinct, assert1, assert2, assert3, checksat))
 
-  val z3: Z3Solver = new Z3Solver(OldAxioms.asSMTLib) // TODO: update axioms
+  val z3: Z3Solver = new Z3Solver(SMTLibScript(Seq()))
 
   test("AddCommand") {
     val preSize = z3.commands.size
@@ -54,7 +54,11 @@ class TestZ3Solver extends FunSuite {
   }
 
   test("Execute SatFormula") {
-    z3.execute()
+    val (status, output) = z3.execute()
+
+    assert(status == 0)
+    assert(output.size > 1)
+    assert(output(0) == "sat")
   }
 
   test("Flush") {
@@ -64,6 +68,10 @@ class TestZ3Solver extends FunSuite {
 
   test("Execute UnsatFormula") {
     z3.addScript(script)
-    z3.execute()
+    val (status, output) = z3.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output(0) == "unsat")
   }
 }
