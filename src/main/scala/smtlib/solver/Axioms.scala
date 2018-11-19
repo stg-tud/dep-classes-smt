@@ -119,6 +119,36 @@ object Axioms {
                               Apply("insert", Seq("c", "nil")),
                               "c"
                             )))
+  val cIdent = Assert(identTerm)
+
+  // C-Refl
+  private val reflTerm = Forall(Seq(SortedVar("p", "Path")),
+                            Apply("entails", Seq(
+                              "nil",
+                              Apply("path-eq", Seq("p", "p"))
+                            )))
+  val cRefl = Assert(reflTerm)
+
+  // C-Class
+  private val classTerm = Forall(
+                            Seq(
+                              SortedVar("as", Sorts("List", Seq("Constraint"))),
+                              SortedVar("p", "Path"),
+                              SortedVar("c", "String")),
+                            Implies(
+                              And(
+                                Apply("class", Seq("c")),
+                                Apply("entails", Seq(
+                                  "as",
+                                  Apply("instantiated-by", Seq("p", "c"))
+                                ))
+                              ),
+                              Apply("entails", Seq(
+                                "as",
+                                Apply("instance-of", Seq("p", "c"))
+                              ))
+                            ))
+  val cClass = Assert(classTerm)
 
 //  val isPathEqProp = DeclareFun(SimpleSymbol("isPathEq"), Seq(SimpleSymbol("Constraint")), Bool)
 ////  val isPathEqProp = DefineFun(FunctionDef(SimpleSymbol("isPathEq"), Seq(SortedVar(SimpleSymbol("c"), SimpleSymbol("Constraint"))), Bool,
@@ -130,10 +160,15 @@ object Axioms {
   val datatypes = Seq(pathDatatype, constraintDatatype)
   val baseProps = Seq(classProp, varProp)
   val subst = Seq(substPath, substConstraint)
+  val sequentCalculus = Seq(entails, cIdent, cRefl, cClass)
 
-  def all: SMTLibScript = SMTLibScript(datatypes ++ baseProps ++ subst)
+  def all: SMTLibScript = SMTLibScript(datatypes ++ baseProps ++ subst ++ sequentCalculus)
 }
 
 object AxiomsTest extends App {
-  val solver = new Z3Solver(Axioms.all)
+  val solver = new Z3Solver(Axioms.all, true)
+
+  solver.addCommand(CheckSat)
+
+  solver.execute()
 }
