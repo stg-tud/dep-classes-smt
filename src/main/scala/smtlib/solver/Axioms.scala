@@ -34,8 +34,8 @@ object Axioms {
       SelectorDec(SimpleSymbol("instance"), SimpleSymbol("Path")),
       SelectorDec(SimpleSymbol("cls"), SimpleSymbol("String")))),
     ConstructorDec(SimpleSymbol("instantiated-by"), Seq(
-      SelectorDec(SimpleSymbol("obj"), SimpleSymbol("Path")), // TODO: find better selecor names for this
-      SelectorDec(SimpleSymbol("inst"), SimpleSymbol("String"))))
+      SelectorDec(SimpleSymbol("object"), SimpleSymbol("Path")), // TODO: find better selecor names for this
+      SelectorDec(SimpleSymbol("clsname"), SimpleSymbol("String"))))
   )))
 
   /** String is a class name  */
