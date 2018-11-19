@@ -44,6 +44,67 @@ object Axioms {
   /** String is a variable name  */
   val varProp = DeclareFun("variable", Seq("String"), Bool)
 
+  /**
+    * Substitution function for paths.
+    * @param p1 Base path for the substitution
+    * @param id Variable name to be substituted
+    * @param p2 Path to be substituted
+    * @return `id` substituted with `p2` in `p1`
+    */
+  val substPath = DefineFunRec(
+                    FunctionDef(
+                      "subst-path",
+                      Seq(
+                        SortedVar("p1", "Path"),
+                        SortedVar("id", "String"),
+                        SortedVar("p2", "Path")
+                      ),
+                      "Path",
+                      Match("p1",
+                        Seq(
+                          MatchCase(Pattern("var", Seq("x")),
+                            Ite(Eq("id", "x"), "p2", "p1")),
+                          MatchCase(Pattern("pth", Seq("p", "f")),
+                            Apply("pth", Seq(Apply("subst-path", Seq("p", "id", "p2")), "f"))
+                          )
+                        ))
+                    ))
+
+  /**
+    * Substitution function for constraints.
+    * @param c Base constraint for the substitution
+    * @param id Variable name to be substituted
+    * @param p Path to be substituted
+    * @return `id` substituted with `p` in `c`
+    */
+  val substConstraint = DefineFun(
+                          FunctionDef(
+                            "subst-constraint",
+                            Seq(
+                              SortedVar("c", "Constraint"),
+                              SortedVar("id", "String"),
+                              SortedVar("p", "Path")
+                            ),
+                            "Constraint",
+                            Match("c",
+                              Seq(
+                                MatchCase(Pattern("path-eq", Seq("p1", "p2")),
+                                  Apply("path-eq", Seq(
+                                    Apply("subst-path", Seq("p1", "id", "p")),
+                                    Apply("subst-path", Seq("p2", "id", "p"))))),
+                                MatchCase(Pattern("instance-of", Seq("p1", "cls1")),
+                                  Apply("instance-of", Seq(
+                                    Apply("subst-path", Seq("p1", "id", "p")),
+                                    "cls1"
+                                  ))),
+                                MatchCase(Pattern("instantiated-by", Seq("p1", "cls1")),
+                                  Apply("instantiated-by", Seq(
+                                    Apply("subst-path", Seq("p1", "id", "p")),
+                                    "cls1"
+                                  )))
+                              ))
+                          ))
+
 //  val isPathEqProp = DeclareFun(SimpleSymbol("isPathEq"), Seq(SimpleSymbol("Constraint")), Bool)
 ////  val isPathEqProp = DefineFun(FunctionDef(SimpleSymbol("isPathEq"), Seq(SortedVar(SimpleSymbol("c"), SimpleSymbol("Constraint"))), Bool,
 ////    Exists(Seq(SortedVar(SimpleSymbol("p1"), SimpleSymbol("Path")), SortedVar(SimpleSymbol("p2"), SimpleSymbol("Path"))),
