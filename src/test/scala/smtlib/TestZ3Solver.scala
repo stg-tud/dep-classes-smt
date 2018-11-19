@@ -41,22 +41,21 @@ class TestZ3Solver extends FunSuite {
 
     val assert4 = Assert(Not(Eq("a", 0)))
 
-    z3.addCommands(Seq(assert1, assert2, assert3, assert4, CheckSat, GetModel))
+    z3.addCommands(Seq(assert1, assert2, assert3, assert4, CheckSat))
 
-    assert(preSize + 6 == z3.commands.size)
+    assert(preSize + 5 == z3.commands.size)
     assert(z3.commands(preSize) == assert1)
     assert(z3.commands(preSize+1) == assert2)
     assert(z3.commands(preSize+2) == assert3)
     assert(z3.commands(preSize+3) == assert4)
     assert(z3.commands(preSize+4) == CheckSat)
-    assert(z3.commands(preSize+5) == GetModel)
   }
 
   test("Execute SatFormula") {
     val (status, output) = z3.execute()
 
     assert(status == 0)
-    assert(output.size > 1)
+    assert(output.size == 1)
     assert(output.head == "sat")
   }
 
@@ -72,5 +71,44 @@ class TestZ3Solver extends FunSuite {
     assert(status == 0)
     assert(output.size == 1)
     assert(output.head == "unsat")
+  }
+
+  test("Axioms with debugging") {
+    val z3 = new Z3Solver(script, true)
+    val (status, output) = z3.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "unsat")
+  }
+
+  test("Unknown") {
+    val T = DeclareDatatype("T", ConstructorDatatype(Seq(ConstructorDec("NUM", Seq(SelectorDec("n", "Real"))))))
+    val a = DeclareConst("a", "T")
+    val b = DeclareConst("b", "T")
+    val c = DeclareConst("c", "T")
+
+    val isNUMa = Assert(Apply("is-NUM", Seq("a")))
+    val isNUMb = Assert(Apply("is-NUM", Seq("b")))
+    val isNUMc = Assert(Apply("is-NUM", Seq("c")))
+
+    val eq = Assert(Eq("c", Apply("NUM", Seq(Apply("*", Seq(Apply("n", Seq("a")), Apply("n", Seq("b"))))))))
+
+    z3.flush()
+    z3.addCommands(Seq(T, a, b, c, isNUMa, isNUMb, isNUMc, eq, CheckSat))
+
+    val (status, output) = z3.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "unknown")
+  }
+
+  // TODO: remove timeout part in Z3Solver?
+  test("Timeout") {
+    val (status, output) = z3.execute(0)
+
+    println(status)
+    output.foreach(println(_))
   }
 }
