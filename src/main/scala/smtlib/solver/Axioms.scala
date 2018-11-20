@@ -128,7 +128,21 @@ object Axioms {
                               ))
                           ))
 
-  // TODO: add substProp
+  val substProp = DefineFun(
+                    FunctionDef(
+                      "subst",
+                      Seq(
+                        SortedVar("c1", "Constraint"),
+                        SortedVar("x", "String"),
+                        SortedVar("p", "Path"),
+                        SortedVar("c2", "Constraint")
+                      ),
+                      Bool,
+                      Eq(
+                        Apply("subst-constraint", Seq("c1", "x", "p")),
+                        "c2"
+                      )
+                    ))
 
   // DCC
 
@@ -206,7 +220,7 @@ object Axioms {
   val datatypes = Seq(pathDatatype, constraintDatatype)
   val funs = Seq(concat)
   val baseProps = Seq(classProp, varProp)
-  val subst = Seq(substPath, substConstraint)
+  val subst = Seq(substPath, substConstraint, substProp)
   val sequentCalculus = Seq(entails, cIdent, cRefl, cClass, cCut)
 
   def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ baseProps ++ subst ++ sequentCalculus)
