@@ -53,11 +53,16 @@ class Z3Solver(val axioms: SMTLibScript, var debug: Boolean = false) extends SMT
     val io = new ProcessIO(
       in => {
         val writer = new PrintWriter(in)
-        axioms.commands.foreach(command => {
-          val format = command.format()
-          if (debug) println(s"< $format")
-          writer.println(format)
-        })
+//        axioms.commands.foreach(command => {
+//          val format = command.format()
+//          if (debug) println(s"< $format")
+//          writer.println(format)
+//        })
+
+        val format = axioms.format()
+        if (debug) println(s"< $format")
+        writer.println(format)
+
         commands.foreach(command => {
           val format = command.format()
           if (debug) println(s"< $format")
