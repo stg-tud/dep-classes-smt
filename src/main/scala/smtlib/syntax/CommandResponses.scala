@@ -73,6 +73,9 @@ case class ValuationPair(left: Term, right: Term) extends SMTLibFormatter {
   override def format(): String = s"(${left.format()} ${right.format()})"
 }
 
-case class TValuationPair(symbol: SMTLibSymbol, b: BValue) extends SMTLibFormatter {
-  override def format(): String = s"(${symbol.format()} ${b.format()})"
+//case class TValuationPair(symbol: SMTLibSymbol, b: BValue) extends SMTLibFormatter {
+//  override def format(): String = s"(${symbol.format()} ${b.format()})"
+//}
+case class TValuationPair(symbol: SMTLibSymbol, b: Boolean) extends SMTLibFormatter {
+  override def format(): String = s"(${symbol.format()} $b)"
 }
