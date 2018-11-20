@@ -5,6 +5,8 @@ import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
 object Axioms {
+  private val Constraints = Sorts("List", Seq("Constraint"))
+
   /**
     * Path datatype declaration
     * Constrcutors:
@@ -37,6 +39,27 @@ object Axioms {
       SelectorDec(SimpleSymbol("object"), SimpleSymbol("Path")), // TODO: find better selecor names for this
       SelectorDec(SimpleSymbol("clsname"), SimpleSymbol("String"))))
   )))
+
+  /** List concatenation */
+  val concat = DefineFunRec(
+                FunctionDef(
+                  "concat",
+                  Seq(
+                    SortedVar("l1", Constraints),
+                    SortedVar("l2", Constraints)
+                  ),
+                  Constraints,
+                  Match("l1",
+                    Seq(
+                      MatchCase(Pattern("nil", Seq()),
+                        "l2"),
+                      MatchCase(Pattern("insert", Seq("hd", "tl")),
+                        Apply("insert", Seq(
+                          "hd",
+                          Apply("concat", Seq("tl", "l2"))
+                        )))
+                    ))
+                ))
 
   /** String is a class name  */
   val classProp = DeclareFun("class", Seq("String"), Bool)
@@ -105,13 +128,15 @@ object Axioms {
                               ))
                           ))
 
+  // TODO: add substProp
+
   // DCC
 
   /**
     * dcc's sequent calculus judgement
     * entails :: List Constraint -> Constraint -> Bool
     */
-  val entails = DeclareFun("entails", Seq( Sorts("List", Seq("Constraint")), "Constraint"), Bool)
+  val entails = DeclareFun("entails", Seq(Constraints, "Constraint"), Bool)
 
   // C-Ident
   private val identTerm = Forall(Seq(SortedVar("c", "Constraint")),
@@ -132,7 +157,7 @@ object Axioms {
   // C-Class
   private val classTerm = Forall(
                             Seq(
-                              SortedVar("as", Sorts("List", Seq("Constraint"))),
+                              SortedVar("as", Constraints),
                               SortedVar("p", "Path"),
                               SortedVar("c", "String")),
                             Implies(
@@ -150,6 +175,27 @@ object Axioms {
                             ))
   val cClass = Assert(classTerm)
 
+  // C-Cut
+  val cutTerm = Forall(
+                  Seq(
+                    SortedVar("as1", Constraints),
+                    SortedVar("as2", Constraints),
+                    SortedVar("b", "Constraint"),
+                    SortedVar("c", "Constraint")
+                  ),
+                  Implies(
+                    And(
+                      Apply("entails", Seq("as1", "c")),
+                      Apply("entails", Seq(
+                        Apply("insert", Seq("c", "as2")),
+                        "b"
+                      ))),
+                    Apply("entails", Seq(
+                      Apply("concat", Seq("as1", "as2")),
+                      "b"
+                    ))))
+  val cCut = Assert(cutTerm)
+
 //  val isPathEqProp = DeclareFun(SimpleSymbol("isPathEq"), Seq(SimpleSymbol("Constraint")), Bool)
 ////  val isPathEqProp = DefineFun(FunctionDef(SimpleSymbol("isPathEq"), Seq(SortedVar(SimpleSymbol("c"), SimpleSymbol("Constraint"))), Bool,
 ////    Exists(Seq(SortedVar(SimpleSymbol("p1"), SimpleSymbol("Path")), SortedVar(SimpleSymbol("p2"), SimpleSymbol("Path"))),
@@ -158,11 +204,12 @@ object Axioms {
 //  val isInstantiatedByProp = DeclareFun(SimpleSymbol("isInstantiatedBy"), Seq(SimpleSymbol("Constraint")), Bool)
 
   val datatypes = Seq(pathDatatype, constraintDatatype)
+  val funs = Seq(concat)
   val baseProps = Seq(classProp, varProp)
   val subst = Seq(substPath, substConstraint)
-  val sequentCalculus = Seq(entails, cIdent, cRefl, cClass)
+  val sequentCalculus = Seq(entails, cIdent, cRefl, cClass, cCut)
 
-  def all: SMTLibScript = SMTLibScript(datatypes ++ baseProps ++ subst ++ sequentCalculus)
+  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ baseProps ++ subst ++ sequentCalculus)
 }
 
 object AxiomsTest extends App {
