@@ -128,6 +128,15 @@ object Axioms {
                               ))
                           ))
 
+  /**
+    * Substitution proposition
+    * param c1 Base constraint for the substitution
+    * param x Variable name to be substituted
+    * param p Path to be substituted
+    * param c2 Constraint to be the result of the substitution
+    * return true if `x` substituted with `p` in `c1` equals `c2`,
+    *        false otherwise
+    */
   val substProp = DefineFun(
                     FunctionDef(
                       "subst",
