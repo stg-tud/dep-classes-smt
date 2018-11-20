@@ -180,19 +180,19 @@ object Axioms {
   // C-Class
   private val classTerm = Forall(
                             Seq(
-                              SortedVar("as", Constraints),
+                              SortedVar("cs", Constraints),
                               SortedVar("p", "Path"),
                               SortedVar("c", "String")),
                             Implies(
                               And(
                                 Apply("class", Seq("c")),
                                 Apply("entails", Seq(
-                                  "as",
+                                  "cs",
                                   Apply("instantiated-by", Seq("p", "c"))
                                 ))
                               ),
                               Apply("entails", Seq(
-                                "as",
+                                "cs",
                                 Apply("instance-of", Seq("p", "c"))
                               ))
                             ))
@@ -201,20 +201,20 @@ object Axioms {
   // C-Cut
   val cutTerm = Forall(
                   Seq(
-                    SortedVar("as1", Constraints),
-                    SortedVar("as2", Constraints),
+                    SortedVar("cs1", Constraints),
+                    SortedVar("cs2", Constraints),
                     SortedVar("b", "Constraint"),
                     SortedVar("c", "Constraint")
                   ),
                   Implies(
                     And(
-                      Apply("entails", Seq("as1", "c")),
+                      Apply("entails", Seq("cs1", "c")),
                       Apply("entails", Seq(
-                        Apply("insert", Seq("c", "as2")),
+                        Apply("insert", Seq("c", "cs2")),
                         "b"
                       ))),
                     Apply("entails", Seq(
-                      Apply("conc", Seq("as1", "as2")),
+                      Apply("conc", Seq("cs1", "cs2")),
                       "b"
                     ))))
   val cCut = Assert(cutTerm)
@@ -222,7 +222,7 @@ object Axioms {
   // C-Subst
   val substTerm = Forall(
                     Seq(
-                      SortedVar("as", Constraints),
+                      SortedVar("cs", Constraints),
                       SortedVar("x", "String"),
                       SortedVar("a", "Constraint"),
                       SortedVar("p1", "Path"),
@@ -233,7 +233,7 @@ object Axioms {
                     Implies(
                       And(
                         Apply("entails", Seq(
-                          "as",
+                          "cs",
                           Apply("path-eq", Seq("p1", "p2"))
                         )),
                         And(
@@ -241,10 +241,13 @@ object Axioms {
                           And(
                             Apply("subst", Seq("a", "x", "p1", "a1")),
                             And(
-                              Apply("subst", Seq("a", "x", "p2", "a2")) /* subst p2 */,
-                              Apply("entails", Seq("as", "a1"))
+                              Apply("subst", Seq("a", "x", "p2", "a2")),
+                              And(
+                                Apply("variable", Seq("x")),
+                                Apply("entails", Seq("cs", "a1"))
+                              )
                             )))),
-                      Apply("entails", Seq("as", "a2"))
+                      Apply("entails", Seq("cs", "a2"))
                     ))
   val cSubst = Assert(substTerm)
 
