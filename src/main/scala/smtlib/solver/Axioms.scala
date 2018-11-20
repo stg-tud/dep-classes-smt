@@ -61,6 +61,28 @@ object Axioms {
                     ))
                 ))
 
+  /** c \in cs */
+  val elem = DefineFunRec(
+              FunctionDef(
+                "elem",
+                Seq(
+                  SortedVar("c", "Constraint"),
+                  SortedVar("cs", Constraints)
+                ),
+                Bool,
+                Match("cs", Seq(
+                  MatchCase(Pattern("nil"),
+                    False()),
+                  MatchCase(Pattern("insert", Seq("hd", "tl")),
+                    Ite(
+                      Eq("c", "hd"),
+                      True(),
+                      Apply("elem", Seq("c", "tl"))
+                    )
+                  )
+                ))
+              ))
+
   /** String is a class name  */
   val classProp = DeclareFun("class", Seq("String"), Bool)
 
@@ -251,22 +273,42 @@ object Axioms {
                     ))
   val cSubst = Assert(substTerm)
 
-//  val isPathEqProp = DeclareFun(SimpleSymbol("isPathEq"), Seq(SimpleSymbol("Constraint")), Bool)
-////  val isPathEqProp = DefineFun(FunctionDef(SimpleSymbol("isPathEq"), Seq(SortedVar(SimpleSymbol("c"), SimpleSymbol("Constraint"))), Bool,
-////    Exists(Seq(SortedVar(SimpleSymbol("p1"), SimpleSymbol("Path")), SortedVar(SimpleSymbol("p2"), SimpleSymbol("Path"))),
-////      Eq("c", Apply(SimpleSymbol("pathEq"), Seq(SimpleSymbol("p1"), SimpleSymbol("p2")))))))
-//  val isInstanceOfProp = DeclareFun(SimpleSymbol("isInstanceOf"), Seq(SimpleSymbol("Constraint")), Bool)
-//  val isInstantiatedByProp = DeclareFun(SimpleSymbol("isInstantiatedBy"), Seq(SimpleSymbol("Constraint")), Bool)
-
-  // TODO: add property that ordering in constraints list doesnt matter?
+  val entailsOrdering = Assert(
+                          Forall(
+                            Seq(
+                              SortedVar("cs1", Constraints),
+                              SortedVar("cs2", Constraints),
+                              SortedVar("c", "Constraint")
+                            ),
+                            Implies(
+                              And(
+                                Forall(
+                                  Seq(SortedVar("a", "Constraint")),
+                                  And(
+                                    Implies(
+                                      Apply("elem", Seq("a", "cs1")),
+                                      Apply("elem", Seq("a", "cs2"))
+                                    ),
+                                    Implies(
+                                      Not(Apply("elem", Seq("a", "cs1"))),
+                                      Not(Apply("elem", Seq("a", "cs2")))
+                                    )
+                                  )
+                                ),
+                                Apply("entails", Seq("cs1", "c"))
+                              ),
+                              Apply("entails", Seq("cs2", "c"))
+                            )
+                          ))
 
   val datatypes = Seq(pathDatatype, constraintDatatype)
-  val funs = Seq(concat)
+  val funs = Seq(concat, elem)
   val baseProps = Seq(classProp, varProp)
   val subst = Seq(substPath, substConstraint, substProp)
   val sequentCalculus = Seq(entails, cIdent, cRefl, cClass, cCut, cSubst)
+  val additionalProperties = Seq(entailsOrdering)
 
-  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ baseProps ++ subst ++ sequentCalculus)
+  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ baseProps ++ subst ++ sequentCalculus ++ additionalProperties)
 }
 
 object AxiomsTest extends App {
