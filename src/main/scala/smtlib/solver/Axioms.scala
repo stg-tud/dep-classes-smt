@@ -43,7 +43,7 @@ object Axioms {
   /** List concatenation */
   val concat = DefineFunRec(
                 FunctionDef(
-                  "concat",
+                  "conc",
                   Seq(
                     SortedVar("l1", Constraints),
                     SortedVar("l2", Constraints)
@@ -56,7 +56,7 @@ object Axioms {
                       MatchCase(Pattern("insert", Seq("hd", "tl")),
                         Apply("insert", Seq(
                           "hd",
-                          Apply("concat", Seq("tl", "l2"))
+                          Apply("conc", Seq("tl", "l2"))
                         )))
                     ))
                 ))
@@ -191,7 +191,7 @@ object Axioms {
                         "b"
                       ))),
                     Apply("entails", Seq(
-                      Apply("concat", Seq("as1", "as2")),
+                      Apply("conc", Seq("as1", "as2")),
                       "b"
                     ))))
   val cCut = Assert(cutTerm)
