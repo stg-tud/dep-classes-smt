@@ -219,6 +219,35 @@ object Axioms {
                     ))))
   val cCut = Assert(cutTerm)
 
+  // C-Subst
+  val substTerm = Forall(
+                    Seq(
+                      SortedVar("as", Constraints),
+                      SortedVar("x", "String"),
+                      SortedVar("a", "Constraint"),
+                      SortedVar("p1", "Path"),
+                      SortedVar("p2", "Path"),
+                      SortedVar("a1", "Constraint"),
+                      SortedVar("a2", "Constraint")
+                    ),
+                    Implies(
+                      And(
+                        Apply("entails", Seq(
+                          "as",
+                          Apply("path-eq", Seq("p1", "p2"))
+                        )),
+                        And(
+                          Not(Eq("p1", "p2")),
+                          And(
+                            Apply("subst", Seq("a", "x", "p1", "a1")),
+                            And(
+                              Apply("subst", Seq("a", "x", "p2", "a2")) /* subst p2 */,
+                              Apply("entails", Seq("as", "a1"))
+                            )))),
+                      Apply("entails", Seq("as", "a2"))
+                    ))
+  val cSubst = Assert(substTerm)
+
 //  val isPathEqProp = DeclareFun(SimpleSymbol("isPathEq"), Seq(SimpleSymbol("Constraint")), Bool)
 ////  val isPathEqProp = DefineFun(FunctionDef(SimpleSymbol("isPathEq"), Seq(SortedVar(SimpleSymbol("c"), SimpleSymbol("Constraint"))), Bool,
 ////    Exists(Seq(SortedVar(SimpleSymbol("p1"), SimpleSymbol("Path")), SortedVar(SimpleSymbol("p2"), SimpleSymbol("Path"))),
@@ -226,11 +255,13 @@ object Axioms {
 //  val isInstanceOfProp = DeclareFun(SimpleSymbol("isInstanceOf"), Seq(SimpleSymbol("Constraint")), Bool)
 //  val isInstantiatedByProp = DeclareFun(SimpleSymbol("isInstantiatedBy"), Seq(SimpleSymbol("Constraint")), Bool)
 
+  // TODO: add property that ordering in constraints list doesnt matter?
+
   val datatypes = Seq(pathDatatype, constraintDatatype)
   val funs = Seq(concat)
   val baseProps = Seq(classProp, varProp)
   val subst = Seq(substPath, substConstraint, substProp)
-  val sequentCalculus = Seq(entails, cIdent, cRefl, cClass, cCut)
+  val sequentCalculus = Seq(entails, cIdent, cRefl, cClass, cCut, cSubst)
 
   def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ baseProps ++ subst ++ sequentCalculus)
 }
