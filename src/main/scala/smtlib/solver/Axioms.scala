@@ -101,6 +101,9 @@ object Axioms {
   /** String is a variable name  */
   val varProp = DeclareFun("variable", Seq("String"), Bool)
 
+  /** \all x. cs => c in program */
+  val inProgProp = DeclareFun("in-program", Seq("String", Constraints, "Constraint"), Bool)
+
   /**
     * Substitution function for paths.
     * param p1 Base path for the substitution
@@ -318,7 +321,11 @@ object Axioms {
                   ),
                   Implies(
                     And(
-                      True(), // TODO: x. cs1 => c in prog
+                      Apply("in-program", Seq(
+                        "x",
+                        "cs1",
+                        "c"
+                      )),
                       Apply("Entails", Seq(
                         "cs2",
                         Apply("subst-constraints", Seq("cs1", "x", "p"))
@@ -361,7 +368,7 @@ object Axioms {
 
   val datatypes = Seq(pathDatatype, constraintDatatype)
   val funs = Seq(concat, elem)
-  val baseProps = Seq(classProp, varProp)
+  val baseProps = Seq(classProp, varProp, inProgProp)
   val subst = Seq(substPath, substConstraint, substConstraints, substProp)
   val sequentCalculus = Seq(entails, Entails, cIdent, cRefl, cClass, cCut, cSubst, cProg)
   val additionalProperties = Seq(entailsOrdering)
