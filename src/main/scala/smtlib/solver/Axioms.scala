@@ -83,18 +83,6 @@ object Axioms {
                 ))
               ))
 
-  // TODO: asdf
-//  val bigAnd = DefineFunRec(
-//                FunctionDef("big-and",
-//                  Seq(
-//                    SortedVar("l", Constraints)
-//                  ),
-//                  Bool,
-//                  Match("l", Seq(
-//                    MatchCase(Pattern("nil"), True()),
-//                    MatchCase(Pattern("insert", Seq("hd", "tl")), And("hd", Apply("big-and", Seq("tl"))))
-//                  ))))
-
   /** String is a class name  */
   val classProp = DeclareFun("class", Seq("String"), Bool)
 
@@ -165,6 +153,13 @@ object Axioms {
                               ))
                           ))
 
+  /**
+    * Substitution function for a list of constraints.
+    * param cs Base constraints for the substitution
+    * param x Variable name to be substituted
+    * param p Path to be substituted
+    * return `x` substituted with `p` in each `c` of `cs`
+    */
   val substConstraints = DefineFunRec(
                           FunctionDef(
                             "subst-constraints",
@@ -237,19 +232,6 @@ object Axioms {
                         ))
                     ))
                   ))
-
-//  val Entails = DeclareFun("Entails", Seq(Constraints, Constraints), Bool)
-//  val EntailsBody = Assert(
-//                      Forall(Seq(
-//                        SortedVar("cs1", Constraints),
-//                        SortedVar("cs2", Constraints)),
-//                        Implies(
-//                          Forall(Seq(SortedVar("c", "Constraint")),
-//                            And(
-//                              Apply("elem", Seq("c", "cs2")),
-//                              Apply("entails", Seq("cs1", "c"))
-//                            )),
-//                          Apply("Entails", Seq("cs1", "cs2")))))
 
   // C-Ident
   private val identTerm = Forall(Seq(SortedVar("c", "Constraint")),
