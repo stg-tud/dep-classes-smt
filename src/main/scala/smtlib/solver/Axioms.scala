@@ -219,6 +219,18 @@ object Axioms {
     */
   val entails = DeclareFun("entails", Seq(Constraints, "Constraint"), Bool)
   val Entails = DeclareFun("Entails", Seq(Constraints, Constraints), Bool) // TODO: define body
+  
+  val EntailsBody = Assert(
+                      Forall(Seq(
+                        SortedVar("cs1", Constraints),
+                        SortedVar("cs2", Constraints)),
+                        Implies(
+                          Forall(Seq(SortedVar("c", "Constraint")),
+                            And(
+                              Apply("elem", Seq("c", "cs2")),
+                              Apply("entails", Seq("cs1", "c"))
+                            )),
+                          Apply("Entails", Seq("cs1", "cs2")))))
 
   // C-Ident
   private val identTerm = Forall(Seq(SortedVar("c", "Constraint")),
