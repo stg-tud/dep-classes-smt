@@ -216,21 +216,40 @@ object Axioms {
   /**
     * dcc's sequent calculus judgement
     * entails :: List Constraint -> Constraint -> Bool
+    * Entails :: List Constraint -> List Constraint -> Bool
     */
   val entails = DeclareFun("entails", Seq(Constraints, "Constraint"), Bool)
-  val Entails = DeclareFun("Entails", Seq(Constraints, Constraints), Bool) // TODO: define body
-  
-  val EntailsBody = Assert(
-                      Forall(Seq(
-                        SortedVar("cs1", Constraints),
-                        SortedVar("cs2", Constraints)),
-                        Implies(
-                          Forall(Seq(SortedVar("c", "Constraint")),
-                            And(
-                              Apply("elem", Seq("c", "cs2")),
-                              Apply("entails", Seq("cs1", "c"))
-                            )),
-                          Apply("Entails", Seq("cs1", "cs2")))))
+  val Entails = DefineFunRec(
+                  FunctionDef(
+                    "Entails",
+                    Seq(
+                      SortedVar("cs1", Constraints),
+                      SortedVar("cs2", Constraints)
+                    ),
+                    Bool,
+                    Match("cs2", Seq(
+                      MatchCase(Pattern("nil"),
+                        True()),
+                      MatchCase(Pattern("insert", Seq("hd", "tl")),
+                        And(
+                          Apply("entails", Seq("cs1", "hd")),
+                          Apply("Entails", Seq("cs1", "tl"))
+                        ))
+                    ))
+                  ))
+
+//  val Entails = DeclareFun("Entails", Seq(Constraints, Constraints), Bool)
+//  val EntailsBody = Assert(
+//                      Forall(Seq(
+//                        SortedVar("cs1", Constraints),
+//                        SortedVar("cs2", Constraints)),
+//                        Implies(
+//                          Forall(Seq(SortedVar("c", "Constraint")),
+//                            And(
+//                              Apply("elem", Seq("c", "cs2")),
+//                              Apply("entails", Seq("cs1", "c"))
+//                            )),
+//                          Apply("Entails", Seq("cs1", "cs2")))))
 
   // C-Ident
   private val identTerm = Forall(Seq(SortedVar("c", "Constraint")),
