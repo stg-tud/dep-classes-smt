@@ -390,13 +390,30 @@ object Axioms {
 }
 
 object AxiomsTest extends App {
-  val solver = new Z3Solver(Axioms.all, true)
+  val options = Seq(SetOption(ProduceProofs(true)))
 
-  solver.addCommand(DeclareConst("l", Sorts("List", Seq("Constraint"))))
-  solver.addCommand(DeclareConst("c", "Constraint"))
-  solver.addCommand(Assert(Eq("l", Apply("insert", Seq("c", "nil")))))
+  val solver = new Z3Solver(Axioms.all, options,true)
+
+  val pths = Seq(
+    DeclareConst("p1", "Path"),
+    DeclareConst("p2", "Path"),
+    DeclareConst("p3", "Path")
+  )
+  solver.addCommands(pths)
+
+  val cs1 = DeclareConst("cs1", Sorts("List", Seq("Constraint")))
+  val cs2 = DeclareConst("cs2", Sorts("List", Seq("Constraint")))
+  val cs1Empty = Assert(Eq("cs1", "nil"))
+  val cs2Content = Assert(Eq("cs2", Apply("insert", Seq(Apply("path-eq", Seq("p1", "p2")), "nil"))))
+
+  solver.addCommand(cs1)
+  solver.addCommand(cs2)
+  solver.addCommand(cs1Empty)
+  solver.addCommand(cs2Content)
+
 
   solver.addCommand(CheckSat)
+  solver.addCommand(GetProof)
 
   solver.execute()
 }

@@ -9,7 +9,7 @@ import scala.sys.process._
 import ExecutionContext.Implicits.global
 import scala.io.Source
 
-class Z3Solver(val axioms: SMTLibScript, var debug: Boolean = false) extends SMTSolver {
+class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.empty, var debug: Boolean = false) extends SMTSolver {
   // commands to send to the solver
   var commands: Seq[SMTLibCommand] = Seq.empty
 
@@ -53,6 +53,13 @@ class Z3Solver(val axioms: SMTLibScript, var debug: Boolean = false) extends SMT
     val io = new ProcessIO(
       in => {
         val writer = new PrintWriter(in)
+
+        options.foreach(command => {
+          val format = command.format()
+          if (debug) println(s"< $format")
+          writer.println(format)
+        })
+
         axioms.commands.foreach(command => {
           val format = command.format()
           if (debug) println(s"< $format")

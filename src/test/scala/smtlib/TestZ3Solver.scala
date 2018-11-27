@@ -74,7 +74,7 @@ class TestZ3Solver extends FunSuite {
   }
 
   test("Axioms with debugging") {
-    val z3 = new Z3Solver(script, true)
+    val z3 = new Z3Solver(script, debug=true)
     val (status, output) = z3.execute()
 
     assert(status == 0)

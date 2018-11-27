@@ -218,7 +218,7 @@ object OldAxioms {
 }
 
 object OldAxiomsTest extends App {
-  val solver = new Z3Solver(OldAxioms.asSMTLib, true)
+  val solver = new Z3Solver(OldAxioms.asSMTLib, debug=true)
 
   val p1 = DeclareConst("p1", "Path")
   val p2 = DeclareConst("p2", "Path")
