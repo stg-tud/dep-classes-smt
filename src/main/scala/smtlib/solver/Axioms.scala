@@ -4,6 +4,7 @@ import smtlib.SMTLibScript
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
+// TODO: Z3 version 4.8.3 - 64 bit produces errors for nil (in pattern matching). mismatching number of variables supplied to constructor
 object Axioms {
   private val Constraints = Sorts("List", Seq("Constraint"))
 
@@ -239,7 +240,7 @@ object Axioms {
                               Apply("insert", Seq("c", "nil")),
                               "c"
                             )))
-  val cIdent = Assert(identTerm)
+  val cIdent = Assert(Annotate(identTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Ident"))))
 
   // C-Refl
   private val reflTerm = Forall(Seq(SortedVar("p", "Path")),
@@ -247,7 +248,7 @@ object Axioms {
                               "nil",
                               Apply("path-eq", Seq("p", "p"))
                             )))
-  val cRefl = Assert(reflTerm)
+  val cRefl = Assert(Annotate(reflTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Refl"))))
 
   // C-Class
   private val classTerm = Forall(
@@ -268,7 +269,7 @@ object Axioms {
                                 Apply("instance-of", Seq("p", "c"))
                               ))
                             ))
-  val cClass = Assert(classTerm)
+  val cClass = Assert(Annotate(classTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Class"))))
 
   // C-Cut
   val cutTerm = Forall(
@@ -289,7 +290,7 @@ object Axioms {
                       Apply("conc", Seq("cs1", "cs2")),
                       "b"
                     ))))
-  val cCut = Assert(cutTerm)
+  val cCut = Assert(Annotate(cutTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Cut"))))
 
   // C-Subst
   val substTerm = Forall(
@@ -321,7 +322,7 @@ object Axioms {
                             )))),
                       Apply("entails", Seq("cs", "a2"))
                     ))
-  val cSubst = Assert(substTerm)
+  val cSubst = Assert(Annotate(substTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Subst"))))
 
   // C-Prog
   val progTerm = Forall(
@@ -349,35 +350,34 @@ object Axioms {
                       Apply("subst-constraint", Seq("c", "x", "p"))
                     ))
                   ))
-  val cProg = Assert(progTerm)
+  val cProg = Assert(Annotate(progTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
 
-  val entailsOrdering = Assert(
-                          Forall(
-                            Seq(
-                              SortedVar("cs1", Constraints),
-                              SortedVar("cs2", Constraints),
-                              SortedVar("c", "Constraint")
-                            ),
-                            Implies(
-                              And(
-                                Forall(
-                                  Seq(SortedVar("a", "Constraint")),
-                                  And(
-                                    Implies(
-                                      Apply("elem", Seq("a", "cs1")),
-                                      Apply("elem", Seq("a", "cs2"))
-                                    ),
-                                    Implies(
-                                      Not(Apply("elem", Seq("a", "cs1"))),
-                                      Not(Apply("elem", Seq("a", "cs2")))
-                                    )
-                                  )
-                                ),
-                                Apply("entails", Seq("cs1", "c"))
+  val entailsOrderingTerm = Forall(
+                              Seq(
+                                SortedVar("cs1", Constraints),
+                                SortedVar("cs2", Constraints),
+                                SortedVar("c", "Constraint")
                               ),
-                              Apply("entails", Seq("cs2", "c"))
-                            )
-                          ))
+                              Implies(
+                                And(
+                                  Forall(
+                                    Seq(SortedVar("a", "Constraint")),
+                                    And(
+                                      Implies(
+                                        Apply("elem", Seq("a", "cs1")),
+                                        Apply("elem", Seq("a", "cs2"))
+                                      ),
+                                      Implies(
+                                        Not(Apply("elem", Seq("a", "cs1"))),
+                                        Not(Apply("elem", Seq("a", "cs2")))
+                                      )
+                                    )
+                                  ),
+                                  Apply("entails", Seq("cs1", "c"))
+                                ),
+                                Apply("entails", Seq("cs2", "c"))
+                              ))
+  val entailsOrdering = Assert(Annotate(entailsOrderingTerm, Seq(KeyValueAttribute(Keyword("named"), "ordering"))))
 
   val datatypes = Seq(pathDatatype, constraintDatatype)
   val funs = Seq(concat, elem)
