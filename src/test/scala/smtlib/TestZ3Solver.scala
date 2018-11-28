@@ -41,17 +41,24 @@ class TestZ3Solver extends FunSuite {
 
     val assert4 = Assert(Not(Eq("a", 0)))
 
-    z3.addCommands(Seq(assert1, assert2, assert3, assert4, CheckSat))
+    z3.addCommands(Seq(assert1, assert2, assert3, assert4))
 
-    assert(preSize + 5 == z3.commands.size)
+    assert(preSize + 4 == z3.commands.size)
     assert(z3.commands(preSize) == assert1)
     assert(z3.commands(preSize+1) == assert2)
     assert(z3.commands(preSize+2) == assert3)
     assert(z3.commands(preSize+3) == assert4)
-    assert(z3.commands(preSize+4) == CheckSat)
+  }
+
+  test("checksat SatFormula") {
+    val sat = z3.checksat()
+
+    assert(sat == Sat)
   }
 
   test("Execute SatFormula") {
+    z3.addCommand(CheckSat)
+
     val (status, output) = z3.execute()
 
     assert(status == 0)
@@ -71,6 +78,12 @@ class TestZ3Solver extends FunSuite {
     assert(status == 0)
     assert(output.size == 1)
     assert(output.head == "unsat")
+  }
+
+  test("checksat UnsatFormula") {
+    val sat = z3.checksat()
+
+    assert(sat == Unsat)
   }
 
   test("Axioms with debugging") {
@@ -102,6 +115,11 @@ class TestZ3Solver extends FunSuite {
     assert(status == 0)
     assert(output.size == 1)
     assert(output.head == "unknown")
+  }
+
+  test("checksat Unknown") {
+    val sat = z3.checksat()
+    assert(sat == Unknown)
   }
 
   // TODO: remove timeout part in Z3Solver?

@@ -102,33 +102,41 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
   }
 
   override def checksat(timeout: Int): CheckSatResponse = {
+    val pre = commands
+
     addCommand(CheckSat)
 
     val (status, output) = execute(timeout)
 
+    commands = pre
+
     if (status == 0 && output.nonEmpty) {
       parseSatResponse(output.last)
+    } else {
+      // In case of timeout
+      Unknown
     }
-
-    // In case of timeout
-    Unknown
   }
 
   override def getModel(timeout: Int): (CheckSatResponse, scala.Option[GetModelResponse]) = {
+    val pre = commands
+
     addCommand(CheckSat)
     addCommand(GetModel)
 
     val (status, output) = execute(timeout)
+
+    commands = pre
 
     if (status == 0 && output.nonEmpty) {
       val sat = parseSatResponse(output.head)
       val model = None // TODO: Some(modelparsing)
 
       (sat, model)
+    } else {
+      // In case of timeout
+      (Unknown, None)
     }
-
-    // In case of timeout
-    (Unknown, None)
   }
 
   override def addCommand(command: SMTLibCommand): Boolean = {
