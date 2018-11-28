@@ -2,6 +2,7 @@ package smtlib.solver
 
 import java.io.PrintWriter
 
+import smtlib.syntax._
 import smtlib.{SMTLibCommand, SMTLibScript}
 
 import scala.concurrent._
@@ -98,6 +99,36 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
         println("z3 timeout")
         (-1, output)
     }
+  }
+
+  override def checksat(timeout: Int): CheckSatResponse = {
+    addCommand(CheckSat)
+
+    val (status, output) = execute(timeout)
+
+    if (status == 0 && output.nonEmpty) {
+      parseSatResponse(output.last)
+    }
+
+    // In case of timeout
+    Unknown
+  }
+
+  override def getModel(timeout: Int): (CheckSatResponse, scala.Option[GetModelResponse]) = {
+    addCommand(CheckSat)
+    addCommand(GetModel)
+
+    val (status, output) = execute(timeout)
+
+    if (status == 0 && output.nonEmpty) {
+      val sat = parseSatResponse(output.head)
+      val model = None // TODO: Some(modelparsing)
+
+      (sat, model)
+    }
+
+    // In case of timeout
+    (Unknown, None)
   }
 
   override def addCommand(command: SMTLibCommand): Boolean = {

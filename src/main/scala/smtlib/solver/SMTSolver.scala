@@ -1,5 +1,6 @@
 package smtlib.solver
 
+import smtlib.syntax.{CheckSatResponse, GetModelResponse, Sat, Unknown, Unsat}
 import smtlib.{SMTLibCommand, SMTLibScript}
 
 trait SMTSolver {
@@ -46,7 +47,39 @@ trait SMTSolver {
   /**
     * Executes the SMTSolver with the currently held commands.
     * @param timeout The timeout for each query to the SMTSolver in milliseconds.
-    * @return The return code of the SMTSolver or -1 in case of a timeout.
+    * @return The return code of the SMTSolver or -1 in case of a timeout
+    *         and the stdout of the solver.
     */
   def execute(timeout: Int = 1000): (Int, Seq[String])
+
+  /**
+    * Executes the SMTSolver with the currently held commands
+    * and checks them for satisfiability.
+    * @param timeout The timeout for each query to the SMTSolver in milliseconds.
+    * @return `Sat` if the input is satisfiable
+    *        `Unsat` if the infput is unsatisfiable
+    *        `Unknown` if the solver can't decide.
+    */
+  def checksat(timeout: Int = 1000): CheckSatResponse
+
+  /**
+    * Executes the SMTSolver with the currently held commands
+    * and checks them for satisfiability
+    * and retrieves a model from the solver if possible.
+    * @param timeout The timeout for each query to the SMTSolver in milliseconds.
+    * @return `Sat` if the input is satisfiable
+    *        `Unsat` if the infput is unsatisfiable
+    *        `Unknown` if the solver can't decide.
+    *        as well as a model in case of `Sat`
+    */
+  def getModel(timeout: Int = 1000): (CheckSatResponse, Option[GetModelResponse])
+
+  protected def parseSatResponse(s: String): CheckSatResponse = {
+    s match {
+      case "sat"     => Sat
+      case "unsat"   => Unsat
+      case "unknown" => Unknown
+      case _         => Unknown // if error
+    }
+  }
 }
