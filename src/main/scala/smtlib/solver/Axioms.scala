@@ -403,7 +403,11 @@ object Axioms {
     case xs :+ x => Apply("pth", Seq(pth(xs), SMTLibString(x)))
   }
 
+  def cls(s: String) = Apply("class", Seq(SMTLibString(s)))
+
   def pathEq(p1: Term, p2: Term): Term = Apply("path-eq", Seq(p1, p2))
+  def instanceOf(p: Term, c: String) = Apply("instance-of", Seq(p, SMTLibString(c)))
+  def instantiatedBy(p: Term, c: String) = Apply("instantiated-by", Seq(p, SMTLibString(c)))
 }
 
 object AxiomsTest extends App {

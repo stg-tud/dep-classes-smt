@@ -28,9 +28,9 @@ class TestAxioms extends FunSuite {
 
   test("C-Ident") {
     val c = Axioms.pathEq(Axioms.path("x"), Axioms.path("y"))
-    val ident = Assert(Not(Axioms.entails(Seq(c), c)))
+    val assertion = Assert(Not(Axioms.entails(Seq(c), c)))
 
-    z3.addCommands(Seq(ident, CheckSat, GetUnsatCore))
+    z3.addCommands(Seq(assertion, CheckSat, GetUnsatCore))
     val (exit, out) = z3.execute()
     z3.flush()
 
@@ -42,9 +42,9 @@ class TestAxioms extends FunSuite {
 
   test("C-Refl") {
     // !(nil |- x.f = x.f)
-    val refl = Assert(Not(Axioms.entails(Seq(), Axioms.pathEq(Axioms.path("x.f"), Axioms.path("x.f")))))
+    val assertion = Assert(Not(Axioms.entails(Seq(), Axioms.pathEq(Axioms.path("x.f"), Axioms.path("x.f")))))
 
-    z3.addCommands(Seq(refl, CheckSat, GetUnsatCore))
+    z3.addCommands(Seq(assertion, CheckSat, GetUnsatCore))
     val (exit, out) = z3.execute()
     z3.flush()
 
@@ -52,5 +52,20 @@ class TestAxioms extends FunSuite {
     assert(out.size == 2)
     assert(out.head == Unsat.format())
     assert(out(1) == "(C-Refl)")
+  }
+
+  test("C-Class") {
+    val of = Axioms.instanceOf(Axioms.path("x"), "Cls")
+    val by = Axioms.instantiatedBy(Axioms.path("x"), "Cls")
+    val assertion = Assert(Not(Axioms.entails(Seq(by), of)))
+
+    z3.addCommands(Seq(Assert(Axioms.cls("Cls")), assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+    assert(out(1) == "(C-Ident C-Class)")
   }
 }
