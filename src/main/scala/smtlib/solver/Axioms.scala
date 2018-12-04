@@ -14,7 +14,7 @@ object Axioms {
     *   var String
     *   pth Path String
     */
-  val pathDatatype = DeclareDatatype("Path", ConstructorDatatype(Seq(
+  private val pathDatatype = DeclareDatatype("Path", ConstructorDatatype(Seq(
     ConstructorDec("var", Seq(SelectorDec("id", "String"))),
     ConstructorDec("pth", Seq(
       SelectorDec("obj", "Path"),
@@ -29,7 +29,7 @@ object Axioms {
     *   instance-of Path String
     *   instantiated-by Path String
     */
-  val constraintDatatype = DeclareDatatype(SimpleSymbol("Constraint"), ConstructorDatatype(Seq(
+  private val constraintDatatype = DeclareDatatype(SimpleSymbol("Constraint"), ConstructorDatatype(Seq(
     ConstructorDec(SimpleSymbol("path-eq"), Seq(
       SelectorDec(SimpleSymbol("p-left"), SimpleSymbol("Path")),
       SelectorDec(SimpleSymbol("p-right"), SimpleSymbol("Path")))),
@@ -42,7 +42,7 @@ object Axioms {
   )))
 
   /** List concatenation */
-  val concat = DefineFunRec(
+  private val concat = DefineFunRec(
                 FunctionDef(
                   "conc",
                   Seq(
@@ -63,7 +63,7 @@ object Axioms {
                 ))
 
   /** c \in cs */
-  val elem = DefineFunRec(
+  private val elem = DefineFunRec(
               FunctionDef(
                 "elem",
                 Seq(
@@ -85,13 +85,13 @@ object Axioms {
               ))
 
   /** String is a class name  */
-  val classProp = DeclareFun("class", Seq("String"), Bool)
+  private val classProp = DeclareFun("class", Seq("String"), Bool)
 
   /** String is a variable name  */
-  val varProp = DeclareFun("variable", Seq("String"), Bool)
+  private val varProp = DeclareFun("variable", Seq("String"), Bool)
 
   /** \all x. cs => c in program */
-  val inProgProp = DeclareFun("in-program", Seq("String", Constraints, "Constraint"), Bool)
+  private val inProgProp = DeclareFun("in-program", Seq("String", Constraints, "Constraint"), Bool)
 
   /**
     * Substitution function for paths.
@@ -100,7 +100,7 @@ object Axioms {
     * param p2 Path to be substituted
     * return `x` substituted with `p2` in `p1`
     */
-  val substPath = DefineFunRec(
+  private val substPath = DefineFunRec(
                     FunctionDef(
                       "subst-path",
                       Seq(
@@ -126,7 +126,7 @@ object Axioms {
     * param p Path to be substituted
     * return `x` substituted with `p` in `c`
     */
-  val substConstraint = DefineFun(
+  private val substConstraint = DefineFun(
                           FunctionDef(
                             "subst-constraint",
                             Seq(
@@ -161,7 +161,7 @@ object Axioms {
     * param p Path to be substituted
     * return `x` substituted with `p` in each `c` of `cs`
     */
-  val substConstraints = DefineFunRec(
+  private val substConstraints = DefineFunRec(
                           FunctionDef(
                             "subst-constraints",
                             Seq(
@@ -191,7 +191,7 @@ object Axioms {
     * return true if `x` substituted with `p` in `c1` equals `c2`,
     *        false otherwise
     */
-  val substProp = DefineFun(
+  private val substProp = DefineFun(
                     FunctionDef(
                       "subst",
                       Seq(
@@ -214,8 +214,8 @@ object Axioms {
     * entails :: List Constraint -> Constraint -> Bool
     * Entails :: List Constraint -> List Constraint -> Bool
     */
-  val entails = DeclareFun("entails", Seq(Constraints, "Constraint"), Bool)
-  val Entails = DefineFunRec(
+  private val entailsProp = DeclareFun("entails", Seq(Constraints, "Constraint"), Bool)
+  private val EntailsProp = DefineFunRec(
                   FunctionDef(
                     "Entails",
                     Seq(
@@ -240,7 +240,7 @@ object Axioms {
                               Apply("insert", Seq("c", "nil")),
                               "c"
                             )))
-  val cIdent = Assert(Annotate(identTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Ident"))))
+  private val cIdent = Assert(Annotate(identTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Ident"))))
 
   // C-Refl
   private val reflTerm = Forall(Seq(SortedVar("p", "Path")),
@@ -248,7 +248,7 @@ object Axioms {
                               "nil",
                               Apply("path-eq", Seq("p", "p"))
                             )))
-  val cRefl = Assert(Annotate(reflTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Refl"))))
+  private val cRefl = Assert(Annotate(reflTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Refl"))))
 
   // C-Class
   private val classTerm = Forall(
@@ -269,10 +269,10 @@ object Axioms {
                                 Apply("instance-of", Seq("p", "c"))
                               ))
                             ))
-  val cClass = Assert(Annotate(classTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Class"))))
+  private val cClass = Assert(Annotate(classTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Class"))))
 
   // C-Cut
-  val cutTerm = Forall(
+  private val cutTerm = Forall(
                   Seq(
                     SortedVar("cs1", Constraints),
                     SortedVar("cs2", Constraints),
@@ -290,10 +290,10 @@ object Axioms {
                       Apply("conc", Seq("cs1", "cs2")),
                       "b"
                     ))))
-  val cCut = Assert(Annotate(cutTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Cut"))))
+  private val cCut = Assert(Annotate(cutTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Cut"))))
 
   // C-Subst
-  val substTerm = Forall(
+  private val substTerm = Forall(
                     Seq(
                       SortedVar("cs", Constraints),
                       SortedVar("x", "String"),
@@ -322,10 +322,10 @@ object Axioms {
                             )))),
                       Apply("entails", Seq("cs", "a2"))
                     ))
-  val cSubst = Assert(Annotate(substTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Subst"))))
+  private val cSubst = Assert(Annotate(substTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Subst"))))
 
   // C-Prog
-  val progTerm = Forall(
+  private val progTerm = Forall(
                   Seq(
                     SortedVar("cs1", Constraints),
                     SortedVar("cs2", Constraints),
@@ -350,9 +350,9 @@ object Axioms {
                       Apply("subst-constraint", Seq("c", "x", "p"))
                     ))
                   ))
-  val cProg = Assert(Annotate(progTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
+  private val cProg = Assert(Annotate(progTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
 
-  val entailsOrderingTerm = Forall(
+  private val entailsOrderingTerm = Forall(
                               Seq(
                                 SortedVar("cs1", Constraints),
                                 SortedVar("cs2", Constraints),
@@ -377,16 +377,33 @@ object Axioms {
                                 ),
                                 Apply("entails", Seq("cs2", "c"))
                               ))
-  val entailsOrdering = Assert(Annotate(entailsOrderingTerm, Seq(KeyValueAttribute(Keyword("named"), "ordering"))))
+  private val entailsOrdering = Assert(Annotate(entailsOrderingTerm, Seq(KeyValueAttribute(Keyword("named"), "ordering"))))
 
-  val datatypes = Seq(pathDatatype, constraintDatatype)
-  val funs = Seq(concat, elem)
-  val baseProps = Seq(classProp, varProp, inProgProp)
-  val subst = Seq(substPath, substConstraint, substConstraints, substProp)
-  val sequentCalculus = Seq(entails, Entails, cIdent, cRefl, cClass, cCut, cSubst, cProg)
-  val additionalProperties = Seq(entailsOrdering)
+  private val datatypes = Seq(pathDatatype, constraintDatatype)
+  private val funs = Seq(concat, elem)
+  private val baseProps = Seq(classProp, varProp, inProgProp)
+  private val subst = Seq(substPath, substConstraint, substConstraints, substProp)
+  private val sequentCalculus = Seq(entailsProp, EntailsProp, cIdent, cRefl, cClass, cCut, cSubst, cProg)
+  private val additionalProperties = Seq(/*entailsOrdering*/)
 
   def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ baseProps ++ subst ++ sequentCalculus ++ additionalProperties)
+
+  def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(premise.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs))), conclusion))
+
+  /**
+    * Converts a String representing a Path
+    * to a Term understandable by the SMTSolver.
+    * @param s The String representing a path. E.g.: x.f.g
+    * @return A Term representation of `s`. E.g: (pth (pth (var "x") "f") "g")
+    */
+  def path(s: String): Term = pth(s.split("\\.").toSeq)
+
+  private def pth(p: Seq[String]): Term = p match {
+    case Nil :+ x => Apply("var", Seq(SMTLibString(x)))
+    case xs :+ x => Apply("pth", Seq(pth(xs), SMTLibString(x)))
+  }
+
+  def pathEq(p1: Term, p2: Term): Term = Apply("path-eq", Seq(p1, p2))
 }
 
 object AxiomsTest extends App {
