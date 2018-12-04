@@ -68,4 +68,25 @@ class TestAxioms extends FunSuite {
     assert(out.head == Unsat.format())
     assert(out(1) == "(C-Ident C-Class)")
   }
+
+  test ("PathEq is transitive") { // TODO: solver does timeout producing unknown
+    val x = Axioms.path("x")
+    val y = Axioms.path("x")
+    val z = Axioms.path("x")
+
+    val xy = Axioms.pathEq(x, y)
+    val yz = Axioms.pathEq(y, z)
+    val xz = Axioms.pathEq(x, z)
+
+    val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
+
+    z3.addCommands(Seq(assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+    //assert(out(1) == "(C-Refl)")
+  }
 }

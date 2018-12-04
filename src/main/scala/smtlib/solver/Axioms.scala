@@ -411,30 +411,44 @@ object Axioms {
 }
 
 object AxiomsTest extends App {
-  val options = Seq(SetOption(ProduceProofs(true)))
+  val options = Seq(SetOption(ProduceProofs(true)), SetOption(ProduceUnsatCores(true)))
 
   val solver = new Z3Solver(Axioms.all, options,true)
 
-  val pths = Seq(
-    DeclareConst("p1", "Path"),
-    DeclareConst("p2", "Path"),
-    DeclareConst("p3", "Path")
-  )
-  solver.addCommands(pths)
+//  val pths = Seq(
+//    DeclareConst("p1", "Path"),
+//    DeclareConst("p2", "Path"),
+//    DeclareConst("p3", "Path")
+//  )
+//  solver.addCommands(pths)
+//
+//  val cs1 = DeclareConst("cs1", Sorts("List", Seq("Constraint")))
+//  val cs2 = DeclareConst("cs2", Sorts("List", Seq("Constraint")))
+//  val cs1Empty = Assert(Eq("cs1", "nil"))
+//  val cs2Content = Assert(Eq("cs2", Apply("insert", Seq(Apply("path-eq", Seq("p1", "p2")), "nil"))))
+//
+//  solver.addCommand(cs1)
+//  solver.addCommand(cs2)
+//  solver.addCommand(cs1Empty)
+//  solver.addCommand(cs2Content)
+//
+//
+//  solver.addCommand(CheckSat)
+//  solver.addCommand(GetProof)
+//
+//  solver.execute()
 
-  val cs1 = DeclareConst("cs1", Sorts("List", Seq("Constraint")))
-  val cs2 = DeclareConst("cs2", Sorts("List", Seq("Constraint")))
-  val cs1Empty = Assert(Eq("cs1", "nil"))
-  val cs2Content = Assert(Eq("cs2", Apply("insert", Seq(Apply("path-eq", Seq("p1", "p2")), "nil"))))
+  solver.flush()
+  val x = Axioms.path("x")
+  val y = Axioms.path("x")
+  val z = Axioms.path("x")
 
-  solver.addCommand(cs1)
-  solver.addCommand(cs2)
-  solver.addCommand(cs1Empty)
-  solver.addCommand(cs2Content)
+  val xy = Axioms.pathEq(x, y)
+  val yz = Axioms.pathEq(y, z)
+  val xz = Axioms.pathEq(x, z)
 
+  val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
 
-  solver.addCommand(CheckSat)
-  solver.addCommand(GetProof)
-
-  solver.execute()
+  solver.addCommands(Seq(assertion, CheckSat, GetUnsatCore))
+  val (exit, out) = solver.execute(30000)
 }
