@@ -35,8 +35,9 @@ class TestAxioms extends FunSuite {
     z3.flush()
 
     assert(exit == 0)
-    assert(out.nonEmpty)
+    assert(out.size == 2)
     assert(out.head == Unsat.format())
+    assert(out(1) == "(C-Ident)")
   }
 
   test("C-Refl") {
@@ -48,7 +49,8 @@ class TestAxioms extends FunSuite {
     z3.flush()
 
     assert(exit == 0)
-    assert(out.nonEmpty)
+    assert(out.size == 2)
     assert(out.head == Unsat.format())
+    assert(out(1) == "(C-Refl)")
   }
 }
