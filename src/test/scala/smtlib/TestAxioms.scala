@@ -134,18 +134,41 @@ class TestAxioms extends FunSuite {
     assert(out(1) == "(C-Ident C-Class)")
   }
 
-  test("PathEq is symmetric") { // TODO: same as transitive
+  test("PathEq is symmetric 1") { // TODO: same as transitive
     val x = Axioms.path("x")
     val y = Axioms.path("y")
     val xy = Axioms.pathEq(x, y)
     val yx = Axioms.pathEq(y, x)
 
-    val vars = Seq(Assert(Axioms.variable("x")), Assert(Axioms.variable("y")))
+    val knowledge = Seq(
+      Assert(Axioms.variable("x")),
+      Assert(Axioms.variable("y")),
+      Assert(Axioms.pathExists(x)),
+      Assert(Axioms.pathExists(y)),
+      Assert(Axioms.entails(Seq(), xy))
+    )
+    val assertion = Assert(Axioms.entails(Seq(), yx))
 
-    val knowledge = Assert(Axioms.entails(Seq(), xy))
-    val assertion = Assert(Not(Axioms.entails(Seq(), yx)))
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat))
+    val (exit, out) = z3.execute()
+    z3.flush()
+  }
 
-    z3.addCommands(vars ++ Seq(knowledge, assertion, CheckSat, GetUnsatCore))
+  test("PathEq is symmetric 2") { // TODO: same as transitive
+    val x = Axioms.path("x")
+    val y = Axioms.path("y")
+    val xy = Axioms.pathEq(x, y)
+    val yx = Axioms.pathEq(y, x)
+
+    val knowledge = Seq(
+      Assert(Axioms.variable("x")),
+      Assert(Axioms.variable("y")),
+      Assert(Axioms.pathExists(x)),
+      Assert(Axioms.pathExists(y))
+    )
+    val assertion = Assert(Not(Axioms.entails(Seq(xy), yx)))
+
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat))
     val (exit, out) = z3.execute(5000)
     z3.flush()
   }

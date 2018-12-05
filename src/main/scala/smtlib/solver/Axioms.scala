@@ -300,35 +300,66 @@ object Axioms {
   private val cCut = Assert(Annotate(cutTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Cut"))))
 
   // C-Subst //TODO: reorder stuff in the and statements and add path-exists requirement to hopefully help with search space
-  private val substTerm = Forall(
-                    Seq(
-                      SortedVar("cs", Constraints),
-                      SortedVar("x", "String"),
-                      SortedVar("a", "Constraint"),
-                      SortedVar("p1", "Path"),
-                      SortedVar("p2", "Path"),
-                      SortedVar("a1", "Constraint"),
-                      SortedVar("a2", "Constraint")
-                    ),
-                    Implies(
+//  private val substTerm = Forall(
+//                    Seq(
+//                      SortedVar("cs", Constraints),
+//                      SortedVar("x", "String"),
+//                      SortedVar("a", "Constraint"),
+//                      SortedVar("p1", "Path"),
+//                      SortedVar("p2", "Path"),
+//                      SortedVar("a1", "Constraint"),
+//                      SortedVar("a2", "Constraint")
+//                    ),
+//                    Implies(
+//                      And(
+//                        Apply("entails", Seq(
+//                          "cs",
+//                          Apply("path-eq", Seq("p1", "p2"))
+//                        )),
+//                        And(
+//                          Not(Eq("p1", "p2")),
+//                          And(
+//                            Apply("subst", Seq("a", "x", "p1", "a1")),
+//                            And(
+//                              Apply("subst", Seq("a", "x", "p2", "a2")),
+//                              And(
+//                                Apply("variable", Seq("x")),
+//                                Apply("entails", Seq("cs", "a1"))
+//                              )
+//                            )))),
+//                      Apply("entails", Seq("cs", "a2"))
+//                    ))
+private val substTerm = Forall(
+                  Seq(
+                    SortedVar("cs", Constraints),
+                    SortedVar("x", "String"),
+                    SortedVar("a", "Constraint"),
+                    SortedVar("p1", "Path"),
+                    SortedVar("p2", "Path"),
+                    SortedVar("a1", "Constraint"),
+                    SortedVar("a2", "Constraint")
+                  ),
+                  Implies(
+                    And(
+                      Apply("variable", Seq("x")),
                       And(
-                        Apply("entails", Seq(
-                          "cs",
-                          Apply("path-eq", Seq("p1", "p2"))
-                        )),
+                        Apply("path-exists", Seq("p1")),
                         And(
-                          Not(Eq("p1", "p2")),
+                          Apply("path-exists", Seq("p2")),
                           And(
-                            Apply("subst", Seq("a", "x", "p1", "a1")),
+                            Not(Eq("p1", "p2")),
                             And(
-                              Apply("subst", Seq("a", "x", "p2", "a2")),
+                              Apply("entails", Seq(
+                                "cs",
+                                Apply("path-eq", Seq("p1", "p2"))
+                              )),
                               And(
-                                Apply("variable", Seq("x")),
-                                Apply("entails", Seq("cs", "a1"))
-                              )
-                            )))),
-                      Apply("entails", Seq("cs", "a2"))
-                    ))
+                                Apply("subst", Seq("a", "x", "p1", "a1")),
+                                And(
+                                  Apply("subst", Seq("a", "x", "p2", "a2")),
+                                  Apply("entails", Seq("cs", "a1"))))))))),
+                    Apply("entails", Seq("cs", "a2"))
+                  ))
   private val cSubst = Assert(Annotate(substTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Subst"))))
 
   // C-Prog
