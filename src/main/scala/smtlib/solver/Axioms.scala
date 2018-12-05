@@ -246,7 +246,7 @@ object Axioms {
                             )))
   private val cIdent = Assert(Annotate(identTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Ident"))))
 
-  // C-Refl
+  // C-Refl TODO: evaluate if (path-exists p) should be applied to this
   private val reflTerm = Forall(Seq(SortedVar("p", "Path")),
                             Apply("entails", Seq(
                               "nil",
@@ -278,7 +278,7 @@ object Axioms {
                             ))
   private val cClass = Assert(Annotate(classTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Class"))))
 
-  // C-Cut
+  // C-Cut //TODO: look what can be done about the concat (ordering wise)
   private val cutTerm = Forall(
                   Seq(
                     SortedVar("cs1", Constraints),
@@ -299,7 +299,7 @@ object Axioms {
                     ))))
   private val cCut = Assert(Annotate(cutTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Cut"))))
 
-  // C-Subst
+  // C-Subst //TODO: reorder stuff in the and statements and add path-exists requirement to hopefully help with search space
   private val substTerm = Forall(
                     Seq(
                       SortedVar("cs", Constraints),

@@ -26,7 +26,8 @@ class TestAxioms extends FunSuite {
     assert(out.head == Sat.format())
   }
 
-  test("C-Ident") {
+  test("C-Ident 1") {
+    // !(x = y |- x = y)
     val c = Axioms.pathEq(Axioms.path("x"), Axioms.path("y"))
     val assertion = Assert(Not(Axioms.entails(Seq(c), c)))
 
@@ -38,6 +39,21 @@ class TestAxioms extends FunSuite {
     assert(out.size == 2)
     assert(out.head == Unsat.format())
     assert(out(1) == "(C-Ident)")
+  }
+
+  test("C-Ident 2") { // TODO: should this hold?
+    // !(x = y, x = y |- x = y)
+    val c = Axioms.pathEq(Axioms.path("x"), Axioms.path("y"))
+    val assertion = Assert(Not(Axioms.entails(Seq(c, c), c)))
+
+    z3.addCommands(Seq(assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+//    assert(out(1) == "(C-Ident)")
   }
 
   test("C-Refl 1") {
@@ -54,7 +70,7 @@ class TestAxioms extends FunSuite {
     assert(out(1) == "(C-Refl)")
   }
 
-  test("C-Refl 2") {
+  test("C-Refl 2") { // TODO: should this hold?
     // !(x.f :: Cls |- x.f = x.f)
     val x = Axioms.path("x.f")
     val xx = Axioms.pathEq(x, x)
@@ -67,9 +83,9 @@ class TestAxioms extends FunSuite {
     val (exit, out) = z3.execute()
     z3.flush()
 
-//    assert(exit == 0)
-//    assert(out.size == 2)
-//    assert(out.head == Unsat.format())
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
     //assert(out(1) == "(C-Refl)")
   }
 
