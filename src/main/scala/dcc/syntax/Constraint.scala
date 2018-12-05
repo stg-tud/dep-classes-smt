@@ -1,5 +1,8 @@
 package dcc.syntax
 
+import smtlib.solver.Axioms
+import smtlib.syntax.Term
+
 trait Constraint
 
 //case class PathEquivalence(p: Path, q: Path) extends Constraint
