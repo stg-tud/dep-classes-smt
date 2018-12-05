@@ -40,7 +40,7 @@ class TestAxioms extends FunSuite {
     assert(out(1) == "(C-Ident)")
   }
 
-  test("C-Refl") {
+  test("C-Refl 1") {
     // !(nil |- x.f = x.f)
     val assertion = Assert(Not(Axioms.entails(Seq(), Axioms.pathEq(Axioms.path("x.f"), Axioms.path("x.f")))))
 
@@ -54,12 +54,61 @@ class TestAxioms extends FunSuite {
     assert(out(1) == "(C-Refl)")
   }
 
-  test("C-Class") {
-    val of = Axioms.instanceOf(Axioms.path("x"), "Cls")
-    val by = Axioms.instantiatedBy(Axioms.path("x"), "Cls")
+  test("C-Refl 2") {
+    // !(x.f :: Cls |- x.f = x.f)
+    val x = Axioms.path("x.f")
+    val xx = Axioms.pathEq(x, x)
+    val of = Axioms.instanceOf(x, "Cls")
+    val cls = Assert(Axioms.cls("Cls"))
+
+    val assertion = Assert(Not(Axioms.entails(Seq(of), xx)))
+
+    z3.addCommands(Seq(cls, assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+//    assert(exit == 0)
+//    assert(out.size == 2)
+//    assert(out.head == Unsat.format())
+    //assert(out(1) == "(C-Refl)")
+  }
+
+  test("C-Class 1") {
+    val x = Axioms.path("x")
+
+    val of = Axioms.instanceOf(x, "Cls")
+    val by = Axioms.instantiatedBy(x, "Cls")
+
+    val knowledge = Seq(
+      Axioms.assertClass("Cls"),
+      Axioms.assertPath(x),
+      Assert(Axioms.entails(Seq(), by))
+    )
+    val assertion = Assert(Not(Axioms.entails(Seq(), of)))
+
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+    assert(out(1) == "(C-Class)")
+  }
+
+  test("C-Class 2") {
+    val x = Axioms.path("x")
+
+    val of = Axioms.instanceOf(x, "Cls")
+    val by = Axioms.instantiatedBy(x, "Cls")
+
+    val knowledge = Seq(
+      Axioms.assertClass("Cls"),
+      Axioms.assertPath(x)
+    )
     val assertion = Assert(Not(Axioms.entails(Seq(by), of)))
 
-    z3.addCommands(Seq(Assert(Axioms.cls("Cls")), assertion, CheckSat, GetUnsatCore))
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
     val (exit, out) = z3.execute()
     z3.flush()
 
@@ -69,10 +118,26 @@ class TestAxioms extends FunSuite {
     assert(out(1) == "(C-Ident C-Class)")
   }
 
-  test ("PathEq is transitive") { // TODO: solver does timeout producing unknown
+  test("PathEq is symmetric") { // TODO: same as transitive
     val x = Axioms.path("x")
-    val y = Axioms.path("x")
-    val z = Axioms.path("x")
+    val y = Axioms.path("y")
+    val xy = Axioms.pathEq(x, y)
+    val yx = Axioms.pathEq(y, x)
+
+    val vars = Seq(Assert(Axioms.variable("x")), Assert(Axioms.variable("y")))
+
+    val knowledge = Assert(Axioms.entails(Seq(), xy))
+    val assertion = Assert(Not(Axioms.entails(Seq(), yx)))
+
+    z3.addCommands(vars ++ Seq(knowledge, assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute(5000)
+    z3.flush()
+  }
+
+  test("PathEq is transitive") { // TODO: solver does timeout producing unknown entailment false or solver unable to instantiate "clever"?
+    val x = Axioms.path("x")
+    val y = Axioms.path("y")
+    val z = Axioms.path("z")
 
     val xy = Axioms.pathEq(x, y)
     val yz = Axioms.pathEq(y, z)

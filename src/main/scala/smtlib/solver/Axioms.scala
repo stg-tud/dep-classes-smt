@@ -5,6 +5,7 @@ import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
 // TODO: Z3 version 4.8.3 - 64 bit produces errors for nil (in pattern matching). mismatching number of variables supplied to constructor
+// TODO: update calculus rules with path-exists property
 object Axioms {
   private val Constraints = Sorts("List", Seq("Constraint"))
 
@@ -89,6 +90,9 @@ object Axioms {
 
   /** String is a variable name  */
   private val varProp = DeclareFun("variable", Seq("String"), Bool)
+
+  /** Path is valid */
+  private val pathProp = DeclareFun("path-exists", Seq("Path"), Bool)
 
   /** \all x. cs => c in program */
   private val inProgProp = DeclareFun("in-program", Seq("String", Constraints, "Constraint"), Bool)
@@ -259,10 +263,13 @@ object Axioms {
                             Implies(
                               And(
                                 Apply("class", Seq("c")),
-                                Apply("entails", Seq(
-                                  "cs",
-                                  Apply("instantiated-by", Seq("p", "c"))
-                                ))
+                                And(
+                                  Apply("path-exists", Seq("p")),
+                                  Apply("entails", Seq(
+                                    "cs",
+                                    Apply("instantiated-by", Seq("p", "c"))
+                                  ))
+                                )
                               ),
                               Apply("entails", Seq(
                                 "cs",
@@ -381,7 +388,7 @@ object Axioms {
 
   private val datatypes = Seq(pathDatatype, constraintDatatype)
   private val funs = Seq(concat, elem)
-  private val baseProps = Seq(classProp, varProp, inProgProp)
+  private val baseProps = Seq(classProp, varProp, pathProp, inProgProp)
   private val subst = Seq(substPath, substConstraint, substConstraints, substProp)
   private val sequentCalculus = Seq(entailsProp, EntailsProp, cIdent, cRefl, cClass, cCut, cSubst, cProg)
   private val additionalProperties = Seq(/*entailsOrdering*/)
@@ -404,6 +411,12 @@ object Axioms {
   }
 
   def cls(s: String) = Apply("class", Seq(SMTLibString(s)))
+  def variable(s: String) = Apply("variable", Seq(SMTLibString(s)))
+  def pathExists(t: Term) = Apply("path-exists", Seq(t))
+
+  def assertClass(s: String) = Assert(cls(s))
+  def assertVariable(s: String) = Assert(variable(s))
+  def assertPath(t: Term) = Assert(pathExists(t))
 
   def pathEq(p1: Term, p2: Term): Term = Apply("path-eq", Seq(p1, p2))
   def instanceOf(p: Term, c: String) = Apply("instance-of", Seq(p, SMTLibString(c)))
