@@ -55,7 +55,7 @@ class TestAxioms extends FunSuite {
     assert(out(1) == "(C-Refl)")
   }
 
-  test("C-Refl 2") { // TODO: should this hold?
+  test("C-Refl 2") {
     // !(x.f :: Cls |- x.f = x.f)
     val x = Axioms.path("x.f")
     val xx = Axioms.pathEq(x, x)
@@ -160,6 +160,36 @@ class TestAxioms extends FunSuite {
     assert(out.size == 2)
     assert(out.head == Unsat.format())
     assert(out(1) == "(C-Ident C-Weak)")
+  }
+
+  test("C-Perm") {
+    val x = Axioms.path("x")
+    val y = Axioms.path("y")
+    val z = Axioms.path("z")
+
+    val xy = Axioms.pathEq(x, y)
+    val yz = Axioms.pathEq(y, z)
+    val xz = Axioms.pathEq(x, z)
+
+    val knowledge = Seq(
+      Axioms.assertPath(x),
+      Axioms.assertPath(y),
+      Axioms.assertPath(z),
+      Axioms.assertVariable("x"),
+      Axioms.assertVariable("y"),
+      Axioms.assertVariable("z"),
+      Assert(Axioms.entails(Seq(yz, xz, xy), yz))
+    )
+    val assertion = Assert(Not(Axioms.entails(Seq(xy, yz, xz), yz)))
+
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+    assert(out(1) == "(C-Perm)")
   }
 
   test("PathEq is symmetric 1") { // TODO: same as transitive
