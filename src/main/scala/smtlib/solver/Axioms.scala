@@ -448,12 +448,13 @@ private val substTerm = Forall(
 
   private val datatypes = Seq(pathDatatype, constraintDatatype)
   private val funs = Seq(concat, elem)
-  private val baseProps = Seq(classProp, varProp, pathProp, inProgProp)
   private val subst = Seq(substPath, substConstraint, substConstraints, substProp)
-  private val sequentCalculus = Seq(entailsProp, EntailsProp, cIdent, cRefl, cClass, cCut, cSubst, cProg)
+  private val baseProps = Seq(classProp, varProp, pathProp, inProgProp)
+  private val dccProps = Seq(entailsProp, EntailsProp)
   private val structuralRules = Seq(cWeak, cPerm)
+  private val dccRules = Seq(cIdent, cRefl, cClass, cCut, cSubst, cProg)
 
-  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ baseProps ++ subst ++ sequentCalculus ++ structuralRules)
+  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ baseProps ++ dccProps ++ structuralRules ++ dccRules)
 
   def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(premise.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs))), conclusion))
 
