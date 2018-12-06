@@ -230,7 +230,9 @@ class TestAxioms extends FunSuite {
     z3.flush()
   }
 
-  test("PathEq is transitive") { // TODO: solver does timeout producing unknown entailment false or solver unable to instantiate "clever"?
+  // TODO: solver does timeout producing unknown
+  // TODO: how to help the solver instantiate properly
+  test("PathEq is transitive") {
     val x = Axioms.path("x")
     val y = Axioms.path("y")
     val z = Axioms.path("z")
@@ -239,9 +241,17 @@ class TestAxioms extends FunSuite {
     val yz = Axioms.pathEq(y, z)
     val xz = Axioms.pathEq(x, z)
 
+    val knowledge = Seq(
+      Axioms.assertVariable("x"),
+      Axioms.assertVariable("y"),
+      Axioms.assertVariable("z"),
+      Axioms.assertPath(x),
+      Axioms.assertPath(y),
+      Axioms.assertPath(z)
+    )
     val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
 
-    z3.addCommands(Seq(assertion, CheckSat, GetUnsatCore))
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
     val (exit, out) = z3.execute()
     z3.flush()
 
