@@ -3,7 +3,6 @@ package smtlib
 import org.scalatest.FunSuite
 import smtlib.solver.{Axioms, Z3Solver}
 import smtlib.syntax._
-import smtlib.syntax.Implicit._
 
 class TestAxioms extends FunSuite {
   val options: Seq[SMTLibCommand] = Seq(SetOption(ProduceProofs(true)), SetOption(ProduceUnsatCores(true)))
