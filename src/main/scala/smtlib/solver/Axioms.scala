@@ -238,20 +238,31 @@ object Axioms {
                     ))
                   ))
 
-  // C-Ident
+  // C-Ident // TODO: "weakened" version below
   private val identTerm = Forall(Seq(SortedVar("c", "Constraint")),
                             Apply("entails", Seq(
                               Apply("insert", Seq("c", "nil")),
                               "c"
                             )))
+//  private val identTerm = Forall(Seq(SortedVar("cs", Constraints), SortedVar("c", "Constraint")),
+//                            Implies(
+//                              Apply("elem", Seq("c", "cs")),
+//                              Apply("entails", Seq("cs", "c"))
+//                            ))
   private val cIdent = Assert(Annotate(identTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Ident"))))
 
   // C-Refl TODO: evaluate if (path-exists p) should be applied to this
+  // TODO: "weakened" version below, no nil requirement
   private val reflTerm = Forall(Seq(SortedVar("p", "Path")),
                             Apply("entails", Seq(
                               "nil",
                               Apply("path-eq", Seq("p", "p"))
                             )))
+//  private val reflTerm = Forall(Seq(SortedVar("cs", Constraints), SortedVar("p", "Path")),
+//                            Apply("entails", Seq(
+//                              "cs",
+//                              Apply("path-eq", Seq("p", "p"))
+//                            )))
   private val cRefl = Assert(Annotate(reflTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Refl"))))
 
   // C-Class
@@ -390,7 +401,25 @@ private val substTerm = Forall(
                   ))
   private val cProg = Assert(Annotate(progTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
 
-  private val entailsOrderingTerm = Forall(
+  // C-Weak
+  private val weakTerm = Forall(
+                            Seq(
+                              SortedVar("cs", Constraints),
+                              SortedVar("a", "Constraint"),
+                              SortedVar("b", "Constraint")
+                            ),
+                            Implies(
+                              Apply("entails", Seq("cs", "b")),
+                              Apply("entails", Seq(
+                                Apply("insert", Seq("a", "cs")),
+                                "b"
+                              ))
+                            )
+  )
+  private val cWeak = Assert(Annotate(weakTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Weak"))))
+
+  // C-Perm (permutation and contraction)
+  private val permTerm = Forall(
                               Seq(
                                 SortedVar("cs1", Constraints),
                                 SortedVar("cs2", Constraints),
@@ -415,16 +444,16 @@ private val substTerm = Forall(
                                 ),
                                 Apply("entails", Seq("cs2", "c"))
                               ))
-  private val entailsOrdering = Assert(Annotate(entailsOrderingTerm, Seq(KeyValueAttribute(Keyword("named"), "ordering"))))
+  private val cPerm = Assert(Annotate(permTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Perm"))))
 
   private val datatypes = Seq(pathDatatype, constraintDatatype)
   private val funs = Seq(concat, elem)
   private val baseProps = Seq(classProp, varProp, pathProp, inProgProp)
   private val subst = Seq(substPath, substConstraint, substConstraints, substProp)
   private val sequentCalculus = Seq(entailsProp, EntailsProp, cIdent, cRefl, cClass, cCut, cSubst, cProg)
-  private val additionalProperties = Seq(/*entailsOrdering*/)
+  private val structuralRules = Seq(cWeak, cPerm)
 
-  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ baseProps ++ subst ++ sequentCalculus ++ additionalProperties)
+  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ baseProps ++ subst ++ sequentCalculus ++ structuralRules)
 
   def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(premise.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs))), conclusion))
 
@@ -484,15 +513,24 @@ object AxiomsTest extends App {
 
   solver.flush()
   val x = Axioms.path("x")
-  val y = Axioms.path("x")
-  val z = Axioms.path("x")
+  val y = Axioms.path("y")
+  val z = Axioms.path("z")
 
   val xy = Axioms.pathEq(x, y)
   val yz = Axioms.pathEq(y, z)
   val xz = Axioms.pathEq(x, z)
 
-  val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
+  val knowledge = Seq(
+    Axioms.assertPath(x),
+    Axioms.assertPath(y),
+    Axioms.assertPath(z),
+    Axioms.assertVariable("x"),
+    Axioms.assertVariable("y"),
+    Axioms.assertVariable("z")
+  )
 
-  solver.addCommands(Seq(assertion, CheckSat, GetUnsatCore))
-  val (exit, out) = solver.execute(30000)
+  val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), yz)))
+
+  solver.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+  val (exit, out) = solver.execute(5000)
 }
