@@ -340,11 +340,43 @@ object Axioms {
 //                            )))),
 //                      Apply("entails", Seq("cs", "a2"))
 //                    ))
-private val substTerm = Forall(
+//  private val substTerm = Forall( // added restrictions on variables and paths to use.
+//                  Seq(
+//                    SortedVar("cs", Constraints),
+//                    SortedVar("x", "String"),
+//                    SortedVar("a", "Constraint"),
+//                    SortedVar("p1", "Path"),
+//                    SortedVar("p2", "Path"),
+//                    SortedVar("a1", "Constraint"),
+//                    SortedVar("a2", "Constraint")
+//                  ),
+//                  Implies(
+//                    And(
+//                      Apply("variable", Seq("x")),
+//                      And(
+//                        Apply("path-exists", Seq("p1")),
+//                        And(
+//                          Apply("path-exists", Seq("p2")),
+//                          And(
+//                            Not(Eq("p1", "p2")),
+//                            And(
+//                              Apply("entails", Seq(
+//                                "cs",
+//                                Apply("path-eq", Seq("p1", "p2"))
+//                              )),
+//                              And(
+//                                Apply("subst", Seq("a", "x", "p1", "a1")),
+//                                And(
+//                                  Apply("subst", Seq("a", "x", "p2", "a2")),
+//                                  Apply("entails", Seq("cs", "a1"))))))))),
+//                    Apply("entails", Seq("cs", "a2"))
+//                  ))
+  private val substTerm = Forall( // added p1=p2 elem cs
                   Seq(
                     SortedVar("cs", Constraints),
                     SortedVar("x", "String"),
                     SortedVar("a", "Constraint"),
+                    SortedVar("c", "Constraint"),
                     SortedVar("p1", "Path"),
                     SortedVar("p2", "Path"),
                     SortedVar("a1", "Constraint"),
@@ -354,21 +386,28 @@ private val substTerm = Forall(
                     And(
                       Apply("variable", Seq("x")),
                       And(
-                        Apply("path-exists", Seq("p1")),
+                        Apply("is-path-eq", Seq("c")),
                         And(
-                          Apply("path-exists", Seq("p2")),
+                          Apply("elem", Seq("c", "cs")),
                           And(
-                            Not(Eq("p1", "p2")),
+                            Eq("p1", Apply("p-right", Seq("c"))),
                             And(
-                              Apply("entails", Seq(
-                                "cs",
-                                Apply("path-eq", Seq("p1", "p2"))
-                              )),
+                              Eq("p2", Apply("p-left", Seq("c"))),
                               And(
-                                Apply("subst", Seq("a", "x", "p1", "a1")),
+                                Not(Eq("p1", "p2")),
                                 And(
-                                  Apply("subst", Seq("a", "x", "p2", "a2")),
-                                  Apply("entails", Seq("cs", "a1"))))))))),
+                                  Apply("entails", Seq(
+                                    "cs",
+                                    Apply("path-eq", Seq("p1", "p2"))
+                                  )),
+                                  And(
+                                    Apply("subst", Seq("a", "x", "p1", "a1")),
+                                    And(
+                                      Apply("subst", Seq("a", "x", "p2", "a2")),
+                                      Apply("entails", Seq("cs", "a1"))))))
+                            )
+                          )
+                        ))),
                     Apply("entails", Seq("cs", "a2"))
                   ))
   private val cSubst = Assert(Annotate(substTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Subst"))))
@@ -530,8 +569,8 @@ object AxiomsTest extends App {
     Axioms.assertVariable("z")
   )
 
-  val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), yz)))
+  val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
 
   solver.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
-  val (exit, out) = solver.execute(5000)
+  val (exit, out) = solver.execute()
 }
