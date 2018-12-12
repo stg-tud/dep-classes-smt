@@ -225,7 +225,7 @@ class TestAxioms extends FunSuite {
     )
     val assertion = Assert(Not(Axioms.entails(Seq(xy), yx)))
 
-    z3.addCommands(knowledge ++ Seq(assertion, CheckSat))
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
     val (exit, out) = z3.execute()
     z3.flush()
   }
