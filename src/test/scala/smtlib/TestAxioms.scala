@@ -206,9 +206,16 @@ class TestAxioms extends FunSuite {
     )
     val assertion = Assert(Not(Axioms.entails(Seq(), yx)))
 
-    z3.addCommands(knowledge ++ Seq(assertion, CheckSat))
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
     val (exit, out) = z3.execute()
     z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+    assert(out(1).contains("C-Ident"))
+    assert(out(1).contains("C-Refl"))
+    assert(out(1).contains("C-Subst"))
   }
 
   test("PathEq is symmetric 2") { // TODO: same as transitive
@@ -228,6 +235,14 @@ class TestAxioms extends FunSuite {
     z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
     val (exit, out) = z3.execute()
     z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+    assert(out(1).contains("C-Ident"))
+    assert(out(1).contains("C-Refl"))
+    assert(out(1).contains("C-Weak"))
+    assert(out(1).contains("C-Subst"))
   }
 
   // TODO: solver does timeout producing unknown
