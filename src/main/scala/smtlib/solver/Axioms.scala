@@ -238,31 +238,20 @@ object Axioms {
                     ))
                   ))
 
-  // C-Ident // TODO: "weakened" version below
+  // C-Ident
   private val identTerm = Forall(Seq(SortedVar("c", "Constraint")),
                             Apply("entails", Seq(
                               Apply("insert", Seq("c", "nil")),
                               "c"
                             )))
-//  private val identTerm = Forall(Seq(SortedVar("cs", Constraints), SortedVar("c", "Constraint")),
-//                            Implies(
-//                              Apply("elem", Seq("c", "cs")),
-//                              Apply("entails", Seq("cs", "c"))
-//                            ))
   private val cIdent = Assert(Annotate(identTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Ident"))))
 
   // C-Refl TODO: evaluate if (path-exists p) should be applied to this
-  // TODO: "weakened" version below, no nil requirement
   private val reflTerm = Forall(Seq(SortedVar("p", "Path")),
                             Apply("entails", Seq(
                               "nil",
                               Apply("path-eq", Seq("p", "p"))
                             )))
-//  private val reflTerm = Forall(Seq(SortedVar("cs", Constraints), SortedVar("p", "Path")),
-//                            Apply("entails", Seq(
-//                              "cs",
-//                              Apply("path-eq", Seq("p", "p"))
-//                            )))
   private val cRefl = Assert(Annotate(reflTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Refl"))))
 
   // C-Class
