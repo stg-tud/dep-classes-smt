@@ -3,6 +3,7 @@ package smtlib
 import org.scalatest.FunSuite
 import smtlib.solver.{Axioms, Z3Solver}
 import smtlib.syntax._
+import smtlib.syntax.Implicit._
 
 class TestAxioms extends FunSuite {
   val options: Seq[SMTLibCommand] = Seq(SetOption(ProduceProofs(true)), SetOption(ProduceUnsatCores(true)))
@@ -23,6 +24,42 @@ class TestAxioms extends FunSuite {
     assert(exit == 0)
     assert(out.size == 1)
     assert(out.head == Sat.format())
+  }
+
+  test("Generalize Path 1") {
+    val p1 = Axioms.path("x.f.g.h")
+    val p2 = Axioms.path("x.f")
+    val y = Axioms.string("y")
+
+    val gen = Apply("generalize-path", Seq(p1, p2, y))
+    val expected = Axioms.path("y.g.h")
+
+
+    z3.addCommands(Seq(Assert(Not(Eq(gen, expected))), CheckSat))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 1)
+    assert(out.head == Unsat.format())
+  }
+
+  test("Generalize Path 2") {
+    val p1 = Axioms.path("x.f.g.h")
+    val p2 = Axioms.path("x.h")
+    val y = Axioms.string("y")
+
+    val gen = Apply("generalize-path", Seq(p1, p2, y))
+    val expected = Axioms.path("x.f.g.h")
+
+
+    z3.addCommands(Seq(Assert(Not(Eq(gen, expected))), CheckSat))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 1)
+    assert(out.head == Unsat.format())
   }
 
   test("C-Ident") {

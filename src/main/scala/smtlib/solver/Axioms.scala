@@ -211,6 +211,95 @@ object Axioms {
                       )
                     ))
 
+  private val genPath = DefineFunRec(
+                          FunctionDef(
+                            "generalize-path",
+                            Seq(
+                              SortedVar("p1", "Path"),
+                              SortedVar("p2", "Path"),
+                              SortedVar("x", "String")
+                            ),
+                            "Path",
+                            Ite( // p1 == p2 ? x : ...
+                              Eq("p1", "p2"),
+                              Apply("var", Seq("x")),
+                              Match("p1",
+                                Seq(
+                                  MatchCase(Pattern("var", Seq("y")),
+                                    "p1"),
+                                  MatchCase(Pattern("pth", Seq("p", "f")),
+                                    Apply("pth", Seq(
+                                      Apply("generalize-path", Seq("p", "p2", "x")),
+                                      "f"))
+                                  )
+                                )
+                              )
+                            )
+                          ))
+
+  private val genConstraint = DefineFun(
+                                FunctionDef(
+                                  "generalize-constraint",
+                                  Seq(
+                                    SortedVar("c", "Constraint"),
+                                    SortedVar("p", "Path"),
+                                    SortedVar("x", "String")
+                                  ),
+                                  "Constraint",
+                                  Match("c", Seq(
+                                    MatchCase(Pattern("path-eq", Seq("p1", "p2")),
+                                      Apply("path-eq", Seq(
+                                        Apply("generalize-path", Seq("p1", "p", "x")),
+                                        Apply("generalize-path", Seq("p2", "p", "x"))
+                                      ))),
+                                    MatchCase(Pattern("instance-of", Seq("p1", "cls1")),
+                                      Apply("instance-of", Seq(
+                                        Apply("generalize-path", Seq("p1", "p", "x")),
+                                        "cls1"
+                                      ))),
+                                    MatchCase(Pattern("instantiated-by", Seq("p1", "cls1")),
+                                      Apply("instantiated-by", Seq(
+                                        Apply("generalize-path", Seq("p1", "p", "x")),
+                                        "cls1"
+                                      ))),
+                                  ))
+                                ))
+
+  private val genConstraints = DefineFunRec(
+                                FunctionDef(
+                                  "generalize-constraints",
+                                  Seq(
+                                    SortedVar("cs", Constraints),
+                                    SortedVar("p", "Path"),
+                                    SortedVar("x", "String")
+                                  ),
+                                  Constraints,
+                                  Match("cs", Seq(
+                                    MatchCase(Pattern("nil"), "nil"),
+                                    MatchCase(Pattern("insert", Seq("hd", "tl")),
+                                      Apply("insert", Seq(
+                                        Apply("generalize-constraint", Seq("hd", "p", "x")),
+                                        Apply("generalize-constraints", Seq("tl", "p", "x"))
+                                      )))
+                                  ))
+                                ))
+
+  val genProp = DefineFun(
+                  FunctionDef(
+                    "generalization",
+                    Seq(
+                      SortedVar("c1", "Constraint"),
+                      SortedVar("p", "Path"),
+                      SortedVar("x", "String"),
+                      SortedVar("c2", "Constraint")
+                    ),
+                    Bool,
+                    Eq(
+                      Apply("generalize-constraint", Seq("c1", "p", "x")),
+                      "c2"
+                    )
+                  ))
+
   // DCC
 
   /**
@@ -508,12 +597,13 @@ object Axioms {
   private val datatypes = Seq(pathDatatype, constraintDatatype)
   private val funs = Seq(concat, elem)
   private val subst = Seq(substPath, substConstraint, substConstraints, substProp)
+  private val gen = Seq(genPath, genConstraint, genConstraints, genProp)
   private val baseProps = Seq(classProp, varProp, pathProp, inProgProp)
   private val dccProps = Seq(entailsProp, EntailsProp)
   private val structuralRules = Seq(cWeak, cPerm)
   private val dccRules = Seq(cIdent, cRefl, cClass, cCut, cSubst, cProg)
 
-  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ baseProps ++ dccProps ++ structuralRules ++ dccRules)
+  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ gen ++ baseProps ++ dccProps ++ structuralRules ++ dccRules)
 
   def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(premise.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs))), conclusion))
 
@@ -529,6 +619,8 @@ object Axioms {
     case Nil :+ x => Apply("var", Seq(SMTLibString(x)))
     case xs :+ x => Apply("pth", Seq(pth(xs), SMTLibString(x)))
   }
+
+  def string(s: String) = SMTLibString(s)
 
   def cls(s: String) = Apply("class", Seq(SMTLibString(s)))
   def variable(s: String) = Apply("variable", Seq(SMTLibString(s)))
