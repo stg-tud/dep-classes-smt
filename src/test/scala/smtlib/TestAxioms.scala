@@ -62,6 +62,45 @@ class TestAxioms extends FunSuite {
     assert(out.head == Unsat.format())
   }
 
+  test("generalization is inverse of substitution example") {
+    val base = Axioms.path("x.g")
+
+    val x = Axioms.string("x")
+    val p = Axioms.path("x.f")
+
+    val assertion = Assert(Not(Eq(base,
+      Apply("generalize-path", Seq(
+        Apply("subst-path", Seq(base, x, p)), p, x))
+    )))
+
+    z3.addCommands(Seq(assertion, CheckSat))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 1)
+    assert(out.head == Unsat.format())
+  }
+
+  test("generalization is inverse of substitution formal") {
+    val assertion = Assert(Not(
+      Forall(Seq(SortedVar("base", "Path"), SortedVar("p", "Path"), SortedVar("x", "String")),
+        Eq(
+          "base",
+          Apply("generalize-path", Seq(
+            Apply("subst-path", Seq("base", "x", "p")), "p", "x"))
+        ))))
+
+    z3.addCommands(Seq(assertion, CheckSat))
+    val (exit, out) = z3.execute() // tested with up to 5s timout
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 1)
+    //assert(out.head == Unsat.format()) // TODO: should be unsat
+    assert(out.head == Unknown.format()) // TODO: but solver cannot verify this property
+  }
+
   test("C-Ident") {
     // !(x = y |- x = y)
     val c = Axioms.pathEq(Axioms.path("x"), Axioms.path("y"))
