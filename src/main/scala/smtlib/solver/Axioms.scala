@@ -554,7 +554,7 @@ object Axioms {
 //                                  ))),
 //                              Apply("entails", Seq("cs", "a2"))
 //                            ))
-  private val substTerm = Forall( // reduced quantified variables TODO: makes the axioms unsat
+  private val substTerm = Forall( // reduced quantified variables TODO: is-path-eq is required after accessing the selectors. putting it before makes the axioms unsat
                             Seq(
                               SortedVar("x", "String"),
                               SortedVar("a", "Constraint"),
@@ -563,31 +563,29 @@ object Axioms {
                               SortedVar("a1", "Constraint"),
                               SortedVar("a2", "Constraint")
                             ),
-                            And(
-                              Apply("is-path-eq", Seq("c")),
-                              Let(
-                                Seq(
-                                  VarBinding("p1", Apply("p-right", Seq("c"))),
-                                  VarBinding("p2", Apply("p-left", Seq("c")))
-                                ),
-                                Implies(
+                            Let(
+                              Seq(
+                                VarBinding("p1", Apply("p-right", Seq("c"))),
+                                VarBinding("p2", Apply("p-left", Seq("c")))
+                              ),
+                              Implies(
+                                And(
+                                  Apply("variable", Seq("x")),
                                   And(
-                                    Apply("variable", Seq("x")),
+                                    Apply("is-path-eq", Seq("c")), //Apply("elem", Seq("c", "cs"))
                                     And(
-                                      Apply("elem", Seq("c", "cs")),
+                                      Apply("entails", Seq("cs", "c")),
                                       And(
-                                        Apply("entails", Seq("cs", "c")),
+                                        Apply("subst", Seq("a", "x", "p1", "a1")),
                                         And(
-                                          Apply("subst", Seq("a", "x", "p1", "a1")),
-                                          And(
-                                            Apply("generalization", Seq("a2", "p2", "x", "a")),
-                                            Apply("entails", Seq("cs", "a1"))
-                                          )))
-                                      )),
-                                  Apply("entails", Seq("cs", "a2"))
-                                )
+                                          Apply("generalization", Seq("a2", "p2", "x", "a")),
+                                          Apply("entails", Seq("cs", "a1"))
+                                        )))
+                                    )),
+                                Apply("entails", Seq("cs", "a2"))
                               )
-                            ))
+                            )
+)
   private val cSubst = Assert(Annotate(substTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Subst"))))
 
   // C-Prog
