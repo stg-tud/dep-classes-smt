@@ -554,7 +554,37 @@ object Axioms {
 //                                  ))),
 //                              Apply("entails", Seq("cs", "a2"))
 //                            ))
-  private val substTerm = Forall( // reduced quantified variables TODO: is-path-eq is required after accessing the selectors. putting it before makes the axioms unsat
+//  private val substTerm = Forall( // reduced quantified variables TODO: is-path-eq is required after accessing the selectors. putting it before makes the axioms unsat
+//                            Seq(
+//                              SortedVar("x", "String"),
+//                              SortedVar("a", "Constraint"),
+//                              SortedVar("c", "Constraint"),
+//                              SortedVar("cs", Constraints),
+//                              SortedVar("a1", "Constraint"),
+//                              SortedVar("a2", "Constraint")
+//                            ),
+//                            Let(
+//                              Seq(
+//                                VarBinding("p1", Apply("p-right", Seq("c"))),
+//                                VarBinding("p2", Apply("p-left", Seq("c")))
+//                              ),
+//                              Implies(
+//                                And(
+//                                  Apply("variable", Seq("x")),
+//                                  And(
+//                                    Apply("is-path-eq", Seq("c")), //Apply("elem", Seq("c", "cs"))
+//                                    And(
+//                                      Apply("entails", Seq("cs", "c")),
+//                                      And(
+//                                        Apply("subst", Seq("a", "x", "p1", "a1")),
+//                                        And(
+//                                          Apply("generalization", Seq("a2", "p2", "x", "a")),
+//                                          Apply("entails", Seq("cs", "a1"))
+//                                        )))
+//                                    )),
+//                                Apply("entails", Seq("cs", "a2"))
+//                              )))
+  private val substTerm = Forall( // reduced quantified variables and moved requirements on c before using selectors
                             Seq(
                               SortedVar("x", "String"),
                               SortedVar("a", "Constraint"),
@@ -563,16 +593,19 @@ object Axioms {
                               SortedVar("a1", "Constraint"),
                               SortedVar("a2", "Constraint")
                             ),
-                            Let(
-                              Seq(
-                                VarBinding("p1", Apply("p-right", Seq("c"))),
-                                VarBinding("p2", Apply("p-left", Seq("c")))
+                            Implies(
+                              And(
+                                Apply("elem", Seq("c", "cs")),
+                                Apply("is-path-eq", Seq("c"))
                               ),
-                              Implies(
-                                And(
-                                  Apply("variable", Seq("x")),
+                              Let(
+                                Seq(
+                                  VarBinding("p1", Apply("p-right", Seq("c"))),
+                                  VarBinding("p2", Apply("p-left", Seq("c")))
+                                ),
+                                Implies(
                                   And(
-                                    Apply("is-path-eq", Seq("c")), //Apply("elem", Seq("c", "cs"))
+                                    Apply("variable", Seq("x")),
                                     And(
                                       Apply("entails", Seq("cs", "c")),
                                       And(
@@ -580,9 +613,9 @@ object Axioms {
                                         And(
                                           Apply("generalization", Seq("a2", "p2", "x", "a")),
                                           Apply("entails", Seq("cs", "a1"))
-                                        )))
-                                    )),
-                                Apply("entails", Seq("cs", "a2"))
+                                        )))),
+                                  Apply("entails", Seq("cs", "a2"))
+                                )
                               )
                             )
 )
