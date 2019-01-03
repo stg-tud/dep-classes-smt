@@ -289,8 +289,8 @@ class TestAxioms extends FunSuite {
     assert(exit == 0)
     assert(out.size == 2)
     assert(out.head == Unsat.format())
-    assert(out(1).contains("C-Ident"))
-    assert(out(1).contains("C-Refl"))
+//    assert(out(1).contains("C-Ident"))
+//    assert(out(1).contains("C-Refl"))
     assert(out(1).contains("C-Subst"))
   }
 
@@ -315,9 +315,9 @@ class TestAxioms extends FunSuite {
     assert(exit == 0)
     assert(out.size == 2)
     assert(out.head == Unsat.format())
-    assert(out(1).contains("C-Ident"))
-    assert(out(1).contains("C-Refl"))
-    assert(out(1).contains("C-Weak"))
+//    assert(out(1).contains("C-Ident"))
+//    assert(out(1).contains("C-Refl"))
+//    assert(out(1).contains("C-Weak"))
     assert(out(1).contains("C-Subst"))
   }
 
@@ -343,12 +343,12 @@ class TestAxioms extends FunSuite {
     val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
 
     z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
-    val (exit, out) = z3.execute(5000)
+    val (exit, out) = z3.execute()
     z3.flush()
 
-//    assert(exit == 0)
-//    assert(out.size == 2)
-//    assert(out.head == Unsat.format())
-    //assert(out(1) == "(C-Refl)")
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+    assert(out(1).contains("C-Subst"))
   }
 }
