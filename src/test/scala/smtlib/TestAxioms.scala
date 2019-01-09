@@ -390,9 +390,74 @@ class TestAxioms extends FunSuite {
     assert(out(1).contains("C-Subst"))
   }
 
+  test("PathEq is transitive 1") {
+    val x = Axioms.path("x")
+    val y = Axioms.path("y")
+    val z = Axioms.path("z")
+
+    val xy = Axioms.pathEq(x, y)
+    val yz = Axioms.pathEq(y, z)
+    val xz = Axioms.pathEq(x, z)
+
+    val knowledge = Seq(
+      Axioms.assertVariable("x"),
+      Axioms.assertVariable("y"),
+      Axioms.assertVariable("z"),
+      Axioms.assertPath(x),
+      Axioms.assertPath(y),
+      Axioms.assertPath(z),
+      Assert(Axioms.entails(Seq(), xy)),
+      Assert(Axioms.entails(Seq(), yz)),
+    )
+    val assertion = Assert(Not(Axioms.entails(Seq(), xz)))
+
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+    assert(out(1).contains("C-Refl"))
+    assert(out(1).contains("C-Subst"))
+  }
+
+  test("PathEq is transitive 2") {
+    val x = Axioms.path("x")
+    val y = Axioms.path("y")
+    val z = Axioms.path("z")
+
+    val xy = Axioms.pathEq(x, y)
+    val yz = Axioms.pathEq(y, z)
+    val xz = Axioms.pathEq(x, z)
+
+    val knowledge = Seq(
+      Axioms.assertVariable("x"),
+      Axioms.assertVariable("y"),
+      Axioms.assertVariable("z"),
+      Axioms.assertPath(x),
+      Axioms.assertPath(y),
+      Axioms.assertPath(z),
+      Assert(Axioms.entails(Seq(), xy)),
+      Assert(Axioms.entails(Seq(), yz)),
+    )
+    val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
+
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+    assert(out(1).contains("C-Weak"))
+    assert(out(1).contains("C-Refl"))
+    assert(out(1).contains("C-Subst"))
+  }
+
   // TODO: solver does timeout producing unknown
   // TODO: how to help the solver instantiate properly
-  test("PathEq is transitive") {
+  test("PathEq is transitive 3") {
     val x = Axioms.path("x")
     val y = Axioms.path("y")
     val z = Axioms.path("z")
