@@ -26,6 +26,59 @@ class TestAxioms extends FunSuite {
     assert(out.head == Sat.format())
   }
 
+  test("Substitute Path 1") {
+    val p1 = Axioms.path("x.g.h")
+    val p2 = Axioms.path("y.f")
+    val x = Axioms.string("x")
+
+    val subst = Apply("subst-path", Seq(p1, x, p2))
+    val expected = Axioms.path("y.f.g.h")
+
+
+    z3.addCommands(Seq(Assert(Not(Eq(subst, expected))), CheckSat))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 1)
+    assert(out.head == Unsat.format())
+  }
+
+  test("Substitute Path 2") {
+    val p1 = Axioms.path("x.g.h")
+    val p2 = Axioms.path("y.f")
+    val y = Axioms.string("y")
+
+    val subst = Apply("subst-path", Seq(p1, y, p2))
+    val expected = Axioms.path("x.g.h")
+
+
+    z3.addCommands(Seq(Assert(Not(Eq(subst, expected))), CheckSat))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 1)
+    assert(out.head == Unsat.format())
+  }
+
+  test("Substitute Constraint") {
+    val eq = Axioms.pathEq(Axioms.path("x.g.h"), Axioms.path("y.f"))
+    val x = Axioms.string("x")
+    val p = Axioms.path("z.m.n")
+
+    val subst = Apply("subst-constraint", Seq(eq, x, p))
+    val expected = Axioms.pathEq(Axioms.path("z.m.n.g.h"), Axioms.path("y.f"))
+
+    z3.addCommands(Seq(Assert(Not(Eq(subst, expected))), CheckSat))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 1)
+    assert(out.head == Unsat.format())
+  }
+
   test("Generalize Path 1") {
     val p1 = Axioms.path("x.f.g.h")
     val p2 = Axioms.path("x.f")
@@ -54,6 +107,23 @@ class TestAxioms extends FunSuite {
 
 
     z3.addCommands(Seq(Assert(Not(Eq(gen, expected))), CheckSat))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 1)
+    assert(out.head == Unsat.format())
+  }
+
+  test("Generalize Constraint") {
+    val eq = Axioms.pathEq(Axioms.path("z.m.n.g.h"), Axioms.path("y.f"))
+    val p = Axioms.path("z.m.n")
+    val x = Axioms.string("x")
+
+    val subst = Apply("generalize-constraint", Seq(eq, p, x))
+    val expected = Axioms.pathEq(Axioms.path("x.g.h"), Axioms.path("y.f"))
+
+    z3.addCommands(Seq(Assert(Not(Eq(subst, expected))), CheckSat))
     val (exit, out) = z3.execute()
     z3.flush()
 
