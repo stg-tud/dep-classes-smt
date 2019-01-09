@@ -289,9 +289,8 @@ class TestAxioms extends FunSuite {
     assert(exit == 0)
     assert(out.size == 2)
     assert(out.head == Unsat.format())
-//    assert(out(1).contains("C-Ident"))
-//    assert(out(1).contains("C-Refl"))
-//    assert(out(1).contains("C-Subst"))
+    assert(out(1).contains("C-Refl"))
+    assert(out(1).contains("C-Subst"))
   }
 
   test("PathEq is symmetric 2") {

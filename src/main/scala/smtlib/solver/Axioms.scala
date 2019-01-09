@@ -588,34 +588,37 @@ object Axioms {
                             Seq(
                               SortedVar("x", "String"),
                               SortedVar("a", "Constraint"),
-                              SortedVar("c", "Constraint"),
+                              SortedVar("p1", "Path"),
+                              SortedVar("p2", "Path"),
                               SortedVar("cs", Constraints),
                               SortedVar("a1", "Constraint"),
                               SortedVar("a2", "Constraint")
                             ),
-                            Implies(
-                              And(
-                                Apply("elem", Seq("c", "cs")),
-                                Apply("is-path-eq", Seq("c"))
+                            Let(
+                              Seq(
+                                VarBinding("c", Apply("path-eq", Seq("p1", "p2")))
                               ),
-                              Let(
-                                Seq(
-                                  VarBinding("p1", Apply("p-right", Seq("c"))),
-                                  VarBinding("p2", Apply("p-left", Seq("c")))
-                                ),
-                                Implies(
+                              Implies(
+                                And(
+                                  Apply("variable", Seq("x")),
                                   And(
-                                    Apply("variable", Seq("x")),
+                                    Apply("path-exists", Seq("p1")),
                                     And(
-                                      Apply("entails", Seq("cs", "c")),
+                                      Apply("path-exists", Seq("p2")),
                                       And(
-                                        Apply("subst", Seq("a", "x", "p1", "a1")),
+                                        Apply("entails", Seq("cs", "c")),
                                         And(
-                                          Apply("generalization", Seq("a2", "p2", "x", "a")),
-                                          Apply("entails", Seq("cs", "a1"))
-                                        )))),
-                                  Apply("entails", Seq("cs", "a2"))
-                                )
+                                          Apply("subst", Seq("a", "x", "p1", "a1")),
+                                          And(
+                                            Apply("generalization", Seq("a2", "p2", "x", "a")),
+                                            Apply("entails", Seq("cs", "a1"))
+                                          )
+                                        )
+                                      )
+                                    )
+                                  )
+                                ),
+                                Apply("entails", Seq("cs", "a2"))
                               )
                             )
 )
