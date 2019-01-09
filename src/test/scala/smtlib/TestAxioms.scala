@@ -300,10 +300,10 @@ class TestAxioms extends FunSuite {
     val yx = Axioms.pathEq(y, x)
 
     val knowledge = Seq(
-      Assert(Axioms.variable("x")),
-      Assert(Axioms.variable("y")),
-      Assert(Axioms.pathExists(x)),
-      Assert(Axioms.pathExists(y))
+      Axioms.assertVariable("x"),
+      Axioms.assertVariable("y"),
+      Axioms.assertPath(x),
+      Axioms.assertPath(y)
     )
     val assertion = Assert(Not(Axioms.entails(Seq(xy), yx)))
 
