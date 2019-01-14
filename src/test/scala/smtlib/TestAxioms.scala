@@ -9,6 +9,8 @@ class TestAxioms extends FunSuite {
   val options: Seq[SMTLibCommand] = Seq(
     SetOption(KeyValueAttribute(Keyword("smt.mbqi"), SimpleSymbol("true"))),
     SetOption(KeyValueAttribute(Keyword("model.compact"), SimpleSymbol("true"))),
+    SetOption(KeyValueAttribute(Keyword("smt.qi.max_multi_patterns"), Numeral(4))),
+    SetOption(KeyValueAttribute(Keyword("pi.max_multi_patterns"), Numeral(4))),
 //    SetOption(KeyValueAttribute(Keyword("trace"), SimpleSymbol("true"))),
     SetOption(ProduceProofs(true)),
     SetOption(ProduceUnsatCores(true)))
@@ -481,8 +483,8 @@ class TestAxioms extends FunSuite {
     )
     val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
 
-    z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
-    val (exit, out) = z3.execute()
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat/*, GetUnsatCore*/))
+    val (exit, out) = z3.execute(10*1000)
     z3.flush()
 
 //    assert(exit == 0)
