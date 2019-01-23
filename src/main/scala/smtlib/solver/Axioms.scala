@@ -635,8 +635,7 @@ object Axioms {
                                 ),
                                 Apply("entails", Seq("cs", "a2"))
                               )
-                            )
-)
+                            ))
   private val cSubst = Assert(Annotate(substTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Subst"))))
 
   // C-Prog

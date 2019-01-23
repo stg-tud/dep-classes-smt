@@ -17,7 +17,7 @@ class TestAxioms extends FunSuite {
 //    SetOption(KeyValueAttribute(Keyword("trace"), SimpleSymbol("true"))),
     SetOption(ProduceProofs(true)),
     SetOption(ProduceUnsatCores(true)))
-  val z3 = new CVC4Solver(Axioms.allWithList, options, debug=true) // TODO: debug=false
+  val z3 = new Z3Solver(Axioms.all, options, debug=true) // TODO: debug=false
 
   test ("Axioms.all well-formattet") {
     val (exit, out) = z3.execute()
