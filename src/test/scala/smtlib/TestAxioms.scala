@@ -8,9 +8,12 @@ import smtlib.syntax.Implicit._
 class TestAxioms extends FunSuite {
   val options: Seq[SMTLibCommand] = Seq(
     SetOption(KeyValueAttribute(Keyword("smt.mbqi"), SimpleSymbol("true"))),
-    SetOption(KeyValueAttribute(Keyword("model.compact"), SimpleSymbol("true"))),
+    SetOption(KeyValueAttribute(Keyword("smt.mbqi.max_iterations"), Numeral(10000))),
+//    SetOption(KeyValueAttribute(Keyword("model.compact"), SimpleSymbol("true"))),
+    SetOption(KeyValueAttribute(Keyword("smt.qi.eager_threshold"), Decimal(100))),
+    SetOption(KeyValueAttribute(Keyword("smt.qi.lazy_threshold"), Decimal(200))),
     SetOption(KeyValueAttribute(Keyword("smt.qi.max_multi_patterns"), Numeral(4))),
-    SetOption(KeyValueAttribute(Keyword("pi.max_multi_patterns"), Numeral(4))),
+//    SetOption(KeyValueAttribute(Keyword("pi.max_multi_patterns"), Numeral(4))), // breaks stuff
 //    SetOption(KeyValueAttribute(Keyword("trace"), SimpleSymbol("true"))),
     SetOption(ProduceProofs(true)),
     SetOption(ProduceUnsatCores(true)))
@@ -484,12 +487,12 @@ class TestAxioms extends FunSuite {
     val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
 
     z3.addCommands(knowledge ++ Seq(assertion, CheckSat/*, GetUnsatCore*/))
-    val (exit, out) = z3.execute(10*1000)
+    val (exit, out) = z3.execute(3*1000)
     z3.flush()
 
 //    assert(exit == 0)
-    assert(out.size == 2)
+//    assert(out.size == 2)
     assert(out.head == Unsat.format())
-    assert(out(1).contains("C-Subst"))
+//    assert(out(1).contains("C-Subst"))
   }
 }
