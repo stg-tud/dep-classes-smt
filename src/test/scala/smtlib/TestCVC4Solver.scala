@@ -182,4 +182,65 @@ class TestCVC4Solver extends FunSuite {
     assert(output.size == 1)
     assert(output.head == "unsat")
   }
+
+  val listDatatype = DeclareDatatype("List", ParDatatype(
+    Seq( // symbols
+      SimpleSymbol("T")
+    ),
+    Seq( // constructors
+      ConstructorDec("nil", Seq()),
+      ConstructorDec("cons", Seq(
+        SelectorDec("hd", "T"),
+        SelectorDec("tl", Sorts("List", Seq("T")))
+      ))
+    )
+  ))
+
+  test("Parameterized Datatype Declaration") {
+    cvc4.flush()
+
+    cvc4.addCommand(listDatatype)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
+
+  val l1 = DeclareConst("l1", Sorts("List", Seq("Int")))
+  val l1Empty = Assert(Eq("l1", IdentifierAs("nil", Sorts("List", Seq("Int")))))
+
+  test("Empty List") {
+    cvc4.flush()
+
+    cvc4.addCommand(listDatatype)
+    cvc4.addCommand(l1)
+    cvc4.addCommand(l1Empty)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
+
+  val l1NonEmpty = Assert(Eq("l1", Apply("cons", Seq(Numeral(1), IdentifierAs("nil", Sorts("List", Seq("Int")))))))
+
+  test("Nonempty List") {
+    cvc4.flush()
+
+    cvc4.addCommand(listDatatype)
+    cvc4.addCommand(l1)
+    cvc4.addCommand(l1NonEmpty)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
 }

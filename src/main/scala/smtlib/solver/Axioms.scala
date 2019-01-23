@@ -7,6 +7,8 @@ import smtlib.syntax.Implicit._
 // TODO: Z3 version 4.8.3 - 64 bit produces errors for nil (in pattern matching). mismatching number of variables supplied to constructor
 // TODO: update calculus rules with path-exists property
 object Axioms {
+  // TODO: rename insert to cons for cvc4 as insert is predefined for sets
+  // TODO: also change axioms to use sets instead of lists for cvc4 (http://cvc4.cs.stanford.edu/wiki/Sets)
   private val listDatatype = DeclareDatatype("List", ParDatatype(
     Seq( // symbols
       SimpleSymbol("T")
