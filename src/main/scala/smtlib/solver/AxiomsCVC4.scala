@@ -7,6 +7,8 @@ import smtlib.syntax.Implicit._
 object AxiomsCVC4 {
   // TODO: rename insert to cons for cvc4 as insert is predefined for sets
   // TODO: also change axioms to use sets instead of lists for cvc4 (http://cvc4.cs.stanford.edu/wiki/Sets)
+  // TODO: at which point does it stop to be satisfiable and becomes unknown
+  // TODO: try with self defined list datatype (parametrized and/or unparametrized [we need (List Constraint) exclusively anyway])
 //  private val listDatatype = DeclareDatatype("List", ParDatatype(
 //    Seq( // symbols
 //      SimpleSymbol("T")
