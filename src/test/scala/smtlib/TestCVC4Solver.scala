@@ -243,4 +243,115 @@ class TestCVC4Solver extends FunSuite {
     assert(output.size == 1)
     assert(output.head == "sat")
   }
+
+  val s1 = DeclareConst("s1", Sorts("Set", Seq("Int")))
+  val s1Empty = Assert(Eq("s1", IdentifierAs("emptyset", Sorts("Set", Seq("Int")))))
+
+  test("Empty Set") {
+    cvc4.flush()
+
+    cvc4.addCommand(s1)
+    cvc4.addCommand(s1Empty)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
+
+  val s1Singleton = Assert(Eq("s1", Apply("singleton", Seq(Numeral(1)))))
+
+  test("Singleton Set") {
+    cvc4.flush()
+
+    cvc4.addCommand(s1)
+    cvc4.addCommand(s1Singleton)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
+
+  test("Set Equality") {
+    cvc4.flush()
+
+    cvc4.addCommand(s1)
+    cvc4.addCommand(s1Empty)
+    cvc4.addCommand(s1Singleton)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "unsat")
+  }
+
+  val s1Insert1 = Assert(Eq("s1", Apply("insert", Seq(Numeral(1), Apply("singleton", Seq(Numeral(2)))))))
+
+  test("Set-Insert singleton") {
+    cvc4.flush()
+
+    cvc4.addCommand(s1)
+    cvc4.addCommand(s1Insert1)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
+
+  val s1Insert2 = Assert(Eq("s1", Apply("insert", Seq(Numeral(2), Apply("insert", Seq(Numeral(1), IdentifierAs("emptyset", Sorts("Set", Seq("Int")))))))))
+
+  test("Set-Insert empty") {
+    cvc4.flush()
+
+    cvc4.addCommand(s1)
+    cvc4.addCommand(s1Insert2)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
+
+  test("Set Equality 2") {
+    cvc4.flush()
+
+    cvc4.addCommand(s1)
+    cvc4.addCommand(s1Insert1)
+    cvc4.addCommand(s1Insert2)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
+
+  test("Set Union") {
+    cvc4.flush()
+
+    cvc4.addCommand(Assert(Eq(
+      Apply("union", Seq(Apply("singleton", Seq(Numeral(1))), Apply("singleton", Seq(Numeral(2))))),
+      Apply("insert", Seq(Numeral(2), Apply("insert", Seq(Numeral(1), IdentifierAs("emptyset", Sorts("Set", Seq("Int")))))))
+    )))
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
 }

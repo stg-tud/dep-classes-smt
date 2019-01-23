@@ -449,27 +449,27 @@ object NoiceTest extends App {
   val solver = new CVC4Solver(AxiomsCVC4.all, options,true)
 
   solver.flush()
-//  val x = AxiomsCVC4.path("x")
-//  val y = AxiomsCVC4.path("y")
-//  val z = AxiomsCVC4.path("z")
-//
-//  val xy = AxiomsCVC4.pathEq(x, y)
-//  val yz = AxiomsCVC4.pathEq(y, z)
-//  val xz = AxiomsCVC4.pathEq(x, z)
-//
-//  val knowledge = Seq(
-//    AxiomsCVC4.assertPath(x),
-//    AxiomsCVC4.assertPath(y),
-//    AxiomsCVC4.assertPath(z),
-//    AxiomsCVC4.assertVariable("x"),
-//    AxiomsCVC4.assertVariable("y"),
-//    AxiomsCVC4.assertVariable("z")
-//  )
-//
-//  val assertion = Assert(Not(AxiomsCVC4.entails(Seq(xy, yz), xz)))
-//
-//
-//  solver.addCommands(knowledge +: assertion)
+  val x = AxiomsCVC4.path("x")
+  val y = AxiomsCVC4.path("y")
+  val z = AxiomsCVC4.path("z")
+
+  val xy = AxiomsCVC4.pathEq(x, y)
+  val yz = AxiomsCVC4.pathEq(y, z)
+  val xz = AxiomsCVC4.pathEq(x, z)
+
+  val knowledge = Seq(
+    AxiomsCVC4.assertPath(x),
+    AxiomsCVC4.assertPath(y),
+    AxiomsCVC4.assertPath(z),
+    AxiomsCVC4.assertVariable("x"),
+    AxiomsCVC4.assertVariable("y"),
+    AxiomsCVC4.assertVariable("z")
+  )
+
+  val assertion = Assert(Not(AxiomsCVC4.entails(Seq(xy, yz), xz)))
+
+
+  solver.addCommands(knowledge :+ assertion)
   solver.addCommand(CheckSat)
   //solver.addCommand(GetUnsatCore)
   val (exit, out) = solver.execute()
