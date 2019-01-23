@@ -7,6 +7,19 @@ import smtlib.syntax.Implicit._
 // TODO: Z3 version 4.8.3 - 64 bit produces errors for nil (in pattern matching). mismatching number of variables supplied to constructor
 // TODO: update calculus rules with path-exists property
 object Axioms {
+  private val listDatatype = DeclareDatatype("List", ParDatatype(
+    Seq( // symbols
+      SimpleSymbol("T")
+    ),
+    Seq( // constructors
+      ConstructorDec("nil", Seq()),
+      ConstructorDec("insert", Seq(
+        SelectorDec("head", "T"),
+        SelectorDec("tail", Sorts("List", Seq("T")))
+      ))
+    )
+  ))
+
   private val Constraints = Sorts("List", Seq("Constraint"))
 
   /**
@@ -707,6 +720,7 @@ object Axioms {
   private val dccRules = Seq(cIdent, cRefl, cClass, cCut, cSubst, cProg)
 
   def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ gen ++ baseProps ++ dccProps ++ structuralRules ++ dccRules)
+  def allWithList: SMTLibScript = SMTLibScript(listDatatype +: all.commands)
 
   def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(premise.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs))), conclusion))
 

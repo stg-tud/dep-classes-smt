@@ -1,23 +1,23 @@
 package smtlib
 
 import org.scalatest.FunSuite
-import smtlib.solver.{Axioms, Z3Solver}
+import smtlib.solver.{Axioms, CVC4Solver, Z3Solver}
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
 class TestAxioms extends FunSuite {
   val options: Seq[SMTLibCommand] = Seq(
-    SetOption(KeyValueAttribute(Keyword("smt.mbqi"), SimpleSymbol("true"))),
-    SetOption(KeyValueAttribute(Keyword("smt.mbqi.max_iterations"), Numeral(10000))),
+//    SetOption(KeyValueAttribute(Keyword("smt.mbqi"), SimpleSymbol("true"))),
+//    SetOption(KeyValueAttribute(Keyword("smt.mbqi.max_iterations"), Numeral(10000))),
 //    SetOption(KeyValueAttribute(Keyword("model.compact"), SimpleSymbol("true"))),
-    SetOption(KeyValueAttribute(Keyword("smt.qi.eager_threshold"), Decimal(100))),
-    SetOption(KeyValueAttribute(Keyword("smt.qi.lazy_threshold"), Decimal(200))),
-    SetOption(KeyValueAttribute(Keyword("smt.qi.max_multi_patterns"), Numeral(4))),
+//    SetOption(KeyValueAttribute(Keyword("smt.qi.eager_threshold"), Decimal(100))),
+//    SetOption(KeyValueAttribute(Keyword("smt.qi.lazy_threshold"), Decimal(200))),
+//    SetOption(KeyValueAttribute(Keyword("smt.qi.max_multi_patterns"), Numeral(4))),
 //    SetOption(KeyValueAttribute(Keyword("pi.max_multi_patterns"), Numeral(4))), // breaks stuff
 //    SetOption(KeyValueAttribute(Keyword("trace"), SimpleSymbol("true"))),
     SetOption(ProduceProofs(true)),
     SetOption(ProduceUnsatCores(true)))
-  val z3 = new Z3Solver(Axioms.all, options, debug=true) // TODO: debug=false
+  val z3 = new CVC4Solver(Axioms.allWithList, options, debug=true) // TODO: debug=false
 
   test ("Axioms.all well-formattet") {
     val (exit, out) = z3.execute()

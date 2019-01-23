@@ -20,10 +20,13 @@ class CVC4Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq
     call = call ++ Seq("--lang", "smt2.6.1")
 
     // verbose output
-    //call = call :+ "-v"
+//    call = call :+ "-vv" // TODO: make verbosity parameterized or set it via smtlib option "(set-option :verbosity i)" where 0 <= i <= 2
 
     // turn on model generation
     call = call :+ "-m"
+
+    // enable incremental solving
+//    call = call :+ "-i" // not supported with produce proofs
 
     // enable time limiting per query (give milliseconds)
     call = call :+ s"--tlimit-per=$timeout"

@@ -6,7 +6,7 @@ import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
 class TestCVC4Solver extends FunSuite {
-  val cvc4 = new CVC4Solver(SMTLibScript(Seq()), debug=true)
+  val cvc4 = new CVC4Solver(SMTLibScript(Seq()), debug = true) // TODO: remove debug option
 
   val const1 = DeclareConst("a", "Int")
   val const2 = DeclareConst("b", "Int")
@@ -121,8 +121,65 @@ class TestCVC4Solver extends FunSuite {
 //    assert(output.head == "unknown")
 //  }
 
-  test("checksat Unknown") {
-    val sat = cvc4.checksat()
-    assert(sat == Unknown)
+//  test("checksat Unknown") {
+//    val sat = cvc4.checksat()
+//    assert(sat == Unknown)
+//  }
+
+  val pathDatatype = DeclareDatatype("Path", ConstructorDatatype(Seq(
+    ConstructorDec("var", Seq(SelectorDec("id", "String"))),
+    ConstructorDec("pth", Seq(
+      SelectorDec("obj", "Path"),
+      SelectorDec("field", "String")
+    ))
+  )))
+
+  test("Datatype Declaration") {
+    cvc4.flush()
+
+    cvc4.addCommand(pathDatatype)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
+
+  val pathConst = DeclareConst("p", "Path")
+  val pathContent1 = Assert(Eq("p", Apply("var", Seq(SMTLibString("x")))))
+
+  test("Constructor invocation") {
+    cvc4.flush()
+
+    cvc4.addCommand(pathDatatype)
+    cvc4.addCommand(pathConst)
+    cvc4.addCommand(pathContent1)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
+
+  val pathContent2 = Assert(Eq("p", Apply("pth", Seq(Apply("var", Seq(SMTLibString("x"))), SMTLibString("f")))))
+
+  test("Constructor equality") {
+    cvc4.flush()
+
+    cvc4.addCommand(pathDatatype)
+    cvc4.addCommand(pathConst)
+    cvc4.addCommand(pathContent1)
+    cvc4.addCommand(pathContent2)
+    cvc4.addCommand(CheckSat)
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "unsat")
   }
 }
