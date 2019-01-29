@@ -15,11 +15,12 @@ class DCC(P: Program) {
 
   // constraint entailment
   def entails(ctx: List[Constraint], c: Constraint): Boolean = {
-    if(ctx.size <= 1) {
-      println(s"$ctx |- $c")
-    } else {
-      ctx.foreach(println)
-      println(s"|- $c")
+    ctx match {
+      case Nil => println(s"ϵ |- $c")
+      case _::Nil => println(s"$ctx |- $c")
+      case _ =>
+        ctx.foreach(println)
+        println(s"|- $c")
     }
 
     (ctx, c) match {
@@ -59,7 +60,7 @@ class DCC(P: Program) {
         case ((_, Id(_)), rst) => rst // true && rst
         case _ => false // false && rst
       } => // TODO: extend guard with other non-interp prerequisites like entailment? implement body
-      val x: Id  = Id(freshname('x))
+      val x: Id  = Id(freshname())
       val args1: List[(Id, Id)] = args.map{case (f, Id(z)) => (f, Id(z))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
       val o: Obj = (cls, args1)
       // cls in Program
@@ -150,8 +151,11 @@ class DCC(P: Program) {
       case (_, rst) => rst
     }
 
-  // TODO: implement
-  def freshname(x: Symbol): Symbol = x
+  private var nameCounter: Int = 0
+  def freshname(): Symbol = {
+    nameCounter += 1
+    Symbol("x" + nameCounter.toString)
+  }
 }
 
 import Util._
