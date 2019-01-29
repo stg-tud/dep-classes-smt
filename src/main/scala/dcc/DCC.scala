@@ -14,18 +14,28 @@ class DCC(P: Program) {
     //cs.map(c => entails(ctx, c)).fold(true){_ && _}
 
   // constraint entailment
-  def entails(ctx: List[Constraint], c: Constraint): Boolean = (ctx, c) match {
-    // C-Ident
-    case _ if ctx.contains(c) => true
-    // C-Refl
-    case (_, PathEquivalence(p, q)) if p == q => true
-    // C-Class
-    case (_, InstanceOf(p, cls)) => entails(ctx, InstantiatedBy(p, cls))
-    // TODO: really needed to implement this or go directly to smt?
-    case (_, _) => false
+  def entails(ctx: List[Constraint], c: Constraint): Boolean = {
+    if(ctx.size <= 1) {
+      println(s"$ctx |- $c")
+    } else {
+      ctx.foreach(println)
+      println(s"|- $c")
+    }
+
+    (ctx, c) match {
+      // C-Ident (with weakening)
+      case _ if ctx.contains(c) => true
+      // C-Refl (with weakening)
+      case (_, PathEquivalence(p, q)) if p == q => true
+      // C-Class
+      case (_, InstanceOf(p, cls)) => entails(ctx, InstantiatedBy(p, cls))
+      // TODO: really needed to implement this or go directly to smt?
+      case (_, _) => false
+    }
   }
 
   // TODO: change return type to Either or Option?
+  // TODO: big step
   def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
     // R-Field
     case FieldAccess(X@Id(_), F@Id(_)) =>
@@ -53,7 +63,7 @@ class DCC(P: Program) {
       val args1: List[(Id, Id)] = args.map{case (f, Id(z)) => (f, Id(z))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
       val o: Obj = (cls, args1)
       // cls in Program
-      val (y: Id, b: List[Constraint]) = classInProgram(cls, P).getOrElse() // TODO: alpha renaming y to x and orElse
+      val (y: Id, b: List[Constraint]) = classInProgram(cls, P).getOrElse() // TODO: alpha renaming y to x and orElse error
       // heap constraints entail cls constraints
       if (entails(HC(heap) ++ OC(x, o), b))
         (heap + (x -> o), x)
@@ -159,4 +169,14 @@ object Main extends App {
   )
 
   naturalNumbers.foreach(println)
+
+  val dcc = new DCC(naturalNumbers)
+
+  //val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Zero), Nil))
+  val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Succ), List((Id('p), ObjectConstruction(Id('Zero), Nil)))))
+  val (h1, e1) = dcc.interp(h, e)
+
+  println("Heap:")
+  h1.foreach(println)
+  println("Expr:" + e1)
 }
