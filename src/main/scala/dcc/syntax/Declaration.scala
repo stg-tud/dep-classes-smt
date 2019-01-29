@@ -10,7 +10,10 @@ trait Declaration
 //case class ConstraintEntailment(x: VariableName, cs: List[Constraint], c: Constraint) extends Declaration
 
 case class ConstructorDeclaration(C: Id, x: Id, as: List[Constraint]) extends Declaration {
-  override def toString: String = s"$C($x. ${commaSeparate(as.map(_.toString))})"
+  override def toString: String = as match {
+    case Nil => s"$C($x. ϵ)"
+    case _ => s"$C($x. ${commaSeparate(as.map(_.toString))})"
+  }
 }
 
 case class MethodImplementation(m: Id, x: Id, as: List[Constraint], t: Type, e: Expression) extends Declaration {

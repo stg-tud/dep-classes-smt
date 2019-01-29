@@ -2,6 +2,7 @@ package dcc
 
 import dcc.syntax.Program.Program
 import dcc.syntax._
+import jdk.nashorn.internal.codegen.CompilerConstants
 
 class DCC(P: Program) {
   // Class(field = value, ...)
@@ -145,22 +146,17 @@ class DCC(P: Program) {
 
 import Util._
 object Main extends App {
-  val l: List[Int] = List(1, 1, 1, 1, 1)
-  def plus1(i: Int): Int = i+1
+  val naturalNumbers: Program = List(
+    ConstructorDeclaration(Id('Zero), Id('x), Nil),
+    ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
+    ConstructorDeclaration(Id('Succ), Id('x), List(InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat)))),
+    ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Succ)), InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))), InstanceOf(Id('x), Id('Nat))),
+    AbstractMethodDeclaration(Id('prev), Id('x), List(InstanceOf(Id('x), Id('Nat))), Type(Id('y), List(InstanceOf(Id('y), Id('Nat))))),
+    MethodImplementation(Id('prev), Id('x), List(InstanceOf(Id('x), Id('Zero))), Type(Id('y), List(InstanceOf(Id('y), Id('Nat)))),
+      ObjectConstruction(Id('Zero), Nil)),
+    MethodImplementation(Id('prev), Id('x), List(InstanceOf(Id('x), Id('Succ)), InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))), Type(Id('y), List(InstanceOf(Id('y), Id('Nat)))),
+      FieldAccess(Id('x), Id('p)))
+  )
 
-  val m = l.foldLeft(Nil: List[Int]){
-    case (rst@j::is, i) => i+j :: rst
-    case (is, i) => i :: is
-  }
-
-  val n = l.foldRight(Nil: List[Int]){
-    case (i, rst@j::is) =>
-      println(s"rst ++ List($i+$j)")
-      rst ++ List(i+j)
-    case (i, is) => is ++ List(i)
-  }
-
-  println(m)
-  println(n)
-  println(l.filter(_ => false))
+  naturalNumbers.foreach(println)
 }
