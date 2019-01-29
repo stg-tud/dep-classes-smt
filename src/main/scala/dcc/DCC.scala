@@ -38,7 +38,10 @@ class DCC(P: Program) {
         case _ => (heap, expr) // x does not have field f TODO: return type
       }
     // R-Call
-    case MethodCall(m, x@Id(_)) => (heap, expr) // TODO
+    case MethodCall(m, x@Id(_)) => (heap, expr)
+//      val S: List[Any] = ??? // TODO: list type: m-impl
+
+      // todo
     // R-New
     case ObjectConstruction(cls, args)
       if args.foldRight(true){ // if args are values (Id)
@@ -123,28 +126,41 @@ class DCC(P: Program) {
       init :: fieldCs
   }
 
+  // Method Type
+  def mType(m: Id, x: Id, y: Id): List[(List[Constraint], List[Constraint])] =
+    P.foldRight(Nil: List[(List[Constraint], List[Constraint])]){
+      case (AbstractMethodDeclaration(`m`, `x`, a, Type(`y`, b)), rst) => (a, b) :: rst
+      case (_, rst) => rst}
+
+  // Method Implementation
+  def mImpl(m: Id, x: Id): List[(List[Constraint], Expression)] =
+    P.foldRight(Nil: List[(List[Constraint], Expression)]){
+      case (MethodImplementation(`m`, `x`, a, Type(y, b), e), rst) => (a, e) :: rst
+      case (_, rst) => rst
+    }
+
   // TODO: implement
   def freshname(x: Symbol): Symbol = x
 }
 
-//import Util._
-//object Main extends App {
-//  val l: List[Int] = List(1, 1, 1, 1, 1)
-//  def plus1(i: Int): Int = i+1
-//
-//  val m = l.foldLeft(Nil: List[Int]){
-//    case (rst@j::is, i) => i+j :: rst
-//    case (is, i) => i :: is
-//  }
-//
-//  val n = l.foldRight(Nil: List[Int]){
-//    case (i, rst@j::is) =>
-//      println(s"rst ++ List($i+$j)")
-//      rst ++ List(i+j)
-//    case (i, is) => is ++ List(i)
-//  }
-//
-//  println(m)
-//  println(n)
-//  println(l.filter(_ => false))
-//}
+import Util._
+object Main extends App {
+  val l: List[Int] = List(1, 1, 1, 1, 1)
+  def plus1(i: Int): Int = i+1
+
+  val m = l.foldLeft(Nil: List[Int]){
+    case (rst@j::is, i) => i+j :: rst
+    case (is, i) => i :: is
+  }
+
+  val n = l.foldRight(Nil: List[Int]){
+    case (i, rst@j::is) =>
+      println(s"rst ++ List($i+$j)")
+      rst ++ List(i+j)
+    case (i, is) => is ++ List(i)
+  }
+
+  println(m)
+  println(n)
+  println(l.filter(_ => false))
+}
