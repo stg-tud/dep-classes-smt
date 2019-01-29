@@ -2,7 +2,6 @@ package dcc
 
 import dcc.syntax.Program.Program
 import dcc.syntax._
-import jdk.nashorn.internal.codegen.CompilerConstants
 
 class DCC(P: Program) {
   // Class(field = value, ...)
@@ -13,6 +12,7 @@ class DCC(P: Program) {
     cs.forall(c => entails(ctx, c))
     //cs.map(c => entails(ctx, c)).fold(true){_ && _}
 
+  // TODO: implement conversion to smtlib and call solver
   // constraint entailment
   def entails(ctx: List[Constraint], c: Constraint): Boolean = {
     ctx match {
