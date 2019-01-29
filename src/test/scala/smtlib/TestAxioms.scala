@@ -1,7 +1,7 @@
 package smtlib
 
 import org.scalatest.FunSuite
-import smtlib.solver.{Axioms, CVC4Solver, Z3Solver}
+import smtlib.solver.{Axioms, Z3Solver}
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
