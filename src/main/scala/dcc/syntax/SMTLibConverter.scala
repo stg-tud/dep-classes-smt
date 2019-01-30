@@ -1,8 +1,9 @@
 package dcc.syntax
 
 import dcc.syntax.Program.Program
+import smtlib.SMTLibCommand
 import smtlib.solver.Axioms
-import smtlib.syntax.{Apply, SMTLibString, SimpleSymbol, Term}
+import smtlib.syntax._
 
 object SMTLibConverter {
   def convertConstraint(c: Constraint): Term = c match {
@@ -33,8 +34,8 @@ object SMTLibConverter {
     Apply(SimpleSymbol("entails"), Seq(ctxSMTLib, cSMTLib))
   }
 
-  def convertVariables(constraints: List[Constraint]): List[Term] =
-    extractVariables(constraints).map(x => Apply(SimpleSymbol("variable"), Seq(SMTLibString(x))))
+  def makeAsserts(terms: List[Term]): List[SMTLibCommand] =
+    terms.map(t => Assert(t))
 
   def convertVariablesPathsClasses(constraints: List[Constraint]): (List[Term], List[Term], List[Term]) = {
     val (vars, paths, classes) = extractVariablesPathsClasses(constraints)
@@ -99,6 +100,9 @@ object SMTLibConverter {
 
         extractVariablesPathsClasses(rst, vars1, paths1, classes1)
   }
+
+  def convertVariables(constraints: List[Constraint]): List[Term] =
+    extractVariables(constraints).map(x => Apply(SimpleSymbol("variable"), Seq(SMTLibString(x))))
 
   private def extractVariables(constraints: List[Constraint], vars: List[String] = List()): List[String] = constraints match {
     case Nil => vars

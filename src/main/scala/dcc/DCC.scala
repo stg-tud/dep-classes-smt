@@ -2,8 +2,8 @@ package dcc
 
 import dcc.syntax.Program.Program
 import dcc.syntax._
-import smtlib.SMTLibCommand
-import smtlib.syntax.Term
+import smtlib.solver.{Axioms, Z3Solver}
+import smtlib.syntax.{Assert, Sat, Term, Unsat, Unknown}
 
 class DCC(P: Program) {
   // Class(field = value, ...)
@@ -14,16 +14,16 @@ class DCC(P: Program) {
     cs.forall(c => entails(ctx, c))
     //cs.map(c => entails(ctx, c)).fold(true){_ && _}
 
-  // TODO: implement conversion to smtlib and call solver
   // constraint entailment
   def entails(ctx: List[Constraint], c: Constraint): Boolean = {
-    ctx match {
-      case Nil => println(s"ϵ |- $c")
-      case _::Nil => println(s"$ctx |- $c")
-      case _ =>
-        ctx.foreach(println)
-        println(s"|- $c")
-    }
+    // debug output
+//    ctx match {
+//      case Nil => println(s"ϵ |- $c")
+//      case _::Nil => println(s"$ctx |- $c")
+//      case _ =>
+//        ctx.foreach(println)
+//        println(s"|- $c")
+//    }
 
     (ctx, c) match {
       // C-Ident (with weakening)
@@ -33,16 +33,30 @@ class DCC(P: Program) {
       case (_, _) =>
         val entailment = SMTLibConverter.convertEntailment(ctx, c)
         val programEntailments: List[Term] = SMTLibConverter.convertProgramEntailments(P)
-        val variables: List[Term] = SMTLibConverter.convertVariables(c :: ctx)
+        val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(c :: ctx)
 
-        // TODO: extract paths for path-exists
-        // TODO: extract class names
+        // debug output
+//        println(entailment.format())
+//        programEntailments.foreach(c => println(c.format()))
+//        variables.foreach(c => println(c.format()))
+//        paths.foreach(c => println(c.format()))
+//        classes.foreach(c => println(c.format()))
 
-        println(entailment.format())
-        programEntailments.foreach(c => println(c.format()))
-        variables.foreach(c => println(c.format()))
+        val solver = new Z3Solver(Axioms.all, debug=false)
 
-        false
+        solver.addCommands(SMTLibConverter.makeAsserts(variables))
+        solver.addCommands(SMTLibConverter.makeAsserts(paths))
+        solver.addCommands(SMTLibConverter.makeAsserts(classes))
+        solver.addCommands(SMTLibConverter.makeAsserts(programEntailments))
+        solver.addCommand(Assert(entailment))
+
+        val sat = solver.checksat()
+
+        sat match {
+          case Sat => true
+          case Unsat => false
+          case Unknown => false
+        }
     }
   }
 
@@ -74,7 +88,7 @@ class DCC(P: Program) {
       val args1: List[(Id, Id)] = args.map{case (f, Id(z)) => (f, Id(z))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
       val o: Obj = (cls, args1)
       // cls in Program
-      val (y: Id, b: List[Constraint]) = classInProgram(cls, P).getOrElse() // TODO: alpha renaming y to x and orElse error
+      val (y: Id, b: List[Constraint]) = classInProgram(cls, P).getOrElse(return (heap, expr)) // TODO: alpha renaming of y to x in b and orElse stuck/error
       // heap constraints entail cls constraints
       if (entails(HC(heap) ++ OC(x, o), b))
         (heap + (x -> o), x)
@@ -90,7 +104,7 @@ class DCC(P: Program) {
       interp(h1, MethodCall(m, e1)) // recursive call for big-step
     // RC-New
     case ObjectConstruction(cls, args) =>
-      val (h1, args1) = objArgsInterp2(heap, args)
+      val (h1, args1) = objArgsInterp(heap, args)
       interp(h1, ObjectConstruction(cls, args1)) // recursive call for big-step
   }
 
@@ -100,38 +114,14 @@ class DCC(P: Program) {
     case _ :: rst => classInProgram(Cls, rst)
   }
 
-  private def objArgsInterp(heap: Heap, args: List[(Id, Expression)]): List[(Id, Expression)] = args match {
-    case Nil => Nil
-    case (f, x@Id(_)) :: rst => (f, x) :: objArgsInterp(heap, rst)
-    case (f, e) :: rst =>
-      val (h1, e1) = interp(heap, e)
-      (f, e1) :: objArgsInterp(h1, rst)
-  }
-
-  private def tailObjArgsInterp(heap: Heap, args: List[(Id, Expression)], tail: List[(Id, Expression)]): List[(Id, Expression)] = args match {
-    case Nil => tail
-    case (f, x@Id(_)) :: rst => tailObjArgsInterp(heap, rst, (f, x) :: tail)
-    case (f, e) :: rst =>
-      val (h1, e1) = interp(heap, e)
-      tailObjArgsInterp(h1, rst, (f, e1) :: tail)
-  }
-
-//  private def objArgsInterp1(heap: Heap, args: List[(Id, Expression)]): List[(Heap, (Id, Expression))] = args match {
-//    case Nil => Nil
-//    case (f, x@Id(_)) :: rst => (heap, (f, x)) :: objArgsInterp1(heap, rst)
-//    case (f, e) :: rst =>
-//      val (h1, e1) = interp(heap, e)
-//      (h1, (f, e1)) :: objArgsInterp1(h1, rst)
-//  }
-
-  private def objArgsInterp2(heap: Heap, args: List[(Id, Expression)]): (Heap, List[(Id, Expression)]) = args match {
+  private def objArgsInterp(heap: Heap, args: List[(Id, Expression)]): (Heap, List[(Id, Expression)]) = args match {
     case Nil => (heap, Nil)
     case (f, x@Id(_)) :: rst =>
-      val (h1, args1) = objArgsInterp2(heap, rst)
+      val (h1, args1) = objArgsInterp(heap, rst)
       (h1, (f, x) :: args1)
     case (f, e) :: rst =>
       val (h1, e1) = interp(heap, e)
-      val (h2, args1) = objArgsInterp2(h1, rst)
+      val (h2, args1) = objArgsInterp(h1, rst)
       (h2, (f, e1) :: args1)
   }
 
@@ -157,7 +147,7 @@ class DCC(P: Program) {
   // Method Implementation
   def mImpl(m: Id, x: Id): List[(List[Constraint], Expression)] =
     P.foldRight(Nil: List[(List[Constraint], Expression)]){
-      case (MethodImplementation(`m`, `x`, a, Type(y, b), e), rst) => (a, e) :: rst
+      case (MethodImplementation(`m`, `x`, a, _, e), rst) => (a, e) :: rst
       case (_, rst) => rst
     }
 
