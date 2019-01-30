@@ -111,4 +111,16 @@ class TestSMTLibConversion extends FunSuite {
 
     assert(SMTLibConverter.convertEntailment(ctx, of) == entailment)
   }
+
+  test("Convert Variables") {
+    val cs = List(of, by, eq, PathEquivalence(Id('y), Id('z)), PathEquivalence(FieldPath(Id('m), Id('h)), Id('y)))
+    val vars = List(
+      Apply(SimpleSymbol("variable"), Seq(SMTLibString("m"))),
+      Apply(SimpleSymbol("variable"), Seq(SMTLibString("y"))),
+      Apply(SimpleSymbol("variable"), Seq(SMTLibString("z"))),
+      Apply(SimpleSymbol("variable"), Seq(SMTLibString("x")))
+    )
+
+    assert(SMTLibConverter.convertVariables(cs) == vars)
+  }
 }

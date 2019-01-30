@@ -32,6 +32,30 @@ object SMTLibConverter {
     Apply(SimpleSymbol("entails"), Seq(ctxSMTLib, cSMTLib))
   }
 
+  def convertVariables(constraints: List[Constraint]): List[Term] =
+    extractVariables(constraints).map(x => Apply(SimpleSymbol("variable"), Seq(SMTLibString(x))))
+
+
+  private def extractVariables(constraints: List[Constraint], vars: List[String] = List()): List[String] = constraints match {
+    case Nil => vars
+    case PathEquivalence(p, q) :: rst if !vars.contains(objectName(p)) && !vars.contains(objectName(q)) =>
+      extractVariables(rst, objectName(p) :: objectName(q) :: vars)
+    case PathEquivalence(p, _) :: rst if !vars.contains(objectName(p)) =>
+      extractVariables(rst, objectName(p) :: vars)
+    case PathEquivalence(_, q) :: rst if !vars.contains(objectName(q)) =>
+      extractVariables(rst, objectName(q) :: vars)
+    case InstanceOf(p, cls) :: rst if !vars.contains(objectName(p)) =>
+      extractVariables(rst, objectName(p) :: vars)
+    case InstantiatedBy(p, cls) :: rst if !vars.contains(objectName(p)) =>
+      extractVariables(rst, objectName(p) :: vars)
+    case _ :: rst => extractVariables(rst, vars)
+  }
+
+  private def objectName(p: Path): String = p match {
+    case Id(x) => x.name
+    case FieldPath(q, _) => objectName(q)
+  }
+
   private def makeList(terms: Seq[Term]): Term = terms match {
     case Nil => SimpleSymbol("nil")
     case t :: rst => Apply(SimpleSymbol("insert"), Seq(t, makeList(rst)))

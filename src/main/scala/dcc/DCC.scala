@@ -32,19 +32,21 @@ class DCC(P: Program) {
       case (_, PathEquivalence(p, q)) if p == q => true
       case (_, _) =>
         val entailment = SMTLibConverter.convertEntailment(ctx, c)
-
         val programEntailments: List[Term] = SMTLibConverter.convertProgramEntailments(P)
+        val variables: List[Term] = SMTLibConverter.convertVariables(c :: ctx)
+
+        // TODO: extract paths for path-exists
+        // TODO: extract class names
 
         println(entailment.format())
-
         programEntailments.foreach(c => println(c.format()))
+        variables.foreach(c => println(c.format()))
 
         false
     }
   }
 
   // TODO: change return type to Either or Option?
-  // TODO: big step
   def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
     // R-Field
     case FieldAccess(X@Id(_), F@Id(_)) =>
@@ -81,15 +83,15 @@ class DCC(P: Program) {
     // RC-Field
     case FieldAccess(e, f) =>
       val (h1, e1) = interp(heap, e)
-      (h1, FieldAccess(e1, f))
+      interp(h1, FieldAccess(e1, f)) // recursive call for big-step
     // RC-Call
     case MethodCall(m, e) =>
       val (h1, e1) = interp(heap, e)
-      (h1, MethodCall(m, e1))
+      interp(h1, MethodCall(m, e1)) // recursive call for big-step
     // RC-New
     case ObjectConstruction(cls, args) =>
       val (h1, args1) = objArgsInterp2(heap, args)
-      (h1, ObjectConstruction(cls, args1))
+      interp(h1, ObjectConstruction(cls, args1)) // recursive call for big-step
   }
 
   private def classInProgram(Cls: Id, p: Program): Option[(Id, List[Constraint])] = p match {
@@ -114,13 +116,13 @@ class DCC(P: Program) {
       tailObjArgsInterp(h1, rst, (f, e1) :: tail)
   }
 
-  private def objArgsInterp1(heap: Heap, args: List[(Id, Expression)]): List[(Heap, (Id, Expression))] = args match {
-    case Nil => Nil
-    case (f, x@Id(_)) :: rst => (heap, (f, x)) :: objArgsInterp1(heap, rst)
-    case (f, e) :: rst =>
-      val (h1, e1) = interp(heap, e)
-      (h1, (f, e1)) :: objArgsInterp1(h1, rst)
-  }
+//  private def objArgsInterp1(heap: Heap, args: List[(Id, Expression)]): List[(Heap, (Id, Expression))] = args match {
+//    case Nil => Nil
+//    case (f, x@Id(_)) :: rst => (heap, (f, x)) :: objArgsInterp1(heap, rst)
+//    case (f, e) :: rst =>
+//      val (h1, e1) = interp(heap, e)
+//      (h1, (f, e1)) :: objArgsInterp1(h1, rst)
+//  }
 
   private def objArgsInterp2(heap: Heap, args: List[(Id, Expression)]): (Heap, List[(Id, Expression)]) = args match {
     case Nil => (heap, Nil)
@@ -186,9 +188,8 @@ object Main extends App {
 
   //val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Zero), Nil))
   val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Succ), List((Id('p), ObjectConstruction(Id('Zero), Nil)))))
-  val (h1, e1) = dcc.interp(h, e)
 
   println("Heap:")
-  h1.foreach(println)
-  println("Expr:" + e1)
+  h.foreach(println)
+  println("Expr:" + e)
 }
