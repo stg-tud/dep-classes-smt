@@ -3,7 +3,7 @@ package dcc
 import dcc.syntax.Program.Program
 import dcc.syntax._
 import smtlib.solver.{Axioms, Z3Solver}
-import smtlib.syntax.{Assert, Sat, Term, Unsat, Unknown}
+import smtlib.syntax.{Assert, Not, Sat, Term, Unknown, Unsat}
 
 class DCC(P: Program) {
   // Class(field = value, ...)
@@ -48,13 +48,14 @@ class DCC(P: Program) {
         solver.addCommands(SMTLibConverter.makeAsserts(paths))
         solver.addCommands(SMTLibConverter.makeAsserts(classes))
         solver.addCommands(SMTLibConverter.makeAsserts(programEntailments))
-        solver.addCommand(Assert(entailment))
+        // TODO: check if not entailment is unsat or entailment is sat?
+        solver.addCommand(Assert(Not(entailment)))
 
         val sat = solver.checksat()
 
         sat match {
-          case Sat => true
-          case Unsat => false
+          case Sat => false
+          case Unsat => true
           case Unknown => false
         }
     }
