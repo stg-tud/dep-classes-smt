@@ -12,8 +12,12 @@ object SMTLibConverter {
     case InstantiatedBy(p, cls) => Axioms.instantiatedBy(convertPath(p), cls.toString)
   }
 
-  // TODO: add path conversion via structure
-  def convertPath(p: Path): Term = Axioms.path(p.toString)
+  def convertPath(p: Path): Term = p match {
+    case Id(x) => Apply(SimpleSymbol("var"), Seq(SMTLibString(x.name)))
+    case FieldPath(q, Id(f)) => Apply(SimpleSymbol("pth"), Seq(convertPath(q), SMTLibString(f.name)))
+  }
+
+  def convertPath(p: String): Term = Axioms.path(p)
 
   def convertProgramEntailments(p: Program): List[Term] = p match {
     case Nil => Nil

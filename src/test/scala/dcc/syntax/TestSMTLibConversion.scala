@@ -2,7 +2,7 @@ package dcc.syntax
 
 import dcc.syntax.Program.Program
 import org.scalatest.FunSuite
-import smtlib.syntax.{Apply, SMTLibString, SimpleSymbol}
+import smtlib.syntax.{Apply, Assert, SMTLibString, SimpleSymbol}
 
 class TestSMTLibConversion extends FunSuite {
   val p: Path = Id('x)
@@ -28,8 +28,11 @@ class TestSMTLibConversion extends FunSuite {
 
   test("Convert Path") {
     assert(SMTLibConverter.convertPath(p) == pSMTLib)
-    assert(SMTLibConverter.convertPath(q) == qSMTLib )
+    assert(SMTLibConverter.convertPath(q) == qSMTLib)
     assert(SMTLibConverter.convertPath(r) == rSMTLib)
+    assert(SMTLibConverter.convertPath("x") == pSMTLib)
+    assert(SMTLibConverter.convertPath("x.f") == qSMTLib)
+    assert(SMTLibConverter.convertPath("x.f.f1") == rSMTLib)
   }
 
   val eq = PathEquivalence(p, q)
@@ -169,5 +172,21 @@ class TestSMTLibConversion extends FunSuite {
     assert(vars == expectedVars)
     assert(paths == expectedPaths)
     assert(classes == expectedClasses)
+  }
+
+  test("Make asserts"){
+    val terms = List(
+      Apply(SimpleSymbol("variable"), Seq(SMTLibString("y"))),
+      Apply(SimpleSymbol("variable"), Seq(SMTLibString("x"))),
+      Apply(SimpleSymbol("variable"), Seq(SMTLibString("z")))
+    )
+
+    val expectedAsserts = List(
+      Assert(Apply(SimpleSymbol("variable"), Seq(SMTLibString("y")))),
+      Assert(Apply(SimpleSymbol("variable"), Seq(SMTLibString("x")))),
+      Assert(Apply(SimpleSymbol("variable"), Seq(SMTLibString("z"))))
+    )
+
+    assert(SMTLibConverter.makeAsserts(terms) == expectedAsserts)
   }
 }
