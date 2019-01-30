@@ -46,38 +46,6 @@ class TestSMTLibConversion extends FunSuite {
     assert(SMTLibConverter.convertConstraint(by) == bySMTLib)
   }
 
-  test("make path list") {
-    val terms = Seq(pSMTLib, qSMTLib, rSMTLib)
-    val term = Apply(SimpleSymbol("insert"), Seq(
-      pSMTLib,
-      Apply(SimpleSymbol("insert"), Seq(
-        qSMTLib,
-        Apply(SimpleSymbol("insert"), Seq(
-          rSMTLib,
-          SimpleSymbol("nil")
-        ))
-      ))
-    ))
-
-    assert(SMTLibConverter.makeList(terms) == term)
-  }
-
-  test("make constraint list") {
-    val terms = Seq(eqSMTLib, ofSMTLib, bySMTLib)
-    val term = Apply(SimpleSymbol("insert"), Seq(
-      eqSMTLib,
-      Apply(SimpleSymbol("insert"), Seq(
-        ofSMTLib,
-        Apply(SimpleSymbol("insert"), Seq(
-          bySMTLib,
-          SimpleSymbol("nil")
-        ))
-      ))
-    ))
-
-    assert(SMTLibConverter.makeList(terms) == term)
-  }
-
   val naturalNumbers: Program = List(
     ConstructorDeclaration(Id('Zero), Id('x), Nil),
     ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
@@ -126,5 +94,21 @@ class TestSMTLibConversion extends FunSuite {
     assert(entailments.size == 2)
     assert(entailments.head == zeroEntailment)
     assert(entailments.last == succEntailment)
+  }
+
+  test("Convert Entailment") {
+    val ctx = List(by, eq)
+    val entailment = Apply(SimpleSymbol("entails"), Seq(
+      Apply(SimpleSymbol("insert"), Seq(
+        bySMTLib,
+        Apply(SimpleSymbol("insert"), Seq(
+          eqSMTLib,
+          SimpleSymbol("nil")
+        ))
+      )),
+      ofSMTLib
+    ))
+
+    assert(SMTLibConverter.convertEntailment(ctx, of) == entailment)
   }
 }

@@ -31,12 +31,13 @@ class DCC(P: Program) {
       // C-Refl (with weakening)
       case (_, PathEquivalence(p, q)) if p == q => true
       case (_, _) =>
-        val ctxSMTLib: List[Term] = ctx.map(SMTLibConverter.convertConstraint)
-        val cSMTLib: Term = SMTLibConverter.convertConstraint(c)
+        val entailment = SMTLibConverter.convertEntailment(ctx, c)
 
-        ctxSMTLib.foreach(c => println(c.format()))
-        println(cSMTLib.format())
+        val programEntailments: List[Term] = SMTLibConverter.convertProgramEntailments(P)
 
+        println(entailment.format())
+
+        programEntailments.foreach(c => println(c.format()))
 
         false
     }

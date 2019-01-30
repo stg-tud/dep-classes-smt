@@ -25,7 +25,14 @@ object SMTLibConverter {
     case _ :: rst => convertProgramEntailments(rst)
   }
 
-  def makeList(terms: Seq[Term]): Term = terms match {
+  def convertEntailment(ctx: List[Constraint], c: Constraint): Term = {
+    val ctxSMTLib: Term = SMTLibConverter.makeList(ctx.map(SMTLibConverter.convertConstraint))
+    val cSMTLib: Term = SMTLibConverter.convertConstraint(c)
+
+    Apply(SimpleSymbol("entails"), Seq(ctxSMTLib, cSMTLib))
+  }
+
+  private def makeList(terms: Seq[Term]): Term = terms match {
     case Nil => SimpleSymbol("nil")
     case t :: rst => Apply(SimpleSymbol("insert"), Seq(t, makeList(rst)))
   }
