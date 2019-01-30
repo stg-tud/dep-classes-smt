@@ -11,6 +11,7 @@ object SMTLibConverter {
     case InstantiatedBy(p, cls) => Axioms.instantiatedBy(convertPath(p), cls.toString)
   }
 
+  // TODO: add path conversion via structure
   def convertPath(p: Path): Term = Axioms.path(p.toString)
 
   def convertProgramEntailments(p: Program): List[Term] = p match {
@@ -35,6 +36,69 @@ object SMTLibConverter {
   def convertVariables(constraints: List[Constraint]): List[Term] =
     extractVariables(constraints).map(x => Apply(SimpleSymbol("variable"), Seq(SMTLibString(x))))
 
+  def convertVariablesPathsClasses(constraints: List[Constraint]): (List[Term], List[Term], List[Term]) = {
+    val (vars, paths, classes) = extractVariablesPathsClasses(constraints)
+
+    (
+      vars.map(x => Apply(SimpleSymbol("variable"), Seq(SMTLibString(x)))),
+      paths.map(p => Apply(SimpleSymbol("path-exists"), Seq(convertPath(p)))),
+      classes.map(cls => Apply(SimpleSymbol("class"), Seq(SMTLibString(cls))))
+    )
+  }
+
+  private def extractVariablesPathsClasses
+    (constraints: List[Constraint],
+     vars: List[String] = List(),
+     paths: List[Path] = List(),
+     classes: List[String] = List())
+    : (List[String], List[Path], List[String]) = constraints match {
+      case Nil => (vars, paths, classes)
+      case PathEquivalence(p, q) :: rst =>
+        var vars1: List[String] = vars
+        var paths1: List[Path] = paths
+
+        if(!vars1.contains(objectName(p)))
+          vars1 = objectName(p) :: vars1
+        if(!vars1.contains(objectName(q)))
+          vars1 = objectName(q) :: vars1
+
+        if(!paths1.contains(p))
+          paths1 = p :: paths1
+        if(!paths1.contains(q))
+          paths1 = q :: paths1
+
+        extractVariablesPathsClasses(rst, vars1, paths1, classes)
+      case InstanceOf(p, cls) :: rst =>
+        var vars1: List[String] = vars
+        var paths1: List[Path] = paths
+        var classes1: List[String] = classes
+
+        if(!vars1.contains(objectName(p)))
+          vars1 = objectName(p) :: vars1
+
+        if(!paths1.contains(p))
+          paths1 = p :: paths1
+
+        if(!classes1.contains(cls.toString))
+          classes1 = cls.toString :: classes1
+
+        extractVariablesPathsClasses(rst, vars1, paths1, classes1)
+      case InstantiatedBy(p, cls) :: rst =>
+        var vars1: List[String] = vars
+        var paths1: List[Path] = paths
+        var classes1: List[String] = classes
+
+        if(!vars1.contains(objectName(p)))
+          vars1 = objectName(p) :: vars1
+
+        if(!paths1.contains(p))
+          paths1 = p :: paths1
+
+        if(!classes1.contains(cls.toString))
+          classes1 = cls.toString :: classes1
+
+        extractVariablesPathsClasses(rst, vars1, paths1, classes1)
+  }
 
   private def extractVariables(constraints: List[Constraint], vars: List[String] = List()): List[String] = constraints match {
     case Nil => vars

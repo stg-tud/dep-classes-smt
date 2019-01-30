@@ -123,4 +123,51 @@ class TestSMTLibConversion extends FunSuite {
 
     assert(SMTLibConverter.convertVariables(cs) == vars)
   }
+
+  test("Convert Variables Paths Classes") {
+    val x: Path = Id('x)
+    val y: Path = Id('y)
+    val z: Path = Id('z)
+    val pth: Path = FieldPath(Id('x), Id('f))
+
+    val xSMTLib = Apply(SimpleSymbol("var"), Seq(SMTLibString("x")))
+    val ySMTLib = Apply(SimpleSymbol("var"), Seq(SMTLibString("y")))
+    val zSMTLib = Apply(SimpleSymbol("var"), Seq(SMTLibString("z")))
+    val pthSMTLib = Apply(SimpleSymbol("pth"), Seq(
+      Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))),
+      SMTLibString("f")
+    ))
+
+    val cs = List(
+      PathEquivalence(z, pth),
+      PathEquivalence(x, y),
+      InstanceOf(x, Id('Cls1)),
+      InstantiatedBy(y, Id('Cls1)),
+      InstantiatedBy(z, Id('Cls2))
+    )
+
+    val (vars, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(cs)
+
+    val expectedVars = List(
+      Apply(SimpleSymbol("variable"), Seq(SMTLibString("y"))),
+      Apply(SimpleSymbol("variable"), Seq(SMTLibString("x"))),
+      Apply(SimpleSymbol("variable"), Seq(SMTLibString("z"))),
+    )
+
+    val expectedPaths = List(
+      Apply(SimpleSymbol("path-exists"), Seq(ySMTLib)),
+      Apply(SimpleSymbol("path-exists"), Seq(xSMTLib)),
+      Apply(SimpleSymbol("path-exists"), Seq(pthSMTLib)),
+      Apply(SimpleSymbol("path-exists"), Seq(zSMTLib)),
+    )
+
+    val expectedClasses = List(
+      Apply(SimpleSymbol("class"), Seq(SMTLibString("Cls2"))),
+      Apply(SimpleSymbol("class"), Seq(SMTLibString("Cls1"))),
+    )
+
+    assert(vars == expectedVars)
+    assert(paths == expectedPaths)
+    assert(classes == expectedClasses)
+  }
 }
