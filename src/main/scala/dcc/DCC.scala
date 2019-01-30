@@ -2,6 +2,8 @@ package dcc
 
 import dcc.syntax.Program.Program
 import dcc.syntax._
+import smtlib.SMTLibCommand
+import smtlib.syntax.Term
 
 class DCC(P: Program) {
   // Class(field = value, ...)
@@ -28,10 +30,15 @@ class DCC(P: Program) {
       case _ if ctx.contains(c) => true
       // C-Refl (with weakening)
       case (_, PathEquivalence(p, q)) if p == q => true
-      // C-Class
-      case (_, InstanceOf(p, cls)) => entails(ctx, InstantiatedBy(p, cls))
-      // TODO: really needed to implement this or go directly to smt?
-      case (_, _) => false
+      case (_, _) =>
+        val ctxSMTLib: List[Term] = ctx.map(SMTLibConverter.convertConstraint)
+        val cSMTLib: Term = SMTLibConverter.convertConstraint(c)
+
+        ctxSMTLib.foreach(c => println(c.format()))
+        println(cSMTLib.format())
+
+
+        false
     }
   }
 
