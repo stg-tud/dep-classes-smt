@@ -571,4 +571,49 @@ class TestAxioms extends FunSuite {
     assert(out.head == Unsat.format())
 //    assert(out(1).contains("C-Subst"))
   }
+
+  test("PathEq is transitive with preprocess") {
+    val x = Axioms.path("x")
+    val y = Axioms.path("y")
+    val z = Axioms.path("z")
+
+    val xy = Axioms.pathEq(x, y)
+    val yz = Axioms.pathEq(y, z)
+    val xz = Axioms.pathEq(x, z)
+
+    val vars = Seq(Axioms.string("x"), Axioms.string("y"), Axioms.string("z"))
+    val paths = Seq(
+      (("x", x), ("x", x)),
+      (("x", x), ("y", y)),
+      (("x", x), ("z", z)),
+      (("y", y), ("x", x)),
+      (("y", y), ("y", y)),
+      (("y", y), ("z", z)),
+      (("z", z), ("x", x)),
+      (("z", z), ("y", y)),
+      (("z", z), ("z", z))
+    )
+
+    val knowledge = Seq(
+      Axioms.assertVariable("x"),
+      Axioms.assertVariable("y"),
+      Axioms.assertVariable("z"),
+      Axioms.assertPath(x),
+      Axioms.assertPath(y),
+      Axioms.assertPath(z)
+    )
+    val preprocessed = Axioms.preprocessSubstRules(vars, paths)
+    val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
+
+    z3.addCommands(preprocessed ++ knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute(3*1000)
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+    assert(out(1).contains("C-Subst"))
+    assert(out(1).contains("C-Refl"))
+    assert(out(1).contains("C-Weak"))
+  }
 }
