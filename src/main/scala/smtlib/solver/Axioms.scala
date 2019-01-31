@@ -770,6 +770,7 @@ object Axioms {
       )
     )
 
+  // TODO: can there be more than one rule with the same name? → remove x_p1_p2 from annotation
   def annotateSubstRule(subst: Term, x: String, p1: String, p2: String): Term =
     Annotate(subst, Seq(KeyValueAttribute(Keyword("named"), s"C-Subst_${x}_${p1}_$p2")))
 
