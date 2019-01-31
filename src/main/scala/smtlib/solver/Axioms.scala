@@ -1,6 +1,6 @@
 package smtlib.solver
 
-import smtlib.SMTLibScript
+import smtlib.{SMTLibCommand, SMTLibScript}
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
@@ -737,6 +737,59 @@ object Axioms {
     case Nil :+ x => Apply("var", Seq(SMTLibString(x)))
     case xs :+ x => Apply("pth", Seq(pth(xs), SMTLibString(x)))
   }
+
+  def preprocessSubstRule(x: SMTLibString, p1: Term, p2: Term): Term =
+    Forall(
+      Seq(
+        SortedVar("a", "Constraint"),
+        SortedVar("cs", Constraints),
+        SortedVar("a1", "Constraint"),
+        SortedVar("a2", "Constraint")
+      ),
+      Implies(
+        And(
+          Apply("variable", Seq(x)),
+          And(
+            Apply("path-exists", Seq(p1)),
+            And(
+              Apply("path-exists", Seq(p2)),
+              And(
+                Apply("entails", Seq("cs", Apply("path-eq", Seq(p1, p2)))),
+                And(
+                  Apply("subst", Seq("a", x, p1, "a1")),
+                  And(
+                    Apply("generalization", Seq("a2", p2, x, "a")),
+                    Apply("entails", Seq("cs", "a1"))
+                  )
+                )
+              )
+            )
+          )
+        ),
+        Apply("entails", Seq("cs", "a2"))
+      )
+    )
+
+  def annotateSubstRule(subst: Term, x: String, p1: String, p2: String): Term =
+    Annotate(subst, Seq(KeyValueAttribute(Keyword("named"), s"C-Subst_${x}_${p1}_$p2")))
+
+  def preprocessSubstRules(vars: Seq[SMTLibString], paths: Seq[((String, Term), (String, Term))]): Seq[SMTLibCommand] = {
+    var substRules: Seq[SMTLibCommand] = Seq()
+
+    vars.foreach(x =>
+      paths.foreach { case (_p1, _p2) =>
+        val (s1, p1) = _p1
+        val (s2, p2) = _p2
+
+        val substRule = annotateSubstRule(preprocessSubstRule(x, p1, p2), x.s, s1, s2)
+        substRules = substRules :+ Assert(substRule)
+      }
+    )
+
+    substRules
+  }
+
+  // TODO: preprocess C-Prog
 
   def string(s: String) = SMTLibString(s)
 

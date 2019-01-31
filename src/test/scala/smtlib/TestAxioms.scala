@@ -181,6 +181,82 @@ class TestAxioms extends FunSuite {
 //    assert(out.head == Unknown.format()) // TODO: but solver cannot verify this property
 //  }
 
+  test("preprocess subst rule") {
+    val x = SMTLibString("x")
+    val p1 = Apply("var", Seq(SMTLibString("x")))
+    val p2 = Apply("var", Seq(SMTLibString("y")))
+
+    val expectedSubstRule = Forall(
+      Seq(
+        SortedVar("a", "Constraint"),
+        SortedVar("cs", Sorts("List", Seq("Constraint"))),
+        SortedVar("a1", "Constraint"),
+        SortedVar("a2", "Constraint")
+      ),
+      Implies(
+        And(
+          Apply("variable", Seq(x)),
+          And(
+            Apply("path-exists", Seq(p1)),
+            And(
+              Apply("path-exists", Seq(p2)),
+              And(
+                Apply("entails", Seq("cs", Apply("path-eq", Seq(p1, p2)))),
+                And(
+                  Apply("subst", Seq("a", x, p1, "a1")),
+                  And(
+                    Apply("generalization", Seq("a2", p2, x, "a")),
+                    Apply("entails", Seq("cs", "a1"))
+                  )
+                )
+              )
+            )
+          )
+        ),
+        Apply("entails", Seq("cs", "a2"))
+      )
+    )
+
+    val expectedAnnotation = Annotate(expectedSubstRule, Seq(KeyValueAttribute(Keyword("named"), "C-Subst_x_x_y")))
+
+    val substRule = Axioms.preprocessSubstRule(x, p1, p2)
+
+    assert(substRule == expectedSubstRule)
+    assert(Axioms.annotateSubstRule(substRule, "x", "x", "y") == expectedAnnotation)
+  }
+
+  test("Preprocess Subst Rules") {
+    val vars = Seq(SMTLibString("x"), SMTLibString("y"))
+    val paths = Seq(
+      (("x", Apply("var", Seq(SMTLibString("x")))), ("y", Apply("var", Seq(SMTLibString("y"))))),
+      (("z", Apply("var", Seq(SMTLibString("z")))), ("z", Apply("var", Seq(SMTLibString("z")))))
+    )
+
+    // TODO: handwrite this?
+    val expectedRules = Seq(
+      Assert(Annotate(
+        Axioms.preprocessSubstRule(SMTLibString("x"), Apply("var", Seq(SMTLibString("x"))), Apply("var", Seq(SMTLibString("y")))),
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_x_x_y"))
+      )),
+      Assert(Annotate(
+        Axioms.preprocessSubstRule(SMTLibString("x"), Apply("var", Seq(SMTLibString("z"))), Apply("var", Seq(SMTLibString("z")))),
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_x_z_z"))
+      )),
+      Assert(Annotate(
+        Axioms.preprocessSubstRule(SMTLibString("y"), Apply("var", Seq(SMTLibString("x"))), Apply("var", Seq(SMTLibString("y")))),
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_y_x_y"))
+      )),
+      Assert(Annotate(
+        Axioms.preprocessSubstRule(SMTLibString("y"), Apply("var", Seq(SMTLibString("z"))), Apply("var", Seq(SMTLibString("z")))),
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_y_z_z"))
+      ))
+    )
+
+    val substRules = Axioms.preprocessSubstRules(vars, paths)
+
+    assert(substRules == expectedRules)
+  }
+
   test("C-Ident") {
     // !(x = y |- x = y)
     val c = Axioms.pathEq(Axioms.path("x"), Axioms.path("y"))
