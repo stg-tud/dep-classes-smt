@@ -223,6 +223,14 @@ class TestAxioms extends FunSuite {
 
     assert(substRule == expectedSubstRule)
     assert(Axioms.annotateSubstRule(substRule, "x", "x", "y") == expectedAnnotation)
+
+    z3.addCommands(Seq(Assert(expectedAnnotation), CheckSat))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 1)
+    assert(out.head == "sat")
   }
 
   test("Preprocess Subst Rules") {
@@ -255,6 +263,15 @@ class TestAxioms extends FunSuite {
     val substRules = Axioms.preprocessSubstRules(vars, paths)
 
     assert(substRules == expectedRules)
+
+    z3.addCommands(expectedRules)
+    z3.addCommand(CheckSat)
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 1)
+    assert(out.head == "sat")
   }
 
   test("C-Ident") {
