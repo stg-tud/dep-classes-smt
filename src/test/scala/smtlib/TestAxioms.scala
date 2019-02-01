@@ -233,6 +233,36 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     assert(out.head == "sat")
   }
 
+  test ("makePathPairs") {
+    val x = Axioms.path("x")
+    val y = Axioms.path("y")
+    val z = Axioms.path("z")
+
+    val paths = Seq(("x", x), ("y", y), ("z", z))
+
+    val expected = Seq(
+      (("x", x), ("x", x)),
+      (("x", x), ("y", y)),
+      (("x", x), ("z", z)),
+      (("y", y), ("x", x)),
+      (("y", y), ("y", y)),
+      (("y", y), ("z", z)),
+      (("z", z), ("x", x)),
+      (("z", z), ("y", y)),
+      (("z", z), ("z", z))
+    )
+
+    val makePathPairs = PrivateMethod[Seq[((String, Term), (String, Term))]]('makePathPairs)
+
+    val actual = Axioms invokePrivate makePathPairs(paths)
+
+    assert(actual.size == expected.size)
+    actual.forall(pair => expected.contains(pair))
+
+    // not interested in ordering
+//    assert((Axioms invokePrivate makePathPairs(paths)) == expectedPaths)
+  }
+
   test("Preprocess Subst Rules") {
     val vars = Seq(SMTLibString("x"), SMTLibString("y"))
     val paths = Seq(
@@ -290,29 +320,6 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     assert(exit == 0)
     assert(out.size == 1)
     assert(out.head == "sat")
-  }
-
-  test ("makePathPairs") {
-    val x = Axioms.path("x")
-    val y = Axioms.path("y")
-    val z = Axioms.path("z")
-
-    val paths = Seq(("x", x), ("y", y), ("z", z))
-
-    val expectedPaths = Seq(
-      (("x", x), ("x", x)),
-      (("x", x), ("y", y)),
-      (("x", x), ("z", z)),
-      (("y", y), ("x", x)),
-      (("y", y), ("y", y)),
-      (("y", y), ("z", z)),
-      (("z", z), ("x", x)),
-      (("z", z), ("y", y)),
-      (("z", z), ("z", z))
-    )
-
-    val makePathPairs = PrivateMethod[Seq[((String, Term), (String, Term))]]('makePathPairs)
-    assert((Axioms invokePrivate makePathPairs(paths)) == expectedPaths)
   }
 
   test("C-Ident") {
