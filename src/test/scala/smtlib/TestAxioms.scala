@@ -1,11 +1,11 @@
 package smtlib
 
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, PrivateMethodTester}
 import smtlib.solver.{Axioms, Z3Solver}
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
-class TestAxioms extends FunSuite {
+class TestAxioms extends FunSuite with PrivateMethodTester {
   val options: Seq[SMTLibCommand] = Seq(
 //    SetOption(KeyValueAttribute(Keyword("smt.mbqi"), SimpleSymbol("true"))),
 //    SetOption(KeyValueAttribute(Keyword("smt.mbqi.max_iterations"), Numeral(10000))),
@@ -236,33 +236,51 @@ class TestAxioms extends FunSuite {
   test("Preprocess Subst Rules") {
     val vars = Seq(SMTLibString("x"), SMTLibString("y"))
     val paths = Seq(
-      (("x", Apply("var", Seq(SMTLibString("x")))), ("y", Apply("var", Seq(SMTLibString("y"))))),
-      (("z", Apply("var", Seq(SMTLibString("z")))), ("z", Apply("var", Seq(SMTLibString("z")))))
+      ("x", Apply("var", Seq(SMTLibString("x")))),
+      ("y", Apply("var", Seq(SMTLibString("y"))))
     )
 
     // TODO: handwrite this?
     val expectedRules = Seq(
       Assert(Annotate(
+        Axioms.preprocessSubstRule(SMTLibString("x"), Apply("var", Seq(SMTLibString("x"))), Apply("var", Seq(SMTLibString("x")))),
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_x_x_x"))
+      )),
+      Assert(Annotate(
         Axioms.preprocessSubstRule(SMTLibString("x"), Apply("var", Seq(SMTLibString("x"))), Apply("var", Seq(SMTLibString("y")))),
         Seq(KeyValueAttribute(Keyword("named"), "C-Subst_x_x_y"))
       )),
       Assert(Annotate(
-        Axioms.preprocessSubstRule(SMTLibString("x"), Apply("var", Seq(SMTLibString("z"))), Apply("var", Seq(SMTLibString("z")))),
-        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_x_z_z"))
+        Axioms.preprocessSubstRule(SMTLibString("x"), Apply("var", Seq(SMTLibString("y"))), Apply("var", Seq(SMTLibString("x")))),
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_x_y_x"))
+      )),
+      Assert(Annotate(
+        Axioms.preprocessSubstRule(SMTLibString("x"), Apply("var", Seq(SMTLibString("y"))), Apply("var", Seq(SMTLibString("y")))),
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_x_y_y"))
+      )),
+      Assert(Annotate(
+        Axioms.preprocessSubstRule(SMTLibString("y"), Apply("var", Seq(SMTLibString("x"))), Apply("var", Seq(SMTLibString("x")))),
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_y_x_x"))
       )),
       Assert(Annotate(
         Axioms.preprocessSubstRule(SMTLibString("y"), Apply("var", Seq(SMTLibString("x"))), Apply("var", Seq(SMTLibString("y")))),
         Seq(KeyValueAttribute(Keyword("named"), "C-Subst_y_x_y"))
       )),
       Assert(Annotate(
-        Axioms.preprocessSubstRule(SMTLibString("y"), Apply("var", Seq(SMTLibString("z"))), Apply("var", Seq(SMTLibString("z")))),
-        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_y_z_z"))
+        Axioms.preprocessSubstRule(SMTLibString("y"), Apply("var", Seq(SMTLibString("y"))), Apply("var", Seq(SMTLibString("x")))),
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_y_y_x"))
+      )),
+      Assert(Annotate(
+        Axioms.preprocessSubstRule(SMTLibString("y"), Apply("var", Seq(SMTLibString("y"))), Apply("var", Seq(SMTLibString("y")))),
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst_y_y_y"))
       ))
     )
 
     val substRules = Axioms.preprocessSubstRules(vars, paths)
 
-    assert(substRules == expectedRules)
+    // assert(substRules == expectedRules) // not interested in ordering
+    assert(substRules.size == expectedRules.size)
+    substRules.foreach(rule => assert(expectedRules.contains(rule)))
 
     z3.addCommands(expectedRules)
     z3.addCommand(CheckSat)
@@ -272,6 +290,29 @@ class TestAxioms extends FunSuite {
     assert(exit == 0)
     assert(out.size == 1)
     assert(out.head == "sat")
+  }
+
+  test ("makePathPairs") {
+    val x = Axioms.path("x")
+    val y = Axioms.path("y")
+    val z = Axioms.path("z")
+
+    val paths = Seq(("x", x), ("y", y), ("z", z))
+
+    val expectedPaths = Seq(
+      (("x", x), ("x", x)),
+      (("x", x), ("y", y)),
+      (("x", x), ("z", z)),
+      (("y", y), ("x", x)),
+      (("y", y), ("y", y)),
+      (("y", y), ("z", z)),
+      (("z", z), ("x", x)),
+      (("z", z), ("y", y)),
+      (("z", z), ("z", z))
+    )
+
+    val makePathPairs = PrivateMethod[Seq[((String, Term), (String, Term))]]('makePathPairs)
+    assert((Axioms invokePrivate makePathPairs(paths)) == expectedPaths)
   }
 
   test("C-Ident") {
@@ -599,17 +640,7 @@ class TestAxioms extends FunSuite {
     val xz = Axioms.pathEq(x, z)
 
     val vars = Seq(Axioms.string("x"), Axioms.string("y"), Axioms.string("z"))
-    val paths = Seq(
-      (("x", x), ("x", x)),
-      (("x", x), ("y", y)),
-      (("x", x), ("z", z)),
-      (("y", y), ("x", x)),
-      (("y", y), ("y", y)),
-      (("y", y), ("z", z)),
-      (("z", z), ("x", x)),
-      (("z", z), ("y", y)),
-      (("z", z), ("z", z))
-    )
+    val paths = Seq(("x", x), ("y", y), ("z", z))
 
     val knowledge = Seq(
       Axioms.assertVariable("x"),

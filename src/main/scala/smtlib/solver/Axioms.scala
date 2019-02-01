@@ -773,12 +773,12 @@ object Axioms {
   // TODO: can there be more than one rule with the same name? → remove x_p1_p2 from annotation
   def annotateSubstRule(subst: Term, x: String, p1: String, p2: String): Term =
     Annotate(subst, Seq(KeyValueAttribute(Keyword("named"), s"C-Subst_${x}_${p1}_$p2")))
-
-  def preprocessSubstRules(vars: Seq[SMTLibString], paths: Seq[((String, Term), (String, Term))]): Seq[SMTLibCommand] = {
+  
+  def preprocessSubstRules(vars: Seq[SMTLibString], paths: Seq[(String, Term)]): Seq[SMTLibCommand] = {
     var substRules: Seq[SMTLibCommand] = Seq()
-
+    val pathPairs: Seq[((String, Term), (String, Term))] = makePathPairs(paths)
     vars.foreach(x =>
-      paths.foreach { case (_p1, _p2) =>
+      pathPairs.foreach { case (_p1, _p2) =>
         val (s1, p1) = _p1
         val (s2, p2) = _p2
 
@@ -788,6 +788,14 @@ object Axioms {
     )
 
     substRules
+  }
+
+  private def makePathPairs(paths: Seq[(String, Term)]): Seq[((String, Term), (String, Term))] = {
+    var pairs: Seq[((String, Term), (String, Term))] = Seq()
+
+    paths.foreach(p => pairs = pairs ++ paths.map(q => (p, q)))
+
+    pairs
   }
 
   // TODO: preprocess C-Prog
