@@ -1,0 +1,26 @@
+%% macros
+%%%%%%%%%
+\newcommand{\loremipsum}{\todo[inline]{Lorem Ipsum}}
+%\newcommand{\nat}[1]{\ensuremath{\lceil\text{#1}\rceil}}
+\newcommand{\gprod}[1]{\ensuremath{\langle\text{#1}\rangle}}
+\newcommand{\TNum}{\ensuremath{\mathcal{N}}}
+\newcommand{\TBool}{\ensuremath{\mathcal{B}}}
+\newcommand{\TInt}{\ensuremath{\mathcal{N}}}
+
+\theoremstyle{definition}
+\newtheorem{example}{Example}[chapter]
+\newtheorem{definition}[example]{Definition}
+%\newtheorem{definition}{Definition}[chapter]
+
+%% misc
+%%%%%%%%%
+\DeclareMathOperator{\pto}{\rightharpoonup}     % partial function arrow
+\DeclareMathOperator{\powerset}{\mathcal{P}}    % powerset
+\DeclareMathOperator{\proj}{\upharpoonright}    % projection
+\DeclareMathOperator{\fst}{\pi_1}               % A x B → A
+\DeclareMathOperator{\snd}{\pi_2}               % A x B → B
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../thesis"
+%%% End: 
