@@ -30,9 +30,6 @@ class TestSMTLibConversion extends FunSuite {
     assert(SMTLibConverter.convertPath(p) == pSMTLib)
     assert(SMTLibConverter.convertPath(q) == qSMTLib)
     assert(SMTLibConverter.convertPath(r) == rSMTLib)
-    assert(SMTLibConverter.convertPath("x") == pSMTLib)
-    assert(SMTLibConverter.convertPath("x.f") == qSMTLib)
-    assert(SMTLibConverter.convertPath("x.f.f1") == rSMTLib)
   }
 
   val eq = PathEquivalence(p, q)

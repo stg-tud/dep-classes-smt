@@ -17,8 +17,6 @@ object SMTLibConverter {
     case FieldPath(q, Id(f)) => Apply(SimpleSymbol("pth"), Seq(convertPath(q), SMTLibString(f.name)))
   }
 
-  def convertPath(p: String): Term = Axioms.path(p)
-
   def convertProgramEntailments(p: Program): List[Term] = p match {
     case Nil => Nil
     case ConstraintEntailment(x, as, a) :: rst =>
