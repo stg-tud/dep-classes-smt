@@ -157,6 +157,21 @@ class DCC(P: Program) {
     nameCounter += 1
     Symbol("x" + nameCounter.toString)
   }
+
+  private def renameIdInPath(x: Id, y: Id, p: Path): Path = p match {
+    case `x` => y
+    case z@Id(_) => z
+    case FieldPath(q, f) => FieldPath(renameIdInPath(x, y, q), f)
+  }
+
+  private def renameIdInConstraint(x: Id, y: Id, c: Constraint): Constraint = c match {
+    case PathEquivalence(p, q) => PathEquivalence(renameIdInPath(x, y, p), renameIdInPath(x, y, q))
+    case InstanceOf(p, cls) => InstanceOf(renameIdInPath(x, y, p), cls)
+    case InstantiatedBy(p, cls) => InstantiatedBy(renameIdInPath(x, y, p), cls)
+  }
+
+  private def alphaConversion(x: Id, y: Id, cs: List[Constraint]): List[Constraint] =
+    cs.map(renameIdInConstraint(x, y, _))
 }
 
 import Util._
