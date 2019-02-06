@@ -88,10 +88,11 @@ class DCC(P: Program) {
       val x: Id  = Id(freshname())
       val args1: List[(Id, Id)] = args.map{case (f, Id(z)) => (f, Id(z))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
       val o: Obj = (cls, args1)
-      // cls in Program
-      val (y: Id, b: List[Constraint]) = classInProgram(cls, P).getOrElse(return (heap, expr)) // TODO: alpha renaming of y to x in b and orElse stuck/error
+      // cls in Program: alpha renaming of y to x in b and orElse stuck/error
+      val (y: Id, b: List[Constraint]) = classInProgram(cls, P).getOrElse(return (heap, expr))
+      val b1 = alphaConversion(y, x, b)
       // heap constraints entail cls constraints
-      if (entails(HC(heap) ++ OC(x, o), b))
+      if (entails(HC(heap) ++ OC(x, o), b1))
         (heap + (x -> o), x)
       else
         (heap, expr) // stuck TODO: return type
