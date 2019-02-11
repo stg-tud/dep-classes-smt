@@ -80,6 +80,7 @@ class DCC(P: Program) {
       // Applicable methods
       val S: List[(List[Constraint], Expression)] = mImpl(m, x).filter{case (a, e) => entails(HC(heap), a)}
 
+      // Most specific method
       var (a, e) = S.head
 
       S.foreach{
@@ -120,6 +121,24 @@ class DCC(P: Program) {
       val (h1, args1) = objArgsInterp(heap, args)
       interp(h1, ObjectConstruction(cls, args1)) // recursive call for big-step
   }
+
+  // TODO: change return type to boolean and move Type to the arguments? (to check if expr has type holds and not doing type inference)
+  def typeassignment(context: List[Constraint], expr: Expression): Type = expr match {
+    // T-Field
+    case FieldAccess(e, f) => Type(Id('notyetimplemented), List())
+    // T-Var
+    case x@Id(_) => Type(Id('notyetimplemented), List())
+    // T-Call
+    case MethodCall(m, e) => Type(Id('notyetimplemented), List())
+    // T-New
+    case ObjectConstruction(cls, args) => Type(Id('notyetimplemented), List())
+    // T-Sub
+    case e => Type(Id('notyetimplemented), List())
+  }
+
+  // FV: free variables
+  // wf P: well formed program
+  def typecheck(P: Program): Boolean = false
 
   private def classInProgram(Cls: Id, p: Program): Option[(Id, List[Constraint])] = p match {
     case Nil => None
