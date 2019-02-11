@@ -62,6 +62,7 @@ class DCC(P: Program) {
   }
 
   // TODO: change return type to Either or Option?
+  // TODO: add reduction check in RC rules to avoid endless recursion
   def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
     // R-Field
     case FieldAccess(X@Id(_), F@Id(_)) =>
@@ -75,10 +76,20 @@ class DCC(P: Program) {
         case _ => (heap, expr) // x does not have field f TODO: return type
       }
     // R-Call
-    case MethodCall(m, x@Id(_)) => (heap, expr)
-//      val S: List[Any] = ??? // TODO: list type: m-impl
+    case MethodCall(m, x@Id(_)) =>
+      // Applicable methods
+      val S: List[(List[Constraint], Expression)] = mImpl(m, x).filter{case (a, e) => entails(HC(heap), a)}
 
-      // todo
+      var (a, e) = S.head
+
+      S.foreach{
+        case (a1, e1) if e != e1 =>
+          if (entails(a1, a) && !entails(a, a1))
+            (a, e) = (a1, e1)
+        // TODO: default case?
+      }
+
+      (heap, e)
     // R-New
     case ObjectConstruction(cls, args)
       if args.foldRight(true){ // if args are values (Id)
@@ -195,6 +206,7 @@ object Main extends App {
 
   //val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Zero), Nil))
   val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Succ), List((Id('p), ObjectConstruction(Id('Zero), Nil)))))
+//  val (h1, e1) = dcc.interp(h, FieldAccess(e, Id('p))) // TODO: does not return if e doesnt reduce to Id
 
   println("Heap:")
   h.foreach(println)
