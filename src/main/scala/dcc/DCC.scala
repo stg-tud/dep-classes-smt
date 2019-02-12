@@ -85,9 +85,9 @@ class DCC(P: Program) {
 
       S.foreach{
         case (a1, e1) if e != e1 =>
-          if (entails(a1, a) && !entails(a, a1))
+          if (entails(a1, a) && !entails(a, a1)) // TODO: alpha renaming (footnote page 208)
             (a, e) = (a1, e1)
-        // TODO: default case?
+        case _ => /* noop */
       }
 
       (heap, e)
@@ -127,12 +127,23 @@ class DCC(P: Program) {
     // T-Field
     case FieldAccess(e, f) => Type(Id('notyetimplemented), List())
     // T-Var
-    case x@Id(_) => Type(Id('notyetimplemented), List())
+    case x@Id(_) =>
+      val b = classes(P).foldRight(false){ // first class to match wins
+        case (cls, _) if entails(context, InstanceOf(x, cls)) => true
+        case (_, clss) => clss
+      }
+
+      if(b) {
+        val y = Id(freshname())
+        Type(y, List(PathEquivalence(y, x)))
+      } else {
+        Type(Id('tError), List())
+      }
     // T-Call
     case MethodCall(m, e) => Type(Id('notyetimplemented), List())
     // T-New
     case ObjectConstruction(cls, args) => Type(Id('notyetimplemented), List())
-    // T-Sub
+    // T-Sub // TODO: endless recursion?
     case e => Type(Id('notyetimplemented), List())
   }
 
@@ -144,6 +155,12 @@ class DCC(P: Program) {
     case Nil => None
     case ConstructorDeclaration(Cls, x, a) :: _ => Some(x, a)
     case _ :: rst => classInProgram(Cls, rst)
+  }
+
+  private def classes(p: Program): List[Id] = p match {
+    case Nil => Nil
+    case ConstructorDeclaration(cls, _, _) :: rst => cls :: classes(rst)
+    case _ :: rst => classes(rst)
   }
 
   private def objArgsInterp(heap: Heap, args: List[(Id, Expression)]): (Heap, List[(Id, Expression)]) = args match {
