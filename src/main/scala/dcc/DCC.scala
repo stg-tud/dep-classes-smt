@@ -128,7 +128,15 @@ class DCC(P: Program) {
   // TODO: change return type to boolean and move Type to the arguments? (to check if expr has type holds and not doing type inference)
   def typeassignment(context: List[Constraint], expr: Expression): Type = expr match {
     // T-Field
-    case FieldAccess(e, f) => Type(Id('notyetimplemented), List())
+    case FieldAccess(e, f) =>
+      val Type(x, a) = typeassignment(context, e)
+
+//      val entails1 = entails(context ++ a, InstanceOf(FieldPath(x, f), ???)) // TODO: for all classes (like T-Var) to find suitable class
+//      val entails2 = entails(context ++ a :+ PathEquivalence(FieldPath(x, f), ???), ???) // TODO: how to find y, b
+
+      // TODO: x free in b
+
+      Type(Id('notyetimplemented), List())
     // T-Var
     case x@Id(_) =>
       classes(P).foldRight(Type(Id('tError), List())){ // first class to match wins
@@ -199,10 +207,12 @@ class DCC(P: Program) {
     }
 
   private var nameCounter: Int = 0
-  def freshname(): Symbol = {
+  private def freshname(): Symbol = {
     nameCounter += 1
     Symbol("x" + nameCounter.toString)
   }
+
+  private def freshvar(): Id = Id(freshname())
 
   private def renameIdInPath(x: Id, y: Id, p: Path): Path = p match {
     case `x` => y
