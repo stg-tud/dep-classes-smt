@@ -100,7 +100,7 @@ class DCC(P: Program) {
         case ((_, Id(_)), rst) => rst // true && rst
         case _ => false // false && rst
       } => // TODO: extend guard with other non-interp prerequisites like entailment? implement body
-      val x: Id  = Id(freshname())
+      val x: Id  = freshvar()
       val args1: List[(Id, Id)] = args.map{case (f, Id(z)) => (f, Id(z))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
       val o: Obj = (cls, args1)
       // cls in Program: alpha renaming of y to x in b and orElse stuck/error
@@ -141,7 +141,7 @@ class DCC(P: Program) {
     case x@Id(_) =>
       classes(P).foldRight(Type(Id('tError), List())){ // first class to match wins
         case (cls, _) if entails(context, InstanceOf(x, cls)) =>
-          val y = Id(freshname())
+          val y = freshvar()
           Type(y, List(PathEquivalence(y, x)))
         case (_, clss) => clss
       }
@@ -228,6 +228,20 @@ class DCC(P: Program) {
 
   private def alphaConversion(x: Id, y: Id, cs: List[Constraint]): List[Constraint] =
     cs.map(renameIdInConstraint(x, y, _))
+
+  // add .distinct to remove duplicates
+  private def FV(constraints: List[Constraint]): List[Id] = constraints.flatMap(c => FV(c))
+
+  private def FV(constaint: Constraint): List[Id] = constaint match {
+    case PathEquivalence(p, q) => varname(p) :: varname(q) :: Nil
+    case InstanceOf(p, _) => varname(p) :: Nil
+    case InstantiatedBy(p, _) => varname(p) :: Nil
+  }
+
+  private def varname(p: Path): Id = p match {
+    case x@Id(_) => x
+    case FieldPath(q, _) => varname(q)
+  }
 }
 
 import Util._
