@@ -78,15 +78,18 @@ class DCC(P: Program) {
     // R-Call
     case MethodCall(m, x@Id(_)) =>
       // Applicable methods
-      val S: List[(List[Constraint], Expression)] = mImpl(m, x).filter{case (a, e) => entails(HC(heap), a)}
+      val S: List[(List[Constraint], Expression)] = mImpl(m, x).filter{case (as, _) => entails(HC(heap), as)}
 
       // Most specific method
       var (a, e) = S.head
 
       S.foreach{
         case (a1, e1) if e != e1 =>
-          if (entails(a1, a) && !entails(a, a1)) // TODO: alpha renaming (footnote page 208)
-            (a, e) = (a1, e1)
+          if (entails(a1, a) && !entails(a, a1)) { // TODO: alpha renaming (footnote page 208)
+            //(a, e) = (a1, e1)
+            a = a1
+            e = e1
+          }
         case _ => /* noop */
       }
 
@@ -128,16 +131,11 @@ class DCC(P: Program) {
     case FieldAccess(e, f) => Type(Id('notyetimplemented), List())
     // T-Var
     case x@Id(_) =>
-      val b = classes(P).foldRight(false){ // first class to match wins
-        case (cls, _) if entails(context, InstanceOf(x, cls)) => true
+      classes(P).foldRight(Type(Id('tError), List())){ // first class to match wins
+        case (cls, _) if entails(context, InstanceOf(x, cls)) =>
+          val y = Id(freshname())
+          Type(y, List(PathEquivalence(y, x)))
         case (_, clss) => clss
-      }
-
-      if(b) {
-        val y = Id(freshname())
-        Type(y, List(PathEquivalence(y, x)))
-      } else {
-        Type(Id('tError), List())
       }
     // T-Call
     case MethodCall(m, e) => Type(Id('notyetimplemented), List())
