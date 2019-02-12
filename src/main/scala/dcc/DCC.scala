@@ -230,9 +230,7 @@ class DCC(P: Program) {
     cs.map(renameIdInConstraint(x, y, _))
 
   // add .distinct to remove duplicates
-  private def FV(constraints: List[Constraint]): List[Id] = constraints.flatMap(c => FV(c))
-
-  private def FV(constaint: Constraint): List[Id] = constaint match {
+  private def FV(constraints: List[Constraint]): List[Id] = constraints.flatMap{
     case PathEquivalence(p, q) => varname(p) :: varname(q) :: Nil
     case InstanceOf(p, _) => varname(p) :: Nil
     case InstantiatedBy(p, _) => varname(p) :: Nil
