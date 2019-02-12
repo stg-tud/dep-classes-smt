@@ -132,9 +132,8 @@ class DCC(P: Program) {
       val Type(x, a) = typeassignment(context, e)
 
 //      val entails1 = entails(context ++ a, InstanceOf(FieldPath(x, f), ???)) // TODO: for all classes (like T-Var) to find suitable class
-//      val entails2 = entails(context ++ a :+ PathEquivalence(FieldPath(x, f), ???), ???) // TODO: how to find y, b
-
-      // TODO: x free in b
+//      val entails2 = entails(context ++ a :+ PathEquivalence(FieldPath(x, f), y), b) // TODO: how to find y, b -> use Type as argument and return boolean
+//      val xFreeInB = !FV(b).contains(x)
 
       Type(Id('notyetimplemented), List())
     // T-Var
