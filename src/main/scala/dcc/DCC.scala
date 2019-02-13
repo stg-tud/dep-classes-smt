@@ -132,7 +132,7 @@ class DCC(P: Program) {
       val Type(x, a) = typeassignment(context, e)
 
 //      val entails1 = entails(context ++ a, InstanceOf(FieldPath(x, f), ???)) // TODO: for all classes (like T-Var) to find suitable class
-//      val entails2 = entails(context ++ a :+ PathEquivalence(FieldPath(x, f), y), b) // TODO: how to find y, b -> use Type as argument and return boolean
+//      val entails2 = entails(context ++ a :+ PathEquivalence(FieldPath(x, f), y), b) // TODO: how to find y, b -> use Type as argument and return boolean (see typeassignment1)
 //      val xFreeInB = !FV(b).contains(x)
 
       Type(Id('notyetimplemented), List())
@@ -150,6 +150,37 @@ class DCC(P: Program) {
     case ObjectConstruction(cls, args) => Type(Id('notyetimplemented), List())
     // T-Sub // TODO: endless recursion?
     case e => Type(Id('notyetimplemented), List())
+  }
+
+  def typeassignment1(context: List[Constraint], expr: Expression, t: Type): Boolean = expr match {
+    // T-Field
+    case FieldAccess(e, f) =>
+      val Type(x, a) = typeassignment(context, e)
+      // TODO: typeassignment1(context, e, Type(???, ???)) how to find x, y -> use type as return value (see typeassignment)
+      val y = t.x
+      val b = t.constraints
+
+      !FV(b).contains(x) &&
+      entails(PathEquivalence(FieldPath(x, f), y) :: context ++ a, b) &&
+      classes(P).foldRight(false){
+        case (cls, _) if entails(context ++ a, InstanceOf(FieldPath(x, f), cls)) => true
+        case (_, clss) => clss
+      }
+    // T-Var
+    case x@Id(_) =>
+      t.constraints.size == 1 &&
+        (t.constraints.head == PathEquivalence(t.x, x) ||
+         t.constraints.head == PathEquivalence(x, t.x)) &&
+      classes(P).foldRight(false){ // first class to match wins
+        case (cls, _) if entails(context, InstanceOf(x, cls)) => true
+        case (_, clss) => clss
+      }
+    // T-Call TODO
+    case MethodCall(m, e) => false
+    // T-New TODO
+    case ObjectConstruction(cls, args) => false
+    // T-Sub // TODO: endless recursion?
+    case e => false
   }
 
   // FV: free variables
