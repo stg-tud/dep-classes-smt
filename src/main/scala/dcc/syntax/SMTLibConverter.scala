@@ -1,6 +1,7 @@
 package dcc.syntax
 
 import dcc.syntax.Program.Program
+import dcc.Util.alphaConversion
 import smtlib.SMTLibCommand
 import smtlib.solver.Axioms
 import smtlib.syntax._
@@ -17,6 +18,8 @@ object SMTLibConverter {
     case FieldPath(q, Id(f)) => Apply(SimpleSymbol("pth"), Seq(convertPath(q), SMTLibString(f.name)))
   }
 
+  def convertId(x: Id): Term = SMTLibString(x.toString)
+
   def convertProgramEntailments(p: Program): List[Term] = p match {
     case Nil => Nil
     case ConstraintEntailment(x, as, a) :: rst =>
@@ -27,6 +30,22 @@ object SMTLibConverter {
 
       entailment :: convertProgramEntailments(rst)
     case _ :: rst => convertProgramEntailments(rst)
+  }
+
+  def instantiateProgramEntailments(p: Program, vars: List[Id]): List[Term] = vars.flatMap(instantiateProgramEntailments(p, _))
+
+  def instantiateProgramEntailments(p: Program, variable: Id): List[Term] = p match {
+    case Nil => Nil
+    case ConstraintEntailment(x, as, a) :: rst =>
+      val ctx: Seq[Term] = alphaConversion(x, variable, as).map(convertConstraint)
+      val c: Term = convertConstraint(a)
+
+      // TODO: change signature of 'in-program' proposition?
+      // TODO: -> variable not needed if we enumerate them (is the variable used for matching in the solver?)
+      val entailment = Apply(SimpleSymbol("in-program"), Seq(convertId(variable), makeList(ctx), c))
+
+      entailment :: instantiateProgramEntailments(rst, variable)
+    case _ :: rst => instantiateProgramEntailments(rst, variable)
   }
 
   def convertEntailment(ctx: List[Constraint], c: Constraint): Term = {

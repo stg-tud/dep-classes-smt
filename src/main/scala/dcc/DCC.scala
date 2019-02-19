@@ -2,6 +2,7 @@ package dcc
 
 import dcc.syntax.Program.Program
 import dcc.syntax._
+import dcc.Util._
 import smtlib.solver.{Axioms, Z3Solver}
 import smtlib.syntax.{Assert, Not, Sat, Term, Unknown, Unsat}
 
@@ -25,6 +26,7 @@ class DCC(P: Program) {
 //        println(s"|- $c")
 //    }
 
+    // TODO: ctx.distinct?
     (ctx, c) match {
       // C-Ident (with weakening)
       case _ if ctx.contains(c) => true
@@ -32,8 +34,10 @@ class DCC(P: Program) {
       case (_, PathEquivalence(p, q)) if p == q => true
       case (_, _) =>
         val entailment = SMTLibConverter.convertEntailment(ctx, c)
-        val programEntailments: List[Term] = SMTLibConverter.convertProgramEntailments(P)
         val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(c :: ctx)
+
+        // TODO: instantiate entailments
+        val programEntailments: List[Term] = SMTLibConverter.convertProgramEntailments(P)
 
         // debug output
 //        println(entailment.format())
@@ -243,21 +247,6 @@ class DCC(P: Program) {
   }
 
   private def freshvar(): Id = Id(freshname())
-
-  private def renameIdInPath(x: Id, y: Id, p: Path): Path = p match {
-    case `x` => y
-    case z@Id(_) => z
-    case FieldPath(q, f) => FieldPath(renameIdInPath(x, y, q), f)
-  }
-
-  private def renameIdInConstraint(x: Id, y: Id, c: Constraint): Constraint = c match {
-    case PathEquivalence(p, q) => PathEquivalence(renameIdInPath(x, y, p), renameIdInPath(x, y, q))
-    case InstanceOf(p, cls) => InstanceOf(renameIdInPath(x, y, p), cls)
-    case InstantiatedBy(p, cls) => InstantiatedBy(renameIdInPath(x, y, p), cls)
-  }
-
-  private def alphaConversion(x: Id, y: Id, cs: List[Constraint]): List[Constraint] =
-    cs.map(renameIdInConstraint(x, y, _))
 
   // add .distinct to remove duplicates
   private def FV(constraints: List[Constraint]): List[Id] = constraints.flatMap{
