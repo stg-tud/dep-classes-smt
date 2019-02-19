@@ -1,7 +1,7 @@
 package dcc.syntax
 
 import dcc.syntax.Program.Program
-import dcc.Util.alphaConversion
+import dcc.Util._
 import smtlib.SMTLibCommand
 import smtlib.solver.Axioms
 import smtlib.syntax._
@@ -38,7 +38,7 @@ object SMTLibConverter {
     case Nil => Nil
     case ConstraintEntailment(x, as, a) :: rst =>
       val ctx: Seq[Term] = alphaConversion(x, variable, as).map(convertConstraint)
-      val c: Term = convertConstraint(a)
+      val c: Term = convertConstraint(renameIdInConstraint(x, variable, a))
 
       // TODO: change signature of 'in-program' proposition?
       // TODO: -> variable not needed if we enumerate them (is the variable used for matching in the solver?)
