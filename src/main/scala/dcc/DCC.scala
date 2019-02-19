@@ -16,7 +16,7 @@ class DCC(P: Program) {
     //cs.map(c => entails(ctx, c)).fold(true){_ && _}
 
   // constraint entailment
-  def entails(ctx: List[Constraint], c: Constraint): Boolean = {
+  def entails(context: List[Constraint], c: Constraint): Boolean = {
     // debug output
 //    ctx match {
 //      case Nil => println(s"ϵ |- $c")
@@ -25,18 +25,18 @@ class DCC(P: Program) {
 //        ctx.foreach(println)
 //        println(s"|- $c")
 //    }
-
-    // TODO: ctx.distinct?
-    (ctx, c) match {
+    
+    (context.distinct, c) match {
       // C-Ident (with weakening)
-      case _ if ctx.contains(c) => true
+      case _ if context.contains(c) => true
       // C-Refl (with weakening)
       case (_, PathEquivalence(p, q)) if p == q => true
-      case (_, _) =>
+      case (ctx, _) =>
         val entailment = SMTLibConverter.convertEntailment(ctx, c)
         val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(c :: ctx)
 
         // TODO: instantiate entailments
+        // TODO: collect variables before conversion
         val programEntailments: List[Term] = SMTLibConverter.convertProgramEntailments(P)
 
         // debug output
