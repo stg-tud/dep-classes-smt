@@ -631,10 +631,10 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val (exit, out) = z3.execute(3*1000)
     z3.flush()
 
-//    assert(exit == 0)
-//    assert(out.size == 2)
-    assert(out.head == Unsat.format())
-//    assert(out(1).contains("C-Subst"))
+    assert(exit == 0)
+    assert(out.size == 1)
+    assert(out.head == Unsat.format() ||
+           out.head == Unknown.format())
   }
 
   test("PathEq is transitive with preprocess") {
