@@ -13,7 +13,6 @@ class DCC(P: Program) {
 
   def entails(ctx: List[Constraint], cs: List[Constraint]): Boolean =
     cs.forall(c => entails(ctx, c))
-    //cs.map(c => entails(ctx, c)).fold(true){_ && _}
 
   // constraint entailment
   def entails(context: List[Constraint], c: Constraint): Boolean = {
@@ -25,7 +24,7 @@ class DCC(P: Program) {
 //        ctx.foreach(println)
 //        println(s"|- $c")
 //    }
-    
+
     (context.distinct, c) match {
       // C-Ident (with weakening)
       case _ if context.contains(c) => true
