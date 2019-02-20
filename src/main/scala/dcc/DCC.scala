@@ -39,8 +39,8 @@ class DCC(P: Program) {
 
         // debug output
 //        println(entailment.format())
-        programEntailments.foreach(c => println(c.format()))
-        variables.foreach(c => println(c.format()))
+//        programEntailments.foreach(c => println(c.format()))
+//        variables.foreach(c => println(c.format()))
 //        paths.foreach(c => println(c.format()))
 //        classes.foreach(c => println(c.format()))
 
@@ -64,7 +64,6 @@ class DCC(P: Program) {
   }
 
   // TODO: change return type to Either or Option?
-  // TODO: add reduction check in RC rules to avoid endless recursion
   def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
     // R-Field
     case FieldAccess(X@Id(_), F@Id(_)) =>
@@ -103,7 +102,7 @@ class DCC(P: Program) {
       if args.foldRight(true){ // if args are values (Id)
         case ((_, Id(_)), rst) => rst // true && rst
         case _ => false // false && rst
-      } => // TODO: extend guard with other non-interp prerequisites like entailment? implement body
+      } =>
       val vars = boundVars(heap)
       val x: Id  = freshvar()
       val args1: List[(Id, Id)] = args.map{case (f, Id(z)) => (f, Id(z))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
@@ -119,15 +118,30 @@ class DCC(P: Program) {
     // RC-Field
     case FieldAccess(e, f) =>
       val (h1, e1) = interp(heap, e)
-      interp(h1, FieldAccess(e1, f)) // recursive call for big-step
+
+      if(h1 == heap && e1 == e) {
+        (heap, expr) // stuck
+      } else {
+        interp(h1, FieldAccess(e1, f)) // recursive call for big-step
+      }
     // RC-Call
     case MethodCall(m, e) =>
       val (h1, e1) = interp(heap, e)
-      interp(h1, MethodCall(m, e1)) // recursive call for big-step
+
+      if(h1 == heap && e1 == e) {
+        (heap, expr) // stuck
+      } else {
+        interp(h1, MethodCall(m, e1)) // recursive call for big-step
+      }
     // RC-New
     case ObjectConstruction(cls, args) =>
       val (h1, args1) = objArgsInterp(heap, args)
-      interp(h1, ObjectConstruction(cls, args1)) // recursive call for big-step
+
+      if(h1 == heap && args1 == args) {
+        (heap, expr) // stuck
+      } else {
+        interp(h1, ObjectConstruction(cls, args1)) // recursive call for big-step
+      }
   }
 
   // TODO: change return type to boolean and move Type to the arguments? (to check if expr has type holds and not doing type inference)
@@ -286,9 +300,9 @@ object Main extends App {
 
   //val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Zero), Nil))
   val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Succ), List((Id('p), ObjectConstruction(Id('Zero), Nil)))))
-//  val (h1, e1) = dcc.interp(h, FieldAccess(e, Id('p))) // TODO: does not return if e doesnt reduce to Id
+  val (h1, e1) = dcc.interp(h, FieldAccess(e, Id('p)))
 
   println("Heap:")
-  h.foreach(println)
-  println("Expr:" + e)
+  h1.foreach(println)
+  println("Expr:" + e1)
 }
