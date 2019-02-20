@@ -11,11 +11,11 @@ class DCC(P: Program) {
   type Obj = (Id, List[(Id, Id)])
   type Heap = Map[Id, Obj]
 
-  def entails(ctx: List[Constraint], cs: List[Constraint]): Boolean =
-    cs.forall(c => entails(ctx, c))
+  def entails(ctx: List[Constraint], cs: List[Constraint]/*, vars: List[Id]*/): Boolean =
+    cs.forall(c => entails(ctx, c/*, vars*/))
 
   // constraint entailment
-  def entails(context: List[Constraint], c: Constraint): Boolean = {
+  def entails(context: List[Constraint], c: Constraint/*, vars: List[Id]*/): Boolean = {
     // debug output
 //    ctx match {
 //      case Nil => println(s"ϵ |- $c")
@@ -214,11 +214,11 @@ class DCC(P: Program) {
   }
 
   // Heap Constraints
-  def HC(heap: Heap): List[Constraint] = heap.flatMap{case (x, o) => OC(x, o)}.toList
+  private def HC(heap: Heap): List[Constraint] = heap.flatMap{case (x, o) => OC(x, o)}.toList
     //heap.map{case (x, o) => OC(x, o)}.flatten.toList
 
   // Object Constraints
-  def OC(x: Id, o: Obj): List[Constraint] = o match {
+  private def OC(x: Id, o: Obj): List[Constraint] = o match {
     case (cls, fields) =>
       val init = InstantiatedBy(x, cls)
       val fieldCs = fields.map{case (f, v) => PathEquivalence(FieldPath(x, f), v)}
@@ -227,13 +227,13 @@ class DCC(P: Program) {
   }
 
   // Method Type
-  def mType(m: Id, x: Id, y: Id): List[(List[Constraint], List[Constraint])] =
+  private def mType(m: Id, x: Id, y: Id): List[(List[Constraint], List[Constraint])] =
     P.foldRight(Nil: List[(List[Constraint], List[Constraint])]){
       case (AbstractMethodDeclaration(`m`, `x`, a, Type(`y`, b)), rst) => (a, b) :: rst
       case (_, rst) => rst}
 
   // Method Implementation
-  def mImpl(m: Id, x: Id): List[(List[Constraint], Expression)] =
+  private def mImpl(m: Id, x: Id): List[(List[Constraint], Expression)] =
     P.foldRight(Nil: List[(List[Constraint], Expression)]){
       case (MethodImplementation(`m`, `x`, a, _, e), rst) => (a, e) :: rst
       case (_, rst) => rst
@@ -258,6 +258,9 @@ class DCC(P: Program) {
     case x@Id(_) => x
     case FieldPath(q, _) => varname(q)
   }
+
+  private def boundVars(heap: Heap): List[Id] = heap.map{case (x, o) => x}.toList
+  // heap.foldRight(Nil: List[Id]){case (elem, rst) => elem._1 :: rst}
 }
 
 import Util._
