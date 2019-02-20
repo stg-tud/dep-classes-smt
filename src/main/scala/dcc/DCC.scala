@@ -276,7 +276,7 @@ class DCC(P: Program) {
     case FieldPath(q, _) => varname(q)
   }
 
-  private def boundVars(heap: Heap): List[Id] = heap.map{case (x, o) => x}.toList
+  private def boundVars(heap: Heap): List[Id] = heap.map{case (x, _) => x}.toList
   // heap.foldRight(Nil: List[Id]){case (elem, rst) => elem._1 :: rst}
 }
 
