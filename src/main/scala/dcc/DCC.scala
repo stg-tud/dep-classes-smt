@@ -11,11 +11,11 @@ class DCC(P: Program) {
   type Obj = (Id, List[(Id, Id)])
   type Heap = Map[Id, Obj]
 
-  def entails(ctx: List[Constraint], cs: List[Constraint]/*, vars: List[Id]*/): Boolean =
-    cs.forall(c => entails(ctx, c/*, vars*/))
+  def entails(ctx: List[Constraint], cs: List[Constraint], vars: List[Id]): Boolean =
+    cs.forall(c => entails(ctx, c, vars))
 
   // constraint entailment
-  def entails(context: List[Constraint], c: Constraint/*, vars: List[Id]*/): Boolean = {
+  def entails(context: List[Constraint], c: Constraint, vars: List[Id]): Boolean = {
     // debug output
 //    ctx match {
 //      case Nil => println(s"ϵ |- $c")
@@ -32,16 +32,15 @@ class DCC(P: Program) {
       case (_, PathEquivalence(p, q)) if p == q => true
       case (ctx, _) =>
         val entailment = SMTLibConverter.convertEntailment(ctx, c)
+        // TODO: remove variables from this monstrous beast, convert them from added argument vars
         val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(c :: ctx)
 
-        // TODO: instantiate entailments
-        // TODO: collect variables before conversion
-        val programEntailments: List[Term] = SMTLibConverter.convertProgramEntailments(P)
+        val programEntailments: List[Term] = SMTLibConverter.instantiateProgramEntailments(P, vars)
 
         // debug output
 //        println(entailment.format())
-//        programEntailments.foreach(c => println(c.format()))
-//        variables.foreach(c => println(c.format()))
+        programEntailments.foreach(c => println(c.format()))
+        variables.foreach(c => println(c.format()))
 //        paths.foreach(c => println(c.format()))
 //        classes.foreach(c => println(c.format()))
 
@@ -80,15 +79,17 @@ class DCC(P: Program) {
       }
     // R-Call
     case MethodCall(m, x@Id(_)) =>
+      val vars = boundVars(heap)
+
       // Applicable methods
-      val S: List[(List[Constraint], Expression)] = mImpl(m, x).filter{case (as, _) => entails(HC(heap), as)}
+      val S: List[(List[Constraint], Expression)] = mImpl(m, x).filter{case (as, _) => entails(HC(heap), as, vars)}
 
       // Most specific method
       var (a, e) = S.head
 
       S.foreach{
         case (a1, e1) if e != e1 =>
-          if (entails(a1, a) && !entails(a, a1)) { // TODO: alpha renaming (footnote page 208)
+          if (entails(a1, a, vars) && !entails(a, a1, vars)) { // TODO: alpha renaming (footnote page 208)
             //(a, e) = (a1, e1)
             a = a1
             e = e1
@@ -103,6 +104,7 @@ class DCC(P: Program) {
         case ((_, Id(_)), rst) => rst // true && rst
         case _ => false // false && rst
       } => // TODO: extend guard with other non-interp prerequisites like entailment? implement body
+      val vars = boundVars(heap)
       val x: Id  = freshvar()
       val args1: List[(Id, Id)] = args.map{case (f, Id(z)) => (f, Id(z))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
       val o: Obj = (cls, args1)
@@ -110,7 +112,7 @@ class DCC(P: Program) {
       val (y: Id, b: List[Constraint]) = classInProgram(cls, P).getOrElse(return (heap, expr))
       val b1 = alphaConversion(y, x, b)
       // heap constraints entail cls constraints
-      if (entails(HC(heap) ++ OC(x, o), b1))
+      if (entails(HC(heap) ++ OC(x, o), b1, x :: vars))
         (heap + (x -> o), x)
       else
         (heap, expr) // stuck TODO: return type
@@ -142,7 +144,7 @@ class DCC(P: Program) {
     // T-Var
     case x@Id(_) =>
       classes(P).foldRight(Type(Id('tError), List())){ // first class to match wins
-        case (cls, _) if entails(context, InstanceOf(x, cls)) =>
+        case (cls, _) if entails(context, InstanceOf(x, cls), Nil) => // TODO: replace Nil with vars
           val y = freshvar()
           Type(y, List(PathEquivalence(y, x)))
         case (_, clss) => clss
@@ -155,6 +157,7 @@ class DCC(P: Program) {
     case e => Type(Id('notyetimplemented), List())
   }
 
+  // TODO: replace Nil with vars in entails
   def typeassignment1(context: List[Constraint], expr: Expression, t: Type): Boolean = expr match {
     // T-Field
     case FieldAccess(e, f) =>
@@ -164,9 +167,9 @@ class DCC(P: Program) {
       val b = t.constraints
 
       !FV(b).contains(x) &&
-      entails(PathEquivalence(FieldPath(x, f), y) :: context ++ a, b) &&
+      entails(PathEquivalence(FieldPath(x, f), y) :: context ++ a, b, Nil) &&
       classes(P).foldRight(false){
-        case (cls, _) if entails(context ++ a, InstanceOf(FieldPath(x, f), cls)) => true
+        case (cls, _) if entails(context ++ a, InstanceOf(FieldPath(x, f), cls), Nil) => true
         case (_, clss) => clss
       }
     // T-Var
@@ -175,7 +178,7 @@ class DCC(P: Program) {
         (t.constraints.head == PathEquivalence(t.x, x) ||
          t.constraints.head == PathEquivalence(x, t.x)) &&
       classes(P).foldRight(false){ // first class to match wins
-        case (cls, _) if entails(context, InstanceOf(x, cls)) => true
+        case (cls, _) if entails(context, InstanceOf(x, cls), Nil) => true
         case (_, clss) => clss
       }
     // T-Call TODO
