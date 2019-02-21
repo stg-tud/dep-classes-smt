@@ -639,31 +639,62 @@ object Axioms {
   private val cSubst = Assert(Annotate(substTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Subst"))))
 
   // C-Prog
+//  private val progTerm = Forall(
+//                  Seq(
+//                    SortedVar("cs1", Constraints),
+//                    SortedVar("cs2", Constraints),
+//                    SortedVar("c", "Constraint"),
+//                    SortedVar("x", "String"),
+//                    SortedVar("p", "Path"),
+//                  ),
+//                  Implies(
+//                    And(
+//                      Apply("in-program", Seq(
+//                        "x",
+//                        "cs1",
+//                        "c"
+//                      )),
+//                      Apply("Entails", Seq(
+//                        "cs2",
+//                        Apply("subst-constraints", Seq("cs1", "x", "p"))
+//                      ))
+//                    ),
+//                    Apply("entails", Seq(
+//                      "cs2",
+//                      Apply("subst-constraint", Seq("c", "x", "p"))
+//                    ))
+//                  ))
   private val progTerm = Forall(
-                  Seq(
-                    SortedVar("cs1", Constraints),
-                    SortedVar("cs2", Constraints),
-                    SortedVar("c", "Constraint"),
-                    SortedVar("x", "String"),
-                    SortedVar("p", "Path"),
-                  ),
-                  Implies(
-                    And(
-                      Apply("in-program", Seq(
-                        "x",
-                        "cs1",
-                        "c"
-                      )),
-                      Apply("Entails", Seq(
-                        "cs2",
-                        Apply("subst-constraints", Seq("cs1", "x", "p"))
-                      ))
-                    ),
-                    Apply("entails", Seq(
-                      "cs2",
-                      Apply("subst-constraint", Seq("c", "x", "p"))
-                    ))
-                  ))
+                          Seq(
+                            SortedVar("cs1", Constraints),
+                            SortedVar("cs2", Constraints),
+                            SortedVar("c", "Constraint"),
+                            SortedVar("x", "String"),
+                            SortedVar("p", "Path"),
+                          ),
+                          Implies(
+                            And(
+                              Apply("variable", Seq("x")),
+                              And(
+                                Apply("path-exists", Seq("p")),
+                                And(
+                                  Apply("in-program", Seq(
+                                    "x",
+                                    "cs1",
+                                    "c"
+                                  )),
+                                  Apply("Entails", Seq(
+                                    "cs2",
+                                    Apply("subst-constraints", Seq("cs1", "x", "p"))
+                                  ))
+                                )
+                              )
+                            ),
+                            Apply("entails", Seq(
+                              "cs2",
+                              Apply("generalize-constraint", Seq("c", "p", "x"))
+                            ))
+                          ))
   private val cProg = Assert(Annotate(progTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
 
   // C-Weak
