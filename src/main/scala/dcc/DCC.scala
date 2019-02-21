@@ -17,13 +17,13 @@ class DCC(P: Program) {
   // constraint entailment
   def entails(context: List[Constraint], c: Constraint, vars: List[Id]): Boolean = {
     // debug output
-//    ctx match {
-//      case Nil => println(s"ϵ |- $c")
-//      case _::Nil => println(s"$ctx |- $c")
-//      case _ =>
-//        ctx.foreach(println)
-//        println(s"|- $c")
-//    }
+    context match {
+      case Nil => println(s"ϵ |- $c")
+      case _ if context.size < 4 => println(s"${syntax.Util.commaSeparate(context)} |- $c")
+      case _ =>
+        context.foreach(println)
+        println(s"|- $c")
+    }
 
     (context.distinct, c) match {
       // C-Ident (with weakening)
@@ -38,11 +38,11 @@ class DCC(P: Program) {
         val programEntailments: List[Term] = SMTLibConverter.instantiateProgramEntailments(P, vars)
 
         // debug output
-//        println(entailment.format())
-//        programEntailments.foreach(c => println(c.format()))
-//        variables.foreach(c => println(c.format()))
-//        paths.foreach(c => println(c.format()))
-//        classes.foreach(c => println(c.format()))
+        println(entailment.format())
+        programEntailments.foreach(c => println(c.format()))
+        variables.foreach(c => println(c.format()))
+        paths.foreach(c => println(c.format()))
+        classes.foreach(c => println(c.format()))
 
         val solver = new Z3Solver(Axioms.all, debug=false)
 
@@ -294,15 +294,16 @@ object Main extends App {
       FieldAccess(Id('x), Id('p)))
   )
 
-  naturalNumbers.foreach(println)
+//  naturalNumbers.foreach(println)
 
   val dcc = new DCC(naturalNumbers)
 
-  //val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Zero), Nil))
-  val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Succ), List((Id('p), ObjectConstruction(Id('Zero), Nil)))))
-  val (h1, e1) = dcc.interp(h, FieldAccess(e, Id('p)))
+  val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Zero), Nil))
+  val (h1, e1) = dcc.interp(h, ObjectConstruction(Id('Succ), List((Id('p), e))))
+//  val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Succ), List((Id('p), ObjectConstruction(Id('Zero), Nil)))))
+//  val (h1, e1) = dcc.interp(h, FieldAccess(e, Id('p)))
 
-  println("Heap:")
-  h1.foreach(println)
-  println("Expr:" + e1)
+//  println("Heap:")
+//  h.foreach(println)
+//  println("Expr:" + e)
 }

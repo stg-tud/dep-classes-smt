@@ -145,6 +145,7 @@ object SMTLibConverter {
     case FieldPath(q, _) => objectName(q)
   }
 
+  // TODO: remove. use Axioms.makeList (moved from here)
   private def makeList(terms: Seq[Term]): Term = terms match {
     case Nil => SimpleSymbol("nil")
     case t :: rst => Apply(SimpleSymbol("insert"), Seq(t, makeList(rst)))

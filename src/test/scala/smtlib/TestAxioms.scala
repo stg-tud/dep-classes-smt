@@ -671,4 +671,49 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     assert(out(1).contains("C-Refl"))
     assert(out(1).contains("C-Weak"))
   }
+
+//  test("C-Prog 1") {
+//    //
+//  }
+
+  test("C-Prog 2") {
+    val x1 = Axioms.path("x1")
+    val x2 = Axioms.path("x2")
+    val x2P = Axioms.path("x2.p")
+
+    val x1Zero = Axioms.instantiatedBy(x1, "Zero")
+    val x2Succ = Axioms.instantiatedBy(x2, "Succ")
+    val x2Px1 = Axioms.pathEq(x2P, x1)
+    val x2PNat = Axioms.instanceOf(x2P, "Nat")
+
+    // Aux
+    val x1NatInst = Axioms.instanceOf(x1, "Nat")
+    val x1ZeroInst = Axioms.instanceOf(x1, "Zero")
+    val x1SuccInst = Axioms.instanceOf(x1, "Succ")
+    val x2NatInst = Axioms.instanceOf(x2, "Nat")
+    val x2ZeroInst = Axioms.instanceOf(x2, "Zero")
+    val x2SuccInst = Axioms.instanceOf(x2, "Succ")
+    val x1PNatInst = Axioms.instanceOf(Axioms.path("x1.p"), "Nat")
+
+    val knowledge = Seq(
+      Axioms.assertVariable("x1"),
+      Axioms.assertVariable("x2"),
+      Axioms.assertPath(x1),
+      Axioms.assertPath(x2),
+      Axioms.assertPath(x2P),
+      Axioms.assertClass("Zero"),
+      Axioms.assertClass("Succ"),
+      Axioms.assertClass("Nat"),
+      Axioms.assertInProg(Axioms.string("x1"), Seq(x1ZeroInst), x1NatInst),
+      Axioms.assertInProg(Axioms.string("x1"), Seq(x1SuccInst, x1PNatInst), x1NatInst),
+      Axioms.assertInProg(Axioms.string("x2"), Seq(x2ZeroInst), x2NatInst),
+      Axioms.assertInProg(Axioms.string("x2"), Seq(x2SuccInst, x2PNat), x2NatInst)
+    )
+
+    val assertion = Assert(Not(Axioms.entails(Seq(x1Zero, x2Succ, x2Px1), x2PNat)))
+
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat/*, GetUnsatCore*/))
+    val (exit, out) = z3.execute()
+    z3.flush()
+  }
 }

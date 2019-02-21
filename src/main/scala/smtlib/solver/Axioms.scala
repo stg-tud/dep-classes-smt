@@ -638,63 +638,63 @@ object Axioms {
                             ))
   private val cSubst = Assert(Annotate(substTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Subst"))))
 
-  // C-Prog
-//  private val progTerm = Forall(
-//                  Seq(
-//                    SortedVar("cs1", Constraints),
-//                    SortedVar("cs2", Constraints),
-//                    SortedVar("c", "Constraint"),
-//                    SortedVar("x", "String"),
-//                    SortedVar("p", "Path"),
-//                  ),
-//                  Implies(
-//                    And(
-//                      Apply("in-program", Seq(
-//                        "x",
-//                        "cs1",
-//                        "c"
-//                      )),
-//                      Apply("Entails", Seq(
-//                        "cs2",
-//                        Apply("subst-constraints", Seq("cs1", "x", "p"))
-//                      ))
-//                    ),
-//                    Apply("entails", Seq(
-//                      "cs2",
-//                      Apply("subst-constraint", Seq("c", "x", "p"))
-//                    ))
-//                  ))
+  // C-Prog // TODO: change on this rule broke patheq symmetrict 2 test. why/how?
   private val progTerm = Forall(
-                          Seq(
-                            SortedVar("cs1", Constraints),
-                            SortedVar("cs2", Constraints),
-                            SortedVar("c", "Constraint"),
-                            SortedVar("x", "String"),
-                            SortedVar("p", "Path"),
-                          ),
-                          Implies(
-                            And(
-                              Apply("variable", Seq("x")),
-                              And(
-                                Apply("path-exists", Seq("p")),
-                                And(
-                                  Apply("in-program", Seq(
-                                    "x",
-                                    "cs1",
-                                    "c"
-                                  )),
-                                  Apply("Entails", Seq(
-                                    "cs2",
-                                    Apply("subst-constraints", Seq("cs1", "x", "p"))
-                                  ))
-                                )
-                              )
-                            ),
-                            Apply("entails", Seq(
-                              "cs2",
-                              Apply("generalize-constraint", Seq("c", "p", "x"))
-                            ))
-                          ))
+                  Seq(
+                    SortedVar("cs1", Constraints),
+                    SortedVar("cs2", Constraints),
+                    SortedVar("c", "Constraint"),
+                    SortedVar("x", "String"),
+                    SortedVar("p", "Path"),
+                  ),
+                  Implies(
+                    And(
+                      Apply("in-program", Seq(
+                        "x",
+                        "cs1",
+                        "c"
+                      )),
+                      Apply("Entails", Seq(
+                        "cs2",
+                        Apply("subst-constraints", Seq("cs1", "x", "p"))
+                      ))
+                    ),
+                    Apply("entails", Seq(
+                      "cs2",
+                      Apply("subst-constraint", Seq("c", "x", "p"))
+                    ))
+                  ))
+//  private val progTerm = Forall( // TODO: remove x, whats p for?
+//                          Seq(
+//                            SortedVar("cs1", Constraints),
+//                            SortedVar("cs2", Constraints),
+//                            SortedVar("c", "Constraint"),
+//                            SortedVar("x", "String"),
+//                            SortedVar("p", "Path"),
+//                          ),
+//                          Implies(
+//                            And(
+//                              Apply("variable", Seq("x")),
+//                              And(
+//                                Apply("path-exists", Seq("p")),
+//                                And(
+//                                  Apply("in-program", Seq(
+//                                    "x",
+//                                    "cs1",
+//                                    "c"
+//                                  )),
+//                                  Apply("Entails", Seq(
+//                                    "cs2",
+//                                    Apply("subst-constraints", Seq("cs1", "x", "p"))
+//                                  ))
+//                                )
+//                              )
+//                            ),
+//                            Apply("entails", Seq(
+//                              "cs2",
+//                              Apply("generalize-constraint", Seq("c", "p", "x"))
+//                            ))
+//                          ))
   private val cProg = Assert(Annotate(progTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
 
   // C-Weak
@@ -833,15 +833,24 @@ object Axioms {
 
   // TODO: preprocess C-Prog
 
+  def makeList(terms: Seq[Term]): Term = terms match {
+    case Nil => SimpleSymbol("nil")
+    case t :: rst => Apply(SimpleSymbol("insert"), Seq(t, makeList(rst)))
+  }
+
   def string(s: String) = SMTLibString(s)
 
   def cls(s: String) = Apply("class", Seq(SMTLibString(s)))
   def variable(s: String) = Apply("variable", Seq(SMTLibString(s)))
   def pathExists(t: Term) = Apply("path-exists", Seq(t))
+  def inProg(x: Term, cs: Term, c: Term) = Apply("in-program", Seq(x, cs, c))
+  def inProg(x: Term, cs: Seq[Term], c: Term) = Apply("in-program", Seq(x, makeList(cs), c))
 
   def assertClass(s: String) = Assert(cls(s))
   def assertVariable(s: String) = Assert(variable(s))
   def assertPath(t: Term) = Assert(pathExists(t))
+  def assertInProg(x: Term, cs: Term, c: Term) = Assert(inProg(x, cs, c))
+  def assertInProg(x: Term, cs: Seq[Term], c: Term) = Assert(inProg(x, cs, c))
 
   def pathEq(p1: Term, p2: Term): Term = Apply("path-eq", Seq(p1, p2))
   def instanceOf(p: Term, c: String) = Apply("instance-of", Seq(p, SMTLibString(c)))
