@@ -672,9 +672,32 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     assert(out(1).contains("C-Weak"))
   }
 
-//  test("C-Prog 1") {
-//    //
-//  }
+  test("C-Prog 1") {
+    val x = Axioms.path("x")
+    val y = Axioms.path("y")
+
+    val xZero = Axioms.instanceOf(x, "Zero")
+    val xNat = Axioms.instanceOf(x, "Nat")
+
+//    val yZero = Axioms.instanceOf(y, "Zero")
+//    val yNat = Axioms.instanceOf(y, "Nat")
+
+//    val prog = Axioms.inProg("x", Seq(xZero), xNat)
+
+    val knowledge = Seq(
+      Axioms.assertVariable("x"),
+      Axioms.assertPath(x),
+      Axioms.assertClass("Zero"),
+      Axioms.assertClass("Nat"),
+      Axioms.assertInProg("x", Seq(xZero), xNat)
+    )
+
+    val assertion = Assert(Not(Axioms.entails(Seq(xZero), xNat)))
+
+    z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute()
+    z3.flush()
+  }
 
   test("C-Prog 2") {
     val x1 = Axioms.path("x1")
@@ -704,10 +727,10 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
       Axioms.assertClass("Zero"),
       Axioms.assertClass("Succ"),
       Axioms.assertClass("Nat"),
-      Axioms.assertInProg(Axioms.string("x1"), Seq(x1ZeroInst), x1NatInst),
-      Axioms.assertInProg(Axioms.string("x1"), Seq(x1SuccInst, x1PNatInst), x1NatInst),
-      Axioms.assertInProg(Axioms.string("x2"), Seq(x2ZeroInst), x2NatInst),
-      Axioms.assertInProg(Axioms.string("x2"), Seq(x2SuccInst, x2PNat), x2NatInst)
+      Axioms.assertInProg("x1", Seq(x1ZeroInst), x1NatInst),
+      Axioms.assertInProg("x1", Seq(x1SuccInst, x1PNatInst), x1NatInst),
+      Axioms.assertInProg("x2", Seq(x2ZeroInst), x2NatInst),
+      Axioms.assertInProg("x2", Seq(x2SuccInst, x2PNat), x2NatInst)
     )
 
     val assertion = Assert(Not(Axioms.entails(Seq(x1Zero, x2Succ, x2Px1), x2PNat)))
