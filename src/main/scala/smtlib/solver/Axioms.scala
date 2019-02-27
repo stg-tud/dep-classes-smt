@@ -112,6 +112,13 @@ object Axioms {
   /** \all x. cs => c in program */
   private val inProgProp = DeclareFun("in-program", Seq("String", Constraints, "Constraint"), Bool)
 
+  private val lookupProgEntailment = DefineFun(
+    FunctionDef("lookup-program-entailment", Seq(SortedVar("c", "Constraint")), Constraints,
+      Ite(Eq("c", instanceOf(path("x"), "Nat")),
+        makeList(Seq(instanceOf(path("x"), "Zero"))),
+        makeList(Seq()))) // TODO: undefined
+  )
+
   /**
     * Substitution function for paths.
     * param p1 Base path for the substitution
@@ -697,6 +704,7 @@ object Axioms {
 //                          ))
   // TODO: preprocess in-prog (enumerate constraints in rule)
   // TODO: remove variable from in-prog?
+  // TODO: change in-prog to lookup function
   private val progTerm = Forall(
                   Seq(
                     SortedVar("cs1", Constraints),
@@ -723,7 +731,26 @@ object Axioms {
                       "c"
                     ))
                   ))
-  private val cProg = Assert(Annotate(progTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
+  private val progTerm2 = Forall(
+    Seq(
+      SortedVar("cs1", Constraints),
+      SortedVar("c", "Constraint")
+    ),
+    Let(Seq(
+      VarBinding("cs2", Apply("lookup-program-entailment", Seq("c")))
+    ),
+      Implies(
+        And(
+          Not(Eq("cs2", "nil")), // TODO: change to whatever undefined will be for lookup
+          Apply("Entails", Seq("cs1", "cs2"))
+        ),
+        Apply("entails", Seq(
+          "cs1",
+          "c"
+        ))
+      ))
+  )
+  private val cProg = Assert(Annotate(progTerm2, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
 
   // C-Weak
   private val weakTerm = Forall(
@@ -771,7 +798,7 @@ object Axioms {
   private val cPerm = Assert(Annotate(permTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Perm"))))
 
   private val datatypes = Seq(pathDatatype, constraintDatatype)
-  private val funs = Seq(concat, elem)
+  private val funs = Seq(concat, elem, lookupProgEntailment)
   private val subst = Seq(substPath, substConstraint, substConstraints, substProp)
   private val gen = Seq(genPath, genConstraint, genConstraints, genProp)
   private val baseProps = Seq(classProp, varProp, pathProp, inProgProp)
