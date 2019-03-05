@@ -35,7 +35,8 @@ class DCC(P: Program) {
         // TODO: remove variables from this monstrous beast, convert them from added argument vars
         val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(c :: ctx)
 
-        val programEntailments: List[Term] = SMTLibConverter.instantiateProgramEntailments(P, vars)
+        // TODO: replace with lookup function
+        val programEntailments: List[Term] = List() // SMTLibConverter.instantiateProgramEntailments(P, vars)
 
         // debug output
         println(entailment.format())

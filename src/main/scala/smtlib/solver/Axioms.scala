@@ -110,7 +110,7 @@ object Axioms {
   private val pathProp = DeclareFun("path-exists", Seq("Path"), Bool)
 
   /** \all x. cs => c in program */
-  private val inProgProp = DeclareFun("in-program", Seq("String", Constraints, "Constraint"), Bool)
+//  private val inProgProp = DeclareFun("in-program", Seq("String", Constraints, "Constraint"), Bool)
 
   private val lookupProgEntailment = DefineFun(
     FunctionDef("lookup-program-entailment", Seq(SortedVar("c", "Constraint")), Constraints,
@@ -705,32 +705,32 @@ object Axioms {
   // TODO: preprocess in-prog (enumerate constraints in rule)
   // TODO: remove variable from in-prog?
   // TODO: change in-prog to lookup function
-  private val progTerm = Forall(
-                  Seq(
-                    SortedVar("cs1", Constraints),
-                    SortedVar("c", "Constraint"),
-                    SortedVar("x", "String"),
-                  ),
-                  Implies(
-                    And(
-                      Apply("variable", Seq(SMTLibString("x"))),
-                      And(
-                        Apply("in-program", Seq(
-                          SMTLibString("x"),
-                          makeList(Seq(instanceOf(path("x"), "Zero"))),
-                          "c"
-                        )),
-                        Apply("Entails", Seq(
-                          "cs1",
-                          makeList(Seq(instanceOf(path("x"), "Zero")))
-                        ))
-                      )
-                    ),
-                    Apply("entails", Seq(
-                      "cs1",
-                      "c"
-                    ))
-                  ))
+//  private val progTerm = Forall(
+//                  Seq(
+//                    SortedVar("cs1", Constraints),
+//                    SortedVar("c", "Constraint"),
+//                    SortedVar("x", "String"),
+//                  ),
+//                  Implies(
+//                    And(
+//                      Apply("variable", Seq(SMTLibString("x"))),
+//                      And(
+//                        Apply("in-program", Seq(
+//                          SMTLibString("x"),
+//                          makeList(Seq(instanceOf(path("x"), "Zero"))),
+//                          "c"
+//                        )),
+//                        Apply("Entails", Seq(
+//                          "cs1",
+//                          makeList(Seq(instanceOf(path("x"), "Zero")))
+//                        ))
+//                      )
+//                    ),
+//                    Apply("entails", Seq(
+//                      "cs1",
+//                      "c"
+//                    ))
+//                  ))
   private val progTerm2 = Forall(
     Seq(
       SortedVar("cs1", Constraints),
@@ -742,7 +742,10 @@ object Axioms {
       Implies(
         And(
           Not(Eq("cs2", "nil")), // TODO: change to whatever undefined will be for lookup
-          Apply("Entails", Seq("cs1", "cs2"))
+          And(
+            Apply("Entails", Seq("cs1", "cs2")),
+            "false"
+          )
         ),
         Apply("entails", Seq(
           "cs1",
@@ -801,7 +804,7 @@ object Axioms {
   private val funs = Seq(concat, elem, lookupProgEntailment)
   private val subst = Seq(substPath, substConstraint, substConstraints, substProp)
   private val gen = Seq(genPath, genConstraint, genConstraints, genProp)
-  private val baseProps = Seq(classProp, varProp, pathProp, inProgProp)
+  private val baseProps = Seq(classProp, varProp, pathProp)
   private val dccProps = Seq(entailsProp, EntailsProp)
   private val structuralRules = Seq(cWeak, cPerm)
   private val dccRules = Seq(cIdent, cRefl, cClass, cCut, cSubst, cProg)
