@@ -901,14 +901,14 @@ object Axioms {
   def cls(s: String) = Apply("class", Seq(SMTLibString(s)))
   def variable(s: String) = Apply("variable", Seq(SMTLibString(s)))
   def pathExists(t: Term) = Apply("path-exists", Seq(t))
-  def inProg(x: String, cs: Term, c: Term) = Apply("in-program", Seq(SMTLibString(x), cs, c))
-  def inProg(x: String, cs: Seq[Term], c: Term) = Apply("in-program", Seq(SMTLibString(x), makeList(cs), c))
+//  def inProg(x: String, cs: Term, c: Term) = Apply("in-program", Seq(SMTLibString(x), cs, c))
+//  def inProg(x: String, cs: Seq[Term], c: Term) = Apply("in-program", Seq(SMTLibString(x), makeList(cs), c))
 
   def assertClass(s: String) = Assert(cls(s))
   def assertVariable(s: String) = Assert(variable(s))
   def assertPath(t: Term) = Assert(pathExists(t))
-  def assertInProg(x: String, cs: Term, c: Term) = Assert(inProg(x, cs, c))
-  def assertInProg(x: String, cs: Seq[Term], c: Term) = Assert(inProg(x, cs, c))
+//  def assertInProg(x: String, cs: Term, c: Term) = Assert(inProg(x, cs, c))
+//  def assertInProg(x: String, cs: Seq[Term], c: Term) = Assert(inProg(x, cs, c))
 
   def pathEq(p1: Term, p2: Term): Term = Apply("path-eq", Seq(p1, p2))
   def instanceOf(p: Term, c: String) = Apply("instance-of", Seq(p, SMTLibString(c)))

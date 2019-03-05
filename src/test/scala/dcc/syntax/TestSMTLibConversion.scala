@@ -94,14 +94,6 @@ class TestSMTLibConversion extends FunSuite {
                           Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))), SMTLibString("Nat")))
                         ))
 
-//  test("Convert Program Entailments") {
-//    val entailments = SMTLibConverter.convertProgramEntailments(naturalNumbers)
-//
-//    assert(entailments.size == 2)
-//    assert(entailments.head == zeroEntailment)
-//    assert(entailments.last == succEntailment)
-//  }
-
   test("Convert Entailment") {
     val ctx = List(by, eq)
     val entailment = Apply(SimpleSymbol("entails"), Seq(
@@ -259,96 +251,4 @@ class TestSMTLibConversion extends FunSuite {
 
     assert(actual == expected)
   }
-
-//  test("Instantiate program entailments") {
-//    val p: Program = List(
-//      ConstraintEntailment(Id('x), List(InstantiatedBy(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
-//      ConstructorDeclaration(Id('Zero), Id('x), Nil),
-//      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero)), PathEquivalence(Id('x), FieldPath(Id('x), Id('f)))), InstanceOf(Id('x), Id('Nat))),
-//    )
-//    val vars: List[Id] = List(Id('x), Id('y), Id('z))
-//
-//    val actual = SMTLibConverter.instantiateProgramEntailments(p, vars)
-//    val expected = List(
-//      Apply(SimpleSymbol("in-program"),
-//        Seq(SMTLibString("x"),
-//          Apply(SimpleSymbol("insert"), Seq(
-//            Apply(SimpleSymbol("instantiated-by"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))), SMTLibString("Zero"))),
-//            SimpleSymbol("nil")
-//          )),
-//          Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))), SMTLibString("Nat")))
-//        )),
-//      Apply(SimpleSymbol("in-program"),
-//        Seq(SMTLibString("x"),
-//          Apply(SimpleSymbol("insert"), Seq(
-//            Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))), SMTLibString("Zero"))),
-//            Apply(SimpleSymbol("insert"), Seq(
-//              Apply(SimpleSymbol("path-eq"), Seq(
-//                Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))),
-//                Apply(SimpleSymbol("pth"), Seq(
-//                  Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))),
-//                  SMTLibString("f")
-//                ))
-//              )),
-//              SimpleSymbol("nil")
-//            ))
-//          )),
-//          Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))), SMTLibString("Nat")))
-//      )),
-//      Apply(SimpleSymbol("in-program"),
-//        Seq(SMTLibString("y"),
-//          Apply(SimpleSymbol("insert"), Seq(
-//            Apply(SimpleSymbol("instantiated-by"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("y"))), SMTLibString("Zero"))),
-//            SimpleSymbol("nil")
-//          )),
-//          Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("y"))), SMTLibString("Nat")))
-//        )),
-//      Apply(SimpleSymbol("in-program"),
-//        Seq(SMTLibString("y"),
-//          Apply(SimpleSymbol("insert"), Seq(
-//            Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("y"))), SMTLibString("Zero"))),
-//            Apply(SimpleSymbol("insert"), Seq(
-//              Apply(SimpleSymbol("path-eq"), Seq(
-//                Apply(SimpleSymbol("var"), Seq(SMTLibString("y"))),
-//                Apply(SimpleSymbol("pth"), Seq(
-//                  Apply(SimpleSymbol("var"), Seq(SMTLibString("y"))),
-//                  SMTLibString("f")
-//                ))
-//              )),
-//              SimpleSymbol("nil")
-//            ))
-//          )),
-//          Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("y"))), SMTLibString("Nat")))
-//      )),
-//      ////
-//      Apply(SimpleSymbol("in-program"),
-//        Seq(SMTLibString("z"),
-//          Apply(SimpleSymbol("insert"), Seq(
-//            Apply(SimpleSymbol("instantiated-by"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("z"))), SMTLibString("Zero"))),
-//            SimpleSymbol("nil")
-//          )),
-//          Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("z"))), SMTLibString("Nat")))
-//        )),
-//      Apply(SimpleSymbol("in-program"),
-//        Seq(SMTLibString("z"),
-//          Apply(SimpleSymbol("insert"), Seq(
-//            Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("z"))), SMTLibString("Zero"))),
-//            Apply(SimpleSymbol("insert"), Seq(
-//              Apply(SimpleSymbol("path-eq"), Seq(
-//                Apply(SimpleSymbol("var"), Seq(SMTLibString("z"))),
-//                Apply(SimpleSymbol("pth"), Seq(
-//                  Apply(SimpleSymbol("var"), Seq(SMTLibString("z"))),
-//                  SMTLibString("f")
-//                ))
-//              )),
-//              SimpleSymbol("nil")
-//            ))
-//          )),
-//          Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("z"))), SMTLibString("Nat")))
-//      ))
-//    )
-//
-//    assert(actual.size == expected.size)
-//    assert(actual.forall(expected.contains(_)))
-//  }
 }

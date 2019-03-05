@@ -688,8 +688,8 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
       Axioms.assertVariable("x"),
       Axioms.assertPath(x),
       Axioms.assertClass("Zero"),
-      Axioms.assertClass("Nat"),
-      Axioms.assertInProg("x", Seq(xZero), xNat)
+      Axioms.assertClass("Nat")//,
+//      Axioms.assertInProg("x", Seq(xZero), xNat)
     )
 
     val assertion = Assert(Not(Axioms.entails(Seq(xZero), xNat)))
@@ -726,11 +726,11 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
       Axioms.assertPath(x2P),
       Axioms.assertClass("Zero"),
       Axioms.assertClass("Succ"),
-      Axioms.assertClass("Nat"),
-      Axioms.assertInProg("x1", Seq(x1ZeroInst), x1NatInst),
-      Axioms.assertInProg("x1", Seq(x1SuccInst, x1PNatInst), x1NatInst),
-      Axioms.assertInProg("x2", Seq(x2ZeroInst), x2NatInst),
-      Axioms.assertInProg("x2", Seq(x2SuccInst, x2PNat), x2NatInst)
+      Axioms.assertClass("Nat")//,
+//      Axioms.assertInProg("x1", Seq(x1ZeroInst), x1NatInst),
+//      Axioms.assertInProg("x1", Seq(x1SuccInst, x1PNatInst), x1NatInst),
+//      Axioms.assertInProg("x2", Seq(x2ZeroInst), x2NatInst),
+//      Axioms.assertInProg("x2", Seq(x2SuccInst, x2PNat), x2NatInst)
     )
 
     val assertion = Assert(Not(Axioms.entails(Seq(x1Zero, x2Succ, x2Px1), x2PNat)))

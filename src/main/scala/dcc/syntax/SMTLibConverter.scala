@@ -20,18 +20,6 @@ object SMTLibConverter {
 
   def convertId(x: Id): Term = SMTLibString(x.toString)
 
-//  def convertProgramEntailments(p: Program): List[Term] = p match {
-//    case Nil => Nil
-//    case ConstraintEntailment(x, as, a) :: rst =>
-//      val ctx: Seq[Term] = as.map(convertConstraint)
-//      val c: Term = convertConstraint(a)
-//
-//      val entailment = Apply(SimpleSymbol("in-program"), Seq(SMTLibString(x.toString), makeList(ctx), c))
-//
-//      entailment :: convertProgramEntailments(rst)
-//    case _ :: rst => convertProgramEntailments(rst)
-//  }
-
   // TODO: handle multiple matches in lookup (see test in converter for example)
   def makeProgramEntailmentLookupFunction(p: Program, variables: List[Id]): SMTLibCommand = {
     val x = SimpleSymbol("c")
@@ -44,7 +32,6 @@ object SMTLibConverter {
       body
     ))
   }
-
 
   private def instantiateProgramEntailments(p: Program, variable: Id): List[(Constraint,List[Constraint])] = p match {
     case Nil => Nil
@@ -65,22 +52,6 @@ object SMTLibConverter {
         makeProgramEntailmentLookupFunctionBody(rst, x)
       )
   }
-
-//  def instantiateProgramEntailments(p: Program, vars: List[Id]): List[Term] = vars.flatMap(instantiateProgramEntailments(p, _))
-//
-//  def instantiateProgramEntailments(p: Program, variable: Id): List[Term] = p match {
-//    case Nil => Nil
-//    case ConstraintEntailment(x, as, a) :: rst =>
-//      val ctx: Seq[Term] = alphaConversion(x, variable, as).map(convertConstraint)
-//      val c: Term = convertConstraint(renameIdInConstraint(x, variable, a))
-//
-//      // TODO: change signature of 'in-program' proposition?
-//      // TODO: -> variable not needed if we enumerate them (is the variable used for matching in the solver?)
-//      val entailment = Apply(SimpleSymbol("in-program"), Seq(convertId(variable), makeList(ctx), c))
-//
-//      entailment :: instantiateProgramEntailments(rst, variable)
-//    case _ :: rst => instantiateProgramEntailments(rst, variable)
-//  }
 
   def convertEntailment(ctx: List[Constraint], c: Constraint): Term = {
     val ctxSMTLib: Term = SMTLibConverter.makeList(ctx.map(SMTLibConverter.convertConstraint))
