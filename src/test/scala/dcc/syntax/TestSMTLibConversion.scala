@@ -186,7 +186,6 @@ class TestSMTLibConversion extends FunSuite {
   }
 
   test("make program entailment lookup function") {
-    // TODO: multi hit in lookup
     val p: Program = List(
       ConstraintEntailment(Id('x), List(InstantiatedBy(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
       ConstructorDeclaration(Id('Zero), Id('x), Nil),
@@ -209,41 +208,47 @@ class TestSMTLibConversion extends FunSuite {
 
     val expected = DefineFun(FunctionDef(SimpleSymbol("lookup-program-entailment"),
       Seq(SortedVar(c, SimpleSymbol("Constraint"))),
-      Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))),
+      Sorts(SimpleSymbol("List"), Seq(Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))),
       Ite(
         Eq(c, instOf(x, "Nat")),
-        insert(instBy(x, "Zero"), nil),
-        Ite(
-          Eq(c, instOf(x, "Nat")),
+        insert(
           insert(
             instOf(x, "Zero"),
             insert(
               pEq(x, Apply(SimpleSymbol("pth"), Seq(x, SMTLibString("f")))),
               nil)),
-          Ite(
-            Eq(c, instOf(y, "Nat")),
-            insert(instBy(y, "Zero"), nil),
-            Ite(
-              Eq(c, instOf(y, "Nat")),
+          insert(
+            insert(instBy(x, "Zero"), nil),
+            nil
+          )
+        ),
+        Ite(
+          Eq(c, instOf(y, "Nat")),
+          insert(
+            insert(
+              instOf(y, "Zero"),
               insert(
-                instOf(y, "Zero"),
-                insert(
-                  pEq(y, Apply(SimpleSymbol("pth"), Seq(y, SMTLibString("f")))),
-                  nil)),
-              Ite(
-                Eq(c, instOf(z, "Nat")),
-                insert(instBy(z, "Zero"), nil),
-                Ite(
-                  Eq(c, instOf(z, "Nat")),
-                  insert(
-                    instOf(z, "Zero"),
-                    insert(
-                      pEq(z, Apply(SimpleSymbol("pth"), Seq(z, SMTLibString("f")))),
-                      nil)),
-                  nil
-                )
-              )
+                pEq(y, Apply(SimpleSymbol("pth"), Seq(y, SMTLibString("f")))),
+                nil)),
+            insert(
+              insert(instBy(y, "Zero"), nil),
+              nil
             )
+          ),
+          Ite(
+            Eq(c, instOf(z, "Nat")),
+            insert(
+              insert(
+                instOf(z, "Zero"),
+                insert(
+                  pEq(z, Apply(SimpleSymbol("pth"), Seq(z, SMTLibString("f")))),
+                  nil)),
+              insert(
+                insert(instBy(z, "Zero"), nil),
+                nil
+              )
+            ),
+            nil
           )
         )
       )

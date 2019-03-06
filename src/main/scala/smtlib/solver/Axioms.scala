@@ -742,10 +742,7 @@ object Axioms {
       Implies(
         And(
           Not(Eq("cs2", "nil")), // TODO: change to whatever undefined will be for lookup
-          And(
-            Apply("Entails", Seq("cs1", "cs2")),
-            "false"
-          )
+          Apply("Entails", Seq("cs1", "cs2"))
         ),
         Apply("entails", Seq(
           "cs1",
@@ -894,6 +891,11 @@ object Axioms {
   def makeList(terms: Seq[Term]): Term = terms match {
     case Nil => SimpleSymbol("nil")
     case t :: rst => Apply(SimpleSymbol("insert"), Seq(t, makeList(rst)))
+  }
+
+  def makeOr(terms: Seq[Term]): Term = terms match {
+    case Nil => SimpleSymbol("false")
+    case t :: rst => Or(t, makeOr(rst))
   }
 
   def string(s: String) = SMTLibString(s)

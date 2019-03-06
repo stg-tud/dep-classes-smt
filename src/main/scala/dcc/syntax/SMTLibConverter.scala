@@ -20,7 +20,6 @@ object SMTLibConverter {
 
   def convertId(x: Id): Term = SMTLibString(x.toString)
 
-  // TODO: handle multiple matches in lookup (see test in converter for example)
   def makeProgramEntailmentLookupFunction(p: Program, variables: List[Id]): SMTLibCommand = {
     val x = SimpleSymbol("c")
     val body = makeProgramEntailmentLookupFunctionBody(variables.flatMap(instantiateProgramEntailments(p, _)), x)
@@ -28,27 +27,30 @@ object SMTLibConverter {
     DefineFun(FunctionDef(
       SimpleSymbol("lookup-program-entailment"),
       Seq(SortedVar(x, SimpleSymbol("Constraint"))),
-      Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))),
+      Sorts(SimpleSymbol("List"), Seq(Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))),
       body
     ))
   }
 
-  private def instantiateProgramEntailments(p: Program, variable: Id): List[(Constraint,List[Constraint])] = p match {
-    case Nil => Nil
+  private def instantiateProgramEntailments(p: Program, variable: Id, entailments: Map[Constraint, List[List[Constraint]]] = Map()): Map[Constraint, List[List[Constraint]]] = p match {
+    case Nil => entailments
     case ConstraintEntailment(x, as, a) :: rst =>
       val cs = alphaConversion(x, variable, as)
       val c = renameIdInConstraint(x, variable, a)
 
-      (c, cs) :: instantiateProgramEntailments(rst, variable)
-    case _ :: rst => instantiateProgramEntailments(rst, variable)
+      entailments.get(c) match {
+        case None => instantiateProgramEntailments(rst, variable, entailments + (c -> List(cs)))
+        case Some(ccs) => instantiateProgramEntailments(rst, variable, entailments + (c -> (cs :: ccs)))
+      }
+    case _ :: rst => instantiateProgramEntailments(rst, variable, entailments)
   }
 
-  private def makeProgramEntailmentLookupFunctionBody(entailments: List[(Constraint, List[Constraint])], x: Term): Term = entailments match {
+  private def makeProgramEntailmentLookupFunctionBody(entailments: List[(Constraint, List[List[Constraint]])], x: Term): Term = entailments match {
     case Nil => SimpleSymbol("nil") // TODO: change to something else for no hit?
-    case (c, cs) :: rst =>
+    case (c, ccs) :: rst =>
       Ite(
         Eq(x, convertConstraint(c)),
-        makeList(cs.map(convertConstraint)),
+        Axioms.makeList(ccs.map(cs => Axioms.makeList(cs.map(convertConstraint)))),
         makeProgramEntailmentLookupFunctionBody(rst, x)
       )
   }
