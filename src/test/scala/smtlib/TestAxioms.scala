@@ -1,5 +1,7 @@
 package smtlib
 
+import dcc.syntax.Program.Program
+import dcc.syntax._
 import org.scalatest.{FunSuite, PrivateMethodTester}
 import smtlib.solver.{Axioms, Z3Solver}
 import smtlib.syntax._
@@ -681,15 +683,24 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 
 //    val yZero = Axioms.instanceOf(y, "Zero")
 //    val yNat = Axioms.instanceOf(y, "Nat")
+    val p: Program = List(
+      ConstraintEntailment(Id('x), List(InstantiatedBy(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
+      ConstructorDeclaration(Id('Zero), Id('x), Nil),
+      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero)), PathEquivalence(Id('x), FieldPath(Id('x), Id('f)))), InstanceOf(Id('x), Id('Nat))),
+    )
+    val vars: List[Id] = List(Id('x))
+    val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(p, vars)
 
-//    val prog = Axioms.inProg("x", Seq(xZero), xNat)
+    val preprocess = Seq(
+      lookup,
+      Assert(Annotate(Axioms.preprocessProgRule(), Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
+    )
 
     val knowledge = Seq(
       Axioms.assertVariable("x"),
       Axioms.assertPath(x),
       Axioms.assertClass("Zero"),
-      Axioms.assertClass("Nat")//,
-//      Axioms.assertInProg("x", Seq(xZero), xNat)
+      Axioms.assertClass("Nat")
     )
 
     val assertion = Assert(Not(Axioms.entails(Seq(xZero), xNat)))

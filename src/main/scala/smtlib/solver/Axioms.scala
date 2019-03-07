@@ -100,6 +100,31 @@ object Axioms {
                 ))
               ))
 
+  /** big or */
+  private val bigOrEntails = DefineFunRec(
+    FunctionDef(
+      "big-or-Entails",
+      Seq(
+        SortedVar("ccs", Sorts("List", Seq(Constraints))),
+        SortedVar("cs", Constraints)
+      ),
+      Bool,
+      Match("ccs", Seq(
+        MatchCase(Pattern("nil"), "false"),
+        MatchCase(Pattern("insert", Seq("cs1", "ccs1")),
+          Ite(
+            Eq("ccs1", "nil"),
+            Apply("Entails", Seq("cs", "cs1")),
+            Or(
+              Apply("Entails", Seq("cs", "cs1")),
+              Apply("big-or-Entails", Seq("ccs1", "cs"))
+            )
+          )
+        )
+      ))
+    )
+  )
+
   /** String is a class name  */
   private val classProp = DeclareFun("class", Seq("String"), Bool)
 
@@ -809,7 +834,8 @@ object Axioms {
   def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ gen ++ baseProps ++ dccProps ++ structuralRules ++ dccRules)
   def allWithList: SMTLibScript = SMTLibScript(listDatatype +: all.commands)
 
-  def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(premise.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs))), conclusion))
+  def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(makeList(premise), conclusion))
+  def entails(premise: Term, conclusion: Term): Term = Apply("entails", Seq(premise, conclusion))
 
   /**
     * Converts a String representing a Path
@@ -886,17 +912,37 @@ object Axioms {
     pairs
   }
 
-  // TODO: preprocess C-Prog
+  // TODO: evaluate generalization + substitution for C-Prog
+  def preprocessProgRule(): Term =
+    Forall(
+      Seq(
+        SortedVar("cs", Constraints),
+        SortedVar("c", "Constraint")
+      ),
+      Let(Seq(
+        VarBinding("ccs", Apply("lookup-program-entailment", Seq("c")))
+      ),
+        Implies(
+          And(
+            Not(Eq("ccs", "nil")), // TODO: change to whatever undefined will be for lookup
+            Apply("big-or-Entails", Seq("ccs", "cs"))
+          ),
+          entails("cs", "c")
+        )
+      )
+    )
 
-  def makeList(terms: Seq[Term]): Term = terms match {
-    case Nil => SimpleSymbol("nil")
-    case t :: rst => Apply(SimpleSymbol("insert"), Seq(t, makeList(rst)))
-  }
+  def makeList(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs)))
+//    terms match {
+//    case Nil => SimpleSymbol("nil")
+//    case t :: rst => Apply(SimpleSymbol("insert"), Seq(t, makeList(rst)))
+//  }
 
-  def makeOr(terms: Seq[Term]): Term = terms match {
-    case Nil => SimpleSymbol("false")
-    case t :: rst => Or(t, makeOr(rst))
-  }
+  def makeOr(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("false"):Term)((x, xs) => Or(x, xs))
+//    terms match {
+//    case Nil => SimpleSymbol("false")
+//    case t :: rst => Or(t, makeOr(rst))
+//  }
 
   def string(s: String) = SMTLibString(s)
 
