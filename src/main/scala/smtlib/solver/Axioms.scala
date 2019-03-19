@@ -120,14 +120,14 @@ object Axioms {
       Match("ccs", Seq(
         MatchCase(Pattern("nan"), "false"),
         MatchCase(Pattern("cons", Seq("cs1", "ccs1")),
-          Ite(
-            Eq("ccs1", "nan"),
+//          Ite(
+//            Eq("ccs1", "nan"),
+//            Apply("Entails", Seq("cs", "cs1")),
+          Or(
             Apply("Entails", Seq("cs", "cs1")),
-            Or(
-              Apply("Entails", Seq("cs", "cs1")),
-              Apply("big-or-Entails", Seq("ccs1", "cs"))
-            )
+            Apply("big-or-Entails", Seq("ccs1", "cs"))
           )
+//          )
         )
       ))
     )
