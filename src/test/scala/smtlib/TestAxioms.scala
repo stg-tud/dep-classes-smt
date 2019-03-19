@@ -693,7 +693,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 
     val preprocess = Seq(
       lookup,
-      Assert(Annotate(Axioms.preprocessProgRule(), Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
+      Assert(Annotate(Axioms.preprocessProgRule(), Seq(KeyValueAttribute(Keyword("named"), "C-Prog1"))))
     )
 
     val knowledge = Seq(
@@ -703,9 +703,10 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
       Axioms.assertClass("Nat")
     )
 
-    val assertion = Assert(Not(Axioms.entails(Seq(xZero), xNat)))
+    // TODO: carry sort into entails
+    val assertion = Assert(Not(Axioms.entails(Apply("insert", Seq(xZero, IdentifierAs("nil", Sorts("List", Seq("Constraint"))))), xNat)))
 
-    z3.addCommands(knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+    z3.addCommands(preprocess ++ knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
     val (exit, out) = z3.execute()
     z3.flush()
   }

@@ -204,51 +204,53 @@ class TestSMTLibConversion extends FunSuite {
     def instBy(x: Term, cls: String) = Apply(SimpleSymbol("instantiated-by"), Seq(x, SMTLibString(cls)))
     def pEq(p: Term, q: Term) = Apply(SimpleSymbol("path-eq"), Seq(p, q))
     def insert(x: Term, xs: Term) = Apply(SimpleSymbol("insert"), Seq(x, xs))
-    val nil = SimpleSymbol("nil")
+    def cons(x: Term, xs: Term) = Apply(SimpleSymbol("cons"), Seq(x, xs))
+    val nil = IdentifierAs(SimpleSymbol("nil"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+    val nan = SimpleSymbol("nan")
 
     val expected = DefineFun(FunctionDef(SimpleSymbol("lookup-program-entailment"),
       Seq(SortedVar(c, SimpleSymbol("Constraint"))),
-      Sorts(SimpleSymbol("List"), Seq(Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))),
+      SimpleSymbol("CsList"),
       Ite(
         Eq(c, instOf(x, "Nat")),
-        insert(
+        cons(
           insert(
             instOf(x, "Zero"),
             insert(
               pEq(x, Apply(SimpleSymbol("pth"), Seq(x, SMTLibString("f")))),
               nil)),
-          insert(
+          cons(
             insert(instBy(x, "Zero"), nil),
-            nil
+            nan
           )
         ),
         Ite(
           Eq(c, instOf(y, "Nat")),
-          insert(
+          cons(
             insert(
               instOf(y, "Zero"),
               insert(
                 pEq(y, Apply(SimpleSymbol("pth"), Seq(y, SMTLibString("f")))),
                 nil)),
-            insert(
+            cons(
               insert(instBy(y, "Zero"), nil),
-              nil
+              nan
             )
           ),
           Ite(
             Eq(c, instOf(z, "Nat")),
-            insert(
+            cons(
               insert(
                 instOf(z, "Zero"),
                 insert(
                   pEq(z, Apply(SimpleSymbol("pth"), Seq(z, SMTLibString("f")))),
                   nil)),
-              insert(
+              cons(
                 insert(instBy(z, "Zero"), nil),
-                nil
+                nan
               )
             ),
-            nil
+            nan
           )
         )
       )

@@ -27,7 +27,7 @@ object SMTLibConverter {
     DefineFun(FunctionDef(
       SimpleSymbol("lookup-program-entailment"),
       Seq(SortedVar(x, SimpleSymbol("Constraint"))),
-      Sorts(SimpleSymbol("List"), Seq(Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))),
+      SimpleSymbol("CsList"), //Sorts(SimpleSymbol("List"), Seq(Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))),
       body
     ))
   }
@@ -46,11 +46,13 @@ object SMTLibConverter {
   }
 
   private def makeProgramEntailmentLookupFunctionBody(entailments: List[(Constraint, List[List[Constraint]])], x: Term): Term = entailments match {
-    case Nil => SimpleSymbol("nil") // TODO: change to something else for no hit?
+    case Nil => SimpleSymbol("nan") //IdentifierAs(SimpleSymbol("nil"), Sorts(SimpleSymbol("List"), Seq(Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint")))))) // TODO: change to something else for no hit?
     case (c, ccs) :: rst =>
       Ite(
         Eq(x, convertConstraint(c)),
-        Axioms.makeList(ccs.map(cs => Axioms.makeList(cs.map(convertConstraint)))),
+        Axioms.makeCsList(
+          ccs.map(cs => Axioms.makeList(cs.map(convertConstraint), SimpleSymbol("Constraint")))
+        ),
         makeProgramEntailmentLookupFunctionBody(rst, x)
       )
   }

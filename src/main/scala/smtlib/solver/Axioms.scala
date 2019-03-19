@@ -24,6 +24,14 @@ object Axioms {
 
   private val Constraints = Sorts("List", Seq("Constraint"))
 
+  private val constraintsListDatatype = DeclareDatatype("CsList", ConstructorDatatype(Seq(
+    ConstructorDec("nan", Seq()),
+    ConstructorDec("cons", Seq(
+      SelectorDec("hd", Constraints),
+      SelectorDec("tl", "CsList")
+    ))
+  )))
+
   /**
     * Path datatype declaration
     * Constrcutors:
@@ -105,15 +113,15 @@ object Axioms {
     FunctionDef(
       "big-or-Entails",
       Seq(
-        SortedVar("ccs", Sorts("List", Seq(Constraints))),
+        SortedVar("ccs", "CsList"),
         SortedVar("cs", Constraints)
       ),
       Bool,
       Match("ccs", Seq(
-        MatchCase(Pattern("nil"), "false"),
-        MatchCase(Pattern("insert", Seq("cs1", "ccs1")),
+        MatchCase(Pattern("nan"), "false"),
+        MatchCase(Pattern("cons", Seq("cs1", "ccs1")),
           Ite(
-            Eq("ccs1", "nil"),
+            Eq("ccs1", "nan"),
             Apply("Entails", Seq("cs", "cs1")),
             Or(
               Apply("Entails", Seq("cs", "cs1")),
@@ -136,13 +144,6 @@ object Axioms {
 
   /** \all x. cs => c in program */
 //  private val inProgProp = DeclareFun("in-program", Seq("String", Constraints, "Constraint"), Bool)
-
-  private val lookupProgEntailment = DefineFun(
-    FunctionDef("lookup-program-entailment", Seq(SortedVar("c", "Constraint")), Constraints,
-      Ite(Eq("c", instanceOf(path("x"), "Nat")),
-        makeList(Seq(instanceOf(path("x"), "Zero"))),
-        makeList(Seq()))) // TODO: undefined
-  )
 
   /**
     * Substitution function for paths.
@@ -224,7 +225,7 @@ object Axioms {
                             Match("cs",
                               Seq(
                                 MatchCase(Pattern("nil"),
-                                  "nil"),
+                                  IdentifierAs("nil", Constraints)),
                                 MatchCase(Pattern("insert", Seq("hd", "tl")),
                                   Apply("insert", Seq(
                                     Apply("subst-constraint", Seq("hd", "x", "p")),
@@ -322,7 +323,7 @@ object Axioms {
                                   ),
                                   Constraints,
                                   Match("cs", Seq(
-                                    MatchCase(Pattern("nil"), "nil"),
+                                    MatchCase(Pattern("nil"), IdentifierAs("nil", Constraints)),
                                     MatchCase(Pattern("insert", Seq("hd", "tl")),
                                       Apply("insert", Seq(
                                         Apply("generalize-constraint", Seq("hd", "p", "x")),
@@ -377,7 +378,7 @@ object Axioms {
   // C-Ident
   private val identTerm = Forall(Seq(SortedVar("c", "Constraint")),
                             Apply("entails", Seq(
-                              Apply("insert", Seq("c", "nil")),
+                              Apply("insert", Seq("c", IdentifierAs("nil", Constraints))),
                               "c"
                             )))
   private val cIdent = Assert(Annotate(identTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Ident"))))
@@ -385,7 +386,7 @@ object Axioms {
   // C-Refl TODO: evaluate if (path-exists p) should be applied to this
   private val reflTerm = Forall(Seq(SortedVar("p", "Path")),
                             Apply("entails", Seq(
-                              "nil",
+                              IdentifierAs("nil", Constraints),
                               Apply("path-eq", Seq("p", "p"))
                             )))
   private val cRefl = Assert(Annotate(reflTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Refl"))))
@@ -756,26 +757,26 @@ object Axioms {
 //                      "c"
 //                    ))
 //                  ))
-  private val progTerm2 = Forall(
-    Seq(
-      SortedVar("cs1", Constraints),
-      SortedVar("c", "Constraint")
-    ),
-    Let(Seq(
-      VarBinding("cs2", Apply("lookup-program-entailment", Seq("c")))
-    ),
-      Implies(
-        And(
-          Not(Eq("cs2", "nil")), // TODO: change to whatever undefined will be for lookup
-          Apply("Entails", Seq("cs1", "cs2"))
-        ),
-        Apply("entails", Seq(
-          "cs1",
-          "c"
-        ))
-      ))
-  )
-  private val cProg = Assert(Annotate(progTerm2, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
+//  private val progTerm2 = Forall(
+//    Seq(
+//      SortedVar("cs1", Constraints),
+//      SortedVar("c", "Constraint")
+//    ),
+//    Let(Seq(
+//      VarBinding("cs2", Apply("lookup-program-entailment", Seq("c")))
+//    ),
+//      Implies(
+//        And(
+//          Not(Eq("cs2", "nil")), // TODO: change to whatever undefined will be for lookup
+//          Apply("Entails", Seq("cs1", "cs2"))
+//        ),
+//        Apply("entails", Seq(
+//          "cs1",
+//          "c"
+//        ))
+//      ))
+//  )
+//  private val cProg = Assert(Annotate(progTerm2, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
 
   // C-Weak
   private val weakTerm = Forall(
@@ -822,19 +823,20 @@ object Axioms {
                               ))
   private val cPerm = Assert(Annotate(permTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Perm"))))
 
-  private val datatypes = Seq(pathDatatype, constraintDatatype)
-  private val funs = Seq(concat, elem, lookupProgEntailment)
+  private val datatypes = Seq(pathDatatype, constraintDatatype, constraintsListDatatype)
+  private val funs = Seq(concat, elem)
   private val subst = Seq(substPath, substConstraint, substConstraints, substProp)
   private val gen = Seq(genPath, genConstraint, genConstraints, genProp)
   private val baseProps = Seq(classProp, varProp, pathProp)
   private val dccProps = Seq(entailsProp, EntailsProp)
   private val structuralRules = Seq(cWeak, cPerm)
-  private val dccRules = Seq(cIdent, cRefl, cClass, cCut, cSubst, cProg)
+  private val dccRules = Seq(cIdent, cRefl, cClass, cCut, cSubst/*, cProg*/)
+  private val dccPreprocFuns = Seq(bigOrEntails)
 
-  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ gen ++ baseProps ++ dccProps ++ structuralRules ++ dccRules)
+  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ gen ++ baseProps ++ dccProps ++ structuralRules ++ dccRules ++ dccPreprocFuns)
   def allWithList: SMTLibScript = SMTLibScript(listDatatype +: all.commands)
 
-  def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(makeList(premise), conclusion))
+  def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(makeList(premise, "Constraint"), conclusion))
   def entails(premise: Term, conclusion: Term): Term = Apply("entails", Seq(premise, conclusion))
 
   /**
@@ -924,7 +926,7 @@ object Axioms {
       ),
         Implies(
           And(
-            Not(Eq("ccs", "nil")), // TODO: change to whatever undefined will be for lookup
+            Not(Eq("ccs", "nan" /*IdentifierAs("nil", Sorts("List", Seq(Constraints)))*/)), // TODO: change to whatever undefined will be for lookup
             Apply("big-or-Entails", Seq("ccs", "cs"))
           ),
           entails("cs", "c")
@@ -932,11 +934,27 @@ object Axioms {
       )
     )
 
-  def makeList(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs)))
+  // TODO: assert prog rule with annotation
+
+  /**
+    * Generates a Term representing a List
+    * @param terms The elements of the list to generate
+    * @return A Term representing a list of `terms`
+    */
+//  def makeList(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs)))
 //    terms match {
 //    case Nil => SimpleSymbol("nil")
 //    case t :: rst => Apply(SimpleSymbol("insert"), Seq(t, makeList(rst)))
 //  }
+  /**
+    * Generates a Term representing a List
+    * @param terms The elements of the list to generate
+    * @param sort The element sort of the list to generate
+    * @return A Term representing a list of `terms`
+    */
+  def makeList(terms: Seq[Term], sort: Sort): Term = terms.foldRight(IdentifierAs("nil", Sorts("List", Seq(sort))):Term)((x, xs) => Apply("insert", Seq(x, xs)))
+
+  def makeCsList(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("nan"): Term)((x, xs) => Apply("cons", Seq(x, xs)))
 
   def makeOr(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("false"):Term)((x, xs) => Or(x, xs))
 //    terms match {
