@@ -674,6 +674,63 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     assert(out(1).contains("C-Weak"))
   }
 
+  test("lookup-program-entailment") {
+    val x = Axioms.path("x")
+    val xf = Axioms.path("x.f")
+
+    val p: Program = List(
+      ConstraintEntailment(Id('x), List(InstantiatedBy(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
+      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero)), PathEquivalence(Id('x), FieldPath(Id('x), Id('f)))), InstanceOf(Id('x), Id('Nat)))
+    )
+    val vars: List[Id] = List(Id('x))
+    val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(p, vars)
+
+    val expectedSublist1 =
+      Apply("insert", Seq(
+        Axioms.instanceOf(x, "Zero"),
+        Apply("insert", Seq(
+          Axioms.pathEq(x, xf),
+          "nil"
+        ))))
+
+    val expectedSublist2 =
+      Apply("insert", Seq(
+        Axioms.instantiatedBy(x, "Zero"),
+        "nil"
+      ))
+
+    val expected =
+      Apply("cons", Seq(
+        expectedSublist1,
+        Apply("cons", Seq(
+          expectedSublist2,
+          "nan"
+        ))
+      ))
+
+    // Defined lookup
+    val assertion1 = Eq(
+      Apply("lookup-program-entailment", Seq(Axioms.instanceOf(x, "Nat"))),
+      expected
+      )
+
+    // Undefined lookup
+    val assertion2 = Eq(
+      Apply("lookup-program-entailment", Seq(Axioms.instanceOf(xf, "Foo"))),
+      "nan"
+    )
+
+    val assertion = Assert(Not(And(assertion1, assertion2)))
+
+    z3.addCommands(Seq(lookup, assertion, CheckSat))
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 1)
+    assert(out.head == "unsat")
+  }
+
   test("C-Prog 1") {
     val x = Axioms.path("x")
     val y = Axioms.path("y")
@@ -685,8 +742,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 //    val yNat = Axioms.instanceOf(y, "Nat")
     val p: Program = List(
       ConstraintEntailment(Id('x), List(InstantiatedBy(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
-      ConstructorDeclaration(Id('Zero), Id('x), Nil),
-      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero)), PathEquivalence(Id('x), FieldPath(Id('x), Id('f)))), InstanceOf(Id('x), Id('Nat))),
+      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero)), PathEquivalence(Id('x), FieldPath(Id('x), Id('f)))), InstanceOf(Id('x), Id('Nat)))
     )
     val vars: List[Id] = List(Id('x))
     val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(p, vars)
