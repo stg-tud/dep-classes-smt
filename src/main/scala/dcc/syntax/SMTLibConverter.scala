@@ -51,7 +51,7 @@ object SMTLibConverter {
       Ite(
         Eq(x, convertConstraint(c)),
         Axioms.makeCsList(
-          ccs.map(cs => Axioms.makeList(cs.map(convertConstraint), SimpleSymbol("Constraint")))
+          ccs.map(cs => Axioms.makeList(cs.map(convertConstraint)))
         ),
         makeProgramEntailmentLookupFunctionBody(rst, x)
       )

@@ -225,7 +225,7 @@ object Axioms {
                             Match("cs",
                               Seq(
                                 MatchCase(Pattern("nil"),
-                                  IdentifierAs("nil", Constraints)),
+                                  "nil"),
                                 MatchCase(Pattern("insert", Seq("hd", "tl")),
                                   Apply("insert", Seq(
                                     Apply("subst-constraint", Seq("hd", "x", "p")),
@@ -323,7 +323,7 @@ object Axioms {
                                   ),
                                   Constraints,
                                   Match("cs", Seq(
-                                    MatchCase(Pattern("nil"), IdentifierAs("nil", Constraints)),
+                                    MatchCase(Pattern("nil"), "nil"),
                                     MatchCase(Pattern("insert", Seq("hd", "tl")),
                                       Apply("insert", Seq(
                                         Apply("generalize-constraint", Seq("hd", "p", "x")),
@@ -378,7 +378,7 @@ object Axioms {
   // C-Ident
   private val identTerm = Forall(Seq(SortedVar("c", "Constraint")),
                             Apply("entails", Seq(
-                              Apply("insert", Seq("c", IdentifierAs("nil", Constraints))),
+                              Apply("insert", Seq("c", "nil")),
                               "c"
                             )))
   private val cIdent = Assert(Annotate(identTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Ident"))))
@@ -386,7 +386,7 @@ object Axioms {
   // C-Refl TODO: evaluate if (path-exists p) should be applied to this
   private val reflTerm = Forall(Seq(SortedVar("p", "Path")),
                             Apply("entails", Seq(
-                              IdentifierAs("nil", Constraints),
+                              "nil",
                               Apply("path-eq", Seq("p", "p"))
                             )))
   private val cRefl = Assert(Annotate(reflTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Refl"))))
@@ -836,7 +836,7 @@ object Axioms {
   def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ gen ++ baseProps ++ dccProps ++ structuralRules ++ dccRules ++ dccPreprocFuns)
   def allWithList: SMTLibScript = SMTLibScript(listDatatype +: all.commands)
 
-  def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(makeList(premise, "Constraint"), conclusion))
+  def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(makeList(premise), conclusion))
   def entails(premise: Term, conclusion: Term): Term = Apply("entails", Seq(premise, conclusion))
 
   /**
@@ -941,7 +941,7 @@ object Axioms {
     * @param terms The elements of the list to generate
     * @return A Term representing a list of `terms`
     */
-//  def makeList(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs)))
+  def makeList(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs)))
 //    terms match {
 //    case Nil => SimpleSymbol("nil")
 //    case t :: rst => Apply(SimpleSymbol("insert"), Seq(t, makeList(rst)))

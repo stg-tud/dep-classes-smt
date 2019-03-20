@@ -205,7 +205,7 @@ class TestSMTLibConversion extends FunSuite {
     def pEq(p: Term, q: Term) = Apply(SimpleSymbol("path-eq"), Seq(p, q))
     def insert(x: Term, xs: Term) = Apply(SimpleSymbol("insert"), Seq(x, xs))
     def cons(x: Term, xs: Term) = Apply(SimpleSymbol("cons"), Seq(x, xs))
-    val nil = IdentifierAs(SimpleSymbol("nil"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+    val nil = SimpleSymbol("nil") //IdentifierAs(SimpleSymbol("nil"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
     val nan = SimpleSymbol("nan")
 
     val expected = DefineFun(FunctionDef(SimpleSymbol("lookup-program-entailment"),
