@@ -759,7 +759,6 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
       Axioms.assertClass("Nat")
     )
 
-    // TODO: carry sort into entails
     val assertion = Assert(Not(Axioms.entails(Apply("insert", Seq(xZero, IdentifierAs("nil", Sorts("List", Seq("Constraint"))))), xNat)))
 
     z3.addCommands(preprocess ++ knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
@@ -767,7 +766,15 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     z3.flush()
   }
 
+  // TODO: check this test
   test("C-Prog 2") {
+    val p: Program = List(
+      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
+      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Succ)), InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))), InstanceOf(Id('x), Id('Nat)))
+    )
+    val vars: List[Id] = List(Id('x1), Id('x2))
+    val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(p, vars)
+
     val x1 = Axioms.path("x1")
     val x2 = Axioms.path("x2")
     val x2P = Axioms.path("x2.p")
@@ -801,9 +808,13 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 //      Axioms.assertInProg("x2", Seq(x2SuccInst, x2PNat), x2NatInst)
     )
 
+    val preprocessed = Seq(
+      lookup,
+      Assert(Annotate(Axioms.preprocessProgRule(), Seq(KeyValueAttribute(Keyword("named"), "C-Prog1"))))
+    )
     val assertion = Assert(Not(Axioms.entails(Seq(x1Zero, x2Succ, x2Px1), x2PNat)))
 
-    z3.addCommands(knowledge ++ Seq(assertion, CheckSat/*, GetUnsatCore*/))
+    z3.addCommands(preprocessed ++ knowledge ++ Seq(assertion, CheckSat/*, GetUnsatCore*/))
     val (exit, out) = z3.execute()
     z3.flush()
   }
