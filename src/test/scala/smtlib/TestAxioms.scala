@@ -741,8 +741,8 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 //    val yZero = Axioms.instanceOf(y, "Zero")
 //    val yNat = Axioms.instanceOf(y, "Nat")
     val p: Program = List(
-      ConstraintEntailment(Id('x), List(InstantiatedBy(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
-      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero)), PathEquivalence(Id('x), FieldPath(Id('x), Id('f)))), InstanceOf(Id('x), Id('Nat)))
+      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
+      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Succ)), InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))), InstanceOf(Id('x), Id('Nat)))
     )
     val vars: List[Id] = List(Id('x))
     val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(p, vars)
