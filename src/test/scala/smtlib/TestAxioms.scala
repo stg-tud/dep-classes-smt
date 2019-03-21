@@ -694,23 +694,10 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
           Axioms.pathEq(x, xf),
           "nil"
         ))))
-    val expectedSublist1y =
-      Apply("insert", Seq(
-        Axioms.instanceOf(y, "Zero"),
-        Apply("insert", Seq(
-          Axioms.pathEq(y, yf),
-          "nil"
-        ))))
 
     val expectedSublist2x =
       Apply("insert", Seq(
         Axioms.instantiatedBy(x, "Zero"),
-        "nil"
-      ))
-
-    val expectedSublist2y =
-      Apply("insert", Seq(
-        Axioms.instantiatedBy(y, "Zero"),
         "nil"
       ))
 
@@ -721,6 +708,20 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
           expectedSublist2x,
           "nan"
         ))
+      ))
+
+    val expectedSublist1y =
+      Apply("insert", Seq(
+        Axioms.instanceOf(y, "Zero"),
+        Apply("insert", Seq(
+          Axioms.pathEq(y, yf),
+          "nil"
+        ))))
+
+    val expectedSublist2y =
+      Apply("insert", Seq(
+        Axioms.instantiatedBy(y, "Zero"),
+        "nil"
       ))
 
     val expectedy =
