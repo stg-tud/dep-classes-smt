@@ -20,7 +20,6 @@ class TestInterpreter extends FunSuite {
   test("new Zero") {
     val dcc = new DCC(naturalNumbers)
     val (h1, e1) = dcc.interp(Map.empty, ObjectConstruction(Id('Zero), Nil))
-    val (h2, e2) = dcc.interp(Map.empty, ObjectConstruction(Id('Succ), List((Id('p), ObjectConstruction(Id('Zero), Nil)))))
 
     assert(h1.size == 1)
     assert(h1(Id('x1)) == (Id('Zero), List()))

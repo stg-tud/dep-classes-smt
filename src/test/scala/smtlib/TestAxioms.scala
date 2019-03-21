@@ -676,51 +676,81 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 
   test("lookup-program-entailment") {
     val x = Axioms.path("x")
+    val y = Axioms.path("y")
     val xf = Axioms.path("x.f")
+    val yf = Axioms.path("y.f")
 
     val p: Program = List(
       ConstraintEntailment(Id('x), List(InstantiatedBy(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
       ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero)), PathEquivalence(Id('x), FieldPath(Id('x), Id('f)))), InstanceOf(Id('x), Id('Nat)))
     )
-    val vars: List[Id] = List(Id('x))
+    val vars: List[Id] = List(Id('x), Id('y))
     val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(p, vars)
 
-    val expectedSublist1 =
+    val expectedSublist1x =
       Apply("insert", Seq(
         Axioms.instanceOf(x, "Zero"),
         Apply("insert", Seq(
           Axioms.pathEq(x, xf),
           "nil"
         ))))
+    val expectedSublist1y =
+      Apply("insert", Seq(
+        Axioms.instanceOf(y, "Zero"),
+        Apply("insert", Seq(
+          Axioms.pathEq(y, yf),
+          "nil"
+        ))))
 
-    val expectedSublist2 =
+    val expectedSublist2x =
       Apply("insert", Seq(
         Axioms.instantiatedBy(x, "Zero"),
         "nil"
       ))
 
-    val expected =
+    val expectedSublist2y =
+      Apply("insert", Seq(
+        Axioms.instantiatedBy(y, "Zero"),
+        "nil"
+      ))
+
+    val expectedx =
       Apply("cons", Seq(
-        expectedSublist1,
+        expectedSublist1x,
         Apply("cons", Seq(
-          expectedSublist2,
+          expectedSublist2x,
           "nan"
         ))
       ))
 
-    // Defined lookup
+    val expectedy =
+      Apply("cons", Seq(
+        expectedSublist1y,
+        Apply("cons", Seq(
+          expectedSublist2y,
+          "nan"
+        ))
+      ))
+
+    // Defined lookup x
     val assertion1 = Eq(
       Apply("lookup-program-entailment", Seq(Axioms.instanceOf(x, "Nat"))),
-      expected
+      expectedx
       )
 
-    // Undefined lookup
+    // Defined lookup y
     val assertion2 = Eq(
+      Apply("lookup-program-entailment", Seq(Axioms.instanceOf(y, "Nat"))),
+      expectedy
+    )
+
+    // Undefined lookup
+    val assertion3 = Eq(
       Apply("lookup-program-entailment", Seq(Axioms.instanceOf(xf, "Foo"))),
       "nan"
     )
 
-    val assertion = Assert(Not(And(assertion1, assertion2)))
+    val assertion = Assert(Not(And(assertion1, And(assertion2, assertion3))))
 
     z3.addCommands(Seq(lookup, assertion, CheckSat))
     val (exit, out) = z3.execute()
