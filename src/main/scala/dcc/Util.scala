@@ -17,4 +17,19 @@ object Util {
 
   def alphaConversion(x: Id, y: Id, cs: List[Constraint]): List[Constraint] =
     cs.map(renameIdInConstraint(x, y, _))
+
+  def substitute(x: Id, p: Path, q: Path): Path = q match {
+    case `x` => p
+    case y@Id(_) => y
+    case FieldPath(q1, f) => FieldPath(substitute(x, p, q1), f)
+  }
+
+  def substitute(x: Id, path: Path, c: Constraint): Constraint = c match {
+    case PathEquivalence(p, q) => PathEquivalence(substitute(x, path, p), substitute(x, path, q))
+    case InstanceOf(p, cls) => InstanceOf(substitute(x, path, p), cls)
+    case InstantiatedBy(p, cls) => InstantiatedBy(substitute(x, path, p), cls)
+  }
+
+  def substitute(x: Id, p: Path, cs: List[Constraint]): List[Constraint] =
+    cs.map(substitute(x, p, _))
 }

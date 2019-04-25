@@ -18,11 +18,12 @@ object SMTLibConverter {
     case FieldPath(q, Id(f)) => Apply(SimpleSymbol("pth"), Seq(convertPath(q), SMTLibString(f.name)))
   }
 
-  def convertId(x: Id): Term = SMTLibString(x.toString)
+  // TODO: change type back to Term?
+  def convertId(x: Id): SMTLibString = SMTLibString(x.toString)
 
-  def makeProgramEntailmentLookupFunction(p: Program, variables: List[Id]): SMTLibCommand = {
+  def makeProgramEntailmentLookupFunction(p: Program, paths: List[Path]): SMTLibCommand = {
     val x = SimpleSymbol("c")
-    val body = makeProgramEntailmentLookupFunctionBody(variables.flatMap(instantiateProgramEntailments(p, _)), x)
+    val body = makeProgramEntailmentLookupFunctionBody(paths.flatMap(instantiateProgramEntailments(p, _)), x)
 
     DefineFun(FunctionDef(
       SimpleSymbol("lookup-program-entailment"),
@@ -32,18 +33,31 @@ object SMTLibConverter {
     ))
   }
 
-  private def instantiateProgramEntailments(p: Program, variable: Id, entailments: Map[Constraint, List[List[Constraint]]] = Map()): Map[Constraint, List[List[Constraint]]] = p match {
+  private def instantiateProgramEntailments(p: Program, path: Path, entailments: Map[Constraint, List[List[Constraint]]] = Map()): Map[Constraint, List[List[Constraint]]] = p match {
     case Nil => entailments
     case ConstraintEntailment(x, as, a) :: rst =>
-      val cs = alphaConversion(x, variable, as)
-      val c = renameIdInConstraint(x, variable, a)
+      val cs: List[Constraint] = substitute(x, path, as)
+      val c: Constraint = substitute(x, path, a)
 
       entailments.get(c) match {
-        case None => instantiateProgramEntailments(rst, variable, entailments + (c -> List(cs)))
-        case Some(ccs) => instantiateProgramEntailments(rst, variable, entailments + (c -> (cs :: ccs)))
+        case None => instantiateProgramEntailments(rst, path, entailments + (c -> List(cs)))
+        case Some(ccs) => instantiateProgramEntailments(rst, path, entailments + (c -> (cs :: ccs)))
       }
-    case _ :: rst => instantiateProgramEntailments(rst, variable, entailments)
+    case _ :: rst => instantiateProgramEntailments(rst, path, entailments)
   }
+
+//  private def instantiateProgramEntailments(p: Program, variable: Id, entailments: Map[Constraint, List[List[Constraint]]] = Map()): Map[Constraint, List[List[Constraint]]] = p match {
+//    case Nil => entailments
+//    case ConstraintEntailment(x, as, a) :: rst =>
+//      val cs = alphaConversion(x, variable, as)
+//      val c = renameIdInConstraint(x, variable, a)
+//
+//      entailments.get(c) match {
+//        case None => instantiateProgramEntailments(rst, variable, entailments + (c -> List(cs)))
+//        case Some(ccs) => instantiateProgramEntailments(rst, variable, entailments + (c -> (cs :: ccs)))
+//      }
+//    case _ :: rst => instantiateProgramEntailments(rst, variable, entailments)
+//  }
 
   private def makeProgramEntailmentLookupFunctionBody(entailments: List[(Constraint, List[List[Constraint]])], x: Term): Term = entailments match {
     case Nil => SimpleSymbol("nan") //IdentifierAs(SimpleSymbol("nil"), Sorts(SimpleSymbol("List"), Seq(Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint")))))) // TODO: change to something else for no hit?

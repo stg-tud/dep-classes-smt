@@ -191,9 +191,9 @@ class TestSMTLibConversion extends FunSuite {
       ConstructorDeclaration(Id('Zero), Id('x), Nil),
       ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero)), PathEquivalence(Id('x), FieldPath(Id('x), Id('f)))), InstanceOf(Id('x), Id('Nat))),
     )
-    val vars: List[Id] = List(Id('x), Id('y), Id('z))
+    val paths: List[Id] = List(Id('x), Id('y), Id('z))
 
-    val actual = SMTLibConverter.makeProgramEntailmentLookupFunction(p, vars)
+    val actual = SMTLibConverter.makeProgramEntailmentLookupFunction(p, paths)
 
     val c = SimpleSymbol("c")
     val x = Apply(SimpleSymbol("var"), Seq(SMTLibString("x")))

@@ -383,6 +383,13 @@ object Axioms {
                             )))
   private val cIdent = Assert(Annotate(identTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Ident"))))
 
+  // C-Ident (direct closure)
+  private val directIdentTerm = Forall(Seq(SortedVar("c", "Constraint"), SortedVar("cs", Constraints)),
+    Implies(
+      Apply("elem", Seq("c", "cs")),
+      Apply("entails", Seq("cs", "c"))))
+  private val cDirectIdent = Assert(Annotate(directIdentTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Ident"))))
+
   // C-Refl TODO: evaluate if (path-exists p) should be applied to this
   private val reflTerm = Forall(Seq(SortedVar("p", "Path")),
                             Apply("entails", Seq(
@@ -778,7 +785,7 @@ object Axioms {
 //  )
 //  private val cProg = Assert(Annotate(progTerm2, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
 
-  // C-Weak
+  // C-Weak TODO: don't rely on structure of insert, should be able to weaken on arbitrary position
   private val weakTerm = Forall(
                             Seq(
                               SortedVar("cs", Constraints),
@@ -795,7 +802,7 @@ object Axioms {
   )
   private val cWeak = Assert(Annotate(weakTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Weak"))))
 
-  // C-Perm (permutation and contraction)
+  // C-Perm (permutation and contraction) TODO: find more practical solution that doesnt require pre knowledge (see test)
   private val permTerm = Forall(
                               Seq(
                                 SortedVar("cs1", Constraints),
@@ -830,10 +837,13 @@ object Axioms {
   private val baseProps = Seq(classProp, varProp, pathProp)
   private val dccProps = Seq(entailsProp, EntailsProp)
   private val structuralRules = Seq(cWeak, cPerm)
-  private val dccRules = Seq(cIdent, cRefl, cClass, cCut, cSubst/*, cProg*/)
+  private val dccClosureRules = Seq(cIdent)
+  private val dccRules = Seq(cRefl, cClass, cCut/*, cSubst/*, cProg*/*/)
   private val dccPreprocFuns = Seq(bigOrEntails)
+  private val dccDirectClosureRules = Seq(cDirectIdent)
 
-  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ gen ++ baseProps ++ dccProps ++ structuralRules ++ dccRules ++ dccPreprocFuns)
+  def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ gen ++ baseProps ++ dccProps ++ structuralRules ++ dccClosureRules ++ dccRules ++ dccPreprocFuns)
+  def allDirectClosure: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ gen ++ baseProps ++ dccProps ++ structuralRules ++ dccDirectClosureRules ++ dccRules ++ dccPreprocFuns)
   def allWithList: SMTLibScript = SMTLibScript(listDatatype +: all.commands)
 
   def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(makeList(premise), conclusion))
@@ -852,6 +862,8 @@ object Axioms {
     case xs :+ x => Apply("pth", Seq(pth(xs), SMTLibString(x)))
   }
 
+  // TODO: finde den variablen dreher (gefunden: p1, p2 in path-eq)
+  // TODO: prüfe ob subst/gen zu tauschen ausreicht
   def preprocessSubstRule(x: SMTLibString, p1: Term, p2: Term): Term =
     Forall(
       Seq(
@@ -870,9 +882,9 @@ object Axioms {
               And(
                 Apply("entails", Seq("cs", Apply("path-eq", Seq(p1, p2)))),
                 And(
-                  Apply("subst", Seq("a", x, p1, "a1")),
+                  Apply("subst", Seq("a", x, p2, "a1")),
                   And(
-                    Apply("generalization", Seq("a2", p2, x, "a")),
+                    Apply("generalization", Seq("a2", p1, x, "a")),
                     Apply("entails", Seq("cs", "a1"))
                   )
                 )
@@ -883,6 +895,39 @@ object Axioms {
         Apply("entails", Seq("cs", "a2"))
       )
     )
+//  Forall(
+//    Seq(
+//      SortedVar("a2", "Constraint"),
+//      SortedVar("cs", Constraints)
+//    ),
+//    Implies(
+//      Let(
+//        Seq(
+//          VarBinding("a", Apply("generalize-constraint", Seq("a2", p2, x)))
+//        ),
+//        Let(
+//          Seq(
+//            VarBinding("a1", Apply("subst-constraint", Seq("a", x, p1))),
+//            VarBinding("cs1", Apply("subst-constraints", Seq("cs", x, p1)))
+//          ),
+//          And(
+//            Apply("variable", Seq(x)),
+//            And(
+//              Apply("path-exists", Seq(p1)),
+//              And(
+//                Apply("path-exists", Seq(p2)),
+//                And(
+//                  Apply("entails", Seq("cs", Apply("path-eq", Seq(p1, p2)))),
+//                  Apply("entails", Seq("cs1", "a1"))
+//                )
+//              )
+//            )
+//          )
+//        )
+//      ),
+//      Apply("entails", Seq("cs", "a2"))
+//    )
+//  )
 
   // TODO: can there be more than one rule with the same name? → remove x_p1_p2 from annotation
   def annotateSubstRule(subst: Term, x: String, p1: String, p2: String): Term =
