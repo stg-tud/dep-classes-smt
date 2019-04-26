@@ -189,34 +189,57 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val p1 = Apply("var", Seq(SMTLibString("x")))
     val p2 = Apply("var", Seq(SMTLibString("y")))
 
+//    val expectedSubstRule = Forall(
+//      Seq(
+//        SortedVar("a2", "Constraint"),
+//        SortedVar("cs", Sorts("List", Seq("Constraint"))),
+//        SortedVar("a", "Constraint"),
+//        SortedVar("a1", "Constraint")
+//      ),
+//      Implies(
+//        And(
+//          Apply("variable", Seq(x)),
+//          And(
+//            Apply("path-exists", Seq(p1)),
+//            And(
+//              Apply("path-exists", Seq(p2)),
+//              And(
+//                Apply("entails", Seq("cs", Apply("path-eq", Seq(p1, p2)))),
+//                And(
+//                  Apply("subst", Seq("a", x, p2, "a1")),
+//                  And(
+//                    Apply("generalization", Seq("a2", p1, x, "a")),
+//                    Apply("entails", Seq("cs", "a1"))
+//                  )
+//                )
+//              )
+//            )
+//          )
+//        ),
+//        Apply("entails", Seq("cs", "a2"))
+//      )
+//    )
     val expectedSubstRule = Forall(
       Seq(
-        SortedVar("a", "Constraint"),
-        SortedVar("cs", Sorts("List", Seq("Constraint"))),
-        SortedVar("a1", "Constraint"),
-        SortedVar("a2", "Constraint")
+        SortedVar("a2", "Constraint"),
+        SortedVar("cs", Sorts("List", Seq("Constraint")))
       ),
-      Implies(
-        And(
-          Apply("variable", Seq(x)),
-          And(
-            Apply("path-exists", Seq(p1)),
-            And(
-              Apply("path-exists", Seq(p2)),
-              And(
-                Apply("entails", Seq("cs", Apply("path-eq", Seq(p1, p2)))),
-                And(
-                  Apply("subst", Seq("a", x, p2, "a1")),
-                  And(
-                    Apply("generalization", Seq("a2", p1, x, "a")),
-                    Apply("entails", Seq("cs", "a1"))
-                  )
-                )
-              )
-            )
-          )
+      Let(
+        Seq(
+          VarBinding("a", Apply("generalize-constraint", Seq("a2", p1, x)))
         ),
-        Apply("entails", Seq("cs", "a2"))
+        Let(
+          Seq(
+            VarBinding("a1", Apply("subst-constraint", Seq("a", x, p2)))
+          ),
+          Implies(
+            And(
+              Apply("entails", Seq("cs", Apply("path-eq", Seq(p1, p2)))),
+              Apply("entails", Seq("cs", "a1"))
+            ),
+            Apply("entails", Seq("cs", "a2"))
+          )
+        )
       )
     )
 
@@ -974,16 +997,20 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val preprocessed = Seq(
       Assert(Annotate(
         Forall(Seq(
+          SortedVar("a2", "Constraint"),
           SortedVar("cs", Sorts("List", Seq("Constraint")))
         ),
           Implies(
-            And(
-              Apply("entails", Seq("cs", Apply("path-eq", Seq(yp, x)))),
-              Apply("entails", Seq("cs", xZero)) // Apply("generalize-constraint", Seq(ypZero, yp, SMTLibString("x")))
+            Let(
+              Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yp, SMTLibString("x"))))),
+              And(
+                Apply("entails", Seq("cs", Apply("path-eq", Seq(yp, x)))),
+                Apply("entails", Seq("cs", "a")) // Apply("subst-constraint", Seq("a", SMTLibString("x"), x)) // TODO: timeout with subst
+              )
             ),
-            Apply("entails", Seq("cs", ypZero)) // TODO: why does it timeout when bound variable here
+            Apply("entails", Seq("cs", "a2"))
           )),
-        Seq(KeyValueAttribute(Keyword("named"), "foo"))))
+        Seq(KeyValueAttribute(Keyword("named"), "foo.bar"))))
     )
 
     val knowledge = Seq(

@@ -865,69 +865,57 @@ object Axioms {
   // TODO: finde den variablen dreher (gefunden: p1, p2 in path-eq)
   // TODO: prüfe ob subst/gen zu tauschen ausreicht
   def preprocessSubstRule(x: SMTLibString, p1: Term, p2: Term): Term =
-    Forall(
-      Seq(
-        SortedVar("a", "Constraint"),
-        SortedVar("cs", Constraints),
-        SortedVar("a1", "Constraint"),
-        SortedVar("a2", "Constraint")
-      ),
-      Implies(
-        And(
-          Apply("variable", Seq(x)),
-          And(
-            Apply("path-exists", Seq(p1)),
-            And(
-              Apply("path-exists", Seq(p2)),
-              And(
-                Apply("entails", Seq("cs", Apply("path-eq", Seq(p1, p2)))),
-                And(
-                  Apply("subst", Seq("a", x, p2, "a1")),
-                  And(
-                    Apply("generalization", Seq("a2", p1, x, "a")),
-                    Apply("entails", Seq("cs", "a1"))
-                  )
-                )
-              )
-            )
-          )
-        ),
-        Apply("entails", Seq("cs", "a2"))
-      )
-    )
-//  Forall(
-//    Seq(
-//      SortedVar("a2", "Constraint"),
-//      SortedVar("cs", Constraints)
-//    ),
-//    Implies(
-//      Let(
-//        Seq(
-//          VarBinding("a", Apply("generalize-constraint", Seq("a2", p2, x)))
-//        ),
-//        Let(
-//          Seq(
-//            VarBinding("a1", Apply("subst-constraint", Seq("a", x, p1))),
-//            VarBinding("cs1", Apply("subst-constraints", Seq("cs", x, p1)))
-//          ),
+//    Forall(
+//      Seq(
+//        SortedVar("a2", "Constraint"),
+//        SortedVar("cs", Constraints),
+//        SortedVar("a", "Constraint"),
+//        SortedVar("a1", "Constraint")
+//      ),
+//      Implies(
+//        And(
+//          Apply("variable", Seq(x)),
 //          And(
-//            Apply("variable", Seq(x)),
+//            Apply("path-exists", Seq(p1)),
 //            And(
-//              Apply("path-exists", Seq(p1)),
+//              Apply("path-exists", Seq(p2)),
 //              And(
-//                Apply("path-exists", Seq(p2)),
+//                Apply("entails", Seq("cs", Apply("path-eq", Seq(p1, p2)))),
 //                And(
-//                  Apply("entails", Seq("cs", Apply("path-eq", Seq(p1, p2)))),
-//                  Apply("entails", Seq("cs1", "a1"))
+//                  Apply("subst", Seq("a", x, p2, "a1")),
+//                  And(
+//                    Apply("generalization", Seq("a2", p1, x, "a")),
+//                    Apply("entails", Seq("cs", "a1"))
+//                  )
 //                )
 //              )
 //            )
 //          )
-//        )
-//      ),
-//      Apply("entails", Seq("cs", "a2"))
+//        ),
+//        Apply("entails", Seq("cs", "a2"))
+//      )
 //    )
-//  )
+  Forall(
+    Seq(
+      SortedVar("a2", "Constraint"),
+      SortedVar("cs", Constraints)
+    ),
+    Let(Seq(
+      VarBinding("a", Apply("generalize-constraint", Seq("a2", p1, x)))
+    ),
+      Let(
+        Seq(VarBinding("a1", Apply("subst-constraint", Seq("a", x, p2)))),
+        Implies(
+          And(
+            Apply("entails", Seq("cs", Apply("path-eq", Seq(p1, p2)))),
+            Apply("entails", Seq("cs", "a1"))
+          ),
+          Apply("entails", Seq("cs", "a2"))
+        )
+      )
+    )
+  )
+
 
   // TODO: can there be more than one rule with the same name? → remove x_p1_p2 from annotation
   def annotateSubstRule(subst: Term, x: String, p1: String, p2: String): Term =
