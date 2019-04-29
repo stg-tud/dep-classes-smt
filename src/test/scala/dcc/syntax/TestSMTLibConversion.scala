@@ -1,10 +1,11 @@
 package dcc.syntax
 
 import dcc.syntax.Program.Program
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, PrivateMethodTester}
+import smtlib.SMTLibCommand
 import smtlib.syntax._
 
-class TestSMTLibConversion extends FunSuite {
+class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
   test("Convert Id") {
     assert(SMTLibConverter.convertId(Id('x)) == SMTLibString("x"))
     assert(SMTLibConverter.convertId(Id('x0)) == SMTLibString("x0"))
@@ -257,5 +258,41 @@ class TestSMTLibConversion extends FunSuite {
     ))
 
     assert(actual == expected)
+  }
+
+  test("instantiate subst rule") {
+    val x = Id('x)
+    val p = Id('p)
+    val q = Id('q)
+
+    val xTerm = SMTLibString("x")
+    val pTerm = Apply(SimpleSymbol("var"), Seq(SMTLibString("p")))
+    val qTerm = Apply(SimpleSymbol("var"), Seq(SMTLibString("q")))
+
+    val expectedBody = Forall(
+      Seq(
+        SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
+        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+      ),
+      Let(
+        Seq(VarBinding(SimpleSymbol("a"), Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), pTerm, xTerm)))),
+        Let(
+          Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a"), xTerm, qTerm)))),
+          Implies(
+            And(
+              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
+              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
+            ),
+            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
+          )
+        )
+      )
+    )
+
+    val expectedRule = Assert(Annotate(expectedBody, Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol(s"C-Subst-$x-$p-$q")))))
+
+    val actualRule = SMTLibConverter invokePrivate PrivateMethod[SMTLibCommand]('instantiateSubstRule)(x, p, q)
+
+    assert(actualRule == expectedRule)
   }
 }

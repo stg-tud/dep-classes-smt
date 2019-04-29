@@ -71,6 +71,57 @@ object SMTLibConverter {
       )
   }
 
+  def generateSubstRules(vars: List[Id], paths: List[Path]): Seq[SMTLibCommand] = {
+    var rules: Seq[SMTLibCommand] = Seq()
+    val pathPairs = makePathPairs(paths)
+
+    vars.foreach(x => pathPairs.foreach{
+        case (p, q) => rules = rules :+ instantiateSubstRule(x, p, q)
+    })
+
+    rules
+  }
+
+  private def instantiateSubstRule(variable: Id, p: Path, q: Path): SMTLibCommand =
+    Assert(
+      Annotate(
+        substRuleTemplate(variable, p, q),
+        Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol(s"C-Subst-$variable-$p-$q")))))
+
+  // TODO: optimize rule (x == p, x == q, p == q)
+  private def substRuleTemplate(variable: Id, p1: Path, p2: Path): Term = {
+    val x: Term = convertId(variable)
+    val p: Term = convertPath(p1)
+    val q: Term = convertPath(p2)
+
+    Forall(
+      Seq(
+        SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
+        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+      ),
+      Let(
+        Seq(VarBinding(SimpleSymbol("a"), Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), p, x)))),
+        Let(
+          Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a"), x, q)))),
+          Implies(
+            And(
+              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(p, q)))),
+              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
+            ),
+            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
+          )
+        )
+      )
+    )
+  }
+
+
+  private def makePathPairs(paths: List[Path]): List[(Path, Path)] = {
+    var pairs: List[(Path, Path)] = List()
+    paths.foreach(p => pairs = pairs ++ paths.map(q => (p, q)))
+    pairs
+  }
+
   def convertEntailment(ctx: List[Constraint], c: Constraint): Term = {
     val ctxSMTLib: Term = SMTLibConverter.makeList(ctx.map(SMTLibConverter.convertConstraint))
     val cSMTLib: Term = SMTLibConverter.convertConstraint(c)
