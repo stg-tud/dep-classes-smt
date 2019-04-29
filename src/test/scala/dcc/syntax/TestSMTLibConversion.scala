@@ -260,7 +260,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     assert(actual == expected)
   }
 
-  test("instantiate subst rule (x, p, q)") {
+  test("instantiateSubstRule(x, p, q)") {
     val x = Id('x)
     val p = Id('p)
     val q = Id('q)
@@ -296,7 +296,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     assert(actualRule == expectedRule)
   }
 
-  test("instantiate subst rule (x, x, q)") {
+  test("instantiateSubstRule(x, x, q)") {
     val x = Id('x)
     val q = Id('q)
 
@@ -310,16 +310,13 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
       ),
       Let(
-        Seq(VarBinding(SimpleSymbol("a"), SimpleSymbol("a2"))),
-        Let(
-          Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a"), xTerm, qTerm)))),
-          Implies(
-            And(
-              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
-              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
-            ),
-            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
-          )
+        Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a2"), xTerm, qTerm)))),
+        Implies(
+          And(
+            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
+            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
+          ),
+          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
         )
       )
     )
@@ -331,7 +328,41 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     assert(actualRule == expectedRule)
   }
 
-  test("instantiate subst rule (x, x, x)") {
+  test("instantiateSubstRule(x, p, x)") {
+    val x = Id('x)
+    val p = Id('p)
+
+    val xTerm = SMTLibString("x")
+    val pTerm = Apply(SimpleSymbol("var"), Seq(SMTLibString("p")))
+    val qTerm = Apply(SimpleSymbol("var"), Seq(SMTLibString("x")))
+
+    val expectedBody = Forall(
+      Seq(
+        SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
+        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+      ),
+      Let(
+        Seq(VarBinding(SimpleSymbol("a"), Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), pTerm, xTerm)))),
+        Implies(
+          And(
+            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
+            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a")))
+          ),
+          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
+        )
+      )
+    )
+
+    val expectedRule = Assert(Annotate(expectedBody, Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol(s"C-Subst-$x-$p-$x")))))
+
+    val actualRule = SMTLibConverter invokePrivate PrivateMethod[SMTLibCommand]('instantiateSubstRule)(x, p, x)
+
+    assert(actualRule == expectedRule)
+  }
+
+  // TODO: optimize patheq x == x
+  // TODO: will be obsolete if x, x, x entries will be skipped
+  test("instantiateSubstRule(x, x, x)") {
     val x = Id('x)
 
     val xTerm = SMTLibString("x")
@@ -343,18 +374,12 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
         SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
       ),
-      Let(
-        Seq(VarBinding(SimpleSymbol("a"), SimpleSymbol("a2"))),
-        Let(
-          Seq(VarBinding(SimpleSymbol("a1"), SimpleSymbol("a"))),
-          Implies(
-            And(
-              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
-              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
-            ),
-            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
-          )
-        )
+      Implies(
+        And(
+          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
+          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
+        ),
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
       )
     )
 
@@ -365,7 +390,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     assert(actualRule == expectedRule)
   }
 
-  test("instantiate subst rule (x, x, q.f)") {
+  test("instantiateSubstRule(x, x, q.f)") {
     val x = Id('x)
     val q = FieldPath(Id('q), Id('f))
 
@@ -379,16 +404,13 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
       ),
       Let(
-        Seq(VarBinding(SimpleSymbol("a"), SimpleSymbol("a2"))),
-        Let(
-          Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a"), xTerm, qTerm)))),
-          Implies(
-            And(
-              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
-              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
-            ),
-            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
-          )
+        Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a2"), xTerm, qTerm)))),
+        Implies(
+          And(
+            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
+            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
+          ),
+          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
         )
       )
     )

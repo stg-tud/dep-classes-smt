@@ -71,6 +71,7 @@ object SMTLibConverter {
       )
   }
 
+  // TODO: optimize (skip x == p == q)
   def generateSubstRules(vars: List[Id], paths: List[Path]): Seq[SMTLibCommand] = {
     var rules: Seq[SMTLibCommand] = Seq()
     val pathPairs = makePathPairs(paths)
@@ -88,43 +89,84 @@ object SMTLibConverter {
         substRuleTemplate(variable, p, q),
         Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol(s"C-Subst-$variable-$p-$q")))))
 
-  // TODO: optimize rule (x == p, x == q, p == q)
+  // TODO: optimize rule (p == q)
   private def substRuleTemplate(variable: Id, p1: Path, p2: Path): Term = {
     val x: Term = convertId(variable)
     val p: Term = convertPath(p1)
     val q: Term = convertPath(p2)
+
+    def implies(a1: Term) =
+      Implies(
+        And(
+          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(p, q)))),
+          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), a1))
+        ),
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
+      )
+
+    def subst(a: Term) =
+      if(variable == p2)
+        implies(a)
+      else
+        Let(
+          Seq(VarBinding(SimpleSymbol("a1"),
+            Apply(SimpleSymbol("subst-constraint"), Seq(a, x, q))
+          )),
+          implies(SimpleSymbol("a1"))
+        )
+
 
     Forall(
       Seq(
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
         SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
       ),
-      Let(
-        Seq(VarBinding(SimpleSymbol("a"),
-          if (variable == p1)
-            SimpleSymbol("a2")
-          else
-            Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), p, x))
-        )),
+      if (variable == p1)
+        subst(SimpleSymbol("a2"))
+      else
         Let(
-          Seq(VarBinding(SimpleSymbol("a1"),
-            if (variable == p2)
-              SimpleSymbol("a")
-            else
-              Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a"), x, q))
+          Seq(VarBinding(SimpleSymbol("a"),
+            Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), p, x))
           )),
-          Implies(
-            And(
-              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(p, q)))),
-              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
-            ),
-            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
-          )
+          subst(SimpleSymbol("a"))
         )
-      )
     )
   }
-
+//  private def substRuleTemplate(variable: Id, p1: Path, p2: Path): Term = {
+//    val x: Term = convertId(variable)
+//    val p: Term = convertPath(p1)
+//    val q: Term = convertPath(p2)
+//
+//    Forall(
+//      Seq(
+//        SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
+//        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+//      ),
+//      Let(
+//        Seq(VarBinding(SimpleSymbol("a"),
+//          if (variable == p1)
+//            SimpleSymbol("a2")
+//          else
+//            Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), p, x))
+//        )),
+//        Let(
+//          Seq(VarBinding(SimpleSymbol("a1"),
+//            if (variable == p2)
+//              SimpleSymbol("a")
+//            else
+//              Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a"), x, q))
+//          )),
+//          Implies(
+//            And(
+//              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(p, q)))),
+//              Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
+//            ),
+//            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
+//          )
+//        )
+//      )
+//    )
+//  }
 
   private def makePathPairs(paths: List[Path]): List[(Path, Path)] = {
     var pairs: List[(Path, Path)] = List()
