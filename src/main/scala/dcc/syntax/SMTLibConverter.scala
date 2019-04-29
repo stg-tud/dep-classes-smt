@@ -100,9 +100,19 @@ object SMTLibConverter {
         SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
       ),
       Let(
-        Seq(VarBinding(SimpleSymbol("a"), Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), p, x)))),
+        Seq(VarBinding(SimpleSymbol("a"),
+          if (variable == p1)
+            SimpleSymbol("a2")
+          else
+            Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), p, x))
+        )),
         Let(
-          Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a"), x, q)))),
+          Seq(VarBinding(SimpleSymbol("a1"),
+            if (variable == p2)
+              SimpleSymbol("a")
+            else
+              Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a"), x, q))
+          )),
           Implies(
             And(
               Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(p, q)))),
