@@ -949,8 +949,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val vars = Seq(Axioms.string("x"))
     val paths = Seq(("x", x), ("y.p", yp))
 
-    val preprocessed = Seq(
-      Assert(Annotate(
+    val handwritten = Assert(Annotate(
         Forall(Seq(
           SortedVar("a2", "Constraint"),
           SortedVar("cs", Sorts("List", Seq("Constraint")))
@@ -976,8 +975,14 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 //            )
 //          )
         ),
-        Seq(KeyValueAttribute(Keyword("named"), "foo.bar"))))
-    )
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst-x-y.p-x"))))
+
+    val preprocessed = SMTLibConverter.generateSubstRules(List(Id('x)), List(Id('x), FieldPath(Id('y), Id('p))))
+
+    assert(preprocessed.contains(handwritten))
+
+    println(s"preprocessed.size = ${preprocessed.size}")
+    preprocessed.foreach(rule => println(rule.format()))
 
     val knowledge = Seq(
       Axioms.assertVariable("x"),
@@ -988,8 +993,9 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 
     val assertion = Assert(Not(Axioms.entails(Seq(xZero, ypx), ypZero)))
 
-    z3.addCommands(preprocessed ++ knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
-    val (exit, out) = z3.execute()
+    // TODO: why does it timeout when using the preprocessed rules instead of the handwritten one?
+    z3.addCommands(Seq(handwritten) ++ knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute(10000)
     z3.flush()
   }
 
