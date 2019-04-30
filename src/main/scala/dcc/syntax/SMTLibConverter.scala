@@ -71,13 +71,13 @@ object SMTLibConverter {
       )
   }
 
-  // TODO: optimize (skip x == p == q)
   def generateSubstRules(vars: List[Id], paths: List[Path]): Seq[SMTLibCommand] = {
     var rules: Seq[SMTLibCommand] = Seq()
     val pathPairs = makePathPairs(paths)
 
     vars.foreach(x => pathPairs.foreach{
-        case (p, q) => rules = rules :+ instantiateSubstRule(x, p, q)
+      case (p, q) if x == p && p == q => () // skip
+      case (p, q) => rules = rules :+ instantiateSubstRule(x, p, q)
     })
 
     rules
