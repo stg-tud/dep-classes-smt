@@ -619,10 +619,8 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val xy = Axioms.pathEq(x, y)
     val yx = Axioms.pathEq(y, x)
 
-    val vars = Seq(Axioms.string("x"), Axioms.string("y"))
-    val paths = Seq(("x", x), ("y", y))
-
-    val preprocessed = Axioms.preprocessSubstRules(vars, paths)
+    val vars = List(Id('x), Id('y))
+    val preprocessed = SMTLibConverter.generateSubstRules(vars, vars)
 
     val knowledge = Seq(
       Assert(Axioms.variable("x")),
@@ -650,10 +648,8 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val xy = Axioms.pathEq(x, y)
     val yx = Axioms.pathEq(y, x)
 
-    val vars = Seq(Axioms.string("x"), Axioms.string("y"))
-    val paths = Seq(("x", x), ("y", y))
-
-    val preprocessed = Axioms.preprocessSubstRules(vars, paths)
+    val vars = List(Id('x), Id('y))
+    val preprocessed = SMTLibConverter.generateSubstRules(vars, vars)
 
     val knowledge = Seq(
       Axioms.assertVariable("x"),
@@ -684,9 +680,8 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val yz = Axioms.pathEq(y, z)
     val xz = Axioms.pathEq(x, z)
 
-    val vars = Seq(Axioms.string("x"), Axioms.string("y"), Axioms.string("z"))
-    val paths = Seq(("x", x), ("y", y), ("z", z))
-    val preprocessed = Axioms.preprocessSubstRules(vars, paths)
+    val vars = List(Id('x), Id('y), Id('z))
+    val preprocessed = SMTLibConverter.generateSubstRules(vars, vars)
 
     val knowledge = Seq(
       Axioms.assertVariable("x"),
@@ -719,9 +714,8 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val yz = Axioms.pathEq(y, z)
     val xz = Axioms.pathEq(x, z)
 
-    val vars = Seq(Axioms.string("x"), Axioms.string("y"), Axioms.string("z"))
-    val paths = Seq(("x", x), ("y", y), ("z", z))
-    val preprocessed = Axioms.preprocessSubstRules(vars, paths)
+    val vars = List(Id('x), Id('y), Id('z))
+    val preprocessed = SMTLibConverter.generateSubstRules(vars, vars)
 
     val knowledge = Seq(
       Axioms.assertVariable("x"),
@@ -747,8 +741,6 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     assert(out(1).contains("C-Subst"))
   }
 
-  // TODO: solver does timeout producing unknown
-  // TODO: how to help the solver instantiate properly
   test("PathEq is transitive 3") {
     val x = Axioms.path("x")
     val y = Axioms.path("y")
@@ -758,9 +750,8 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val yz = Axioms.pathEq(y, z)
     val xz = Axioms.pathEq(x, z)
 
-    val vars = Seq(Axioms.string("x"), Axioms.string("y"), Axioms.string("z"))
-    val paths = Seq(("x", x), ("y", y), ("z", z))
-    val preprocessed = Axioms.preprocessSubstRules(vars, paths)
+    val vars = List(Id('x), Id('y), Id('z))
+    val preprocessed = SMTLibConverter.generateSubstRules(vars, vars) //Axioms.preprocessSubstRules(vars, paths)
 
     val knowledge = Seq(
       Axioms.assertVariable("x"),
@@ -773,7 +764,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
 
     z3.addCommands(preprocessed ++ knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
-    val (exit, out) = z3.execute(3*1000)
+    val (exit, out) = z3.execute()
     z3.flush()
 
     assert(exit == 0)
@@ -783,42 +774,6 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     assert(out(1).contains("C-Refl"))
     assert(out(1).contains("C-Weak"))
   }
-
-  // integrated in above
-//  test("PathEq is transitive with preprocess") {
-//    val x = Axioms.path("x")
-//    val y = Axioms.path("y")
-//    val z = Axioms.path("z")
-//
-//    val xy = Axioms.pathEq(x, y)
-//    val yz = Axioms.pathEq(y, z)
-//    val xz = Axioms.pathEq(x, z)
-//
-//    val vars = Seq(Axioms.string("x"), Axioms.string("y"), Axioms.string("z"))
-//    val paths = Seq(("x", x), ("y", y), ("z", z))
-//
-//    val knowledge = Seq(
-//      Axioms.assertVariable("x"),
-//      Axioms.assertVariable("y"),
-//      Axioms.assertVariable("z"),
-//      Axioms.assertPath(x),
-//      Axioms.assertPath(y),
-//      Axioms.assertPath(z)
-//    )
-//    val preprocessed = Axioms.preprocessSubstRules(vars, paths)
-//    val assertion = Assert(Not(Axioms.entails(Seq(xy, yz), xz)))
-//
-//    z3.addCommands(preprocessed ++ knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
-//    val (exit, out) = z3.execute()
-//    z3.flush()
-//
-//    assert(exit == 0)
-//    assert(out.size == 2)
-//    assert(out.head == Unsat.format())
-//    assert(out(1).contains("C-Subst"))
-//    assert(out(1).contains("C-Refl"))
-//    assert(out(1).contains("C-Weak"))
-//  }
 
   test("lookup-program-entailment") {
     val x = Axioms.path("x")
@@ -1000,16 +955,27 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
           SortedVar("a2", "Constraint"),
           SortedVar("cs", Sorts("List", Seq("Constraint")))
         ),
-          Implies(
-            Let(
-              Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yp, SMTLibString("x"))))),
+//          Implies(
+//            Let(
+//              Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yp, SMTLibString("x"))))),
+//              And(
+//                Apply("entails", Seq("cs", Apply("path-eq", Seq(yp, x)))),
+//                Apply("entails", Seq("cs", "a")) // Apply("subst-constraint", Seq("a", SMTLibString("x"), x)) // TODO: timeout with subst
+//              )
+//            ),
+//            Apply("entails", Seq("cs", "a2"))
+//          )
+          Let(
+            Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yp, SMTLibString("x"))))),
+            Implies(
               And(
                 Apply("entails", Seq("cs", Apply("path-eq", Seq(yp, x)))),
-                Apply("entails", Seq("cs", "a")) // Apply("subst-constraint", Seq("a", SMTLibString("x"), x)) // TODO: timeout with subst
-              )
-            ),
-            Apply("entails", Seq("cs", "a2"))
-          )),
+                Apply("entails", Seq("cs", "a"))
+              ),
+              Apply("entails", Seq("cs", "a2"))
+            )
+          )
+        ),
         Seq(KeyValueAttribute(Keyword("named"), "foo.bar"))))
     )
 
@@ -1037,7 +1003,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val vars = Seq(Axioms.string("x"))
     val paths = Seq(("x", x), ("y.p", yp))
 
-    val preprocessed = Axioms.preprocessSubstRules(vars, paths)
+    val preprocessed = SMTLibConverter.generateSubstRules(List(Id('x)), List(Id('x), FieldPath(Id('y), Id('p))))
 
     val knowledge = Seq(
       Axioms.assertVariable("x"),
