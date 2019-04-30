@@ -274,18 +274,18 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
         SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
       ),
-      Let(
-        Seq(VarBinding(SimpleSymbol("a"), Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), pTerm, xTerm)))),
+      Implies(
         Let(
-          Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a"), xTerm, qTerm)))),
-          Implies(
+          Seq(VarBinding(SimpleSymbol("a"), Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), pTerm, xTerm)))),
+          Let(
+            Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a"), xTerm, qTerm)))),
             And(
               Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
               Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
-            ),
-            Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
+            )
           )
-        )
+        ),
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
       )
     )
 
@@ -309,15 +309,15 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
         SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
       ),
-      Let(
-        Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a2"), xTerm, qTerm)))),
-        Implies(
+      Implies(
+        Let(
+          Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a2"), xTerm, qTerm)))),
           And(
             Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
             Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
-          ),
-          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
-        )
+          )
+        ),
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
       )
     )
 
@@ -341,15 +341,15 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
         SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
       ),
-      Let(
-        Seq(VarBinding(SimpleSymbol("a"), Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), pTerm, xTerm)))),
-        Implies(
+      Implies(
+        Let(
+          Seq(VarBinding(SimpleSymbol("a"), Apply(SimpleSymbol("generalize-constraint"), Seq(SimpleSymbol("a2"), pTerm, xTerm)))),
           And(
             Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
             Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a")))
-          ),
-          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
-        )
+          )
+        ),
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
       )
     )
 
@@ -360,8 +360,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     assert(actualRule == expectedRule)
   }
 
-  // TODO: optimize patheq x == x
-  // TODO: will be obsolete if x, x, x entries will be skipped
+  // obsolete since x, x, x entries are skipped in generation
   test("instantiateSubstRule(x, x, x)") {
     val x = Id('x)
 
@@ -403,15 +402,15 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
         SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
       ),
-      Let(
-        Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a2"), xTerm, qTerm)))),
-        Implies(
+      Implies(
+        Let(
+          Seq(VarBinding(SimpleSymbol("a1"), Apply(SimpleSymbol("subst-constraint"), Seq(SimpleSymbol("a2"), xTerm, qTerm)))),
           And(
             Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
             Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a1")))
-          ),
-          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
-        )
+          )
+        ),
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
       )
     )
 
@@ -449,15 +448,18 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     val x = Id('x)
     val y = Id('y)
 
+    import smtlib.syntax.Implicit.stringToSimpleSymbol
+
     def expectedRule(body: Term) = Forall(
       Seq(
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
         SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
       ),
-      body
+      Implies(
+        body,
+        Apply("entails", Seq("cs", "a2"))
+      )
     )
-
-    import smtlib.syntax.Implicit.stringToSimpleSymbol
 
     val xVar = SMTLibString("x")
     val yVar = SMTLibString("y")
@@ -469,12 +471,9 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         expectedRule(
           Let(
             Seq(VarBinding("a1", Apply("subst-constraint", Seq("a2", xVar, yPath)))),
-            Implies(
-              And(
-                Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, yPath)))),
-                Apply("entails", Seq("cs", "a1"))
-              ),
-              Apply("entails", Seq("cs", "a2"))
+            And(
+              Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, yPath)))),
+              Apply("entails", Seq("cs", "a1"))
             )
           )
         ),
@@ -484,12 +483,9 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         expectedRule(
           Let(
             Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yPath, xVar)))),
-            Implies(
-              And(
-                Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, xPath)))),
-                Apply("entails", Seq("cs", "a"))
-              ),
-              Apply("entails", Seq("cs", "a2"))
+            And(
+              Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, xPath)))),
+              Apply("entails", Seq("cs", "a"))
             )
           )
         ),
@@ -501,12 +497,9 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
             Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yPath, xVar)))),
             Let(
               Seq(VarBinding("a1", Apply("subst-constraint", Seq("a", xVar, yPath)))),
-              Implies(
-                And(
-                  Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, yPath)))),
-                  Apply("entails", Seq("cs", "a1"))
-                ),
-                Apply("entails", Seq("cs", "a2"))
+              And(
+                Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, yPath)))),
+                Apply("entails", Seq("cs", "a1"))
               )
             )
           )
@@ -519,12 +512,9 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
             Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", xPath, yVar)))),
             Let(
               Seq(VarBinding("a1", Apply("subst-constraint", Seq("a", yVar, xPath)))),
-              Implies(
-                And(
-                  Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, xPath)))),
-                  Apply("entails", Seq("cs", "a1"))
-                ),
-                Apply("entails", Seq("cs", "a2"))
+              And(
+                Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, xPath)))),
+                Apply("entails", Seq("cs", "a1"))
               )
             )
           )
@@ -535,12 +525,9 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         expectedRule(
           Let(
             Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", xPath, yVar)))),
-            Implies(
-              And(
-                Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, yPath)))),
-                Apply("entails", Seq("cs", "a"))
-              ),
-              Apply("entails", Seq("cs", "a2"))
+            And(
+              Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, yPath)))),
+              Apply("entails", Seq("cs", "a"))
             )
           )
         ),
@@ -550,12 +537,9 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         expectedRule(
           Let(
             Seq(VarBinding("a1", Apply("subst-constraint", Seq("a2", yVar, xPath)))),
-            Implies(
-              And(
-                Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, xPath)))),
-                Apply("entails", Seq("cs", "a1"))
-              ),
-              Apply("entails", Seq("cs", "a2"))
+            And(
+              Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, xPath)))),
+              Apply("entails", Seq("cs", "a1"))
             )
           )
         ),

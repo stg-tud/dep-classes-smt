@@ -95,32 +95,24 @@ object SMTLibConverter {
     val p: Term = convertPath(p1)
     val q: Term = convertPath(p2)
 
-    def implies(a1: Term) =
-      Implies(
-        And(
-          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(p, q)))),
-          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), a1))
-        ),
-        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
+    def conjecture(a1: Term) =
+      And(
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(p, q)))),
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), a1))
       )
 
     def subst(a: Term) =
       if(variable == p2)
-        implies(a)
+        conjecture(a)
       else
         Let(
           Seq(VarBinding(SimpleSymbol("a1"),
             Apply(SimpleSymbol("subst-constraint"), Seq(a, x, q))
           )),
-          implies(SimpleSymbol("a1"))
+          conjecture(SimpleSymbol("a1"))
         )
 
-
-    Forall(
-      Seq(
-        SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
-        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
-      ),
+    val gen =
       if (variable == p1)
         subst(SimpleSymbol("a2"))
       else
@@ -130,6 +122,17 @@ object SMTLibConverter {
           )),
           subst(SimpleSymbol("a"))
         )
+
+
+    Forall(
+      Seq(
+        SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
+        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+      ),
+      Implies(
+        gen,
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
+      )
     )
   }
 //  private def substRuleTemplate(variable: Id, p1: Path, p2: Path): Term = {

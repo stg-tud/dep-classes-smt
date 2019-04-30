@@ -955,26 +955,26 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
           SortedVar("a2", "Constraint"),
           SortedVar("cs", Sorts("List", Seq("Constraint")))
         ),
-//          Implies(
-//            Let(
-//              Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yp, SMTLibString("x"))))),
-//              And(
-//                Apply("entails", Seq("cs", Apply("path-eq", Seq(yp, x)))),
-//                Apply("entails", Seq("cs", "a")) // Apply("subst-constraint", Seq("a", SMTLibString("x"), x)) // TODO: timeout with subst
-//              )
-//            ),
-//            Apply("entails", Seq("cs", "a2"))
-//          )
-          Let(
-            Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yp, SMTLibString("x"))))),
-            Implies(
+          Implies(
+            Let(
+              Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yp, SMTLibString("x"))))),
               And(
                 Apply("entails", Seq("cs", Apply("path-eq", Seq(yp, x)))),
-                Apply("entails", Seq("cs", "a"))
-              ),
-              Apply("entails", Seq("cs", "a2"))
-            )
+                Apply("entails", Seq("cs", "a")) // Apply("subst-constraint", Seq("a", SMTLibString("x"), x)) // TODO: timeout with subst
+              )
+            ),
+            Apply("entails", Seq("cs", "a2"))
           )
+//          Let(
+//            Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yp, SMTLibString("x"))))),
+//            Implies(
+//              And(
+//                Apply("entails", Seq("cs", Apply("path-eq", Seq(yp, x)))),
+//                Apply("entails", Seq("cs", "a"))
+//              ),
+//              Apply("entails", Seq("cs", "a2"))
+//            )
+//          )
         ),
         Seq(KeyValueAttribute(Keyword("named"), "foo.bar"))))
     )
