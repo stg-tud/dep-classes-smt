@@ -421,4 +421,151 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
 
     assert(actualRule == expectedRule)
   }
+
+  test("makePathPairs") {
+    val x = Id('x)
+    val y = Id('y)
+    val z = Id('z)
+
+    val expected = List(
+      (x, x),
+      (x, y),
+      (x, z),
+      (y, x),
+      (y, y),
+      (y, z),
+      (z, x),
+      (z, y),
+      (z, z)
+    )
+
+    val actual = SMTLibConverter invokePrivate PrivateMethod[List[(Path, Path)]]('makePathPairs)(List(x, y, z))
+
+    assert(actual.size == expected.size)
+    assert(actual.forall(pair => expected.contains(pair)))
+  }
+
+  test("generateSubstRules") {
+    val x = Id('x)
+    val y = Id('y)
+
+    def expectedRule(body: Term) = Forall(
+      Seq(
+        SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
+        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+      ),
+      body
+    )
+
+    import smtlib.syntax.Implicit.stringToSimpleSymbol
+
+    val xVar = SMTLibString("x")
+    val yVar = SMTLibString("y")
+    val xPath = Apply("var", Seq(xVar))
+    val yPath = Apply("var", Seq(yVar))
+
+    val expected = Seq(
+      Assert(Annotate(
+        expectedRule(
+          Let(
+            Seq(VarBinding("a1", Apply("subst-constraint", Seq("a2", xVar, yPath)))),
+            Implies(
+              And(
+                Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, yPath)))),
+                Apply("entails", Seq("cs", "a1"))
+              ),
+              Apply("entails", Seq("cs", "a2"))
+            )
+          )
+        ),
+        Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol("C-Subst-x-x-y")))
+      )),
+      Assert(Annotate(
+        expectedRule(
+          Let(
+            Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yPath, xVar)))),
+            Implies(
+              And(
+                Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, xPath)))),
+                Apply("entails", Seq("cs", "a"))
+              ),
+              Apply("entails", Seq("cs", "a2"))
+            )
+          )
+        ),
+        Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol("C-Subst-x-y-x")))
+      )),
+      Assert(Annotate(
+        expectedRule(
+          Let(
+            Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yPath, xVar)))),
+            Let(
+              Seq(VarBinding("a1", Apply("subst-constraint", Seq("a", xVar, yPath)))),
+              Implies(
+                And(
+                  Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, yPath)))),
+                  Apply("entails", Seq("cs", "a1"))
+                ),
+                Apply("entails", Seq("cs", "a2"))
+              )
+            )
+          )
+        ),
+        Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol("C-Subst-x-y-y")))
+      )),
+      Assert(Annotate(
+        expectedRule(
+          Let(
+            Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", xPath, yVar)))),
+            Let(
+              Seq(VarBinding("a1", Apply("subst-constraint", Seq("a", yVar, xPath)))),
+              Implies(
+                And(
+                  Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, xPath)))),
+                  Apply("entails", Seq("cs", "a1"))
+                ),
+                Apply("entails", Seq("cs", "a2"))
+              )
+            )
+          )
+        ),
+        Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol("C-Subst-y-x-x")))
+      )),
+      Assert(Annotate(
+        expectedRule(
+          Let(
+            Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", xPath, yVar)))),
+            Implies(
+              And(
+                Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, yPath)))),
+                Apply("entails", Seq("cs", "a"))
+              ),
+              Apply("entails", Seq("cs", "a2"))
+            )
+          )
+        ),
+        Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol("C-Subst-y-x-y")))
+      )),
+      Assert(Annotate(
+        expectedRule(
+          Let(
+            Seq(VarBinding("a1", Apply("subst-constraint", Seq("a2", yVar, xPath)))),
+            Implies(
+              And(
+                Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, xPath)))),
+                Apply("entails", Seq("cs", "a1"))
+              ),
+              Apply("entails", Seq("cs", "a2"))
+            )
+          )
+        ),
+        Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol("C-Subst-y-y-x")))
+      ))
+    )
+
+    val actual = SMTLibConverter.generateSubstRules(List(x, y), List(x, y))
+
+    assert(actual.size == expected.size)
+    assert(actual.forall(rule => expected.contains(rule)))
+  }
 }

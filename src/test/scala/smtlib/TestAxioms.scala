@@ -259,7 +259,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     assert(out.head == "sat")
   }
 
-  test ("makePathPairs") {
+  test("makePathPairs") {
     val x = Axioms.path("x")
     val y = Axioms.path("y")
     val z = Axioms.path("z")
@@ -283,7 +283,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val actual = Axioms invokePrivate makePathPairs(paths)
 
     assert(actual.size == expected.size)
-    actual.forall(pair => expected.contains(pair))
+    assert(actual.forall(pair => expected.contains(pair)))
 
     // not interested in ordering
 //    assert((Axioms invokePrivate makePathPairs(paths)) == expectedPaths)
