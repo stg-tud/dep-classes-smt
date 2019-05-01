@@ -374,10 +374,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
         SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
       ),
       Implies(
-        And(
-          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(pTerm, qTerm)))),
-          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
-        ),
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2"))),
         Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
       )
     )
@@ -497,10 +494,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
             Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yPath, xVar)))),
             Let(
               Seq(VarBinding("a1", Apply("subst-constraint", Seq("a", xVar, yPath)))),
-              And(
-                Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, yPath)))),
-                Apply("entails", Seq("cs", "a1"))
-              )
+              Apply("entails", Seq("cs", "a1"))
             )
           )
         ),
@@ -512,10 +506,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
             Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", xPath, yVar)))),
             Let(
               Seq(VarBinding("a1", Apply("subst-constraint", Seq("a", yVar, xPath)))),
-              And(
-                Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, xPath)))),
-                Apply("entails", Seq("cs", "a1"))
-              )
+              Apply("entails", Seq("cs", "a1"))
             )
           )
         ),
