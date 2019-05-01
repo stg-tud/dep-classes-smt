@@ -77,6 +77,7 @@ object SMTLibConverter {
 
     vars.foreach(x => pathPairs.foreach{
       case (p, q) if x == p && p == q => () // skip
+      //case (p, q) if p == q => () // skip
       case (p, q) => rules = rules :+ instantiateSubstRule(x, p, q)
     })
 
@@ -89,17 +90,25 @@ object SMTLibConverter {
         substRuleTemplate(variable, p, q),
         Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol(s"C-Subst-$variable-$p-$q")))))
 
-  // TODO: optimize rule (p == q)
+  /**
+    * optimizations in place
+    * p == q: no entails check, reflexive
+    * x == p: no generalization, x generalized with x is x
+    * x == q: no substitution, x substituted with x is x
+    **/
   private def substRuleTemplate(variable: Id, p1: Path, p2: Path): Term = {
     val x: Term = convertId(variable)
     val p: Term = convertPath(p1)
     val q: Term = convertPath(p2)
 
     def conjecture(a1: Term) =
-      And(
-        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(p, q)))),
+      if (p1 == p2)
         Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), a1))
-      )
+      else
+        And(
+          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), Apply(SimpleSymbol("path-eq"), Seq(p, q)))),
+          Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), a1))
+        )
 
     def subst(a: Term) =
       if(variable == p2)
