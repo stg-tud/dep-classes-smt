@@ -14,7 +14,7 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
   // commands to send to the solver
   var commands: Seq[SMTLibCommand] = Seq.empty
 
-  override def makeCall(timeout: Int = 1000): Seq[String] = Seq("z3", "-smt2", s"-t:${timeout.toString}", "-in")
+  override def makeCall(timeout: Int = 1000): Seq[String] = Seq("z3", "-smt2", "trace=true", "proof=true", s"-t:${timeout.toString}", "-in")
 //    var call = Seq("z3")
 //
 //    // use smtlib v2 as input language

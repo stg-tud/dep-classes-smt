@@ -5,6 +5,7 @@ import smtlib.solver.Z3Solver
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
+// TODO: update tests to function independent
 class TestZ3Solver extends FunSuite {
   val const1 = DeclareConst("a", "Int")
   val const2 = DeclareConst("b", "Int")
@@ -19,9 +20,10 @@ class TestZ3Solver extends FunSuite {
   val assert2 = Assert(aaIsC)
   val assert3 = Assert(bbIsC)
   val distinct = Assert(Distinct("a", "b"))
-  val script = SMTLibScript(Seq(const1, const2, const3, distinct, assert1, assert2, assert3, CheckSat))
+  val commands = SMTLibScript(Seq(const1, const2, const3, distinct, assert1, assert2, assert3))
+  val script = SMTLibScript(commands.commands :+ CheckSat)
 
-  val z3: Z3Solver = new Z3Solver(SMTLibScript(Seq()))
+  val z3: Z3Solver = new Z3Solver(SMTLibScript(Seq()), debug = true)
 
   test("AddCommand") {
     val preSize = z3.commands.size
@@ -81,6 +83,8 @@ class TestZ3Solver extends FunSuite {
   }
 
   test("checksat UnsatFormula") {
+    z3.flush()
+    z3.addScript(commands)
     val sat = z3.checksat()
 
     assert(sat == Unsat)
@@ -120,6 +124,160 @@ class TestZ3Solver extends FunSuite {
   test("checksat Unknown") {
     val sat = z3.checksat()
     assert(sat == Unknown)
+  }
+
+  test("(List Int)") {
+    val i = DeclareConst("i", "Int")
+    val j = DeclareConst("j", "Int")
+    val l = DeclareConst("l", Sorts("List", Seq("Int")))
+
+    val content = Assert(Eq(
+      "l",
+      Apply("insert", Seq("i",
+        Apply("insert", Seq("j", "nil"))))
+    ))
+
+    z3.flush()
+    z3.addCommands(Seq(i, j, l, content))
+
+    val sat = z3.checksat()
+    assert(sat == Sat)
+  }
+
+  test("compare list") {
+    val i = DeclareConst("i", "Int")
+    val j = DeclareConst("j", "Int")
+    val l = DeclareConst("l", Sorts("List", Seq("Int")))
+
+    val content = Assert(Eq(
+      "l",
+      Apply("insert", Seq(1,
+        Apply("insert", Seq(2, "nil"))))
+    ))
+
+    val iIs1 = Assert(Eq("i", 1))
+    val jIs3 = Assert(Eq("j", 3))
+
+    val assertion = Assert(Eq(
+      "l",
+      Apply("insert", Seq("i",
+        Apply("insert", Seq("j", "nil"))))
+    ))
+
+    z3.flush()
+    z3.addCommand(i)
+    z3.addCommand(j)
+    z3.addCommand(l)
+    z3.addCommand(content)
+    z3.addCommand(iIs1)
+    z3.addCommand(jIs3)
+    z3.addCommand(assertion)
+
+    val sat = z3.checksat()
+    assert(sat == Unsat)
+  }
+
+  test("nonempty int list") {
+    val datatype = DeclareDatatype(
+      "lst",
+      ConstructorDatatype(Seq(
+        ConstructorDec("single", Seq(SelectorDec("content", "Int"))),
+        ConstructorDec("multi", Seq(
+          SelectorDec("elem", "Int"),
+          SelectorDec("rest", "lst"),
+        )),
+      ))
+    )
+
+    val l = DeclareConst("l", "lst")
+    val content = Assert(Eq("l", Apply("single", Seq(1))))
+
+    z3.flush()
+    z3.addCommand(datatype)
+    z3.addCommand(l)
+    z3.addCommand(content)
+
+    z3.checksat()
+  }
+
+  test("nonempty int list function") {
+    val datatype = DeclareDatatype(
+      "lst",
+      ConstructorDatatype(Seq(
+        ConstructorDec("single", Seq(SelectorDec("content", "Int"))),
+        ConstructorDec("multi", Seq(
+          SelectorDec("elem", "Int"),
+          SelectorDec("rest", "lst"),
+        )),
+      ))
+    )
+
+    val fun = DefineFun(
+      FunctionDef(
+        "first",
+        Seq(
+          SortedVar("k", "lst")
+        ),
+        "Int",
+        Match("k",
+          Seq(
+            MatchCase(Pattern("single", Seq("content")),
+              "content"),
+            MatchCase(Pattern("multi", Seq("hd", "tl")),
+              "hd")
+          )
+        )
+      )
+    )
+
+    val l = DeclareConst("l", "lst")
+    val content = Assert(Eq("l", Apply("single", Seq(1))))
+
+    z3.flush()
+    z3.addCommand(datatype)
+    z3.addCommand(fun)
+    z3.addCommand(l)
+    z3.addCommand(content)
+
+    z3.checksat()
+  }
+
+  test("list function") {
+    val fun = DefineFun(
+      FunctionDef(
+        "first",
+        Seq(
+          SortedVar("lst", Sorts("List", Seq("Int"))),
+          SortedVar("default", "Int")
+        ),
+        "Int",
+        Match("lst",
+          Seq(
+            MatchCase(Pattern("nil", Seq()),
+              "default"),
+            MatchCase(Pattern("insert", Seq("hd", "tl")),
+              "hd")
+          )
+        )
+      )
+    )
+
+    val l = DeclareConst("l", Sorts("List", Seq("Int")))
+    val content = Assert(Eq(
+      "l",
+      Apply("insert", Seq(1,
+        Apply("insert", Seq(2, "nil"))))
+    ))
+
+    val assertion = Assert(Not(Eq(1, Apply("first", Seq("l")))))
+
+    z3.flush()
+    z3.addCommand(fun)
+//    z3.addCommand(l)
+//    z3.addCommand(content)
+//    z3.addCommand(assertion)
+
+    assert(z3.checksat() == Unsat)
   }
 
   // TODO: remove timeout part in Z3Solver?

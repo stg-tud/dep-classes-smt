@@ -996,7 +996,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val assertion = Assert(Not(Axioms.entails(Seq(xZero, ypx), ypZero)))
 
     // TODO: including preprocessed.last results in a timeout
-    z3.addCommands(Seq(preprocessed.head, handwritten, preprocessed.last) ++ knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+    z3.addCommands(Seq(preprocessed.head, handwritten, preprocessed.last) ++ knowledge ++ Seq(assertion, CheckSat/*, GetUnsatCore*/))
     val (exit, out) = z3.execute()
     z3.flush()
   }
