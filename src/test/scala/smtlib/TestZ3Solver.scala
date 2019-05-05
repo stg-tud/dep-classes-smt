@@ -197,7 +197,8 @@ class TestZ3Solver extends FunSuite {
     z3.addCommand(l)
     z3.addCommand(content)
 
-    z3.checksat()
+    val sat = z3.checksat()
+    assert(sat == Sat)
   }
 
   test("nonempty int list function") {
@@ -212,6 +213,7 @@ class TestZ3Solver extends FunSuite {
       ))
     )
 
+    // (error "line 2 column 43: constructor symbol expected")
     val fun = DefineFun(
       FunctionDef(
         "first",
@@ -230,16 +232,55 @@ class TestZ3Solver extends FunSuite {
       )
     )
 
-    val l = DeclareConst("l", "lst")
-    val content = Assert(Eq("l", Apply("single", Seq(1))))
+    val funLet = DefineFun(FunctionDef(
+      "first",
+      Seq(
+        SortedVar("k", "lst")
+      ),
+      "Int",
+      Ite(
+        Apply("is-single", Seq("k")),
+        Let(
+          Seq(VarBinding("i", Apply("content", Seq("k")))),
+          "i"
+        ),
+        Let(
+          Seq(
+            VarBinding("hd", Apply("elem", Seq("k"))),
+            VarBinding("tl", Apply("rest", Seq("k")))
+          ),
+          "hd"
+        )
+      )
+    ))
+
+    val l1 = DeclareConst("l1", "lst")
+    val l2 = DeclareConst("l2", "lst")
+    val content1 = Assert(Eq("l1", Apply("single", Seq(2))))
+    val content2 = Assert(Eq("l2", Apply("multi", Seq(1, "l1"))))
+
+    val assertion = Assert(Not(And(
+      Eq(
+        Apply("first", Seq("l1")),
+        2
+      ),
+      Eq(
+        Apply("first", Seq("l2")),
+        1
+      )
+    )))
 
     z3.flush()
     z3.addCommand(datatype)
-    z3.addCommand(fun)
-    z3.addCommand(l)
-    z3.addCommand(content)
+    z3.addCommand(funLet)
+    z3.addCommand(l1)
+    z3.addCommand(content1)
+    z3.addCommand(l2)
+    z3.addCommand(content2)
+    z3.addCommand(assertion)
 
-    z3.checksat()
+    val sat = z3.checksat()
+    assert(sat == Unsat)
   }
 
   test("list function") {
@@ -251,16 +292,30 @@ class TestZ3Solver extends FunSuite {
           SortedVar("default", "Int")
         ),
         "Int",
-        Match("lst",
-          Seq(
-            MatchCase(Pattern("nil", Seq()),
-              "default"),
-            MatchCase(Pattern("insert", Seq("hd", "tl")),
-              "hd")
+        Ite(
+          Apply("is-nil", Seq("lst")),
+          "default",
+          Let(
+            Seq(
+              VarBinding("hd", Apply("head", Seq("lst"))),
+              VarBinding("tl", Apply("tail", Seq("lst")))
+            ),
+            "hd"
           )
         )
       )
     )
+
+    //> (error "line 1 column 82: mismatching number of variables supplied to constructor")
+    // → nil
+//    Match("lst",
+//      Seq(
+//        MatchCase(Pattern("nil", Seq()),
+//          "default"),
+//        MatchCase(Pattern("insert", Seq("hd", "tl")),
+//          "hd")
+//      )
+//    )
 
     val l = DeclareConst("l", Sorts("List", Seq("Int")))
     val content = Assert(Eq(
@@ -269,13 +324,16 @@ class TestZ3Solver extends FunSuite {
         Apply("insert", Seq(2, "nil"))))
     ))
 
-    val assertion = Assert(Not(Eq(1, Apply("first", Seq("l")))))
+    val assertion = Assert(Not(And(
+        Eq(1, Apply("first", Seq("l", -999))),
+        Eq(-999, Apply("first", Seq("nil", -999)))
+    )))
 
     z3.flush()
     z3.addCommand(fun)
-//    z3.addCommand(l)
-//    z3.addCommand(content)
-//    z3.addCommand(assertion)
+    z3.addCommand(l)
+    z3.addCommand(content)
+    z3.addCommand(assertion)
 
     assert(z3.checksat() == Unsat)
   }
