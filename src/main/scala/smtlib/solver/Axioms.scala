@@ -74,16 +74,14 @@ object Axioms {
                     SortedVar("l2", Constraints)
                   ),
                   Constraints,
-                  Match("l1",
-                    Seq(
-                      MatchCase(Pattern("nil", Seq()),
-                        "l2"),
-                      MatchCase(Pattern("insert", Seq("hd", "tl")),
-                        Apply("insert", Seq(
-                          "hd",
-                          Apply("conc", Seq("tl", "l2"))
-                        )))
-                    ))
+                  Ite(
+                    Apply("is-insert", Seq("l1")),
+                    Apply("insert", Seq(
+                      Apply("head", Seq("l1")),
+                      Apply("conc", Seq(Apply("tail", Seq("l1")), "l2"))
+                    )),
+                    "l2"
+                  )
                 ))
 
   /** c \in cs */
@@ -95,17 +93,15 @@ object Axioms {
                   SortedVar("cs", Constraints)
                 ),
                 Bool,
-                Match("cs", Seq(
-                  MatchCase(Pattern("nil"),
-                    False()),
-                  MatchCase(Pattern("insert", Seq("hd", "tl")),
-                    Ite(
-                      Eq("c", "hd"),
-                      True(),
-                      Apply("elem", Seq("c", "tl"))
-                    )
-                  )
-                ))
+                Ite(
+                  Apply("is-insert", Seq("cs")),
+                  Ite(
+                    Eq("c", Apply("head", Seq("cs"))),
+                    True(),
+                    Apply("elem", Seq("c", Apply("tail", Seq("cs"))))
+                  ),
+                  False()
+                )
               ))
 
   /** big or */
@@ -117,19 +113,28 @@ object Axioms {
         SortedVar("cs", Constraints)
       ),
       Bool,
-      Match("ccs", Seq(
-        MatchCase(Pattern("nan"), "false"),
-        MatchCase(Pattern("cons", Seq("cs1", "ccs1")),
+      Ite(
+        Apply("is-cons", Seq("ccs")),
+//        Let(
+//          Seq(
+//            VarBinding("cs1", Apply("hd", Seq("ccs"))),
+//            VarBinding("ccs1", Apply("tl", Seq("ccs")))
+//          ),
 //          Ite(
 //            Eq("ccs1", "nan"),
 //            Apply("Entails", Seq("cs", "cs1")),
-          Or(
-            Apply("Entails", Seq("cs", "cs1")),
-            Apply("big-or-Entails", Seq("ccs1", "cs"))
-          )
+//            Or(
+//              Apply("Entails", Seq("cs", "cs1")),
+//              Apply("big-or-Entails", Seq("ccs1", "cs"))
+//            )
 //          )
-        )
-      ))
+//        ),
+        Or(
+          Apply("Entails", Seq("cs", Apply("hd", Seq("ccs")))),
+          Apply("big-or-Entails", Seq(Apply("tl", Seq("ccs")), "cs"))
+        ),
+        False()
+      )
     )
   )
 
@@ -161,14 +166,14 @@ object Axioms {
                         SortedVar("p2", "Path")
                       ),
                       "Path",
-                      Match("p1",
-                        Seq(
-                          MatchCase(Pattern("var", Seq("y")),
-                            Ite(Eq("x", "y"), "p2", "p1")),
-                          MatchCase(Pattern("pth", Seq("p", "f")),
-                            Apply("pth", Seq(Apply("subst-path", Seq("p", "x", "p2")), "f"))
-                          )
+                      Ite(
+                        Apply("is-var", Seq("p1")),
+                        Ite(Eq("x", Apply("id", Seq("p1"))), "p2", "p1"),
+                        Apply("pth", Seq(
+                          Apply("subst-path", Seq(Apply("obj", Seq("p1")), "x", "p2")),
+                          Apply("field", Seq("p1"))
                         ))
+                      )
                     ))
 
   /**
@@ -187,23 +192,24 @@ object Axioms {
                               SortedVar("p", "Path")
                             ),
                             "Constraint",
-                            Match("c",
-                              Seq(
-                                MatchCase(Pattern("path-eq", Seq("p1", "p2")),
-                                  Apply("path-eq", Seq(
-                                    Apply("subst-path", Seq("p1", "x", "p")),
-                                    Apply("subst-path", Seq("p2", "x", "p"))))),
-                                MatchCase(Pattern("instance-of", Seq("p1", "cls1")),
-                                  Apply("instance-of", Seq(
-                                    Apply("subst-path", Seq("p1", "x", "p")),
-                                    "cls1"
-                                  ))),
-                                MatchCase(Pattern("instantiated-by", Seq("p1", "cls1")),
-                                  Apply("instantiated-by", Seq(
-                                    Apply("subst-path", Seq("p1", "x", "p")),
-                                    "cls1"
-                                  )))
-                              ))
+                            Ite(
+                              Apply("is-path-eq", Seq("c")),
+                              Apply("path-eq", Seq(
+                                Apply("subst-path", Seq(Apply("p-left", Seq("c")), "x", "p")),
+                                Apply("subst-path", Seq(Apply("p-right", Seq("c")), "x", "p"))
+                              )),
+                              Ite(
+                                Apply("is-instance-of", Seq("c")),
+                                Apply("instance-of", Seq(
+                                  Apply("subst-path", Seq(Apply("instance", Seq("c")), "x", "p")),
+                                  Apply("cls", Seq("c"))
+                                )),
+                                Apply("instantiated-by", Seq(
+                                  Apply("subst-path", Seq(Apply("object", Seq("c")), "x", "p")),
+                                  Apply("clsname", Seq("c"))
+                                ))
+                              )
+                            )
                           ))
 
   /**
@@ -222,16 +228,14 @@ object Axioms {
                               SortedVar("p", "Path")
                             ),
                             Constraints,
-                            Match("cs",
-                              Seq(
-                                MatchCase(Pattern("nil"),
-                                  "nil"),
-                                MatchCase(Pattern("insert", Seq("hd", "tl")),
-                                  Apply("insert", Seq(
-                                    Apply("subst-constraint", Seq("hd", "x", "p")),
-                                    Apply("subst-constraints", Seq("tl", "x", "p"))
-                                  )))
-                              ))
+                            Ite(
+                              Apply("is-insert", Seq("cs")),
+                              Apply("insert", Seq(
+                                Apply("subst-constraint", Seq(Apply("head", Seq("cs")), "x", "p")),
+                                Apply("subst-constraints", Seq(Apply("tail", Seq("cs")), "x", "p"))
+                              )),
+                              "nil"
+                            )
                           ))
 
   /**
@@ -271,16 +275,12 @@ object Axioms {
                             Ite( // p1 == p2 ? x : ...
                               Eq("p1", "p2"),
                               Apply("var", Seq("x")),
-                              Match("p1",
-                                Seq(
-                                  MatchCase(Pattern("var", Seq("y")),
-                                    "p1"),
-                                  MatchCase(Pattern("pth", Seq("p", "f")),
-                                    Apply("pth", Seq(
-                                      Apply("generalize-path", Seq("p", "p2", "x")),
-                                      "f"))
-                                  )
-                                )
+                              Ite(
+                                Apply("is-var", Seq("p1")),
+                                "p1",
+                                Apply("pth", Seq(
+                                  Apply("generalize-path", Seq(Apply("obj", Seq("p1")), "p2", "x")),
+                                  Apply("field", Seq("p1"))))
                               )
                             )
                           ))
@@ -294,23 +294,24 @@ object Axioms {
                                     SortedVar("x", "String")
                                   ),
                                   "Constraint",
-                                  Match("c", Seq(
-                                    MatchCase(Pattern("path-eq", Seq("p1", "p2")),
-                                      Apply("path-eq", Seq(
-                                        Apply("generalize-path", Seq("p1", "p", "x")),
-                                        Apply("generalize-path", Seq("p2", "p", "x"))
-                                      ))),
-                                    MatchCase(Pattern("instance-of", Seq("p1", "cls1")),
+                                  Ite(
+                                    Apply("is-path-eq", Seq("c")),
+                                    Apply("path-eq", Seq(
+                                      Apply("generalize-path", Seq(Apply("p-left", Seq("c")), "p", "x")),
+                                      Apply("generalize-path", Seq(Apply("p-right", Seq("c")), "p", "x"))
+                                    )),
+                                    Ite(
+                                      Apply("is-instance-of", Seq("c")),
                                       Apply("instance-of", Seq(
-                                        Apply("generalize-path", Seq("p1", "p", "x")),
-                                        "cls1"
-                                      ))),
-                                    MatchCase(Pattern("instantiated-by", Seq("p1", "cls1")),
+                                        Apply("generalize-path", Seq(Apply("instance", Seq("c")), "p", "x")),
+                                        Apply("cls", Seq("c"))
+                                      )),
                                       Apply("instantiated-by", Seq(
-                                        Apply("generalize-path", Seq("p1", "p", "x")),
-                                        "cls1"
-                                      ))),
-                                  ))
+                                        Apply("generalize-path", Seq(Apply("object", Seq("c")), "p", "x")),
+                                        Apply("clsname", Seq("c"))
+                                      ))
+                                    )
+                                  )
                                 ))
 
   private val genConstraints = DefineFunRec(
@@ -322,14 +323,14 @@ object Axioms {
                                     SortedVar("x", "String")
                                   ),
                                   Constraints,
-                                  Match("cs", Seq(
-                                    MatchCase(Pattern("nil"), "nil"),
-                                    MatchCase(Pattern("insert", Seq("hd", "tl")),
-                                      Apply("insert", Seq(
-                                        Apply("generalize-constraint", Seq("hd", "p", "x")),
-                                        Apply("generalize-constraints", Seq("tl", "p", "x"))
-                                      )))
-                                  ))
+                                  Ite(
+                                    Apply("is-insert", Seq("cs")),
+                                    Apply("insert", Seq(
+                                      Apply("generalize-constraint", Seq(Apply("head", Seq("cs")), "p", "x")),
+                                      Apply("generalize-constraints", Seq(Apply("tail", Seq("cs")), "p", "x"))
+                                    )),
+                                    "nil"
+                                  )
                                 ))
 
   val genProp = DefineFun(
@@ -364,15 +365,14 @@ object Axioms {
                       SortedVar("cs2", Constraints)
                     ),
                     Bool,
-                    Match("cs2", Seq(
-                      MatchCase(Pattern("nil"),
-                        True()),
-                      MatchCase(Pattern("insert", Seq("hd", "tl")),
-                        And(
-                          Apply("entails", Seq("cs1", "hd")),
-                          Apply("Entails", Seq("cs1", "tl"))
-                        ))
-                    ))
+                    Ite(
+                      Apply("is-insert", Seq("cs2")),
+                      And(
+                        Apply("entails", Seq("cs1", Apply("head", Seq("cs2")))),
+                        Apply("Entails", Seq("cs1", Apply("tail", Seq("cs2"))))
+                      ),
+                      True()
+                    )
                   ))
 
   // C-Ident
