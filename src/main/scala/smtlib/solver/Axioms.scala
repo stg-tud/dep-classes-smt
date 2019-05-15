@@ -4,25 +4,18 @@ import smtlib.{SMTLibCommand, SMTLibScript}
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
 
-// TODO: Z3 version 4.8.3 - 64 bit produces errors for nil (in pattern matching). mismatching number of variables supplied to constructor
 // TODO: update calculus rules with path-exists property
 object Axioms {
-  // TODO: rename insert to cons for cvc4 as insert is predefined for sets
-  // TODO: also change axioms to use sets instead of lists for cvc4 (http://cvc4.cs.stanford.edu/wiki/Sets)
-  private val listDatatype = DeclareDatatype("List", ParDatatype(
-    Seq( // symbols
-      SimpleSymbol("T")
-    ),
-    Seq( // constructors
-      ConstructorDec("nil", Seq()),
-      ConstructorDec("insert", Seq(
-        SelectorDec("head", "T"),
-        SelectorDec("tail", Sorts("List", Seq("T")))
-      ))
-    )
-  ))
+  // TODO: change axioms to use sets instead of lists for cvc4 (http://cvc4.cs.stanford.edu/wiki/Sets)
+  private val Constraints = "CList" //Sorts("List", Seq("Constraint"))
 
-  private val Constraints = Sorts("List", Seq("Constraint"))
+  private val constraintListDatatype = DeclareDatatype("CList", ConstructorDatatype(Seq(
+    ConstructorDec("empty", Seq()),
+    ConstructorDec("construct", Seq(
+      SelectorDec("first", "Constraint"),
+      SelectorDec("rest", "CList")
+    ))
+  )))
 
   private val constraintsListDatatype = DeclareDatatype("CsList", ConstructorDatatype(Seq(
     ConstructorDec("nan", Seq()),
@@ -75,10 +68,10 @@ object Axioms {
                   ),
                   Constraints,
                   Ite(
-                    Apply("is-insert", Seq("l1")),
-                    Apply("insert", Seq(
-                      Apply("head", Seq("l1")),
-                      Apply("conc", Seq(Apply("tail", Seq("l1")), "l2"))
+                    Apply("is-construct", Seq("l1")),
+                    Apply("construct", Seq(
+                      Apply("first", Seq("l1")),
+                      Apply("conc", Seq(Apply("rest", Seq("l1")), "l2"))
                     )),
                     "l2"
                   )
@@ -94,11 +87,11 @@ object Axioms {
                 ),
                 Bool,
                 Ite(
-                  Apply("is-insert", Seq("cs")),
+                  Apply("is-construct", Seq("cs")),
                   Ite(
-                    Eq("c", Apply("head", Seq("cs"))),
+                    Eq("c", Apply("first", Seq("cs"))),
                     True(),
-                    Apply("elem", Seq("c", Apply("tail", Seq("cs"))))
+                    Apply("elem", Seq("c", Apply("rest", Seq("cs"))))
                   ),
                   False()
                 )
@@ -229,12 +222,12 @@ object Axioms {
                             ),
                             Constraints,
                             Ite(
-                              Apply("is-insert", Seq("cs")),
-                              Apply("insert", Seq(
-                                Apply("subst-constraint", Seq(Apply("head", Seq("cs")), "x", "p")),
-                                Apply("subst-constraints", Seq(Apply("tail", Seq("cs")), "x", "p"))
+                              Apply("is-construct", Seq("cs")),
+                              Apply("construct", Seq(
+                                Apply("subst-constraint", Seq(Apply("first", Seq("cs")), "x", "p")),
+                                Apply("subst-constraints", Seq(Apply("rest", Seq("cs")), "x", "p"))
                               )),
-                              "nil"
+                              "empty"
                             )
                           ))
 
@@ -324,12 +317,12 @@ object Axioms {
                                   ),
                                   Constraints,
                                   Ite(
-                                    Apply("is-insert", Seq("cs")),
-                                    Apply("insert", Seq(
-                                      Apply("generalize-constraint", Seq(Apply("head", Seq("cs")), "p", "x")),
-                                      Apply("generalize-constraints", Seq(Apply("tail", Seq("cs")), "p", "x"))
+                                    Apply("is-construct", Seq("cs")),
+                                    Apply("construct", Seq(
+                                      Apply("generalize-constraint", Seq(Apply("first", Seq("cs")), "p", "x")),
+                                      Apply("generalize-constraints", Seq(Apply("rest", Seq("cs")), "p", "x"))
                                     )),
-                                    "nil"
+                                    "empty"
                                   )
                                 ))
 
@@ -366,10 +359,10 @@ object Axioms {
                     ),
                     Bool,
                     Ite(
-                      Apply("is-insert", Seq("cs2")),
+                      Apply("is-construct", Seq("cs2")),
                       And(
-                        Apply("entails", Seq("cs1", Apply("head", Seq("cs2")))),
-                        Apply("Entails", Seq("cs1", Apply("tail", Seq("cs2"))))
+                        Apply("entails", Seq("cs1", Apply("first", Seq("cs2")))),
+                        Apply("Entails", Seq("cs1", Apply("rest", Seq("cs2"))))
                       ),
                       True()
                     )
@@ -378,7 +371,7 @@ object Axioms {
   // C-Ident
   private val identTerm = Forall(Seq(SortedVar("c", "Constraint")),
                             Apply("entails", Seq(
-                              Apply("insert", Seq("c", "nil")),
+                              Apply("construct", Seq("c", "empty")),
                               "c"
                             )))
   private val cIdent = Assert(Annotate(identTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Ident"))))
@@ -393,7 +386,7 @@ object Axioms {
   // C-Refl TODO: evaluate if (path-exists p) should be applied to this
   private val reflTerm = Forall(Seq(SortedVar("p", "Path")),
                             Apply("entails", Seq(
-                              "nil",
+                              "empty",
                               Apply("path-eq", Seq("p", "p"))
                             )))
   private val cRefl = Assert(Annotate(reflTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Refl"))))
@@ -434,7 +427,7 @@ object Axioms {
                     And(
                       Apply("entails", Seq("cs1", "c")),
                       Apply("entails", Seq(
-                        Apply("insert", Seq("c", "cs2")),
+                        Apply("construct", Seq("c", "cs2")),
                         "b"
                       ))),
                     Apply("entails", Seq(
@@ -795,7 +788,7 @@ object Axioms {
                             Implies(
                               Apply("entails", Seq("cs", "b")),
                               Apply("entails", Seq(
-                                Apply("insert", Seq("a", "cs")),
+                                Apply("construct", Seq("a", "cs")),
                                 "b"
                               ))
                             )
@@ -830,7 +823,7 @@ object Axioms {
                               ))
   private val cPerm = Assert(Annotate(permTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Perm"))))
 
-  private val datatypes = Seq(pathDatatype, constraintDatatype, constraintsListDatatype)
+  private val datatypes = Seq(pathDatatype, constraintDatatype, constraintListDatatype, constraintsListDatatype)
   private val funs = Seq(concat, elem)
   private val subst = Seq(substPath, substConstraint, substConstraints, substProp)
   private val gen = Seq(genPath, genConstraint, genConstraints, genProp)
@@ -844,7 +837,7 @@ object Axioms {
 
   def all: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ gen ++ baseProps ++ dccProps ++ structuralRules ++ dccClosureRules ++ dccRules ++ dccPreprocFuns)
   def allDirectClosure: SMTLibScript = SMTLibScript(datatypes ++ funs ++ subst ++ gen ++ baseProps ++ dccProps ++ structuralRules ++ dccDirectClosureRules ++ dccRules ++ dccPreprocFuns)
-  def allWithList: SMTLibScript = SMTLibScript(listDatatype +: all.commands)
+  //def allWithList: SMTLibScript = SMTLibScript(listDatatype +: all.commands)
 
   def entails(premise: Seq[Term], conclusion: Term): Term = Apply("entails", Seq(makeList(premise), conclusion))
   def entails(premise: Term, conclusion: Term): Term = Apply("entails", Seq(premise, conclusion))
@@ -959,7 +952,7 @@ object Axioms {
       ),
         Implies(
           And(
-            Not(Eq("ccs", "nan" /*IdentifierAs("nil", Sorts("List", Seq(Constraints)))*/)), // TODO: change to whatever undefined will be for lookup
+            Not(Eq("ccs", "nan")), // TODO: change to whatever undefined will be for lookup
             Apply("big-or-Entails", Seq("ccs", "cs"))
           ),
           entails("cs", "c")
@@ -974,18 +967,20 @@ object Axioms {
     * @param terms The elements of the list to generate
     * @return A Term representing a list of `terms`
     */
-  def makeList(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("nil"):Term)((x, xs) => Apply("insert", Seq(x, xs)))
+  def makeList(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("empty"):Term)((x, xs) => Apply("construct", Seq(x, xs)))
 //    terms match {
 //    case Nil => SimpleSymbol("nil")
 //    case t :: rst => Apply(SimpleSymbol("insert"), Seq(t, makeList(rst)))
 //  }
+
+  //TODO: remove
   /**
     * Generates a Term representing a List
     * @param terms The elements of the list to generate
     * @param sort The element sort of the list to generate
     * @return A Term representing a list of `terms`
     */
-  def makeList(terms: Seq[Term], sort: Sort): Term = terms.foldRight(IdentifierAs("nil", Sorts("List", Seq(sort))):Term)((x, xs) => Apply("insert", Seq(x, xs)))
+  //def makeList(terms: Seq[Term], sort: Sort): Term = terms.foldRight(IdentifierAs("nil", Sorts("List", Seq(sort))):Term)((x, xs) => Apply("insert", Seq(x, xs)))
 
   def makeCsList(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("nan"): Term)((x, xs) => Apply("cons", Seq(x, xs)))
 

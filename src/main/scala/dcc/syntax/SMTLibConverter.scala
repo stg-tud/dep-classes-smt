@@ -60,7 +60,7 @@ object SMTLibConverter {
 //  }
 
   private def makeProgramEntailmentLookupFunctionBody(entailments: List[(Constraint, List[List[Constraint]])], x: Term): Term = entailments match {
-    case Nil => SimpleSymbol("nan") //IdentifierAs(SimpleSymbol("nil"), Sorts(SimpleSymbol("List"), Seq(Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint")))))) // TODO: change to something else for no hit?
+    case Nil => SimpleSymbol("nan") // TODO: change to something else for no hit?
     case (c, ccs) :: rst =>
       Ite(
         Eq(x, convertConstraint(c)),
@@ -136,7 +136,7 @@ object SMTLibConverter {
     Forall(
       Seq(
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
-        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+        SortedVar(SimpleSymbol("cs"), SimpleSymbol("CList")) // Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint")))
       ),
       Implies(
         gen,
@@ -285,7 +285,7 @@ object SMTLibConverter {
 
   // TODO: remove. use Axioms.makeList (moved from here)
   private def makeList(terms: Seq[Term]): Term = terms match {
-    case Nil => SimpleSymbol("nil")
-    case t :: rst => Apply(SimpleSymbol("insert"), Seq(t, makeList(rst)))
+    case Nil => SimpleSymbol("empty")
+    case t :: rst => Apply(SimpleSymbol("construct"), Seq(t, makeList(rst)))
   }
 }

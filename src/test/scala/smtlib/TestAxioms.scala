@@ -224,7 +224,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val expectedSubstRule = Forall(
       Seq(
         SortedVar("a2", "Constraint"),
-        SortedVar("cs", Sorts("List", Seq("Constraint")))
+        SortedVar("cs", "CList")
       ),
       Let(
         Seq(
@@ -366,7 +366,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
   }
 
   test("C-Refl 1") {
-    // !(nil |- x.f = x.f)
+    // !(empty |- x.f = x.f)
     val assertion = Assert(Not(Axioms.entails(Seq(), Axioms.pathEq(Axioms.path("x.f"), Axioms.path("x.f")))))
 
     z3.addCommands(Seq(assertion, CheckSat, GetUnsatCore))
@@ -500,12 +500,12 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 //        ),
 //        Sorts("List", Seq("Constraint")),
 //        Match("l", Seq(
-//          MatchCase(Pattern("nil"),
+//          MatchCase(Pattern("empty"),
 //            "acc"),
-//          MatchCase(Pattern("insert", Seq("hd", "tl")),
+//          MatchCase(Pattern("construct", Seq("hd", "tl")),
 //            Apply("reverse", Seq(
 //              "tl",
-//              Apply("insert", Seq("hd", "acc"))
+//              Apply("construct", Seq("hd", "acc"))
 //            ))
 //          )
 //        ))
@@ -514,7 +514,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 //    val reverseTerm = Forall(Seq(SortedVar("c", "Constraint"), SortedVar("cs", Sorts("List", Seq("Constraint")))),
 //      Implies(
 //        Apply("entails", Seq(
-//          Apply("reverse", Seq("cs", "nil")),
+//          Apply("reverse", Seq("cs", "empty")),
 //          "c")),
 //        Apply("entails", Seq("cs", "c"))))
 //    val cReverse = Assert(Annotate(reverseTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Reverse"))))
@@ -792,17 +792,17 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(p, vars)
 
     val expectedSublist1x =
-      Apply("insert", Seq(
+      Apply("construct", Seq(
         Axioms.instanceOf(x, "Zero"),
-        Apply("insert", Seq(
+        Apply("construct", Seq(
           Axioms.pathEq(x, xf),
-          "nil"
+          "empty"
         ))))
 
     val expectedSublist2x =
-      Apply("insert", Seq(
+      Apply("construct", Seq(
         Axioms.instantiatedBy(x, "Zero"),
-        "nil"
+        "empty"
       ))
 
     val expectedx =
@@ -815,17 +815,17 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
       ))
 
     val expectedSublist1y =
-      Apply("insert", Seq(
+      Apply("construct", Seq(
         Axioms.instanceOf(y, "Zero"),
-        Apply("insert", Seq(
+        Apply("construct", Seq(
           Axioms.pathEq(y, yf),
-          "nil"
+          "empty"
         ))))
 
     val expectedSublist2y =
-      Apply("insert", Seq(
+      Apply("construct", Seq(
         Axioms.instantiatedBy(y, "Zero"),
-        "nil"
+        "empty"
       ))
 
     val expectedy =
@@ -891,7 +891,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
       Axioms.assertClass("Nat")
     )
 
-    val assertion = Assert(Not(Axioms.entails(Apply("insert", Seq(xZero, IdentifierAs("nil", Sorts("List", Seq("Constraint"))))), xNat)))
+    val assertion = Assert(Not(Axioms.entails(Apply("construct", Seq(xZero, "empty")), xNat)))  // IdentifierAs("empty", Sorts("List", Seq("Constraint")))
 
     z3.addCommands(preprocess ++ knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
     val (exit, out) = z3.execute()
@@ -955,7 +955,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val handwritten = Assert(Annotate(
         Forall(Seq(
           SortedVar("a2", "Constraint"),
-          SortedVar("cs", Sorts("List", Seq("Constraint")))
+          SortedVar("cs", "CList")
         ),
           Implies(
             Let(
@@ -1069,9 +1069,9 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 //      Eq(
 //        Apply("lookup-program-entailment", Seq(ypNat)),
 //        Apply("cons", Seq(
-//          Apply("insert", Seq(
+//          Apply("construct", Seq(
 //            Axioms.instanceOf(yp, "Zero"),
-//            "nil"
+//            "empty"
 //          )),
 //          "nan"
 //        ))
