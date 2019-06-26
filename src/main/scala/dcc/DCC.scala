@@ -204,9 +204,57 @@ class DCC(P: Program) {
     case e => false
   }
 
+  def typeass(context: List[Constraint], expr: Expression): List[Type] = expr match {
+    // T-Var
+    case x@Id(_) =>
+      //classes(P).foldRight(List(Type(Id('tError), List(PathEquivalence(x, Id('noValidClass)))))){
+      classes(P).foldRight(Nil: List[Type]){
+        // TODO: list of vars: add context vars?
+        case (cls, clss) if entails(context, InstanceOf(x, cls), List(x)) =>
+          val y = freshvar()
+          Type(y, List(PathEquivalence(y, x))) :: clss
+        case (_, clss) => clss
+      } match {
+        case Nil => List(Type(Id('tError), List(PathEquivalence(x, Id('noValidClass)))))
+        case l => l
+      }
+    // T-Field
+    case FieldAccess(e, f) =>
+      val types = typeass(context, e)
+      // TODO:
+      // for each type
+      //   check x.f :: C
+      //   find b
+      ???
+    // T-Call
+    case MethodCall(m, e) => ???
+    // T-New
+    case ObjectConstruction(cls, args) => ???
+  }
+
   // FV: free variables
   // wf P: well formed program
-  def typecheck(P: Program): Boolean = false
+  def typecheck(P: Program): Boolean = P match {
+    case decl => typecheck(decl) // TODO: add guard to check for other properties
+  }
+
+  def typecheck(D: Declaration): Boolean = D match {
+    // WF-CD
+    case ConstructorDeclaration(cls, x, a) => FV(a) == List(x)
+    // WF-RD
+    case ConstraintEntailment(x, a, InstanceOf(y, _)) if x == y => FV(a) == List(x) && a.contains(InstanceOf(x, Id('placeholder))) // TODO: a.contains(InstanceOf(x, _))
+    // WF-MS
+    case AbstractMethodDeclaration(m, x, a, Type(y, b)) => {
+      val vars = FV(b) // TODO: check if x != y for size check?
+      FV(a) == List(x) && vars.size == 2 && vars.contains(x) && vars.contains(y)
+    }
+    // WF-MI
+    case MethodImplementation(m, x, a, t@Type(y, b), e) => {
+      val vars = FV(b) // TODO: check if x != y for size check?
+      FV(a) == List(x) && vars.size == 2 && vars.contains(x) && vars.contains(y) &&
+      typeassignment1(a, e, t) // TODO: type as return value or not?
+    }
+  }
 
   private def classInProgram(Cls: Id, p: Program): Option[(Id, List[Constraint])] = p match {
     case Nil => None

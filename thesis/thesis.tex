@@ -23,6 +23,10 @@
 \usepackage{bussproofs} % for type rules
 \usepackage{todonotes}
 
+\usepackage{float} % for figures
+\floatstyle{boxed} 
+\restylefloat{figure}
+
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{tikz}
@@ -71,8 +75,12 @@
 
 % Content
 %%%%%%%%%
-%\input{include/introduction}
-%\input{include/preliminaries}
+\input{include/introduction}
+\input{include/preliminaries}
+\input{include/implementation}
+\input{include/learning}
+\input{include/case-study}
+\input{include/related-work}
 %\input{include/...}
 
 % Bibliography

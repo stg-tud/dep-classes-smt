@@ -974,12 +974,12 @@ object Axioms {
 //  }
 
   //TODO: remove
-  /**
-    * Generates a Term representing a List
-    * @param terms The elements of the list to generate
-    * @param sort The element sort of the list to generate
-    * @return A Term representing a list of `terms`
-    */
+//  /**
+//    * Generates a Term representing a List
+//    * @param terms The elements of the list to generate
+//    * @param sort The element sort of the list to generate
+//    * @return A Term representing a list of `terms`
+//    */
   //def makeList(terms: Seq[Term], sort: Sort): Term = terms.foldRight(IdentifierAs("nil", Sorts("List", Seq(sort))):Term)((x, xs) => Apply("insert", Seq(x, xs)))
 
   def makeCsList(terms: Seq[Term]): Term = terms.foldRight(SimpleSymbol("nan"): Term)((x, xs) => Apply("cons", Seq(x, xs)))

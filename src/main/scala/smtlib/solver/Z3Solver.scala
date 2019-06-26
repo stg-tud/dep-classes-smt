@@ -14,7 +14,7 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
   // commands to send to the solver
   var commands: Seq[SMTLibCommand] = Seq.empty
 
-  override def makeCall(timeout: Int = 1000): Seq[String] = Seq("z3", "-smt2", "trace=true", "proof=true", s"-t:${timeout.toString}", "-in")
+  private def makeCall(timeout: Int = 1000): Seq[String] = Seq("z3", "-smt2", "trace=true", "proof=true", s"-t:${timeout.toString}", "-in")
 //    var call = Seq("z3")
 //
 //    // use smtlib v2 as input language
@@ -34,6 +34,7 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
 //    call
 //  }
 
+  // TODO: move to trait, readd makeCall as override method
   override def execute(timeout: Int): (Int, Seq[String]) = {
     val call = makeCall(timeout)
     var output: Seq[String] = Seq.empty
@@ -51,6 +52,7 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
 //      })
 //      writer.close()
 //    })
+    // TODO: make object for io?
     val io = new ProcessIO(
       in => {
         val writer = new PrintWriter(in)

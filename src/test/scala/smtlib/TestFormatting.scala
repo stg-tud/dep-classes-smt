@@ -170,6 +170,23 @@ class TestFormatting extends FunSuite{
     assert(exists.format() == "(exists ((x (List Int)) (y (List Int))) (let ((h (head x)) (t (tail x))) (insert h (append t y))))")
   }
 
+  test("Term thesis format example") {
+    assert(var1.format() == "(x (List Int))")
+    assert(var2.format() == "(y (List Int))")
+    assert(binding1.format() == "(h (head x))")
+    assert(binding2.format() == "(t (tail x))")
+
+    val term = Forall(Seq(var1),
+      Exists(Seq(var2),
+        Let(
+          Seq(binding1, binding2),
+          Eq(
+            Apply(SimpleSymbol("insert"), Seq(SimpleSymbol("h"), SimpleSymbol("t"))),
+            SimpleSymbol("y")))))
+
+    assert(term.format() == "(forall ((x (List Int))) (exists ((y (List Int))) (let ((h (head x)) (t (tail x))) (= (insert h t) y))))")
+  }
+
   test("Term.Sugar") {
     assert(True().format() == "true")
     assert(False().format() == "false")

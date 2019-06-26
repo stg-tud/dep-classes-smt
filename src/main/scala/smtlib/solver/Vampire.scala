@@ -2,44 +2,22 @@ package smtlib.solver
 
 import java.io.PrintWriter
 
-import smtlib.syntax._
+import smtlib.syntax.{CheckSatResponse, GetModelResponse, Unknown}
 import smtlib.{SMTLibCommand, SMTLibScript}
 
 import scala.concurrent._
+import scala.io.Source
 import scala.sys.process._
 import ExecutionContext.Implicits.global
-import scala.io.Source
 
-class CVC4Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.empty, var debug: Boolean = false) extends SMTSolver {
+class Vampire(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.empty, var debug: Boolean = false) extends SMTSolver {
   var commands: Seq[SMTLibCommand] = Seq.empty
 
-  private def makeCall(timeout: Int = 1000): Seq[String] = { //Seq("cvc4", "-v", "-m", "--lang", "smt2.6.1")
-    var call = Seq("cvc4")
-
-    // use smtlib v2 as input language
-    call = call ++ Seq("--lang", "smt2.6.1")
-
-    // verbose output
-//    call = call :+ "-vv" // TODO: make verbosity parameterized or set it via smtlib option "(set-option :verbosity i)" where 0 <= i <= 2
-
-    // turn on model generation
-    call = call :+ "-m"
-
-    // enable incremental solving
-//    call = call :+ "-i" // not supported with produce proofs
-
-    // enable time limiting per query (give milliseconds)
-    call = call :+ s"--tlimit-per=$timeout"
-
-    // enable time limiting (give milliseconds)
-    call = call :+ s"--tlimit=${timeout*commands.size+100}"
-
-
-    call
-  }
+  // TODO: see sylvias type-pragmatics for reference
+  private def makeCall(): Seq[String] = Seq("vampire", "--input_syntax", "smtlib2")
 
   override def execute(timeout: Int): (Int, Seq[String]) = {
-    val call = makeCall(timeout)
+    val call = makeCall()
     var output: Seq[String] = Seq.empty
 
     val io = new ProcessIO(
@@ -57,7 +35,6 @@ class CVC4Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq
           if (debug) println(s"< $format")
           writer.println(format)
         })
-
         commands.foreach(command => {
           val format = command.format()
           if (debug) println(s"< $format")
@@ -88,43 +65,13 @@ class CVC4Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq
     }
   }
 
+  // TODO
   override def checksat(timeout: Int): CheckSatResponse = {
-    val pre = commands
-
-    addCommand(CheckSat)
-
-    val (status, output) = execute(timeout)
-
-    commands = pre
-
-    if (status == 0 && output.nonEmpty) {
-      parseSatResponse(output.last)
-    } else {
-      // In case of timeout
-      Unknown
-    }
+    Unknown
   }
 
-  override def getModel(timeout: Int): (CheckSatResponse, scala.Option[GetModelResponse]) = {
-    val pre = commands
-
-    addCommand(CheckSat)
-    addCommand(GetModel)
-
-    val (status, output) = execute(timeout)
-
-    commands = pre
-
-    if (status == 0 && output.nonEmpty) {
-      val sat = parseSatResponse(output.head)
-      val model = None // TODO: Some(modelparsing)
-
-      (sat, model)
-    } else {
-      // In case of timeout
-      (Unknown, None)
-    }
-  }
+  // TODO
+  override def getModel(timeout: Int): (CheckSatResponse, Option[GetModelResponse]) = (Unknown, None)
 
   override def addCommand(command: SMTLibCommand): Boolean = {
     commands = commands :+ command

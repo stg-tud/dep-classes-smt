@@ -1,0 +1,83 @@
+@TECHREPORT{smtlib,
+  author =	 {Clark Barrett and Pascal Fontaine and Cesare Tinelli},
+  title =	 {{The SMT-LIB Standard: Version 2.6}},
+  institution =	 {Department of Computer Science, The University of Iowa},
+  year =	 2017,
+  note =	 {Available at {\tt www.SMT-LIB.org}}
+}
+@Inbook{smt,
+author="Barrett, Clark
+and Tinelli, Cesare",
+editor="Clarke, Edmund M.
+and Henzinger, Thomas A.
+and Veith, Helmut
+and Bloem, Roderick",
+title="Satisfiability Modulo Theories",
+bookTitle="Handbook of Model Checking",
+year="2018",
+publisher="Springer International Publishing",
+address="Cham",
+pages="305--343",
+abstract="Satisfiability Modulo Theories (SMT) refers to the problem of determining whether a first-order formula is satisfiable with respect to some logical theory. Solvers based on SMT are used as back-end engines in model-checking applications such as bounded, interpolation-based, and predicate-abstraction-based model checking. After a brief illustration of these uses, we survey the predominant techniques for solving SMT problems with an emphasis on the lazy approach, in which a propositional satisfiability (SAT) solver is combined with one or more theory solvers. We discuss the architecture of a lazy SMT solver, give examples of theory solvers, show how to combine such solvers modularly, and mention several extensions of the lazy approach. We also briefly describe the eager approach in which the SMT problem is reduced to a SAT problem. Finally, we discuss how the basic framework for determining satisfiability can be extended with additional functionality such as producing models, proofs, unsatisfiable cores, and interpolants.",
+isbn="978-3-319-10575-8",
+doi="10.1007/978-3-319-10575-8_11",
+url="https://doi.org/10.1007/978-3-319-10575-8_11"
+}
+@InProceedings{z3,
+author="de Moura, Leonardo
+and Bj{\o}rner, Nikolaj",
+editor="Ramakrishnan, C. R.
+and Rehof, Jakob",
+title="Z3: An Efficient SMT Solver",
+booktitle="Tools and Algorithms for the Construction and Analysis of Systems",
+year="2008",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="337--340",
+abstract="Satisfiability Modulo Theories (SMT) problem is a decision problem for logical first order formulas with respect to combinations of background theories such as: arithmetic, bit-vectors, arrays, and uninterpreted functions. Z3 is a new and efficient SMT Solver freely available from Microsoft Research. It is used in various software verification and analysis applications.",
+isbn="978-3-540-78800-3"
+}
+@inproceedings{dc,
+ author = {Gasiunas, Vaidas and Mezini, Mira and Ostermann, Klaus},
+ title = {Dependent Classes},
+ booktitle = {Proceedings of the 22Nd Annual ACM SIGPLAN Conference on Object-oriented Programming Systems and Applications},
+ series = {OOPSLA '07},
+ year = {2007},
+ isbn = {978-1-59593-786-5},
+ location = {Montreal, Quebec, Canada},
+ pages = {133--152},
+ numpages = {20},
+ url = {http://doi.acm.org/10.1145/1297027.1297038},
+ doi = {10.1145/1297027.1297038},
+ acmid = {1297038},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {dependent classes, dynamic dispatch, multimethods, multiple dispatch, variability, virtual classes},
+}
+@phdthesis{vaidas:thesis,
+            year = {2010},
+          school = {Technische Universit{\"a}t},
+           title = {Advanced Object-Oriented Language Mechanisms for Variability Management},
+          author = {Vaidas Gasi{\=u}nas},
+         address = {Darmstadt},
+           month = {December},
+             url = {http://tuprints.ulb.tu-darmstadt.de/2353/},
+        abstract = {Classes are often too small units of modularization. In a lot of cases, a cohesive piece of functionality involves a group of related classes. Although mainstream languages provide class grouping mechanisms, such as packages and inner classes in Java, the typical object-oriented techniques, such as inheritance and subtype polymorphism, are not supported at the scope of such class groups. As a result, variations involving multiple classes must be encoded by variations of individual classes. Such encodings compromise type-safety and produce a considerable amount of glue code, which is often error-prone and not stable. The main statement of this thesis is that by making typical object-oriented techniques available at the scope of a group of classes we can provide a better support for managing variations at that scope. For the purpose of making inheritance and polymorphism available for a group of classes, we rely on the ideas of virtual classes and family polymorphism. A large-scale multiple inheritance is enabled by the propagating mixin composition. In this thesis we present the first implementation of these ideas for Java, and propose improvements to their semantics, namely a more intuitive linearization algorithm for propagating mixin composition and more flexible path-dependent types. We also introduce abstract virtual classes, which increase the advantages of family polymorphism by providing the possibility to describe interfaces for families of classes. Further, we propose a novel concept of dependent classes, which enhances virtual classes in analogous way like multimethods enhance single-dispatch. The multi-dispatch for classes not only enables dispatch of their functionality by multiple constructor parameters, but also generalizes family polymorphism with the possibility to express membership of an object in multiple families. The feasibility of the new concept is validated in two ways. First, we design a concrete language with dependent classes, called DepJ, and implement a type-checker and interpreter for it. Second, we formalize the features of dependent classes in vc{\^{ }}n and DC\_C calculi, and verify their soundness and decidability. The expected advantages of virtual classes and dependent classes for variation management are validated by a set of variation scenarios. We explore variations at the scope of individual objects, as well as at the scope of a group of objects. We also investigate interactions of different kinds of variations and analyze specific variation scenarios in the context of object-oriented frameworks. We identify the problems of implementing these scenarios using conventional object-oriented techniques, and show that these problems are resolved by implementations with the advanced techniques. In particular, we show that virtual classes and propagating-mixin composition provide the typical advantages of inheritance for managing variations of a group of objects. Dependent classes provide the typical advantages of multi-dispatch for managing variations of a class. They also generalize the advantages of virtual classes with the possibility to modularize variations of multiple overlapping groups of objects, and provide a better solution for modelling multiple variations of a group of objects.}
+}
+@inproceedings{virtual:classes,
+ author = {Ernst, Erik and Ostermann, Klaus and Cook, William R.},
+ title = {A Virtual Class Calculus},
+ booktitle = {Conference Record of the 33rd ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+ series = {POPL '06},
+ year = {2006},
+ isbn = {1-59593-027-2},
+ location = {Charleston, South Carolina, USA},
+ pages = {270--282},
+ numpages = {13},
+ url = {http://doi.acm.org/10.1145/1111037.1111062},
+ doi = {10.1145/1111037.1111062},
+ acmid = {1111062},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {soundness, virtual classes},
+}

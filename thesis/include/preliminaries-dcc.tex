@@ -1,0 +1,122 @@
+\subsection{$DC_C$ Calculus}
+The $vc^n$ calculus does not support abstract classes and methods.
+The $DC_C$ calculus\cite{vaidas:thesis} extends $vc^n$ with support for abstract classes and methods
+and symmetric method dispatch.
+$DC_C$ encodes dependent classes with a constraint system,
+which is used in both the static and dynamic semantics.
+The main relation of the $DC_C$ calculus is constraint entailment,
+replacing $vc^n$'s relations for type equivalence, subtyping, static and dynamic dispatch.
+
+The runtime structure is heap based,
+with explicit object identities
+and relationships between objects based on these identities.
+Expressions evaluate to an identifier pointing to an object in the heap.
+Heaps preserve object identity and enable shared references to objects.
+The heap provides a direct interpretation for equivalent paths,
+two paths are equivalent if they point to the same object at runtime.
+Heaps can be easily translated to a set of constraints describing its objects and their relations,
+which enables the usage of the constraint system for dynamic dispatch and expression typing.
+%- DCc extends $vc^n$ with abstract methods and classes and symmetric method dispatch
+%- gave up unification of methods and classes
+%- runtime structure: heap
+%- heap structure preserves object identity, enables shared references
+%- heap provides direct interpretation for equivalent paths
+%    - paths are equiv if they point to the same object at runtime
+%- heaps can be easily translated to a set of constraints describing its objects and their relations
+%    - enables using constraint system for dynamic dispatch and expression typing
+\subsubsection{Syntax}
+The syntax of $DC_C$ is given in figure 2.2.
+Types are lists of constraints to be satisfied by their instances.
+Types have the form $[x. \overline(a)]$, where $x$ is a bound variable
+and $\overline(a)$ is a list of constraints on $x$.
+An object belongs to a type if it fulfills its constraints.
+
+Constraints of the form $p \equiv q$ express that two paths $p$ and $q$ are equivalent
+and paths are considered to be equivalent if they refer to the same object at runtime.
+$p :: C$ specifies that path $p$ refers to an instance of class $C$.
+The stronger form $p.\textbf{cls} \equiv C$ denotes that
+path $p$ refers to an object instantiated by a constructor of class $C$,
+excluding indirect instances of $C$ inferred through inheritance rules.
+
+A Program $P$ consists of a list of declarations $D$.
+Possible declarations are constructor declarations,
+abstract method declarations, method implementations and constraint entailment rules.
+
+A Path expression can be a variable $x$ or navigation over fields starting from a variable e.g. $x.f$.
+
+Expressions can be variables, field access, object construction and method invocation.
+Field assignments are not supported since the calculus is functional.
+
+% begin syntax figure
+\begin{figure}
+\setlength{\grammarindent}{5em} % increase separation between LHS/RHS
+\begin{grammar}
+<Program>  ::= $\overline{Decl}$
+
+<Decl> ::= C(x. $\overline{Constr}$)
+       | $\forall$ x. $\overline{Constr}$ $\Rightarrow$ Constr
+       \alt m(x. $\overline{Constr}$): Type
+       | m(x. $\overline{Constr}$): Type := Expr
+
+<Type> ::= [x. $\overline{Constr}$]
+
+<Constr> ::= Path $\equiv$ Path
+           | Path :: C
+           | Path.\textbf{cls} $\equiv$ C
+
+<Path> ::= x
+       | <Path>.f
+
+<Expr> ::= x
+       | Expr.f
+       | \textbf{new} C($\overline{f}$ $\equiv$ $\overline{Expr}$)
+       | m(Expr)
+\end{grammar}
+
+\begin{align*}
+MType(m, x, y) &= \{ <\overline{a}, \overline{b}> | (m(x. \overline{a}): [y. \overline{b}]...) \in P \} \\
+MImpl(m, x) &= \{<\overline{a}, e> | (m(x. \overline{a}): [y. \overline{b}] := e) \in P \}
+\end{align*}
+
+x, y $\in$ variable names\\
+f $\in$ field names\\
+C $\in$ class names\\
+m $\in$ method names
+\caption{Syntax}
+\end{figure}
+% end syntax figure
+
+\subsubsection{Constraint System}
+% begin constraint system figure
+\begin{figure}
+TODO
+\caption{Constraint Entailment}
+\end{figure}
+% end constraint system figure
+
+\subsubsection{Operational Semantics}
+% begin Operational Semantics figure
+\begin{figure}
+TODO
+\caption{Operational semantics}
+\end{figure}
+% end Operational Semantics figure
+
+\subsubsection{Type Checking}
+% begin Type assignment figure
+\begin{figure}
+TODO
+\caption{Type assignment}
+\end{figure}
+% end Type assignment figure
+% begin Type Checking figure
+\begin{figure}
+TODO
+\caption{Type checking}
+\end{figure}
+% end Type Checking figure
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../thesis"
+%%% End: 

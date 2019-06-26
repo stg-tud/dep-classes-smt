@@ -35,14 +35,14 @@ trait SMTSolver {
   /** Flush the currently held commands. Axioms are kept. */
   def flush(): Unit
 
-  /**
-    * Fabricates a sequence of `String`s callable via `ProcessBuilder`
-    * in order to execute a SMTSolver.
-    * Assuming the SMTSolver is in the operating systems path.
-    * @param timeout The timeout per query in milliseconds.
-    * @return A callable sequence to execute the SMTSolver.
-    */
-  def makeCall(timeout: Int): Seq[String]
+//  /**
+//    * Fabricates a sequence of `String`s callable via `ProcessBuilder`
+//    * in order to execute a SMTSolver.
+//    * Assuming the SMTSolver is in the operating systems path.
+//    * @param timeout The timeout per query in milliseconds.
+//    * @return A callable sequence to execute the SMTSolver.
+//    */
+//  def makeCall(timeout: Int): Seq[String]
 
   /**
     * Executes the SMTSolver with the currently held commands.

@@ -1,0 +1,171 @@
+\chapter{Preliminaries}
+\section{Satisfiability modulo theories}
+Many problems like formal verification of hard- and software can be reduced
+to checking the satisfiability of a formula in some logic.
+Some of these problems can be easily described as a satisfiability ptroblem
+in propositional logic and solved using a propositional SAT solver.
+Other problems can be described more naturally in other classical logics like first-order logic.
+These logics support more epressive language features including
+non-boolean variables, function and predicate-symbols and quantifiers.
+
+The defining problem of Satisfiability modulo theories (SMT)
+is checking if a logical formula is satisfiable in the context of some background theory.
+Checking validity can be achieved using SMT if the formula is closed under logical negation,
+since a formula is valid in a theory if it's negation is not satisfiable in the theory.
+
+There is a trade-off between the expressiveness of a logic and
+the ability to automatically check satisfiability of formulae.
+A practical compromise is the usage of fragments of first-order logic,
+where the used fragment is restricted syntactically or semantically. % TODO: add examples for restrictions, see notes
+Such restrictions achieve the decidability of the satisfiability problem and
+allow the development of procedures that exploit propoerties of the fragment for efficiency.
+A SMT solver is any software implementing a procedure for determining satisfiability modulo a given theory.
+SMT solvers can be distinguished based on the underlying logic (first-order, modal, temportal, ...),
+the background theory, the accepted input formulas and the interface provided by the solver.\cite{smt,smtlib}
+Z3 is a SMT solver from Microsoft Research\cite{z3}, which is used in this thesis.
+%- SMT problem
+%    - is logical formular satisfiable given a logical theory
+%- propositional SAT solver
+%- some problems described more naturally in classical logics
+%    - such as fo or higher order logics
+%    - with more expressive features/languages
+%    - including non-Boolean variables, function and predicate-symbols (positive arity), quantifiers
+%- trade-off between expressivenes of logic and ability of automatically checking satisfiability of formulae
+%- practical compromise: use fragments of first-order logic
+%    - fragment is restricted
+%        - syntactically and/or
+%        - constraining the interpretation of certain function and predicate symbols
+%        - makes the satisfiability problem decidable
+%        - allows development of procedures that exploit properties of the fragment for efficiency
+
+\subsection{SMT-Lib}
+SMT-Lib is a international initiative with the goal to easing
+research and development in SMT.
+SMT-Lib's main motivation is the availability of common standards in SMT
+with the focused on
+\begin{itemize}
+    \item providing a standard description of background theories
+    \item develping a common in- and output language for SMT solvers
+    \item establishing a library of benchmarks for SMT solvers
+\end{itemize}
+to advance the state of the art in the field.
+The SMT-Lib Standard: Version 2.6\cite{smtlib} defines a language for
+writing terms and formulas in sorted first-order logic,
+specifying background theories,
+specifying logics,
+as well as a command language for interacting with SMT solvers.
+The SMT-Lib format is accepted by the majority of current SMT solvers.
+%- SMT-Lib international initiative aimed at facilitating research and developmentin SMT
+%- focused on
+%    - provide standard rigorous descriptions of background theories used in SMT
+%    - develop + promote common in/output language for SMT solvers
+%    - establish library of benchmarks for SMT solvers
+%- main motivation for SMT-Lib: availability of common standards
+%    and of library of benchmarks facilitate evulution and comparison for SMT systems
+%- advance the state of the art in the field
+%- SMT-Lib format is accepted by majority of current SMT solvers
+%- SMT-Lib Standard 2.6 defines
+%    - language for writing terms and formulas in sorted fo
+%    - language for specifying background theories
+%        - standard vocabulary of sort, function and predicate symbols
+%    - language for specifying logics
+%        - suitably restricted classes of formulas
+%    - command language for interacting with SMT solvers
+%        - asserting and retracting formulas
+%        - querying about satisfiability
+%        - examining models or unsat proofs
+%        - ...
+An example of the SMT-Lib format is shown in figure 2.1. %TODO: figure numbering style?
+The example is showing a formula in sorted first-order logic and the SMT-Lib representation of the formula.
+The formula is quantifying over two integer lists,
+using a let binding to extract the head and the tail from the first list
+to construct a identical list out of these bindings and checks for equality to the second list.
+The example is purely for demonstrating the syntax of the SMT-Lib format.
+
+\begin{figure}
+\begin{align*}
+&\forall x: List[Int]. \exists y: List[Int]. \\
+&\text{ let } h := head(x), t := tail(x)\\
+&\text{ in } insert(h, t) = y
+\end{align*}
+\begin{center}
+(forall ((x (List Int))) (exists ((y (List Int))) \\
+(let ((h (head x)) (t (tail x))) \\
+(= (insert h t) y))))
+\caption{SMT-Lib format example}
+\end{center}
+\end{figure}
+
+\section{Dependent Classes}
+Classes tend to be a too isolated unit to achieve modulatiry.
+Desired functionality involes groups of related classes.
+Grouping mechanisms exist, like namespaces in C++ and packages in Java,
+but these mechanisms do not cover inhertiance and polymorphism for expressing variability.
+Virtual classes\cite{virtual:classes, vaidas:thesis} provide a solution for inheritance and polymorphism.
+They introduce classes as a kind of object members and treat these as virtual methods,
+which allows for overriding in subclasses and are late-bound.
+Virtual classes are inner classes refinable in the subclasses of the enclosing class.
+%- classes not good enough for modularity
+%- functionality involves a group of related classes
+%- grouping mechanisms (namespaces, packages, ...)
+%- does not cover inheritance and polymorphism for expressing variability
+%- virtual classes \cite{virtual:classes}
+%    - provide solution for inheritance and polymorphism
+%    - introduce classes as "object members" and treat them like (virtual) methods
+%        - allow overriding in subclasses, late-bound
+%    - are inner classes that can be refined in the subclasses of the enclosing class
+
+The downside of Virtual Classes is that they must be nested within other classes.
+This requires to cluster classes depending on instances of some class together,
+introducing maybe unwanted coupling between these classes.
+Introducing a new class depending on the instances of an existing class
+requires the modifcation this class and its subclasses,
+limiting extensibility.
+This Nesting does also limit the expression of variability:
+The interface and the implementation of a virtual class can only depend
+on its single enclosing object.
+
+Dependent classes\cite{dc,vaidas:thesis} are generalization of virtual classes.
+The structure of a dependent class depends on arbitrarily many objects and
+dependency is expressed with class parameters.
+Dependent classes can be seen as a combination of virtual classes with multi-dispatch.
+
+The semantics of dependent classes involve non-trivial aspects,
+such as method calls and class instantiation expressions,
+which rely on dynamic dispatch over multiple parameters and the types of their fields.
+As well as the complexity of the type system,
+which integrates static dispatch with dependent typing.
+%- semantics of dependent classes
+%    - invole multiple non-trivial aspects
+%    - method calls and class instantiation expressions rely on dynamic dispatch over multiple parameters
+%        and the types of fields
+%    - most of the complexity in type system
+%        - integrates static dispatch with dependent typing
+
+The $vc^n$ calculus captures the core semantics of dependent classes,
+such as static and dynamic dispatch and dependent typing based on paths.
+The calculus ensures that the static dispatch and static normalization of terms in types
+define a proper abstraction over dynamic dispatch and evaluation of expressions.
+It is defined in an algorithmic style.
+This algorithmic style has the advantage of being constructive
+and through this outlining apossible implementation.
+The algorithmic nature of the calculus comes also with the disadvantage
+of being difficult to extend semantics with new expressive power,
+such as extending the calculus with support for abstract declarations.
+%- vcn calculus
+%    - captures core semantics of dependent classes,
+%        including static and dynamic dispatch and dependent typing based on paths
+%    - calculus defined to ensure static dispatch and static normalization of terms in types
+%        defines proper abstraction over dynamic dispatch and evaluation of expressions
+%    - defined in an algorithmic style
+%        - for ensuring decidability of type system through straightforward proof TODO: add this?
+%    - algorithmic style has advantage of being constructive -> outlines a possible implementation
+%    - at the same time disadvantage: difficult to extend semantics with new expressive power
+%        - difficult to extend calculus with support for abstract declarations
+
+\input{include/preliminaries-dcc}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../thesis"
+%%% End: 
