@@ -146,13 +146,50 @@ OC(x, o) &= (\instBy{x}{C}, \pathEq{x.\overline{f}}{\overline{x}}) &&\text{where
 HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \mapsto \overline{o}
 \end{align*}
 % R-New
-\begin{prooftree}
+\begin{prooftree} % TODO: vertical
 \AxiomC{$x \not \in dom(h)$}
 \AxiomC{o = \stdobj}
 \AxiomC{$\constr{C}{x}{\overline{b}} \in P$}
 \AxiomC{\entails{HC(h), OC(x, o)}{\overline{b}}}
 \RightLabel{R-New}
 \QuaternaryInfC{$\eval{h}{\newInst{C}{\overline{f}}{\overline{x}}}{h, x \mapsto o}{x}$}
+\end{prooftree}
+% R-Field
+\begin{prooftree}
+\AxiomC{$(\pathEq{x.f}{y}) \in HC(h)$}
+\RightLabel{R-Field}
+\UnaryInfC{\eval{h}{x.f}{h}{y}}
+\end{prooftree}
+% R-Call
+\begin{prooftree} % TODO: vertical
+\AxiomC{$S = \{ \pair{\overline{a}}{e}\ |\ \pair{\overline{a}}{e} \in MImpl(m, x) \land \entails{HC(h)}{\overline{a}} \}$}
+\AxiomC{$\pair{\overline{a}}{e} \in S$}
+\AxiomC{$\forall \pair{\overline{a'}}{e'} \in S.\ (e' \neq e) \longrightarrow (\entails{\overline{a'}}{\overline{a}}) \land \neg(\entails{\overline{a}}{\overline{a'}})$}
+\RightLabel{R-Call}
+\TrinaryInfC{\eval{h}{m(x)}{h}{e}}
+\end{prooftree}
+% RC-Field
+\begin{prooftree}
+\AxiomC{\eval{h}{e}{h'}{e'}}
+\RightLabel{RC-Field}
+\UnaryInfC{\eval{h}{e.f}{h'}{e'.f}}
+\end{prooftree}
+% RC-Call
+\begin{prooftree}
+\AxiomC{\eval{h}{e}{h'}{e'}}
+\RightLabel{RC-Call}
+\UnaryInfC{\eval{h}{m(e)}{j'}{m(e')}}
+\end{prooftree}
+% RC-New
+\begin{prooftree}
+\AxiomC{\eval{h}{e}{h'}{e'}}
+\RightLabel{RC-New}
+\UnaryInfC{ % TODO: too long for box
+  \eval
+    {h} % dirty usage of pathEq
+    {\textbf{new } C(\pathEq{\overline{f}}{\overline{x}}, \pathEq{f}{e}, \pathEq{\overline{f'}}{\overline{e'}})}
+    {h'}
+    {\textbf{new } C(\pathEq{\overline{f}}{\overline{x}}, \pathEq{f}{e}, \pathEq{\overline{f'}}{\overline{e'}})}}
 \end{prooftree}
 
 \begin{prooftree}

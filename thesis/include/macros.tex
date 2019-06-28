@@ -37,13 +37,14 @@
 % DCC expressions
 \newcommand{\newInstance}[3]{\ensuremath{\textbf{new } #1(#2 \equiv #3)}}
 \newcommand{\newInst}[3]{\newInstance{#1}{#2}{#3}}
-\newcommand{\eval}[4]{\langle #1;#2 \rangle \rightarrow \langle #3;#4 \rangle}
 
 % DCC misc
 \newcommand{\obj}[3]{\ensuremath{\langle #1; #2 \equiv #3 \rangle}}
 \newcommand*{\stdobj}{\ensuremath{\obj{C}{\overline{f}}{\overline{x}}}}
 \newcommand{\heap}[2]{\ensuremath{#1 \mapsto #2}}
 \newcommand*{\stdheap}{\ensuremath{\heap{\overline{x}}{\overline{o}}}}
+\newcommand{\pair}[2]{\ensuremath{\langle #1;#2 \rangle}}
+\newcommand{\eval}[4]{\ensuremath{\pair{#1}{#2} \rightarrow \pair{#3}{#4}}}
 
 %% misc
 %%%%%%%%%
