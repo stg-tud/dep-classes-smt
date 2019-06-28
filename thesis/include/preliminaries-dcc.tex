@@ -186,10 +186,14 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 \RightLabel{RC-New}
 \UnaryInfC{ % TODO: too long for box
   \eval
-    {h} % dirty usage of pathEq
-    {\textbf{new } C(\pathEq{\overline{f}}{\overline{x}}, \pathEq{f}{e}, \pathEq{\overline{f'}}{\overline{e'}})}
+    {h}
+    {\newInst{C}
+      {\overline{f} \equiv \overline{x}, f}
+      {e, \overline{f'} \equiv \overline{e'}}}
     {h'}
-    {\textbf{new } C(\pathEq{\overline{f}}{\overline{x}}, \pathEq{f}{e}, \pathEq{\overline{f'}}{\overline{e'}})}}
+    {\newInst{C}
+      {\overline{f} \equiv \overline{x}, f}
+      {e', \overline{f'} \equiv \overline{e'}}}}
 \end{prooftree}
 
 \begin{prooftree}
