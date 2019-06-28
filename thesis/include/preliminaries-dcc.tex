@@ -50,26 +50,27 @@ Field assignments are not supported since the calculus is functional.
 % begin syntax figure
 \begin{figure}
 \setlength{\grammarindent}{5em} % increase separation between LHS/RHS
+% TODO: use <> on construction at rhs?
 \begin{grammar}
 <Program>  ::= $\overline{Decl}$
 
-<Decl> ::= C(x. $\overline{Constr}$)
-       | $\forall$ x. $\overline{Constr}$ $\Rightarrow$ Constr
-       \alt m(x. $\overline{Constr}$): Type
-       | m(x. $\overline{Constr}$): Type := Expr
+<Decl> ::= \constr{C}{x}{\overline{Constr}} % C(x. $\overline{Constr}$)
+       | \progEnt{x}{\overline{Constr}}{Constr}
+       \alt \mDecl{m}{x}{\overline{Constr}}{Type} % m(x. $\overline{Constr}$): Type
+       | \mImpl{m}{x}{\overline{Constr}}{Type}{Expr} % m(x. $\overline{Constr}$): Type := Expr
 
 <Type> ::= [x. $\overline{Constr}$]
 
-<Constr> ::= Path $\equiv$ Path
-           | Path :: C
-           | Path.\textbf{cls} $\equiv$ C
+<Constr> ::= \pathEq{Path}{Path} % Path $\equiv$ Path
+           | \instOf{Path}{C} % Path :: C
+           | \instBy{Path}{C} % Path.\textbf{cls} $\equiv$ C
 
 <Path> ::= x
-       | <Path>.f
+       | Path.f
 
 <Expr> ::= x
        | Expr.f
-       | \textbf{new} C($\overline{f}$ $\equiv$ $\overline{Expr}$)
+       | \newInst{C}{\overline{f}}{\overline{Expr}} % \textbf{new} C($\overline{f}$ $\equiv$ $\overline{Expr}$)
        | m(Expr)
 \end{grammar}
 
@@ -123,7 +124,7 @@ m $\in$ method names
 \end{prooftree}
 % C-Prog
 \begin{prooftree}
-\AxiomC{$(\forall x. \overline{a} \Rightarrow a) \in P$} % TODO: add makros for dcc syntax
+\AxiomC{$(\progEnt{x}{\overline{a}}{a}) \in P$}
 \AxiomC{\entails{\overline{b}}{\overline{a}_{\sub{x}{p}}}}
 \RightLabel{(C-Prog)}
 \BinaryInfC{\entails{\overline{b}}{a_{\sub{x}{p}}}}
