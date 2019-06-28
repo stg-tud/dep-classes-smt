@@ -12,6 +12,17 @@
 \newtheorem{definition}[example]{Definition}
 %\newtheorem{definition}{Definition}[chapter]
 
+% DCC constraints
+\newcommand{\pathEq}[2]{\ensuremath{#1 \equiv #2}}
+\newcommand{\instanceOf}[2]{\ensuremath{#1 :: #2}}
+\newcommand{\instOf}[2]{\instanceOf{#1}{#2}}
+\newcommand{\instantiatedBy}[2]{\ensuremath{#1.\textbf{cls} \equiv #2}}
+\newcommand{\instBy}[2]{\instantiatedBy{#1}{#2}}
+\newcommand{\entails}[2]{\ensuremath{#1 \vdash #2}}
+\newcommand*{\ldblbrace}{\{\mskip-6.9mu\{} % left double brace
+\newcommand*{\rdblbrace}{\}\mskip-6.9mu\}} % right double brace
+\newcommand{\sub}[2]{\ensuremath{\ldblbrace #1 \mapsto #2 \rdblbrace}}
+
 %% misc
 %%%%%%%%%
 \DeclareMathOperator{\pto}{\rightharpoonup}     % partial function arrow

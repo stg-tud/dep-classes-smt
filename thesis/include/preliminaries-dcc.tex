@@ -89,7 +89,45 @@ m $\in$ method names
 \subsubsection{Constraint System}
 % begin constraint system figure
 \begin{figure}
-TODO
+% C-Ident
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Ident)}
+\UnaryInfC{\entails{a}{a}}
+\end{prooftree}
+% C-Refl
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Refl)}
+\UnaryInfC{\entails{\epsilon}{\pathEq{p}{p}}}
+\end{prooftree}
+% C-Class
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{\instantiatedBy{p}{C}}}
+\RightLabel{(C-Class)}
+\UnaryInfC{\entails{\overline{a}}{\instanceOf{p}{C}}}
+\end{prooftree}
+% C-Cut
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{c}}
+\AxiomC{\entails{\overline{a'}, c}{b}}
+\RightLabel{(C-Cut)}
+\BinaryInfC{\entails{\overline{a},\overline{a'}}{b}}
+\end{prooftree}
+% C-Subst
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{a_{\sub{x}{p}}}}
+\AxiomC{\entails{\overline{a}}{\pathEq{p'}{p}}}
+\RightLabel{(C-Subst)}
+\BinaryInfC{\entails{\overline{a}}{a_{\sub{x}{p'}}}}
+\end{prooftree}
+% C-Prog
+\begin{prooftree}
+\AxiomC{$(\forall x. \overline{a} \Rightarrow a) \in P$} % TODO: add makros for dcc syntax
+\AxiomC{\entails{\overline{b}}{\overline{a}_{\sub{x}{p}}}}
+\RightLabel{(C-Prog)}
+\BinaryInfC{\entails{\overline{b}}{a_{\sub{x}{p}}}}
+\end{prooftree}
 \caption{Constraint Entailment}
 \end{figure}
 % end constraint system figure
