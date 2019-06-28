@@ -75,8 +75,8 @@ Field assignments are not supported since the calculus is functional.
 \end{grammar}
 
 \begin{align*}
-MType(m, x, y) &= \{ <\overline{a}, \overline{b}> | (m(x. \overline{a}): [y. \overline{b}]...) \in P \} \\
-MImpl(m, x) &= \{<\overline{a}, e> | (m(x. \overline{a}): [y. \overline{b}] := e) \in P \}
+MType(m, x, y) &= \{ \langle\overline{a}, \overline{b}\rangle | (m(x. \overline{a}): [y. \overline{b}]...) \in P \} \\
+MImpl(m, x) &= \{\langle\overline{a}, e\rangle | (m(x. \overline{a}): [y. \overline{b}] := e) \in P \}
 \end{align*}
 
 x, y $\in$ variable names\\
@@ -136,7 +136,36 @@ m $\in$ method names
 \subsubsection{Operational Semantics}
 % begin Operational Semantics figure
 \begin{figure}
-TODO
+% TODO: both alignments side-by-side
+\begin{align*}
+o &::= \stdobj \\ % \langle C; \overline{f} \equiv \overline{x} \rangle \\
+h &::= \stdheap\ \ (x_i \text{ distinct})
+\end{align*}
+\begin{align*}
+OC(x, o) &= (\instBy{x}{C}, \pathEq{x.\overline{f}}{\overline{x}}) &&\text{where } o = \stdobj \\ % \langle C; \overline{f}\equiv\overline{x} \rangle \\
+HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \mapsto \overline{o}
+\end{align*}
+% R-New
+\begin{prooftree}
+\AxiomC{$x \not \in dom(h)$}
+\AxiomC{o = \stdobj}
+\AxiomC{$\constr{C}{x}{\overline{b}} \in P$}
+\AxiomC{\entails{HC(h), OC(x, o)}{\overline{b}}}
+\RightLabel{R-New}
+\QuaternaryInfC{$\eval{h}{\newInst{C}{\overline{f}}{\overline{x}}}{h, x \mapsto o}{x}$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$A\lor B$}
+\AxiomC{$[A]$}
+\noLine
+\UnaryInfC{$C$}
+\AxiomC{$[B]$}
+\noLine
+\UnaryInfC{$C$}
+\TrinaryInfC{$C$}
+\end{prooftree}
+
 \caption{Operational semantics}
 \end{figure}
 % end Operational Semantics figure
