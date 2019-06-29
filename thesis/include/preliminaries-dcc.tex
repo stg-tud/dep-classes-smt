@@ -145,14 +145,27 @@ h &::= \stdheap\ \ (x_i \text{ distinct})
 OC(x, o) &= (\instBy{x}{C}, \pathEq{x.\overline{f}}{\overline{x}}) &&\text{where } o = \stdobj \\ % \langle C; \overline{f}\equiv\overline{x} \rangle \\
 HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \mapsto \overline{o}
 \end{align*}
+% vertical inference rule example
+%\begin{prooftree}
+%\AxiomC{$A\lor B$}
+%\AxiomC{$[A]$}
+%\noLine
+%\UnaryInfC{$C$}
+%\AxiomC{$[B]$}
+%\noLine
+%\UnaryInfC{$C$}
+%\TrinaryInfC{$C$}
+%\end{prooftree}
 % R-New
-\begin{prooftree} % TODO: vertical
+\begin{prooftree}
 \AxiomC{$x \not \in dom(h)$}
-\AxiomC{o = \stdobj}
+\noLine
+\UnaryInfC{o = \stdobj}
 \AxiomC{$\constr{C}{x}{\overline{b}} \in P$}
-\AxiomC{\entails{HC(h), OC(x, o)}{\overline{b}}}
+\noLine
+\UnaryInfC{\entails{HC(h), OC(x, o)}{\overline{b}}}
 \RightLabel{R-New}
-\QuaternaryInfC{$\eval{h}{\newInst{C}{\overline{f}}{\overline{x}}}{h, x \mapsto o}{x}$}
+\BinaryInfC{$\eval{h}{\newInst{C}{\overline{f}}{\overline{x}}}{h, x \mapsto o}{x}$}
 \end{prooftree}
 % R-Field
 \begin{prooftree}
@@ -161,12 +174,13 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 \UnaryInfC{\eval{h}{x.f}{h}{y}}
 \end{prooftree}
 % R-Call
-\begin{prooftree} % TODO: vertical
+\begin{prooftree}
 \AxiomC{$S = \{ \pair{\overline{a}}{e}\ |\ \pair{\overline{a}}{e} \in MImpl(m, x) \land \entails{HC(h)}{\overline{a}} \}$}
 \AxiomC{$\pair{\overline{a}}{e} \in S$}
-\AxiomC{$\forall \pair{\overline{a'}}{e'} \in S.\ (e' \neq e) \longrightarrow (\entails{\overline{a'}}{\overline{a}}) \land \neg(\entails{\overline{a}}{\overline{a'}})$}
+\noLine
+\BinaryInfC{$\forall \pair{\overline{a'}}{e'} \in S.\ (e' \neq e) \longrightarrow (\entails{\overline{a'}}{\overline{a}}) \land \neg(\entails{\overline{a}}{\overline{a'}})$}
 \RightLabel{R-Call}
-\TrinaryInfC{\eval{h}{m(x)}{h}{e}}
+\UnaryInfC{\eval{h}{m(x)}{h}{e}}
 \end{prooftree}
 % RC-Field
 \begin{prooftree}
@@ -194,17 +208,6 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
     {\newInst{C}
       {\overline{f} \equiv \overline{x}, f}
       {e', \overline{f'} \equiv \overline{e'}}}}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{$A\lor B$}
-\AxiomC{$[A]$}
-\noLine
-\UnaryInfC{$C$}
-\AxiomC{$[B]$}
-\noLine
-\UnaryInfC{$C$}
-\TrinaryInfC{$C$}
 \end{prooftree}
 
 \caption{Operational semantics}
