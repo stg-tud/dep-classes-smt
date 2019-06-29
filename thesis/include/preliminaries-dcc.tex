@@ -266,7 +266,46 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 % end Type assignment figure
 % begin Type Checking figure
 \begin{figure}
-TODO
+% WF-CD
+\begin{prooftree}
+\AxiomC{\FVeq{\ovl{a}}{x}}
+\RightLabel{WF-CD}
+\UnaryInfC{\wf{\constr{C}{x}{\ovl{a}}}}
+\end{prooftree}
+% WF-MS
+\begin{prooftree}
+\AxiomC{\FVeq{\ovl{a}}{x}}
+\AxiomC{\FVeq{\ovl{b}}{x,y}}
+\RightLabel{WF-MS}
+\BinaryInfC{\wf{(\mDecl{m}{x}{\ovl{a}}{[y.\ \ovl{b}]})}}
+\end{prooftree}
+% WF-RD
+\begin{prooftree}
+\AxiomC{\FVeq{\ovl{a}}{x}}
+\AxiomC{$\instOf{x}{C'} \in \ovl{a}$}
+\RightLabel{WF-RD}
+\BinaryInfC{\wf{(\progEnt{x}{\ovl{a}}{\instOf{x}{C}})}}
+\end{prooftree}
+% WF-MI
+\begin{prooftree}
+\AxiomC{\FVeq{\ovl{a}}{x}}
+\AxiomC{\FVeq{\ovl{b}}{x,y}}
+\AxiomC{\typeass{\ovl{a}}{e}{[y.\ \ovl{b}]}}
+\RightLabel{WF-Mi}
+\TrinaryInfC{\wf{(\mImpl{m}{x}{\ovl{a}}{[y.\ \ovl{b}]}{e})}}
+\end{prooftree}
+% WF-Prog
+\begin{prooftree}
+\AxiomC{$\forall D \in P.\ \wf{D}$}
+\noLine
+\UnaryInfC{$\forall m.\ \forall \pair{\ovl{a}}{\ovl{b}}, \pair{\ovl{a'}}{\ovl{b'}} \in MType(m, x, y).\ \ovl{b} = \ovl{b'}$}
+\noLine
+\UnaryInfC{$\forall m.\ unique(m)$}
+\noLine
+\UnaryInfC{$\forall m.\ \forall \pair{\ovl{a}}{\ovl{b}} \in MType(m, x, y).\ complete(m, [x.\ \ovl{a}])$}
+\RightLabel{WF-Prog}
+\UnaryInfC{\wf{P}}
+\end{prooftree}
 \caption{Type checking}
 \end{figure}
 % end Type Checking figure
