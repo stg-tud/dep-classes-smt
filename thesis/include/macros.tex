@@ -45,6 +45,10 @@
 \newcommand*{\stdheap}{\ensuremath{\heap{\overline{x}}{\overline{o}}}}
 \newcommand{\pair}[2]{\ensuremath{\langle #1;#2 \rangle}}
 \newcommand{\eval}[4]{\ensuremath{\pair{#1}{#2} \rightarrow \pair{#3}{#4}}}
+\newcommand{\typeass}[3]{\ensuremath{#1 \vdash #2 : #3}}
+\newcommand{\wf}[1]{\ensuremath{\text{wf }#1}}
+\newcommand{\FV}[1]{\ensuremath{FV(#1)}}
+\newcommand{\FVass}[2]{\ensuremath{\FV{#1} = \{#2\}}}
 
 %% misc
 %%%%%%%%%
@@ -53,6 +57,7 @@
 \DeclareMathOperator{\proj}{\upharpoonright}    % projection
 \DeclareMathOperator{\fst}{\pi_1}               % A x B → A
 \DeclareMathOperator{\snd}{\pi_2}               % A x B → B
+\newcommand{\ovl}[1]{\ensuremath{\overline{#1}}}
 
 %%% Local Variables: 
 %%% mode: latex

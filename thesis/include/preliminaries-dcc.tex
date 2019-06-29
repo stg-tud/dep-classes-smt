@@ -158,12 +158,12 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 %\end{prooftree}
 % R-New
 \begin{prooftree}
-\AxiomC{$x \not \in dom(h)$}
+\AxiomC{$x \not \in dom(h)$} % 1
 \noLine
-\UnaryInfC{o = \stdobj}
-\AxiomC{$\constr{C}{x}{\overline{b}} \in P$}
+\UnaryInfC{$\constr{C}{x}{\overline{b}} \in P$} % 3
+\AxiomC{o = \stdobj} % 2
 \noLine
-\UnaryInfC{\entails{HC(h), OC(x, o)}{\overline{b}}}
+\UnaryInfC{\entails{HC(h), OC(x, o)}{\overline{b}}} % 4
 \RightLabel{R-New}
 \BinaryInfC{$\eval{h}{\newInst{C}{\overline{f}}{\overline{x}}}{h, x \mapsto o}{x}$}
 \end{prooftree}
@@ -217,7 +217,50 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 \subsubsection{Type Checking}
 % begin Type assignment figure
 \begin{figure}
-TODO
+% T-Field
+\begin{prooftree}
+\AxiomC{\typeass{\ovl{c}}{e}{[x.\ \ovl{a}]}}
+\AxiomC{\entails{\ovl{c},\ovl{a}}{\instOf{x.f}{C}}}
+\AxiomC{\entails{\ovl{c}, \ovl{a}, \pathEq{x.f}{y}}{\ovl{b}}}
+\AxiomC{$x \not \in \FV{\ovl{b}}$}
+\RightLabel{T-Field}
+\QuaternaryInfC{\typeass{\overline{c}}{e.f}{[y.\ \overline{b}]}}
+\end{prooftree}
+% T-Var
+\begin{prooftree}
+\AxiomC{\entails{\ovl{c}}{\instOf{x}{C}}}
+\RightLabel{T-Var}
+\UnaryInfC{\typeass{\ovl{c}}{x}{[y.\ \pathEq{y}{x}]}}
+\end{prooftree}
+% T-Call
+\begin{prooftree}
+\AxiomC{\entails{\ovl{c}, \ovl{a}}{\ovl{a'}}} % 3
+\AxiomC{\typeass{\ovl{c}}{e}{[x.\ \ovl{a}]}} % 1
+\AxiomC{$\pair{\ovl{a'}}{\ovl{b}} \in MType(m, x, y)$} % 2
+\noLine
+\BinaryInfC{\entails{\ovl{c},\ovl{a},\ovl{b}}{\ovl{b'}}} % 4
+\AxiomC{$x \not \in \FV{\ovl{b'}}$} % 5
+\RightLabel{T-Call}
+\TrinaryInfC{\typeass{\ovl{c}}{m(e)}{[y.\ \ovl{b'}]}}
+\end{prooftree}
+% T-New
+\begin{prooftree}
+\AxiomC{$\forall i.\ \typeass{\ovl{c}}{e_i}{[x_i.\ \ovl{a_i}]}$} % 1
+\noLine
+\UnaryInfC{$\ovl{b} = (\instBy{x}{C}), \bigcup_i \ovl{a_i}_{\sub{x_i}{x.f_i}}$} % 3
+\AxiomC{$\constr{C}{x}{\ovl{b'}} \in P$} % 2
+\noLine
+\UnaryInfC{\entails{\ovl{c},\ovl{b}}{\ovl{b'}}} % 4
+\RightLabel{T-New}
+\BinaryInfC{\typeass{\ovl{c}}{\newInst{C}{\ovl{f}}{\ovl{e}}}{[x.\ \ovl{b}]}}
+\end{prooftree}
+% T-Sub
+\begin{prooftree}
+\AxiomC{\typeass{\ovl{c}}{e}{[x.\ \ovl{a'}]}}
+\AxiomC{\entails{\ovl{c},\ovl{a'}}{\ovl{a}}}
+\RightLabel{T-Sub}
+\BinaryInfC{\typeass{\ovl{c}}{e}{[x.\ \ovl{a}]}}
+\end{prooftree}
 \caption{Type assignment}
 \end{figure}
 % end Type assignment figure
