@@ -184,6 +184,39 @@ The function $OC$ converts an object %definition TODO: keep this?
 to a list of constraints on a given variable.
 A Constraint $a$ is satisfied by a heap $h$, if $\entails{HC(h)}{a}$ holds.
 
+Evaluation in $DC_C$ is a process of moving information from the expression to the heap
+and the values of $DC_C$ are references in the heap.
+Evaluation must yield a heap and a variable.
+During reduction only new objects can be added to the heap,
+while existing objects remain unchanged.
+
+The congruence rules RC-Field, RC-New and RC-Call propagate reduction to subexpressions.
+The computation rules R-Field, R-New and R-Call can only be applied
+when all subexpressions of an expression are reduced to normal forms (variables).
+
+Field access $x.f$ is reducible to the value of $x.f$ in the heap
+if the heap constraints include \pathEq{x.f}{y},
+where $y$ represents the value retrieved from the heap.
+$x$ does not have field $f$ in the heap if the constraint is not included.
+
+Object construction \newInst{C}{\ovl{f}}{\ovl{x}} is reduced
+to a fresh variable $x$ representing the new object,
+as well as extending the heap with an object \obj{C}{\ovl{f}}{\ovl{x}} of class $C$ with
+\ovl{x} as the values of the fields of that object.
+It is checked that a constructor of class $C$ exists in the program
+and that the constraints specified by the constructor
+are satisfied by the new object \entails{HC(h),OC(x,o)}{\ovl{b}}.
+
+A method call $m(x)$ is reduced to the body of the most specific applicable method implementation.
+Applicability of the implementations and selection of the most specific one
+are determined by constraints.
+A method declaration is applicable if its arguments are entailed by the context.
+Set $S$ contains the applicable methods.
+A method declaration with argument constraints \ovl{a}
+is more specific than a method declaration with argument constraints \ovl{a'}
+if \entails{\ovl{a'}}{\ovl{a}},
+but not the other way around $\neg\entails{\ovl{a}}{\ovl{a'}}$.
+
 % begin Operational Semantics figure
 \begin{figure}
 % TODO: both alignments side-by-side
