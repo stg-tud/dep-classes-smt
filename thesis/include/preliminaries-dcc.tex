@@ -88,6 +88,41 @@ m $\in$ method names
 % end syntax figure
 
 \subsubsection{Constraint System}
+The constraint system is given in the style of the sequent calculus
+and the rules for the constraint system are specified in figure 2.2.
+The sequent \entails{\ovl{a}}{a} is interpreted as constraint entailment:
+constraints \ovl{a} entail constraint $a$.
+The constraints on the left-hand side are refered to as the context
+and the constraint on the right-hand side as the constraint entailed by the context.
+The notion \entails{\ovl{a}}{\ovl{b}} is used differently than in the sequent calculus.
+For $DC_C$ it is used as a shortcut for a list of judgements
+\entails{\ovl{a}}{b_i} for each $b_i \in \ovl{b}$,
+meaning that all $b_i$ are entailed by \ovl{a}.
+
+Rules C-Ident and C-Cut are standard rules of the sequent calculus,
+the remainder of the rules are specific to the programming language.
+The standard structural rules of the sequent calculus allowing
+permutation, weakening and constraction of the context
+are implicitly assumed to be specified.
+
+The properties of path equivalence are specified with rules C-Refl and C-Subst.
+Rule C-Refl establishes reflexifity of path equivalence.
+Rule C-Subst specifies that paths can be substituted with equivalent paths
+at any position of any other constraint.
+Other typical rules of equivalence as symmetry and transitivity can be
+derived from these rules.
+
+Rule C-Class specifies that a direct instance of a class
+is an instance of that class, describing that
+\instOf{p}{C} is a weaker relationship than \instBy{p}{C}.
+
+With Rule C-Prog it is possible to specify new axioms for the constraint system in programs.
+This is used to express inheritance declarations between dependent classes:
+the constraint at the right-hand side of the implication must be \instOf{x}{p},
+where $x$ is the bound variable of the rule.
+The rule is restricted to avoid an undecidable constraint system
+and the restrictions are specified by the well-formedness rule WF-RD in figure 2.6.
+
 % begin constraint system figure
 \begin{figure}
 % C-Ident
