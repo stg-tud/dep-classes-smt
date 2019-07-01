@@ -201,10 +201,10 @@ $x$ does not have field $f$ in the heap if the constraint is not included.
 
 Object construction \newInst{C}{\ovl{f}}{\ovl{x}} is reduced
 to a fresh variable $x$ representing the new object,
-as well as extending the heap with an object \obj{C}{\ovl{f}}{\ovl{x}} of class $C$ with
+as well as extending the heap with an object $o = \obj{C}{\ovl{f}}{\ovl{x}}$ of class $C$ with
 \ovl{x} as the values of the fields of that object.
 It is checked that a constructor of class $C$ exists in the program
-and that the constraints specified by the constructor
+and that the constraints \ovl{b} specified by the constructor
 are satisfied by the new object \entails{HC(h),OC(x,o)}{\ovl{b}}.
 
 A method call $m(x)$ is reduced to the body of the most specific applicable method implementation.
