@@ -299,6 +299,21 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 % end Operational Semantics figure
 
 \subsubsection{Type Checking}
+Type assignment for expressions is defined in figure \ref{fig:dcc-typeass}.
+The context of type assignment is a list of constraints prvoding information
+about variables that occur in the expression.
+The typing rules ensure that all free variables of the assigned types
+appear in the context.
+An expression type \type{x}{\ovl{a}} is a collection of constraints \ovl{a}
+with a bound variable $x$
+that will hold for all possible values of the expression at runtime,
+if the runtime environment satisfies the constraints of the context.
+The relation does not guarantee unique type assignments,
+since it is possible to have different constraints satisfied by an expression.
+The rule T-Sub explicitly allows weakening the type of an expression.
+
+Typechecking a program is defined in figure \ref{fig:dcc-wf}.
+
 % begin Type assignment figure
 \begin{figure}
 % T-Field
