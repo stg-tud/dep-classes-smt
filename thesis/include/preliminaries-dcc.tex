@@ -28,7 +28,7 @@ which enables the usage of the constraint system for dynamic dispatch and expres
 \subsubsection{Syntax}
 The syntax of $DC_C$ is given in figure \ref{fig:dcc-syntax}.
 Types are lists of constraints to be satisfied by their instances.
-Types have the form $[x. \overline(a)]$, where $x$ is a bound variable
+Types have the form \type{x}{\ovl{a}}, where $x$ is a bound variable
 and $\overline(a)$ is a list of constraints on $x$.
 An object belongs to a type if it fulfills its constraints.
 
@@ -60,7 +60,7 @@ Field assignments are not supported since the calculus is functional.
        \alt \mDecl{m}{x}{\overline{Constr}}{Type} % m(x. $\overline{Constr}$): Type
        | \mImpl{m}{x}{\overline{Constr}}{Type}{Expr} % m(x. $\overline{Constr}$): Type := Expr
 
-<Type> ::= [x. $\overline{Constr}$]
+<Type> ::= \type{x}{\ovl{Constr}}
 
 <Constr> ::= \pathEq{Path}{Path} % Path $\equiv$ Path
            | \instOf{Path}{C} % Path :: C
@@ -76,8 +76,8 @@ Field assignments are not supported since the calculus is functional.
 \end{grammar}
 
 \begin{align*}
-MType(m, x, y) &= \{ \langle\overline{a}, \overline{b}\rangle | (m(x. \overline{a}): [y. \overline{b}]...) \in P \} \\
-MImpl(m, x) &= \{\langle\overline{a}, e\rangle | (m(x. \overline{a}): [y. \overline{b}] := e) \in P \}
+MType(m, x, y) &= \{ \langle\overline{a}, \overline{b}\rangle | (m(x. \overline{a}): \type{y}{\ovl{b}}...) \in P \} \\ % TODO: ...? (also in thesis)
+MImpl(m, x) &= \{\langle\overline{a}, e\rangle | (m(x. \overline{a}): \type{y}{\ovl{b}} := e) \in P \}
 \end{align*}
 
 x, y $\in$ variable names\\
@@ -318,47 +318,47 @@ Typechecking a program is defined in figure \ref{fig:dcc-wf}.
 \begin{figure}
 % T-Field
 \begin{prooftree}
-\AxiomC{\typeass{\ovl{c}}{e}{[x.\ \ovl{a}]}}
+\AxiomC{\typeass{\ovl{c}}{e}{\type{x}{\ovl{a}}}}
 \AxiomC{\entails{\ovl{c},\ovl{a}}{\instOf{x.f}{C}}}
 \AxiomC{\entails{\ovl{c}, \ovl{a}, \pathEq{x.f}{y}}{\ovl{b}}}
 \AxiomC{$x \not \in \FV{\ovl{b}}$}
 \RightLabel{T-Field}
-\QuaternaryInfC{\typeass{\overline{c}}{e.f}{[y.\ \overline{b}]}}
+\QuaternaryInfC{\typeass{\overline{c}}{e.f}{\type{y}{\ovl{b}}}}
 \end{prooftree}
 % T-Var
 \begin{prooftree}
 \AxiomC{\entails{\ovl{c}}{\instOf{x}{C}}}
 \RightLabel{T-Var}
-\UnaryInfC{\typeass{\ovl{c}}{x}{[y.\ \pathEq{y}{x}]}}
+\UnaryInfC{\typeass{\ovl{c}}{x}{\type{y}{\pathEq{y}{x}}}}
 \end{prooftree}
 % T-Call
 \begin{prooftree}
 \AxiomC{\entails{\ovl{c}, \ovl{a}}{\ovl{a'}}} % 3
-\AxiomC{\typeass{\ovl{c}}{e}{[x.\ \ovl{a}]}} % 1
+\AxiomC{\typeass{\ovl{c}}{e}{\type{x}{\ovl{a}}}} % 1
 \AxiomC{$\pair{\ovl{a'}}{\ovl{b}} \in MType(m, x, y)$} % 2
 \noLine
 \BinaryInfC{\entails{\ovl{c},\ovl{a},\ovl{b}}{\ovl{b'}}} % 4
 \AxiomC{$x \not \in \FV{\ovl{b'}}$} % 5
 \RightLabel{T-Call}
-\TrinaryInfC{\typeass{\ovl{c}}{m(e)}{[y.\ \ovl{b'}]}}
+\TrinaryInfC{\typeass{\ovl{c}}{m(e)}{\type{y}{\ovl{b'}}}}
 \end{prooftree}
 % T-New
 \begin{prooftree}
-\AxiomC{$\forall i.\ \typeass{\ovl{c}}{e_i}{[x_i.\ \ovl{a_i}]}$} % 1
+\AxiomC{$\forall i.\ \typeass{\ovl{c}}{e_i}{\type{x_i}{\ovl{a_i}}}$} % 1
 \noLine
 \UnaryInfC{$\ovl{b} = (\instBy{x}{C}), \bigcup_i \ovl{a_i}_{\sub{x_i}{x.f_i}}$} % 3
 \AxiomC{$\constr{C}{x}{\ovl{b'}} \in P$} % 2
 \noLine
 \UnaryInfC{\entails{\ovl{c},\ovl{b}}{\ovl{b'}}} % 4
 \RightLabel{T-New}
-\BinaryInfC{\typeass{\ovl{c}}{\newInst{C}{\ovl{f}}{\ovl{e}}}{[x.\ \ovl{b}]}}
+\BinaryInfC{\typeass{\ovl{c}}{\newInst{C}{\ovl{f}}{\ovl{e}}}{\type{x}{\ovl{b}}}}
 \end{prooftree}
 % T-Sub
 \begin{prooftree}
-\AxiomC{\typeass{\ovl{c}}{e}{[x.\ \ovl{a'}]}}
+\AxiomC{\typeass{\ovl{c}}{e}{\type{x}{\ovl{a'}}}}
 \AxiomC{\entails{\ovl{c},\ovl{a'}}{\ovl{a}}}
 \RightLabel{T-Sub}
-\BinaryInfC{\typeass{\ovl{c}}{e}{[x.\ \ovl{a}]}}
+\BinaryInfC{\typeass{\ovl{c}}{e}{\type{x}{\ovl{a}}}}
 \end{prooftree}
 \caption{Type assignment}
 \label{fig:dcc-typeass}
@@ -377,7 +377,7 @@ Typechecking a program is defined in figure \ref{fig:dcc-wf}.
 \AxiomC{\FVeq{\ovl{a}}{x}}
 \AxiomC{\FVeq{\ovl{b}}{x,y}}
 \RightLabel{WF-MS}
-\BinaryInfC{\wf{(\mDecl{m}{x}{\ovl{a}}{[y.\ \ovl{b}]})}}
+\BinaryInfC{\wf{(\mDecl{m}{x}{\ovl{a}}{\type{y}{\ovl{b}}})}}
 \end{prooftree}
 % WF-RD
 \begin{prooftree}
@@ -390,9 +390,9 @@ Typechecking a program is defined in figure \ref{fig:dcc-wf}.
 \begin{prooftree}
 \AxiomC{\FVeq{\ovl{a}}{x}}
 \AxiomC{\FVeq{\ovl{b}}{x,y}}
-\AxiomC{\typeass{\ovl{a}}{e}{[y.\ \ovl{b}]}}
+\AxiomC{\typeass{\ovl{a}}{e}{\type{y}{\ovl{b}}}}
 \RightLabel{WF-Mi}
-\TrinaryInfC{\wf{(\mImpl{m}{x}{\ovl{a}}{[y.\ \ovl{b}]}{e})}}
+\TrinaryInfC{\wf{(\mImpl{m}{x}{\ovl{a}}{\type{y}{\ovl{b}}}{e})}}
 \end{prooftree}
 % WF-Prog
 \begin{prooftree}
@@ -402,7 +402,7 @@ Typechecking a program is defined in figure \ref{fig:dcc-wf}.
 \noLine
 \UnaryInfC{$\forall m.\ unique(m)$}
 \noLine
-\UnaryInfC{$\forall m.\ \forall \pair{\ovl{a}}{\ovl{b}} \in MType(m, x, y).\ complete(m, [x.\ \ovl{a}])$}
+\UnaryInfC{$\forall m.\ \forall \pair{\ovl{a}}{\ovl{b}} \in MType(m, x, y).\ complete(m, \type{x}{\ovl{a}})$}
 \RightLabel{WF-Prog}
 \UnaryInfC{\wf{P}}
 \end{prooftree}
