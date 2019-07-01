@@ -1,4 +1,5 @@
 \subsection{$DC_C$ Calculus}
+\label{sec:dcc}
 The $vc^n$ calculus does not support abstract classes and methods.
 The $DC_C$ calculus\cite{vaidas:thesis} extends $vc^n$ with support for abstract classes and methods
 and symmetric method dispatch.
@@ -171,7 +172,17 @@ and the restrictions are specified by the well-formedness rule WF-RD in figure \
 % end constraint system figure
 
 \subsubsection{Operational Semantics}
-The operational semantics are given in figure \ref{fig:dcc-opsemantics}.
+The operational semantics is given in figure \ref{fig:dcc-opsemantics}.
+It is defined as a small-step reduction relation of a heap and an expression.
+A heap is a list of mappings from variables to objects.
+Each object is specified by a class and a list of the values of its fields,
+which are again references in the heap.
+For heaps $h$ and variables $x$, $h(x)$ denotes the object of $h$ referenced by $x$.
+
+The function $HC$ takes a heap and gives the constraints satisfied by all variables of the heap.
+The function $OC$ converts an object %definition TODO: keep this?
+to a list of constraints on a given variable.
+A Constraint $a$ is satisfied by a heap $h$, if $\entails{HC(h)}{a}$ holds.
 
 % begin Operational Semantics figure
 \begin{figure}
