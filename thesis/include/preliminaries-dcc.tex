@@ -25,7 +25,7 @@ which enables the usage of the constraint system for dynamic dispatch and expres
 %- heaps can be easily translated to a set of constraints describing its objects and their relations
 %    - enables using constraint system for dynamic dispatch and expression typing
 \subsubsection{Syntax}
-The syntax of $DC_C$ is given in figure 2.2.
+The syntax of $DC_C$ is given in figure \ref{fig:dcc-syntax}.
 Types are lists of constraints to be satisfied by their instances.
 Types have the form $[x. \overline(a)]$, where $x$ is a bound variable
 and $\overline(a)$ is a list of constraints on $x$.
@@ -84,12 +84,13 @@ f $\in$ field names\\
 C $\in$ class names\\
 m $\in$ method names
 \caption{Syntax}
+\label{fig:dcc-syntax}
 \end{figure}
 % end syntax figure
 
 \subsubsection{Constraint System}
 The constraint system is given in the style of the sequent calculus
-and the rules for the constraint system are specified in figure 2.2.
+and the rules for the constraint system are specified in figure \ref{fig:dcc-constraint-entailment}.
 The sequent \entails{\ovl{a}}{a} is interpreted as constraint entailment:
 constraints \ovl{a} entail constraint $a$.
 The constraints on the left-hand side are refered to as the context
@@ -121,7 +122,7 @@ This is used to express inheritance declarations between dependent classes:
 the constraint at the right-hand side of the implication must be \instOf{x}{p},
 where $x$ is the bound variable of the rule.
 The rule is restricted to avoid an undecidable constraint system
-and the restrictions are specified by the well-formedness rule WF-RD in figure 2.6.
+and the restrictions are specified by the well-formedness rule WF-RD in figure \ref{fig:dcc-wf}.
 
 % begin constraint system figure
 \begin{figure}
@@ -165,10 +166,13 @@ and the restrictions are specified by the well-formedness rule WF-RD in figure 2
 \BinaryInfC{\entails{\overline{b}}{a_{\sub{x}{p}}}}
 \end{prooftree}
 \caption{Constraint Entailment}
+\label{fig:dcc-constraint-entailment}
 \end{figure}
 % end constraint system figure
 
 \subsubsection{Operational Semantics}
+The operational semantics are given in figure \ref{fig:dcc-opsemantics}.
+
 % begin Operational Semantics figure
 \begin{figure}
 % TODO: both alignments side-by-side
@@ -246,6 +250,7 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 \end{prooftree}
 
 \caption{Operational semantics}
+\label{fig:dcc-opsemantics}
 \end{figure}
 % end Operational Semantics figure
 
@@ -297,6 +302,7 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 \BinaryInfC{\typeass{\ovl{c}}{e}{[x.\ \ovl{a}]}}
 \end{prooftree}
 \caption{Type assignment}
+\label{fig:dcc-typeass}
 \end{figure}
 % end Type assignment figure
 % begin Type Checking figure
@@ -342,6 +348,7 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 \UnaryInfC{\wf{P}}
 \end{prooftree}
 \caption{Type checking}
+\label{fig:dcc-wf}
 \end{figure}
 % end Type Checking figure
 
