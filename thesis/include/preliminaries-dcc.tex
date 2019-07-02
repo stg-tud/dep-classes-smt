@@ -312,6 +312,42 @@ The relation does not guarantee unique type assignments,
 since it is possible to have different constraints satisfied by an expression.
 The rule T-Sub explicitly allows weakening the type of an expression.
 
+The type of a variable $x$ is specified by rule T-Var.
+The type of $x$ asserts equivalence of the bound variable $y$ of the type to $x$.
+Further it is checked that \instOf{x}{C} can be satisfied by the context for some class $C$.
+
+Rule T-Field specifies type assignment of a field access $e.f$.
+The constraints of such a field access are the constraints on $x.f$
+entailed by the type of $e$
+, where $x$ is the bound variable of the type of $e$.
+The elimination of $x$ is done via the usage of
+constraints free of $x$ entailed by the type of $e$ and \pathEq{y}{x.f},
+where $y$ is used as the bound variable of the type of $e.f$
+and \entails{\ovl{c},\ovl{a}}{\instOf{x.f}{C}} is used to check if
+field $f$ of $e$ is available at runtime.
+
+Rule T-Call specifies type assignment of method calls $m(e)$.
+The type of $e$ is \type{x}{\ovl{a}}.
+The rule checks the existence of a declaration of $m$,
+whose parameter constrains are \ovl{a'} and return type constraints are \ovl{b}.
+It is checked with \entails{\ovl{c},\ovl{a}}{\ovl{a'}} if
+the parameter constraints are entailed by the type of $e$.
+The type constraints of $m(e)$ are derived from the declared return type of $m$
+and the type of the argument $e$.
+The argument variable $x$ is eliminated, because it does not appear in the context
+and the entailed constraints of the return types and the argument types
+free of $x$ are taken.
+
+Rule T-New specifies type assignment of object constructions.
+The type \type{x}{\ovl{b}} of an object construction \newInst{C}{\ovl{f}}{\ovl{e}}
+consists of a constraint stating that $C$ is the class of the object and the constraints of its fields.
+The field constraints are taken from the types of the expressions $e_i$
+assigned to the fields $f_i$.
+Additionally \entails{\ovl{c},\ovl{b}}{\ovl{b'}} checkes
+that the new object satisfies the constraints of at least
+one constructor \constr{C}{x}{\ovl{b'}} of class $C$.
+\\
+\\
 Typechecking a program is defined in figure \ref{fig:dcc-wf}.
 
 % begin Type assignment figure
