@@ -4,10 +4,10 @@
 \label{sec:smt}
 Many problems like formal verification of hard- and software can be reduced
 to checking the satisfiability of a formula in some logic.
-Some of these problems can be easily described as a satisfiability ptroblem
+Some of these problems can be easily described as a satisfiability problem
 in propositional logic and solved using a propositional SAT solver.
 Other problems can be described more naturally in other classical logics like first-order logic.
-These logics support more epressive language features including
+These logics support more expressive language features including
 non-boolean variables, function and predicate-symbols and quantifiers.
 
 The defining problem of Satisfiability modulo theories (SMT)
@@ -20,9 +20,9 @@ the ability to automatically check satisfiability of formulae.
 A practical compromise is the usage of fragments of first-order logic,
 where the used fragment is restricted syntactically or semantically. % TODO: add examples for restrictions, see notes
 Such restrictions achieve the decidability of the satisfiability problem and
-allow the development of procedures that exploit propoerties of the fragment for efficiency.
+allow the development of procedures that exploit properties of the fragment for efficiency.
 A SMT solver is any software implementing a procedure for determining satisfiability modulo a given theory.
-SMT solvers can be distinguished based on the underlying logic (first-order, modal, temportal, ...),
+SMT solvers can be distinguished based on the underlying logic (first-order, modal, temporal, ...),
 the background theory, the accepted input formulas and the interface provided by the solver.\cite{smt,smtlib}
 Z3 is a SMT solver from Microsoft Research\cite{z3}, which is used in this thesis.
 %- SMT problem
@@ -47,7 +47,7 @@ SMT-Lib's main motivation is the availability of common standards in SMT
 with the focused on
 \begin{itemize}
     \item providing a standard description of background theories
-    \item develping a common in- and output language for SMT solvers
+    \item developing a common in- and output language for SMT solvers
     \item establishing a library of benchmarks for SMT solvers
 \end{itemize}
 to advance the state of the art in the field.
@@ -100,10 +100,10 @@ The example is purely for demonstrating the syntax of the SMT-Lib format.
 
 \section{Dependent Classes}
 \label{sec:depcls}
-Classes tend to be a too isolated unit to achieve modulatiry.
-Desired functionality involes groups of related classes.
+Classes tend to be a too isolated unit to achieve modularity.
+Desired functionality involves groups of related classes.
 Grouping mechanisms exist, like namespaces in C++ and packages in Java,
-but these mechanisms do not cover inhertiance and polymorphism for expressing variability.
+but these mechanisms do not cover inheritance and polymorphism for expressing variability.
 Virtual classes\cite{virtual:classes, vaidas:thesis} provide a solution for inheritance and polymorphism.
 They introduce classes as a kind of object members and treat these as virtual methods,
 which allows for overriding in subclasses and are late-bound.
@@ -122,7 +122,7 @@ The downside of Virtual Classes is that they must be nested within other classes
 This requires to cluster classes depending on instances of some class together,
 introducing maybe unwanted coupling between these classes.
 Introducing a new class depending on the instances of an existing class
-requires the modifcation this class and its subclasses,
+requires the modification this class and its subclasses,
 limiting extensibility.
 This Nesting does also limit the expression of variability:
 The interface and the implementation of a virtual class can only depend
@@ -151,7 +151,7 @@ The calculus ensures that the static dispatch and static normalization of terms 
 define a proper abstraction over dynamic dispatch and evaluation of expressions.
 It is defined in an algorithmic style.
 This algorithmic style has the advantage of being constructive
-and through this outlining apossible implementation.
+and through this outlining a possible implementation.
 The algorithmic nature of the calculus comes also with the disadvantage
 of being difficult to extend semantics with new expressive power,
 such as extending the calculus with support for abstract declarations.

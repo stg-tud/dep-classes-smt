@@ -94,21 +94,21 @@ The constraint system is given in the style of the sequent calculus
 and the rules for the constraint system are specified in figure \ref{fig:dcc-constraint-entailment}.
 The sequent \entails{\ovl{a}}{a} is interpreted as constraint entailment:
 constraints \ovl{a} entail constraint $a$.
-The constraints on the left-hand side are refered to as the context
+The constraints on the left-hand side are referred to as the context
 and the constraint on the right-hand side as the constraint entailed by the context.
 The notion \entails{\ovl{a}}{\ovl{b}} is used differently than in the sequent calculus.
-For $DC_C$ it is used as a shortcut for a list of judgements
+For $DC_C$ it is used as a shortcut for a list of judgments
 \entails{\ovl{a}}{b_i} for each $b_i \in \ovl{b}$,
 meaning that all $b_i$ are entailed by \ovl{a}.
 
 Rules C-Ident and C-Cut are standard rules of the sequent calculus,
 the remainder of the rules are specific to the programming language.
 The standard structural rules of the sequent calculus allowing
-permutation, weakening and constraction of the context
+permutation, weakening and contraction of the context
 are implicitly assumed to be specified.
 
 The properties of path equivalence are specified with rules C-Refl and C-Subst.
-Rule C-Refl establishes reflexifity of path equivalence.
+Rule C-Refl establishes reflexivity of path equivalence.
 Rule C-Subst specifies that paths can be substituted with equivalent paths
 at any position of any other constraint.
 Other typical rules of equivalence as symmetry and transitivity can be
@@ -300,7 +300,7 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 
 \subsubsection{Type Checking}
 Type assignment for expressions is defined in figure \ref{fig:dcc-typeass}.
-The context of type assignment is a list of constraints prvoding information
+The context of type assignment is a list of constraints providing information
 about variables that occur in the expression.
 The typing rules ensure that all free variables of the assigned types
 appear in the context.
@@ -343,7 +343,7 @@ The type \type{x}{\ovl{b}} of an object construction \newInst{C}{\ovl{f}}{\ovl{e
 consists of a constraint stating that $C$ is the class of the object and the constraints of its fields.
 The field constraints are taken from the types of the expressions $e_i$
 assigned to the fields $f_i$.
-Additionally \entails{\ovl{c},\ovl{b}}{\ovl{b'}} checkes
+Additionally \entails{\ovl{c},\ovl{b}}{\ovl{b'}} checks
 that the new object satisfies the constraints of at least
 one constructor \constr{C}{x}{\ovl{b'}} of class $C$.
 \\
@@ -443,7 +443,7 @@ these properties cannot be directly implemented.
 \AxiomC{\FVeq{\ovl{a}}{x}}
 \AxiomC{\FVeq{\ovl{b}}{x,y}}
 \AxiomC{\typeass{\ovl{a}}{e}{\type{y}{\ovl{b}}}}
-\RightLabel{WF-Mi}
+\RightLabel{WF-MI}
 \TrinaryInfC{\wf{(\mImpl{m}{x}{\ovl{a}}{\type{y}{\ovl{b}}}{e})}}
 \end{prooftree}
 % WF-Prog
