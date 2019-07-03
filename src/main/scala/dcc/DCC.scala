@@ -270,7 +270,22 @@ class DCC(P: Program) {
 
       types
     // T-New
-    case ObjectConstruction(cls, args) => ???
+    case ObjectConstruction(cls, args) =>
+      val argsTypes: List[List[Type]] = args.map(arg => typeass(context, arg._2))
+      // TODO: generate all possible combinations of argsTypes?
+
+      val x = freshvar()
+
+      // TODO: process args constraints
+      val b: List[Constraint] = InstantiatedBy(x, cls) :: Nil
+
+      val (x1, b1) = classInProgram(cls, P).getOrElse(return List(Type(Id('tError), List(PathEquivalence(cls, Id('classNotFound))))))
+
+      // TODO: collect types for args combinations
+      if (entails(context ++ b, b1, List(x, x1)))
+        List(Type(x, b))
+      else
+        Nil
   }
 
   // FV: free variables
