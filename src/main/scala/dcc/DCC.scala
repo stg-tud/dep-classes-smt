@@ -225,9 +225,50 @@ class DCC(P: Program) {
       // for each type
       //   check x.f :: C
       //   find b
-      ???
+      var ts: List[Type] = Nil
+      types.foreach{
+        case Type(x, a) =>
+          val y = freshvar()
+
+          // instance of relations for type constraints
+          val instOfs = classes(P).foldRight(Nil: List[Constraint]){ // TODO: list of vars in entails, like T-Var case
+            case (cls, clss) if entails(context ++ a, InstanceOf(FieldPath(x, f), cls), List(x)) =>
+              val c = InstanceOf(y, f)
+              ts = Type(y, List(c)) :: ts
+              c :: clss
+            case (_, clss) => clss
+          }
+
+          // other possible constraints for typing (excluding already used instance of relations)
+//          val b: List[Constraint] = ??? // TODO: generate possible constraints
+//
+//          if (entails(PathEquivalence(FieldPath(x, f), y) :: context ++ a, b, Nil))
+//            ts = Type(y, b) :: ts
+      }
+      ts
     // T-Call
-    case MethodCall(m, e) => ???
+    case MethodCall(m, e) =>
+      val eTypes = typeass(context, e)
+      val y = freshvar()
+
+      var types: List[Type] = Nil
+
+      // for all possible argument types
+      for (Type(x, a) <- eTypes) {
+        // for all method declarations
+        for ((a1, b) <- mTypeSubst(m, x, y)) {
+          val entailsArgs = entails(context ++ a, a1, List(x))
+
+          val b1 = (a1 ++ b).foldRight(Nil: List[Constraint]){ // TODO: take both a1 and b or only b? (strong feeling that it should only be b)
+            case (c, cs) if !FV(c).contains(x) => c :: cs
+            case (_, cs) => cs }
+
+          if (entailsArgs && entails(context ++ a ++ b, b1, List(y)))
+            types = Type(y, b1) :: types
+        }
+      }
+
+      types
     // T-New
     case ObjectConstruction(cls, args) => ???
   }
@@ -298,6 +339,14 @@ class DCC(P: Program) {
       case (AbstractMethodDeclaration(`m`, `x`, a, Type(`y`, b)), rst) => (a, b) :: rst
       case (_, rst) => rst}
 
+  // MType where the bound variables of declared argument and return type constraints are
+  // substituted with given variables
+  private def mTypeSubst(m: Id, x: Id, y: Id): List[(List[Constraint], List[Constraint])] =
+    P.foldRight(Nil: List[(List[Constraint], List[Constraint])]){
+      case (AbstractMethodDeclaration(`m`, xDecl, a, Type(yDecl, b)), rst) =>
+        (substitute(xDecl, x, a), substitute(yDecl, y, b)) :: rst
+      case (_, rst) => rst}
+
   // Method Implementation
   private def mImpl(m: Id, x: Id): List[(List[Constraint], Expression)] =
     P.foldRight(Nil: List[(List[Constraint], Expression)]){
@@ -314,7 +363,9 @@ class DCC(P: Program) {
   private def freshvar(): Id = Id(freshname())
 
   // add .distinct to remove duplicates
-  private def FV(constraints: List[Constraint]): List[Id] = constraints.flatMap{
+  private def FV(constraints: List[Constraint]): List[Id] = constraints.flatMap(FV)
+
+  private def FV(constraint: Constraint): List[Id] = constraint match {
     case PathEquivalence(p, q) => varname(p) :: varname(q) :: Nil
     case InstanceOf(p, _) => varname(p) :: Nil
     case InstantiatedBy(p, _) => varname(p) :: Nil
