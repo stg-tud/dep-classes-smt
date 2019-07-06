@@ -2,7 +2,7 @@
 % - spell check
 % - let others proof-read
 
-\documentclass[a4paper,twoside]{report}
+\documentclass[a4paper,twoside,openright]{report}
 
 %% packages
 %%%%%%%%%%%
@@ -32,6 +32,7 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning,chains,shapes.arrows,shapes.geometric,fit,calc,arrows,decorations.pathmorphing}
 
+\usepackage{adjustbox}
 \usepackage{cleveref}
 
 %% options
@@ -78,6 +79,7 @@
 % Content
 %%%%%%%%%
 \input{include/introduction}
+\clearpage
 \input{include/preliminaries}
 \input{include/implementation}
 \input{include/learning}
