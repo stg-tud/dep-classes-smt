@@ -6,7 +6,7 @@ Many problems like formal verification of hard- and software can be reduced
 to checking the satisfiability of a formula in some logic.
 Some of these problems can be easily described as a satisfiability problem
 in propositional logic and solved using a propositional SAT solver.
-Other problems can be described more naturally in other classical logics like first-order logic.
+Other problems can be described more naturally in other traditional logics like first-order logic.
 These logics support more expressive language features including
 non-boolean variables, function and predicate-symbols and quantifiers.
 
@@ -23,8 +23,8 @@ Such restrictions achieve the decidability of the satisfiability problem and
 allow the development of procedures that exploit properties of the fragment for efficiency.
 A SMT solver is any software implementing a procedure for determining satisfiability modulo a given theory.
 SMT solvers can be distinguished based on the underlying logic (first-order, modal, temporal, ...),
-the background theory, the accepted input formulas and the interface provided by the solver.\cite{smt,smtlib}
-Z3 is a SMT solver from Microsoft Research\cite{z3}, which is used in this thesis.
+the background theory, the accepted input formulas and the interface provided by the solver.~\cite{smt,smtlib}
+Z3 is a SMT solver from Microsoft Research~\cite{z3}, which is used in this thesis.
 %- SMT problem
 %    - is logical formular satisfiable given a logical theory
 %- propositional SAT solver
@@ -46,12 +46,12 @@ research and development in SMT.
 SMT-Lib's main motivation is the availability of common standards in SMT
 with the focused on
 \begin{itemize}
-    \item providing a standard description of background theories
-    \item developing a common in- and output language for SMT solvers
-    \item establishing a library of benchmarks for SMT solvers
+    \item providing a standard description of background theories.
+    \item developing a common in- and output language for SMT solvers.
+    \item establishing a library of benchmarks for SMT solvers.
 \end{itemize}
 to advance the state of the art in the field.
-The SMT-Lib Standard: Version 2.6\cite{smtlib} defines a language for
+The SMT-Lib Standard: Version 2.6~\cite{smtlib} defines a language for
 writing terms and formulas in sorted first-order logic,
 specifying background theories,
 specifying logics,
@@ -94,7 +94,7 @@ The example is purely for demonstrating the syntax of the SMT-Lib format.
 (forall ((x (List Int))) (exists ((y (List Int))) \\
 (let ((h (head x)) (t (tail x))) \\
 (= (insert h t) y))))
-\caption{SMT-Lib format example}
+\caption{SMT-Lib Format Example}
 \end{center}
 \end{figure}
 
@@ -104,7 +104,7 @@ Classes tend to be a too isolated unit to achieve modularity.
 Desired functionality involves groups of related classes.
 Grouping mechanisms exist, like namespaces in C++ and packages in Java,
 but these mechanisms do not cover inheritance and polymorphism for expressing variability.
-Virtual classes\cite{virtual:classes, vaidas:thesis} provide a solution for inheritance and polymorphism.
+Virtual classes~\cite{virtual:classes, vaidas:thesis} provide a solution for inheritance and polymorphism.
 They introduce classes as a kind of object members and treat these as virtual methods,
 which allows for overriding in subclasses and are late-bound.
 Virtual classes are inner classes refinable in the subclasses of the enclosing class.
@@ -128,7 +128,7 @@ This Nesting does also limit the expression of variability:
 The interface and the implementation of a virtual class can only depend
 on its single enclosing object.
 
-Dependent classes\cite{dc,vaidas:thesis} are generalization of virtual classes.
+Dependent classes~\cite{dc,vaidas:thesis} are generalization of virtual classes.
 The structure of a dependent class depends on arbitrarily many objects and
 dependency is expressed with class parameters.
 Dependent classes can be seen as a combination of virtual classes with multi-dispatch.
