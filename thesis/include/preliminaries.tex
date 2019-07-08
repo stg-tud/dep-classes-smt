@@ -2,6 +2,11 @@
 \label{chp:pre}
 \section{Satisfiability modulo theories}
 \label{sec:smt}
+This section shortly introduces Satisfiability modulo theories and the SMT problem.
+This section is a write-up of the Handbook of Model Checking~\cite{smt},
+the technical report on The SMT-Lib Standard~\cite{smtlib}
+and Z3: An efficient smt solver~\cite{z3}.
+\\ \\
 Many problems like formal verification of hard- and software can be reduced
 to checking the satisfiability of a formula in some logic.
 Some of these problems can be easily described as a satisfiability problem
@@ -21,9 +26,10 @@ A practical compromise is the usage of fragments of first-order logic,
 where the used fragment is restricted syntactically or semantically. % TODO: add examples for restrictions, see notes
 Such restrictions achieve the decidability of the satisfiability problem and
 allow the development of procedures that exploit properties of the fragment for efficiency.
+\\
 A SMT solver is any software implementing a procedure for determining satisfiability modulo a given theory.
 SMT solvers can be distinguished based on the underlying logic (first-order, modal, temporal, ...),
-the background theory, the accepted input formulas and the interface provided by the solver.~\cite{smt,smtlib}
+the background theory, the accepted input formulas and the interface provided by the solver.
 Z3 is a SMT solver from Microsoft Research~\cite{z3}, which is used in this thesis.
 %- SMT problem
 %    - is logical formular satisfiable given a logical theory
@@ -44,7 +50,7 @@ Z3 is a SMT solver from Microsoft Research~\cite{z3}, which is used in this thes
 SMT-Lib is a international initiative with the goal to easing
 research and development in SMT.
 SMT-Lib's main motivation is the availability of common standards in SMT
-with the focused on
+with the focus on
 \begin{itemize}
     \item providing a standard description of background theories.
     \item developing a common in- and output language for SMT solvers.
@@ -131,7 +137,7 @@ This Nesting does also limit the expression of variability:
 The interface and the implementation of a virtual class can only depend
 on its single enclosing object.
 
-Dependent classes~\cite{dc,vaidas:thesis} are generalization of virtual classes.
+Dependent classes~\cite{dc,vaidas:thesis} are generalizations of Virtual Classes.
 The structure of a dependent class depends on arbitrarily many objects and
 dependency is expressed with class parameters.
 Dependent classes can be seen as a combination of virtual classes with multi-dispatch.
