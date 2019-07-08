@@ -68,9 +68,9 @@ Field assignments are not supported since the calculus is functional.
               \ |\ \newInst{C}{\overline{f}}{\overline{Expr}} % \textbf{new} C($\overline{f}$ $\equiv$ $\overline{Expr}$)
               \ |\ m(\mathit{Expr})
 \end{align*}
-
+%\hrule
 \begin{align*}
-MType(m, x, y) &= \{ \langle\overline{a}, \overline{b}\rangle | (m(x. \overline{a}): \type{y}{\ovl{b}}...) \in P \} \\ % TODO: ...? (also in thesis)
+MType(m, x, y) &= \{ \langle\overline{a}, \overline{b}\rangle | (m(x. \overline{a}): \type{y}{\ovl{b}}) \in P \} \\ % TODO: ...? (also in thesis)
 MImpl(m, x) &= \{\langle\overline{a}, e\rangle | (m(x. \overline{a}): \type{y}{\ovl{b}} := e) \in P \}
 \end{align*}
 
@@ -85,7 +85,7 @@ $m \in$ method names
 
 \subsubsection{Constraint System}
 The constraint system is given in the style of the sequent calculus
-and the rules for the constraint system are specified in figure \Cref{fig:dcc-constraint-entailment}.
+and the rules for the constraint system are specified in \Cref{fig:dcc-constraint-entailment}.
 The sequent \entails{\ovl{a}}{a} is interpreted as constraint entailment:
 constraints \ovl{a} entail constraint $a$.
 The constraints on the left-hand side are referred to as the context
@@ -117,7 +117,7 @@ This is used to express inheritance declarations between dependent classes:
 the constraint at the right-hand side of the implication must be \instOf{x}{p},
 where $x$ is the bound variable of the rule.
 The rule is restricted to avoid an undecidable constraint system
-and the restrictions are specified by the well-formedness rule WF-RD in figure \Cref{fig:dcc-wf}.
+and the restrictions are specified by the well-formedness rule WF-RD in \Cref{fig:dcc-wf}.
 
 % begin constraint system figure
 \begin{figure}
@@ -166,7 +166,7 @@ and the restrictions are specified by the well-formedness rule WF-RD in figure \
 % end constraint system figure
 
 \subsubsection{Operational Semantics}
-The operational semantics is given in figure \Cref{fig:dcc-opsemantics}.
+The operational semantics is given in \Cref{fig:dcc-opsemantics}.
 It is defined as a small-step reduction relation of a heap and an expression.
 A heap is a list of mappings from variables to objects.
 Each object is specified by a class and a list of the values of its fields,
@@ -296,7 +296,7 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 % end Operational Semantics figure
 
 \subsubsection{Type Checking}
-Type assignment for expressions is defined in figure \Cref{fig:dcc-typeass}.
+Type assignment for expressions is defined in \Cref{fig:dcc-typeass}.
 The context of type assignment is a list of constraints providing information
 about variables that occur in the expression.
 The typing rules ensure that all free variables of the assigned types
@@ -345,7 +345,7 @@ that the new object satisfies the constraints of at least
 one constructor \constr{C}{x}{\ovl{b'}} of class $C$.
 \\
 \\
-Typechecking a program is defined in figure \Cref{fig:dcc-wf}.
+Typechecking a program is defined in \Cref{fig:dcc-wf}.
 A program is well formed if all its declarations are well formed,
 method implementations need to be unique and complete
 and all declarations of a method need to have the same return type.

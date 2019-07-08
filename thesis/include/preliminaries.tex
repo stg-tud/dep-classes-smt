@@ -77,8 +77,9 @@ The SMT-Lib format is accepted by the majority of current SMT solvers.
 %        - querying about satisfiability
 %        - examining models or unsat proofs
 %        - ...
-An example of the SMT-Lib format is shown in figure 2.1. %TODO: figure numbering style?
-The example is showing a formula in sorted first-order logic and the SMT-Lib representation of the formula.
+An example of the SMT-Lib format is shown in \Cref{fig:smtlib-example}. %TODO: figure numbering style?
+The example is showing a formula in sorted first-order logic in the top half
+and the SMT-Lib representation of the formula in the bottom half.
 The formula is quantifying over two integer lists,
 using a let binding to extract the head and the tail from the first list
 to construct a identical list out of these bindings and checks for equality to the second list.
@@ -86,15 +87,17 @@ The example is purely for demonstrating the syntax of the SMT-Lib format.
 
 \begin{figure}
 \begin{align*}
-&\forall x: List[Int]. \exists y: List[Int]. \\
+&\forall x: \mathit{List[Int]}. \exists y: \mathit{List[Int]}. \\
 &\text{ let } h := head(x), t := tail(x)\\
 &\text{ in } insert(h, t) = y
 \end{align*}
+\hrule
 \begin{center}
 (forall ((x (List Int))) (exists ((y (List Int))) \\
 (let ((h (head x)) (t (tail x))) \\
 (= (insert h t) y))))
 \caption{SMT-Lib Format Example}
+\label{fig:smtlib-example}
 \end{center}
 \end{figure}
 
