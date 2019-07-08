@@ -278,16 +278,31 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
 \begin{prooftree}
 \AxiomC{\eval{h}{e}{h'}{e'}}
 \RightLabel{RC-New}
-\UnaryInfC{ % TODO: too long for box
-  \eval
-    {h}
-    {\newInst{C}
-      {\overline{f} \equiv \overline{x}, f}
-      {e, \overline{f'} \equiv \overline{e'}}}
-    {h'}
-    {\newInst{C}
-      {\overline{f} \equiv \overline{x}, f}
-      {e', \overline{f'} \equiv \overline{e'}}}}
+%\UnaryInfC{
+%  \eval
+%    {h}
+%    {\newInst{C}
+%      {\overline{f} \equiv \overline{x}, f}
+%      {e, \overline{f'} \equiv \overline{e'}}}
+%    {h'}
+%    {\newInst{C}
+%      {\overline{f} \equiv \overline{x}, f}
+%      {e', \overline{f'} \equiv \overline{e'}}}}
+\UnaryInfC{
+    \pair
+        {h}
+        {\newInst{C}
+          {\overline{f} \equiv \overline{x}, f}
+          {e, \overline{f'} \equiv \overline{e'}}}
+    \ \ \ \ \ \ \ }
+\noLine
+\UnaryInfC{\ \ \ \ \ \ \ $\rightarrow$
+    \pair
+        {h'}
+        {\newInst{C}
+          {\overline{f} \equiv \overline{x}, f}
+          {e', \overline{f'} \equiv \overline{e'}}}
+}
 \end{prooftree}
 
 \caption{Operational Semantics}
