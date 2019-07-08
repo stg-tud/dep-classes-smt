@@ -14,10 +14,10 @@
 
 % DCC
 % DCC constraints
-\newcommand{\pathEq}[2]{\ensuremath{#1 \equiv #2}}
-\newcommand{\instanceOf}[2]{\ensuremath{#1 :: #2}}
+\newcommand{\pathEq}[2]{\ensuremath{\mathit{#1} \equiv \mathit{#2}}}
+\newcommand{\instanceOf}[2]{\ensuremath{\mathit{#1} :: \mathit{#2}}}
 \newcommand{\instOf}[2]{\instanceOf{#1}{#2}}
-\newcommand{\instantiatedBy}[2]{\ensuremath{#1.\textbf{cls} \equiv #2}}
+\newcommand{\instantiatedBy}[2]{\ensuremath{\mathit{#1}.\textbf{cls} \equiv \mathit{#2}}}
 \newcommand{\instBy}[2]{\instantiatedBy{#1}{#2}}
 \newcommand{\entails}[2]{\ensuremath{#1 \vdash #2}}
 \newcommand*{\ldblbrace}{\{\mskip-6.9mu\{} % left double brace
@@ -25,21 +25,21 @@
 \newcommand{\sub}[2]{\ensuremath{\ldblbrace #1 \mapsto #2 \rdblbrace}}
 
 % DCC declarations
-\newcommand{\constructorDeclaration}[3]{\ensuremath{#1(#2.\ #3)}}
+\newcommand{\constructorDeclaration}[3]{\ensuremath{\mathit{#1}(\mathit{#2}.\ \mathit{#3})}}
 \newcommand{\constr}[3]{\constructorDeclaration{#1}{#2}{#3}}
-\newcommand{\programEntailment}[3]{\ensuremath{ \forall #1.\ #2 \Rightarrow #3}}
+\newcommand{\programEntailment}[3]{\ensuremath{ \forall \mathit{#1}.\ \mathit{#2} \Rightarrow \mathit{#3}}}
 \newcommand{\progEnt}[3]{\programEntailment{#1}{#2}{#3}}
-\newcommand{\abstractMethodDeclaration}[4]{\ensuremath{#1(#2.\ #3): #4}}
+\newcommand{\abstractMethodDeclaration}[4]{\ensuremath{\mathit{#1}(\mathit{#2}.\ \mathit{#3}): \mathit{#4}}}
 \newcommand{\mDecl}[4]{\abstractMethodDeclaration{#1}{#2}{#3}{#4}}
-\newcommand{\methodImplementation}[5]{\ensuremath{#1(#2.\ #3): #4 := #5}}
+\newcommand{\methodImplementation}[5]{\ensuremath{\mathit{#1}(\mathit{#2}.\ \mathit{#3}): \mathit{#4} := \mathit{#5}}}
 \newcommand{\mImpl}[5]{\methodImplementation{#1}{#2}{#3}{#4}{#5}}
 
 % DCC expressions
-\newcommand{\newInstance}[3]{\ensuremath{\textbf{new } #1(#2 \equiv #3)}}
+\newcommand{\newInstance}[3]{\ensuremath{\textbf{new } #1(\mathit{#2} \equiv \mathit{#3})}}
 \newcommand{\newInst}[3]{\newInstance{#1}{#2}{#3}}
 
 % DCC type
-\newcommand{\type}[2]{\ensuremath{[#1.\ #2]}}
+\newcommand{\type}[2]{\ensuremath{[#1.\ \mathit{#2}]}}
 
 % DCC misc
 \newcommand{\obj}[3]{\ensuremath{\langle #1; #2 \equiv #3 \rangle}}

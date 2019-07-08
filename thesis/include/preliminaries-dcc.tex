@@ -52,38 +52,32 @@ Field assignments are not supported since the calculus is functional.
 \begin{figure}
 \setlength{\grammarindent}{5em} % increase separation between LHS/RHS
 % TODO: use <> on construction at rhs?
-\begin{grammar}
-<Program>  ::= $\overline{Decl}$
-
-<Decl> ::= \constr{C}{x}{\overline{Constr}} % C(x. $\overline{Constr}$)
-       | \progEnt{x}{\overline{Constr}}{Constr}
-       \alt \mDecl{m}{x}{\overline{Constr}}{Type} % m(x. $\overline{Constr}$): Type
-       | \mImpl{m}{x}{\overline{Constr}}{Type}{Expr} % m(x. $\overline{Constr}$): Type := Expr
-
-<Type> ::= \type{x}{\ovl{Constr}}
-
-<Constr> ::= \pathEq{Path}{Path} % Path $\equiv$ Path
-           | \instOf{Path}{C} % Path :: C
-           | \instBy{Path}{C} % Path.\textbf{cls} $\equiv$ C
-
-<Path> ::= x
-       | Path.f
-
-<Expr> ::= x
-       | Expr.f
-       | \newInst{C}{\overline{f}}{\overline{Expr}} % \textbf{new} C($\overline{f}$ $\equiv$ $\overline{Expr}$)
-       | m(Expr)
-\end{grammar}
+\begin{align*}
+\mathit{Program} &::= \ovl{Decl} \\
+\mathit{Decl} &::= \constr{C}{x}{\overline{Constr}} % C(x. $\overline{Constr}$)
+                 \ |\ \progEnt{x}{\overline{Constr}}{Constr} \\
+              &\ \ |\ \mDecl{m}{x}{\overline{Constr}}{Type} % m(x. $\overline{Constr}$): Type
+                 \ |\ \mImpl{m}{x}{\overline{Constr}}{Type}{Expr} \\ % m(x. $\overline{Constr}$): Type := Expr
+\mathit{Type} &::= \type{x}{\ovl{Constr}} \\
+\mathit{Constr} &::= \pathEq{Path}{Path} % Path $\equiv$ Path
+                \ |\ \instOf{Path}{C} % Path :: C
+                \ |\ \instBy{Path}{C} \\ % Path.\textbf{cls} $\equiv$ C
+\mathit{Path} &::= x \ |\ \mathit{Path.f}\\
+\mathit{Expr} &::= x
+              \ |\ \mathit{Expr.f}
+              \ |\ \newInst{C}{\overline{f}}{\overline{Expr}} % \textbf{new} C($\overline{f}$ $\equiv$ $\overline{Expr}$)
+              \ |\ m(\mathit{Expr})
+\end{align*}
 
 \begin{align*}
 MType(m, x, y) &= \{ \langle\overline{a}, \overline{b}\rangle | (m(x. \overline{a}): \type{y}{\ovl{b}}...) \in P \} \\ % TODO: ...? (also in thesis)
 MImpl(m, x) &= \{\langle\overline{a}, e\rangle | (m(x. \overline{a}): \type{y}{\ovl{b}} := e) \in P \}
 \end{align*}
 
-x, y $\in$ variable names\\
-f $\in$ field names\\
-C $\in$ class names\\
-m $\in$ method names
+$x, y \in$ variable names\\
+$f \in$ field names\\
+$C \in$ class names\\
+$m \in$ method names
 \caption{Syntax}
 \label{fig:dcc-syntax}
 \end{figure}
