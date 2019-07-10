@@ -274,7 +274,8 @@ class DCC(P: Program) {
     // T-New
     case ObjectConstruction(cls, args) =>
       val argsTypes: List[List[Type]] = args.map(arg => typeass(context, arg._2))
-      // TODO: generate all possible combinations of argsTypes?
+      val argsCombinations = combinations(argsTypes)
+      // TODO: iterate over combinations
 
       val x = freshvar()
 
@@ -395,6 +396,24 @@ class DCC(P: Program) {
 
   private def boundVars(heap: Heap): List[Id] = heap.map{case (x, _) => x}.toList
   // heap.foldRight(Nil: List[Id]){case (elem, rst) => elem._1 :: rst}
+
+  /**
+    * Generates all possible combinations of a given list of lists
+    * @param list The list of lists for which to generate combinations
+    * @return All possible combinations for the given input
+    */
+  private def combinations(list: List[List[Type]]): List[List[Type]] = {
+    _combs = List()
+    combine(list, List())
+    _combs
+  }
+
+  private var _combs: List[List[Type]] = List()
+  private def combine(list: List[List[Type]], accum: List[Type]): Unit = list match {
+    case Nil =>
+    case last :: Nil => last.foreach(elem => _combs = (accum ++ List(elem)) :: _combs)
+    case hd :: tl => hd.foreach(elem => combine(tl, accum ++ List(elem)))
+  }
 }
 
 import Util._
@@ -462,7 +481,7 @@ object Foo extends App {
   }
 
   var p: List[List[Int]] = List()
-  def combine(terms: List[List[Int]], accum: List[Int]): Unit = terms match {
+  def genS(terms: List[List[Int]], accum: List[Int]): Unit = terms match {
     case Nil =>
     case last :: Nil =>
       last.foreach(
@@ -470,16 +489,30 @@ object Foo extends App {
       )
     case hd :: tl =>
       hd.foreach(
-        elem => combine(tl, accum ++ List(elem))
+        elem => genS(tl, accum ++ List(elem))
       )
+  }
+
+  private def combinations(list: List[List[Int]]): List[List[Int]] = {
+    _combs = List()
+    combine(list, List())
+    _combs
+  }
+
+  private var _combs: List[List[Int]] = List()
+  private def combine(list: List[List[Int]], accum: List[Int]): Unit = list match {
+    case Nil =>
+    case last :: Nil => last.foreach(elem => _combs = (accum ++ List(elem)) :: _combs)
+    case hd :: tl => hd.foreach(elem => combine(tl, accum ++ List(elem)))
   }
 
 //  gen(l)
 
   gen(l, List())
-  combine(l, List())
+  genS(l, List())
+  combinations(l)
 
   k.reverse.foreach(println)
 
-  println(k == p)
+  println(k == p && p == _combs)
 }
