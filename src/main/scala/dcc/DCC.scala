@@ -6,6 +6,8 @@ import dcc.Util._
 import smtlib.solver.{Axioms, Z3Solver}
 import smtlib.syntax.{Assert, Not, Sat, Term, Unknown, Unsat}
 
+import scala.collection.mutable
+
 class DCC(P: Program) {
   // Class(field = value, ...)
   type Obj = (Id, List[(Id, Id)])
@@ -421,4 +423,63 @@ object Main extends App {
 //  println("Heap:")
 //  h.foreach(println)
 //  println("Expr:" + e)
+}
+
+//combinations = []
+//
+//def combine(terms, accum):
+//    last = (len(terms) == 1)
+//    n = len(terms[0])
+//    for i in range(n):
+//        item = accum + terms[0][i]
+//        if last:
+//            combinations.append(item)
+//        else:
+//            combine(terms[1:], item)
+
+object Foo extends App {
+  val l: List[List[Int]] = List(List(1, 2), List(3, 4, 5), List(6))
+  //    for (i <- l.head.indices) {
+  //      for (j <- l(1).indices) {
+  //        for (m <- l(2).indices) {
+  //          k = List(l.head(i), l(1)(j), l(2)(m)) :: k
+  //        }
+  //      }
+  //    }
+
+  var k: List[List[Int]] = List()
+  def gen(terms: List[List[Int]], accum: List[Int]): Unit = {
+    val last = terms.size == 1
+    val n = terms.head
+    for (i <- n.indices) {
+      val item = accum ++ List(terms.head(i))
+      if (last) {
+        k = item :: k
+      } else {
+        gen(terms.tail, item)
+      }
+    }
+  }
+
+  var p: List[List[Int]] = List()
+  def combine(terms: List[List[Int]], accum: List[Int]): Unit = terms match {
+    case Nil =>
+    case last :: Nil =>
+      last.foreach(
+        elem => p = (accum ++ List(elem)) :: p
+      )
+    case hd :: tl =>
+      hd.foreach(
+        elem => combine(tl, accum ++ List(elem))
+      )
+  }
+
+//  gen(l)
+
+  gen(l, List())
+  combine(l, List())
+
+  k.reverse.foreach(println)
+
+  println(k == p)
 }
