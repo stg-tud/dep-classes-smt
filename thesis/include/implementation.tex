@@ -1,6 +1,47 @@
 \chapter{$DC_C$ Implementation}
+- implementation in scala
+- general structure of impl
+  - constraint system solved with SMT solver
+  - SMT solver input is SMTLib format
+  - "connection" to smt solver simple external process call
+
 \section{Constraint System}
-\subsection{Axioms / FO}
+- constraint system in DCc given as sequent calculus
+- in order to use SMT on constraint system
+  → transform sequent calculus into first order axioms
+  → use SMTlib representation of these axioms as input to solver
+\subsection{Na\"ive approach}
+- naive approach
+- goal is to be as close to the calculus rules as possible
+- "preserve" structure of calculus rules
+
+- make figure of needed functions, predicates, sorts
+- make figure of rules
+- explain rules
+- list problems of these rules
+  - too complex (e.g. quantified variables, no direct way of deduction in subst rule)
+  - not "structured" (permutation)
+  
+\begin{figure}
+\begin{flalign*}
+\mathit{class(String)} \\
+\mathit{variable(String)} \\
+\mathit{in\text{-}program(String,List[Constraint], Constraint)} \\
+\mathit{subst-path(Path, String, Path): Path} \\
+\mathit{subst-constraint(Constraint, String, Path): Constraint} \\
+\mathit{subst-constraints(List[Constraint], String, Path): List[Constraint]} \\
+\mathit{subst(c1: Constraint, x: String, p: Path, c2: Constraint)} \\
+= \mathit{subst-constraint(c1, x, p) = c2} \\
+\mathit{entails(List[Constraint], Constraint)} \\
+\mathit{Entails(cs1: List[Constraint], cs2: List[Constraint])} \\
+= \mathit{cs2.foreach(entails(cs1, \_))}
+\end{flalign*}
+\caption{Sorts, Predicates, Functions of Na\"ive approach}
+\label{fig:axioms-naive-sorts}
+\end{figure}
+\subsection{Refined version}
+\subsection{Scala integration}
+
 \section{Interpreter}
 \section{Type Relation}
 \subsection{Well formedness of Programs}
