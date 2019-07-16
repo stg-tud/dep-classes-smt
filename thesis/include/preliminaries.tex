@@ -91,7 +91,7 @@ using a let binding to extract the head and the tail from the first list
 to construct a identical list out of these bindings and checks for equality to the second list.
 The example is purely for demonstrating the syntax of the SMT-Lib format.
 
-\begin{figure}
+\begin{figure}[t]
 \begin{align*}
 &\forall x: \mathit{List[Int]}. \exists y: \mathit{List[Int]}. \\
 &\text{ let } h := head(x), t := tail(x)\\
@@ -102,9 +102,9 @@ The example is purely for demonstrating the syntax of the SMT-Lib format.
 (forall ((x (List Int))) (exists ((y (List Int))) \\
 (let ((h (head x)) (t (tail x))) \\
 (= (insert h t) y))))
+\end{center}
 \caption{SMT-Lib Format Example}
 \label{fig:smtlib-example}
-\end{center}
 \end{figure}
 
 \section{Dependent Classes}
@@ -113,10 +113,51 @@ Classes tend to be a too isolated unit to achieve modularity.
 Desired functionality involves groups of related classes.
 Grouping mechanisms exist, like namespaces in C++ and packages in Java,
 but these mechanisms do not cover inheritance and polymorphism for expressing variability.
-Virtual classes~\cite{virtual:classes, vaidas:thesis} provide a solution for inheritance and polymorphism.
+Virtual Classes~\cite{virtual:classes, vaidas:thesis} provide a solution for inheritance and polymorphism.
 They introduce classes as a kind of object members and treat these as virtual methods,
 which allows for overriding in subclasses and are late-bound.
-Virtual classes are inner classes refinable in the subclasses of the enclosing class.
+Virtual Classes are inner classes refinable in the subclasses of the enclosing class. % TODO: remove this sentence?
+
+\Cref{fig:virtual-classes-ex} shows an example
+of the nesting of Virtual Classes in an informal Java-like syntax.
+The example is a shortened version from~\cite{virtual:classes}
+to show the nested behavior of Virtual Classes.
+The class \lstinline{Base} contains two virtual classes:
+class \lstinline{Exp} representing expressions
+and its subclass \lstinline{Lit} representing numeric literals.
+The class \lstinline{WithNeg} extends the collection of
+virtual classes defined in \lstinline{Base} to include
+a class \lstinline{Neg} representing negation expressions.
+Class \lstinline{Neg} has an immutable field of type \lstinline[keywords={out}]{out.Exp}
+and the keyword \lstinline[keywords={out}]{out} is used to refer to
+the enclosing object of \lstinline{Neg}.
+
+%\begin{lstlisting}[caption={ein paar Zeilen code}\label{lst:test123},captionpos=t]
+% for i:=maxint to 0 do 
+%    begin 
+%    j:=square(root(i)); 
+% end; 
+%\end{lstlisting}
+\begin{figure}
+\begin{lstlisting}[language=java,morekeywords={out,field}]
+class Base {
+  class Exp {}
+  class Lit extends Exp {
+    int value;
+  }
+}
+
+class WithNeg extends Base {
+  class Neg extends Exp {
+    Neg(out.Exp e) { this.e = e; }
+    field out.Exp e;
+  }
+}
+\end{lstlisting}
+\caption{Nesting of Virtual Classes}
+\label{fig:virtual-classes-ex}
+\end{figure}
+
 %- classes not good enough for modularity
 %- functionality involves a group of related classes
 %- grouping mechanisms (namespaces, packages, ...)
@@ -137,10 +178,10 @@ This Nesting does also limit the expression of variability:
 The interface and the implementation of a virtual class can only depend
 on its single enclosing object.
 
-Dependent classes~\cite{dc,vaidas:thesis} are generalizations of Virtual Classes.
+Dependent Classes~\cite{dc,vaidas:thesis} are generalizations of Virtual Classes.
 The structure of a dependent class depends on arbitrarily many objects and
 dependency is expressed with class parameters.
-Dependent classes can be seen as a combination of virtual classes with multi-dispatch.
+Dependent Classes can be seen as a combination of Virtual Classes with multi-dispatch.
 
 The semantics of dependent classes involve non-trivial aspects,
 such as method calls and class instantiation expressions,

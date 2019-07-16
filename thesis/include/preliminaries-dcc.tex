@@ -5,10 +5,10 @@ The $DC_C$ calculus~\cite{vaidas:thesis} extends $vc^n$ with support for abstrac
 and symmetric method dispatch.
 $DC_C$ encodes dependent classes with a constraint system,
 which is used in both the static and dynamic semantics.
-The main relation of the $DC_C$ calculus is constraint entailment,
-replacing $vc^n$'s relations for type equivalence, subtyping, static and dynamic dispatch.
+The main relation of the $DC_C$ calculus is constraint entailment.
+%replacing $vc^n$'s relations for type equivalence, subtyping, static and dynamic dispatch.
 
-The runtime structure is heap based,
+The runtime structure is heap-based,
 with explicit object identities
 and relationships between objects based on these identities.
 Expressions evaluate to an identifier pointing to an object in the heap.
@@ -25,11 +25,13 @@ which enables the usage of the constraint system for dynamic dispatch and expres
 %    - paths are equiv if they point to the same object at runtime
 %- heaps can be easily translated to a set of constraints describing its objects and their relations
 %    - enables using constraint system for dynamic dispatch and expression typing
+\\ \\
+Here we show the calculus by Vaidas Gasiūnas.
 \subsubsection{Syntax}
 The syntax of $DC_C$ is given in \Cref{fig:dcc-syntax}.
 Types are lists of constraints to be satisfied by their instances.
 Types have the form \type{x}{\ovl{a}}, where $x$ is a bound variable
-and $\overline(a)$ is a list of constraints on $x$.
+and \ovl{a} is a list of constraints on $x$.
 An object belongs to a type if it fulfills its constraints.
 
 Constraints of the form $p \equiv q$ express that two paths $p$ and $q$ are equivalent
@@ -49,9 +51,7 @@ Expressions can be variables, field access, object construction and method invoc
 Field assignments are not supported since the calculus is functional.
 
 % begin syntax figure
-\begin{figure}
-\setlength{\grammarindent}{5em} % increase separation between LHS/RHS
-% TODO: use <> on construction at rhs?
+\begin{figure}[h]
 \begin{align*}
 \mathit{Program} &::= \ovl{Decl} \\
 \mathit{Decl} &::= \constr{C}{x}{\overline{Constr}} % C(x. $\overline{Constr}$)
@@ -211,15 +211,12 @@ is more specific than a method declaration with argument constraints \ovl{a'}
 if \entails{\ovl{a'}}{\ovl{a}},
 but not the other way around $\neg\entails{\ovl{a}}{\ovl{a'}}$.
 
-% begin Operational Semantics figure
-\begin{adjustbox}{fbox, clip=true} % TODO: make adjustbox work with figure
-asdf1
-\end{adjustbox}
+% begin Operational Semantics figure}
 \begin{figure}
 % TODO: both alignments side-by-side
 \begin{align*}
-o &::= \stdobj \\ % \langle C; \overline{f} \equiv \overline{x} \rangle \\
-h &::= \stdheap\ \ (x_i \text{ distinct})
+o &::= \stdobj && \text{(objects)} \\ % \langle C; \overline{f} \equiv \overline{x} \rangle \\
+h &::= \stdheap\ \ (x_i \text{ distinct}) && \text{(heaps)}
 \end{align*}
 \begin{align*}
 OC(x, o) &= (\instBy{x}{C}, \pathEq{x.\overline{f}}{\overline{x}}) &&\text{where } o = \stdobj \\ % \langle C; \overline{f}\equiv\overline{x} \rangle \\

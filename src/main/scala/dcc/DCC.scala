@@ -210,7 +210,7 @@ class DCC(P: Program) {
     // T-Var
     case x@Id(_) =>
       //classes(P).foldRight(List(Type(Id('tError), List(PathEquivalence(x, Id('noValidClass)))))){
-      classes(P).foldRight(Nil: List[Type]){
+      classes(P).foldRight(Nil: List[Type]) {
         // TODO: list of vars: add context vars?
         case (cls, clss) if entails(context, InstanceOf(x, cls), List(x)) =>
           val y = freshvar()
@@ -228,12 +228,12 @@ class DCC(P: Program) {
       //   check x.f :: C
       //   find b
       var ts: List[Type] = Nil
-      types.foreach{
+      types.foreach {
         case Type(x, a) =>
           val y = freshvar()
 
           // instance of relations for type constraints
-          val instOfs = classes(P).foldRight(Nil: List[Constraint]){ // TODO: list of vars in entails, like T-Var case
+          val instOfs = classes(P).foldRight(Nil: List[Constraint]) { // TODO: list of vars in entails, like T-Var case
             case (cls, clss) if entails(context ++ a, InstanceOf(FieldPath(x, f), cls), List(x)) =>
               val c = InstanceOf(y, f)
               ts = Type(y, List(c)) :: ts
@@ -241,11 +241,11 @@ class DCC(P: Program) {
             case (_, clss) => clss
           }
 
-          // other possible constraints for typing (excluding already used instance of relations)
-//          val b: List[Constraint] = ??? // TODO: generate possible constraints
-//
-//          if (entails(PathEquivalence(FieldPath(x, f), y) :: context ++ a, b, Nil))
-//            ts = Type(y, b) :: ts
+        // other possible constraints for typing (excluding already used instance of relations)
+        //          val b: List[Constraint] = ??? // TODO: generate possible constraints
+        //
+        //          if (entails(PathEquivalence(FieldPath(x, f), y) :: context ++ a, b, Nil))
+        //            ts = Type(y, b) :: ts
       }
       ts
     // T-Call
@@ -261,9 +261,10 @@ class DCC(P: Program) {
         for ((a1, b) <- mTypeSubst(m, x, y)) {
           val entailsArgs = entails(context ++ a, a1, List(x))
 
-          val b1 = (a1 ++ b).foldRight(Nil: List[Constraint]){ // TODO: take both a1 and b or only b? (strong feeling that it should only be b)
+          val b1 = (a1 ++ b).foldRight(Nil: List[Constraint]) { // TODO: take both a1 and b or only b? (strong feeling that it should only be b)
             case (c, cs) if !FV(c).contains(x) => c :: cs
-            case (_, cs) => cs }
+            case (_, cs) => cs
+          }
 
           if (entailsArgs && entails(context ++ a ++ b, b1, List(y)))
             types = Type(y, b1) :: types
@@ -273,22 +274,29 @@ class DCC(P: Program) {
       types
     // T-New
     case ObjectConstruction(cls, args) =>
+      val fields: List[Id] = args.map(_._1)
       val argsTypes: List[List[Type]] = args.map(arg => typeass(context, arg._2))
-      val argsCombinations = combinations(argsTypes)
-      // TODO: iterate over combinations
+      //val argsTypes: List[(Id, List[Type])] = args.map{case (f, e) => (f, typeass(context, e))}
 
       val x = freshvar()
+      var types: List[Type] = Nil
 
-      // TODO: process args constraints
-      val b: List[Constraint] = InstantiatedBy(x, cls) :: Nil
+      combinations(argsTypes).foreach {
+        argsType =>
+          val argsPairs: List[(Id, Type)] = fields.zip(argsType)
+          val argsConstraints: List[Constraint] = argsPairs.flatMap{
+            case (fi, Type(xi, ai)) => substitute(xi, FieldPath(x, fi), ai)
+          }
 
-      val (x1, b1) = classInProgram(cls, P).getOrElse(return List(Type(Id('tError), List(PathEquivalence(cls, Id('classNotFound))))))
+          val b: List[Constraint] = InstantiatedBy(x, cls) :: argsConstraints
 
-      // TODO: collect types for args combinations
-      if (entails(context ++ b, b1, List(x, x1)))
-        List(Type(x, b))
-      else
-        Nil
+          val (x1, b1) = classInProgram(cls, P).getOrElse(return List(Type(Id('tError), List(PathEquivalence(cls, Id('classNotFound))))))
+
+          if (entails(context ++ b, b1, List(x, x1)))
+            types = List(Type(x, b)) :: types
+      }
+
+      types
   }
 
   // FV: free variables
@@ -303,16 +311,14 @@ class DCC(P: Program) {
     // WF-RD
     case ConstraintEntailment(x, a, InstanceOf(y, _)) if x == y => FV(a) == List(x) && a.contains(InstanceOf(x, Id('placeholder))) // TODO: a.contains(InstanceOf(x, _))
     // WF-MS
-    case AbstractMethodDeclaration(m, x, a, Type(y, b)) => {
+    case AbstractMethodDeclaration(m, x, a, Type(y, b)) =>
       val vars = FV(b) // TODO: check if x != y for size check?
       FV(a) == List(x) && vars.size == 2 && vars.contains(x) && vars.contains(y)
-    }
     // WF-MI
-    case MethodImplementation(m, x, a, t@Type(y, b), e) => {
+    case MethodImplementation(m, x, a, t@Type(y, b), e) =>
       val vars = FV(b) // TODO: check if x != y for size check?
       FV(a) == List(x) && vars.size == 2 && vars.contains(x) && vars.contains(y) &&
       typeassignment1(a, e, t) // TODO: type as return value or not?
-    }
   }
 
   private def classInProgram(Cls: Id, p: Program): Option[(Id, List[Constraint])] = p match {
