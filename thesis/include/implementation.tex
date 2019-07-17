@@ -21,58 +21,93 @@
 - list problems of these rules
   - too complex (e.g. quantified variables, no direct way of deduction in subst rule)
   - not "structured" (permutation)
-  
-  
-\Cref{test-a,test-b}
-\begin{figure}
-\centering
-\begin{subfigure}[c]{0.5\textwidth}
-\centering
-\begin{align*}
-  foo\\
-  bar
-\end{align*}
-\subcaption{Subfigure Bild Nr. 1}
-\label{test-a}
-\end{subfigure}
-\begin{subfigure}[c]{0.5\textwidth}
-\centering
-\begin{align*}
-\mathit{Path}\\
-  &\mathit{var(id: String)}\\
-  &\mathit{pth(obj: Path, field: String)}\\
-\mathit{Constraint}\\
-  &\mathit{path-eq(p: Path, q: Path)}\\
-  &\mathit{instance-of(instance: Path, cls: String)}\\
-  &\mathit{instantiated-by(object: Path, clsname: String)}\\
-\end{align*}
-\subcaption{Subfigure Bild Nr. 2}
-\label{test-b}
-\end{subfigure}
-\caption{Zwei Bilder mit Subfigure nebeneinander}
-\end{figure}
-  
-\begin{figure}
+% 
+%\Cref{test-a,test-b}
+%\begin{figure}
+%\centering
+%\begin{subfigure}[c]{0.5\textwidth}
+%\centering
+%\begin{align*}
+%  foo\\
+%  bar
+%\end{align*}
+%\subcaption{Subfigure Bild Nr. 1}
+%\label{test-a}
+%\end{subfigure}
+%\begin{subfigure}[c]{0.5\textwidth}
+%\centering
+%\begin{align*}
+%\mathit{Path}\\
+%  &\mathit{var(id: String)}\\
+%  &\mathit{pth(obj: Path, field: String)}\\
+%\mathit{Constraint}\\
+%  &\mathit{path-eq(p: Path, q: Path)}\\
+%  &\mathit{instance-of(instance: Path, cls: String)}\\
+%  &\mathit{instantiated-by(object: Path, clsname: String)}\\
+%\end{align*}
+%\subcaption{Subfigure Bild Nr. 2}
+%\label{test-b}
+%\end{subfigure}
+%\caption{Zwei Bilder mit Subfigure nebeneinander}
+%\end{figure}
+%
+\begin{figure}[t]
 % Sorts
+\begin{subfigure}[c]{1\textwidth}
+\centering
+%\begin{align*}
+%\mathit{Path}\\%\ \{\\
+%  &\mathit{var}(\mathit{id}: \mathit{String})\\
+%  &\mathit{pth}(\mathit{obj}: \mathit{Path}, \mathit{field}: \mathit{String})\\
+%  %\}\\
+%\mathit{Constraint}\\%\ \{\\
+%  &\mathit{path-eq}(p: \mathit{Path}, q: \mathit{Path})\\
+%  &\mathit{instance-of(instance: Path, cls: String)}\\
+%  &\mathit{instantiated-by(object: Path, clsname: String)}%\\
+%  %\}
+%\end{align*}
+%
 \begin{align*}
-\mathit{Path}\\
-  &\mathit{var(id: String)}\\
-  &\mathit{pth(obj: Path, field: String)}\\
-\mathit{Constraint}\\
-  &\mathit{path-eq(p: Path, q: Path)}\\
-  &\mathit{instance-of(instance: Path, cls: String)}\\
-  &\mathit{instantiated-by(object: Path, clsname: String)}\\
+\mIt{Path} := \{\\
+  &\mIt{var} &&\text{where } \mIt{var}\in \mIt{String}\\
+  &\mIt{obj.field} &&\text{where } \mIt{obj} \in \mIt{Path}, \mIt{field} \in \mIt{String}\\ \}\\
+\mIt{Constraint} := \{\\
+  &\pathEq{\pleft}{\pright} &&\text{where } \pleft,\pright \in \mIt{Path}\\
+  &\instOf{instance}{cls} &&\text{where } \mIt{instance} \in \mIt{Path}, \mIt{cls} \in \mIt{String}\\
+  &\instBy{object}{clsname} &&\text{where } \mIt{object} \in \mIt{Path}, \mIt{clsname} \in \mIt{String}\\ \}
 \end{align*}
-
+%
+%\[
+%\begin{aligned}
+%\mIt{Path} :=\\
+%  &x &&\text{where } x\in \mIt{String}\\
+%  &obj.field &&\text{where } \mIt{obj} \in \mIt{Path}, \mIt{field} \in \mIt{String}\\
+%\mIt{Constraint} :=\\
+%  &\pathEq{p}{q} &&\text{where } p,q \in \mIt{Path}\\
+%  &\instOf{instance}{cls} &&\text{where } \mIt{instance} \in \mIt{Path}, \mIt{cls} \in \mIt{String}\\
+%  &\instBy{object}{clsname} &&\text{where } \mIt{object} \in \mIt{Path}, \mIt{clsname} \in \mIt{String}
+%\end{aligned}
+%\]
+\subcaption{Sorts}
+\label{subfig:axioms-naive-general-sorts}
+\end{subfigure}\\
+\hrule
 % Predicates
+\begin{subfigure}[c]{1\textwidth}
+\centering
 \begin{align*}
 &\mathit{class}(\mathit{String}) \\
 &\mathit{variable}(\mathit{String})\\
 &\mathit{in\text{-}program}(\mathit{String},\mathit{List[Constraint]}, \mathit{Constraint}) \\
 &\mathit{entails}(\mathit{List[Constraint]}, \mathit{Constraint})
 \end{align*}
-
+\subcaption{Predicates}
+\label{subfig:axioms-naive-general-predicates}
+\end{subfigure}\\
+\hrule
 % Functions
+\begin{subfigure}[c]{1\textwidth}
+\centering
 \begin{align*}
 \mathit{subst-path(Path, String, Path): Path} \\
 \mathit{subst-constraint(Constraint, String, Path): Constraint} \\
@@ -82,9 +117,13 @@
 \mathit{Entails(cs1: List[Constraint], cs2: List[Constraint])} \\
 = \mathit{cs2.foreach(entails(cs1, \_))}
 \end{align*}
+\subcaption{Functions}
+\label{subfig:axioms-naive-general-funs}
+\end{subfigure}
 \caption{Sorts, Predicates, Functions of Na\"ive approach}
-\label{fig:axioms-naive-sorts}
+\label{fig:axioms-naive-general}
 \end{figure}
+
 \subsection{Refined version}
 \subsection{Scala integration}
 

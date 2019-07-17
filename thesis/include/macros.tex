@@ -53,6 +53,14 @@
 \newcommand{\FV}[1]{\ensuremath{FV(#1)}}
 \newcommand{\FVeq}[2]{\ensuremath{\FV{#1} = \{#2\}}}
 
+% FO
+\mathchardef\mhyphen="2D
+% \newcommand\nuniq{\mathit{non\mhyphen unique}} example command
+\newcommand*{\pleft}{\ensuremath{\mathit{p\mhyphen left}}}
+\newcommand*{\pright}{\ensuremath{\mathit{p\mhyphen right}}}
+
+% SMTLib format stuff
+
 %% misc
 %%%%%%%%%
 \DeclareMathOperator{\pto}{\rightharpoonup}     % partial function arrow
@@ -61,6 +69,7 @@
 \DeclareMathOperator{\fst}{\pi_1}               % A x B → A
 \DeclareMathOperator{\snd}{\pi_2}               % A x B → B
 \newcommand{\ovl}[1]{\ensuremath{\overline{#1}}}
+\newcommand{\mIt}[1]{\ensuremath{\mathit{#1}}}
 
 %%% Local Variables: 
 %%% mode: latex
