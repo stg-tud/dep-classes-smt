@@ -22,20 +22,66 @@
   - too complex (e.g. quantified variables, no direct way of deduction in subst rule)
   - not "structured" (permutation)
   
+  
+\Cref{test-a,test-b}
 \begin{figure}
-\begin{flalign*}
-\mathit{class(String)} \\
-\mathit{variable(String)} \\
-\mathit{in\text{-}program(String,List[Constraint], Constraint)} \\
+\centering
+\begin{subfigure}[c]{0.5\textwidth}
+\centering
+\begin{align*}
+  foo\\
+  bar
+\end{align*}
+\subcaption{Subfigure Bild Nr. 1}
+\label{test-a}
+\end{subfigure}
+\begin{subfigure}[c]{0.5\textwidth}
+\centering
+\begin{align*}
+\mathit{Path}\\
+  &\mathit{var(id: String)}\\
+  &\mathit{pth(obj: Path, field: String)}\\
+\mathit{Constraint}\\
+  &\mathit{path-eq(p: Path, q: Path)}\\
+  &\mathit{instance-of(instance: Path, cls: String)}\\
+  &\mathit{instantiated-by(object: Path, clsname: String)}\\
+\end{align*}
+\subcaption{Subfigure Bild Nr. 2}
+\label{test-b}
+\end{subfigure}
+\caption{Zwei Bilder mit Subfigure nebeneinander}
+\end{figure}
+  
+\begin{figure}
+% Sorts
+\begin{align*}
+\mathit{Path}\\
+  &\mathit{var(id: String)}\\
+  &\mathit{pth(obj: Path, field: String)}\\
+\mathit{Constraint}\\
+  &\mathit{path-eq(p: Path, q: Path)}\\
+  &\mathit{instance-of(instance: Path, cls: String)}\\
+  &\mathit{instantiated-by(object: Path, clsname: String)}\\
+\end{align*}
+
+% Predicates
+\begin{align*}
+&\mathit{class}(\mathit{String}) \\
+&\mathit{variable}(\mathit{String})\\
+&\mathit{in\text{-}program}(\mathit{String},\mathit{List[Constraint]}, \mathit{Constraint}) \\
+&\mathit{entails}(\mathit{List[Constraint]}, \mathit{Constraint})
+\end{align*}
+
+% Functions
+\begin{align*}
 \mathit{subst-path(Path, String, Path): Path} \\
 \mathit{subst-constraint(Constraint, String, Path): Constraint} \\
 \mathit{subst-constraints(List[Constraint], String, Path): List[Constraint]} \\
 \mathit{subst(c1: Constraint, x: String, p: Path, c2: Constraint)} \\
 = \mathit{subst-constraint(c1, x, p) = c2} \\
-\mathit{entails(List[Constraint], Constraint)} \\
 \mathit{Entails(cs1: List[Constraint], cs2: List[Constraint])} \\
 = \mathit{cs2.foreach(entails(cs1, \_))}
-\end{flalign*}
+\end{align*}
 \caption{Sorts, Predicates, Functions of Na\"ive approach}
 \label{fig:axioms-naive-sorts}
 \end{figure}

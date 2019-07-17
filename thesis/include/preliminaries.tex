@@ -84,28 +84,50 @@ The SMT-Lib format is accepted by the majority of current SMT solvers.
 %        - examining models or unsat proofs
 %        - ...
 An example of the SMT-Lib format is shown in \Cref{fig:smtlib-example}.
-The example is showing a formula in sorted first-order logic in the top half
-and the SMT-Lib representation of the formula in the bottom half.
+The example is showing a formula in sorted first-order logic in \Cref{fig:smtlib-example-fo}
+and the SMT-Lib representation of the formula in \Cref{fig:smtlib-example-smtlib}.
 The formula is quantifying over two integer lists,
 using a let binding to extract the head and the tail from the first list
 to construct a identical list out of these bindings and checks for equality to the second list.
 The example is purely for demonstrating the syntax of the SMT-Lib format.
 
 \begin{figure}[t]
+\begin{subfigure}{1\textwidth}
 \begin{align*}
 &\forall x: \mathit{List[Int]}. \exists y: \mathit{List[Int]}. \\
 &\text{ let } h := head(x), t := tail(x)\\
 &\text{ in } insert(h, t) = y
 \end{align*}
-\hrule
-\begin{center}
+\subcaption{First-order formula}
+\label{fig:smtlib-example-fo}
+\end{subfigure}
+\begin{subfigure}{1\textwidth}
+\centering
+\qquad\\\qquad\\
 (forall ((x (List Int))) (exists ((y (List Int))) \\
 (let ((h (head x)) (t (tail x))) \\
 (= (insert h t) y))))
-\end{center}
+\subcaption{SMTLib representation}
+\label{fig:smtlib-example-smtlib}
+\end{subfigure}
 \caption{SMT-Lib Format Example}
 \label{fig:smtlib-example}
 \end{figure}
+%\begin{figure}[t]
+%\begin{align*}
+%&\forall x: \mathit{List[Int]}. \exists y: \mathit{List[Int]}. \\
+%&\text{ let } h := head(x), t := tail(x)\\
+%&\text{ in } insert(h, t) = y
+%\end{align*}
+%\hrule
+%\begin{center}
+%(forall ((x (List Int))) (exists ((y (List Int))) \\
+%(let ((h (head x)) (t (tail x))) \\
+%(= (insert h t) y))))
+%\end{center}
+%\caption{SMT-Lib Format Example}
+%\label{fig:smtlib-example-1}
+%\end{figure}
 
 \section{Dependent Classes}
 \label{sec:depcls}
