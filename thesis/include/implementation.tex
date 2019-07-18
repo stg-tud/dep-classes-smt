@@ -26,27 +26,33 @@
 % Sorts
 \begin{subfigure}[c]{1\textwidth}
 \centering
-%\begin{align*}
-%\mathit{Path}\\%\ \{\\
-%  &\mathit{var}(\mathit{id}: \mathit{String})\\
-%  &\mathit{pth}(\mathit{obj}: \mathit{Path}, \mathit{field}: \mathit{String})\\
-%  %\}\\
-%\mathit{Constraint}\\%\ \{\\
-%  &\mathit{path-eq}(p: \mathit{Path}, q: \mathit{Path})\\
-%  &\mathit{instance-of(instance: Path, cls: String)}\\
-%  &\mathit{instantiated-by(object: Path, clsname: String)}%\\
-%  %\}
-%\end{align*}
-%
+\begin{subfigure}[c]{0.45\textwidth}
+% BNF
 \begin{align*}
-\mIt{Path} := \{\\
-  &\mIt{var} &&\text{where } \mIt{var}\in \mIt{String}\\
-  &\mIt{obj.field} &&\text{where } \mIt{obj} \in \mIt{Path}, \mIt{field} \in \mIt{String}\\ \}\\
-\mIt{Constraint} := \{\\
-  &\pathEq{\pleft}{\pright} &&\text{where } \pleft,\pright \in \mIt{Path}\\
-  &\instOf{instance}{cls} &&\text{where } \mIt{instance} \in \mIt{Path}, \mIt{cls} \in \mIt{String}\\
-  &\instBy{object}{clsname} &&\text{where } \mIt{object} \in \mIt{Path}, \mIt{clsname} \in \mIt{String}\\ \}
+\mIt{Path} &::=
+     \mIt{String}\\
+  &\quad|\ \mIt{Path.String}
 \end{align*}
+\end{subfigure}
+\begin{subfigure}[c]{0.45\textwidth}
+% BNF
+\begin{align*}
+\mIt{Constraint} &::=
+     \pathEq{Path}{Path}\\
+  &\quad|\ \instOf{Path}{String}\\
+  &\quad|\ \instBy{Path}{String}
+\end{align*}
+\end{subfigure}
+% Set
+%\begin{align*}
+%\mIt{Path} := \{\\
+%  &\mIt{var} &&\text{where } \mIt{var}\in \mIt{String}\\
+%  &\mIt{obj.field} &&\text{where } \mIt{obj} \in \mIt{Path}, \mIt{field} \in \mIt{String}\\ \}\\
+%\mIt{Constraint} := \{\\
+%  &\pathEq{\pleft}{\pright} &&\text{where } \pleft,\pright \in \mIt{Path}\\
+%  &\instOf{instance}{cls} &&\text{where } \mIt{instance} \in \mIt{Path}, \mIt{cls} \in \mIt{String}\\
+%  &\instBy{object}{clsname} &&\text{where } \mIt{object} \in \mIt{Path}, \mIt{clsname} \in \mIt{String}\\ \}
+%\end{align*}
 %
 %\[
 %\begin{aligned}
