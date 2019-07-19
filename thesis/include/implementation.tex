@@ -86,13 +86,16 @@
 \begin{subfigure}[c]{1\textwidth}
 \centering
 \begin{align*}
-\mathit{subst-path(Path, String, Path): Path} \\
-\mathit{subst-constraint(Constraint, String, Path): Constraint} \\
-\mathit{subst-constraints(List[Constraint], String, Path): List[Constraint]} \\
-\mathit{subst(c1: Constraint, x: String, p: Path, c2: Constraint)} \\
-= \mathit{subst-constraint(c1, x, p) = c2} \\
-\mathit{Entails(cs1: List[Constraint], cs2: List[Constraint])} \\
-= \mathit{cs2.foreach(entails(cs1, \_))}
+&\substpath{Path}{String}{Path}:\mIt{Path} = \\
+&\quad??? \\
+&\substconstr{Constraint}{String}{Path}\mathit{: Constraint} = \\
+&\quad??? \\
+&\substconstrs{List[Constraint]}{String}{Path}\mathit{: List[Constraint]} = \\
+&\quad??? \\
+&\mathit{subst(c_1: Constraint, x: String, p: Path, c_2: Constraint)} = \\
+&\quad\substconstr{c_1}{x}{p} = c_2 \\
+&\mathit{Entails(cs1: List[Constraint], cs2: List[Constraint])} = \\
+&\quad\mathit{cs2.foreach(entails(cs1, \_))}
 \end{align*}
 \subcaption{Functions}
 \label{subfig:axioms-naive-general-funs}
