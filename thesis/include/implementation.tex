@@ -93,6 +93,7 @@
 %&\quad \If \is{var}(p_1) \\
 %&\qquad \Then x = \ite{id(p_1)}{p_2}{p_1}\\ % replace id(p_1)
 %&\qquad \Else \substpath{obj(p_1)}{x}{p_2}.f\\ %: replace obj(p_1) and f
+\\
 % constraint substitution
 &\substconstr{c: Constraint}{x: String}{p: Path}\mathit{: Constraint} = c \match \\
 &\quad \case{\pathEq{q_1}{q_2}}
@@ -102,16 +103,16 @@
 &\quad \case{\instOf{q}{C}}
   {\instOf{\substconstr{q}{x}{p}}{C}}\\
 &\quad \case{\instBy{q}{C}}
-  {\instBy{\substconstr{q}{x}{p}}{C}}\\
+  {\instBy{\substconstr{q}{x}{p}}{C}}\\\\
 % constraints substitution
 &\substconstrs{cs: List[Constraint]}{x: String}{p: Path}\mathit{: List[Constraint]} =\\
 &\quad cs \match\\
 &\qquad \case{\epsilon}{\epsilon}\\
 &\qquad \case{hd :: tl}
   {\substconstr{hd}{x}{p} ::
-  \substconstrs{tl}{x}{p}}\\
+  \substconstrs{tl}{x}{p}}\\\\
 &\mathit{subst(c_1: Constraint, x: String, p: Path, c_2: Constraint)} = \\
-&\quad\substconstr{c_1}{x}{p} = c_2 \\
+&\quad\substconstr{c_1}{x}{p} = c_2 \\\\
 &\mathit{Entails(cs_1: List[Constraint], cs_2: List[Constraint])} = cs_2 \match\\
 &\quad \case{\epsilon}{true}\\
 &\quad \case{hd :: tl}{\mIt{entails}(cs_1, hd)} \land \mIt{Entails}(cs_1, tl)
