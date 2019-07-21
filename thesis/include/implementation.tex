@@ -21,8 +21,20 @@
 - list problems of these rules
   - too complex (e.g. quantified variables, no direct way of deduction in subst rule)
   - not "structured" (permutation)
+- fo syntax description for special stuff
+  - pattern matching
+  - let bindings
+  - if statements (inline + multiline)
+  - sort (type) specifications
+  - parametrized list type
+- pretty printing
+  - symbols for functions, etc
+  - substitution
+  - generalization
+  - list notion
+  - list concatenation + inserting
 
-\begin{figure}[t]
+\begin{figure}[t] % sorts, predicates, functions figure
 % Sorts
 \begin{subfigure}[c]{1\textwidth}
 \centering
@@ -122,6 +134,36 @@
 \end{subfigure}
 \caption{Sorts, Predicates, Functions of Na\"ive approach}
 \label{fig:axioms-naive-general}
+\end{figure}
+
+% figure naive axioms
+\begin{figure}
+\begin{align*}
+&\forall c: \Constr.\ \entails{[c]}{c} && \text{(C-Ident)} \\
+&\forall p: \Path.\ \entails{\nil}{\pathEq{p}{p}} && \text{(C-Refl)} \\
+&\forall \ovl{a}: \Constrs, p: \Path, C: \String.&& \text{(C-Class)} \\
+&\quad \mIt{class}(C) \land \entails{\ovl{a}}{\instBy{p}{C}}
+       \rightarrow \entails{\ovl{a}}{\instBy{p}{C}} \\
+&\forall \ovl{a}, \ovl{a'}: \Constrs, b, c: \Constr. && \text{(C-Cut)} \\
+&\quad \entails{\ovl a}{c} \land \entails{c :: \ovl{a'}}{b}
+       \rightarrow \entails{\ovl a, \ovl{a'}}{b}\\
+&\forall \ovl a: \Constrs, x: \String, p_1, p_2: \Path, a, a_1, a_2: \Constr. && \text{(C-Subst)} \\
+&\quad \entails{\ovl a}{\pathEq{p_2}{p_1}} \land \mIt{variable}(x)
+         \land \mIt{subst}(a, x, p_1, a_1) \land \mIt{subst}(a, x, p_2, a_2)\\
+&\quad   \land \entails{\ovl a}{a_1}
+       \rightarrow \entails{\ovl a}{a_2} \\
+&\forall \ovl a, \ovl b: \Constrs, a: \Constr, x: \String, p: \Path. && \text{(C-Prog)} \\
+&\quad \inprog(x, \ovl a, a) \land \entails{\ovl b}{\subst{\ovl a}{x}{p}}
+       \rightarrow \entails{\ovl b}{\subst{a}{x}{p}} \\
+&\forall \ovl a: \Constrs, a, b: \Constr. && \text{(C-Weak)} \\
+&\quad \entails{\ovl a}{b}
+       \rightarrow \entails{a :: \ovl a}{b}\\
+&\forall ???.\ \entails{}{} && \text{(C-???)}\\
+&\forall ???. && \text{(C-???)} \\
+&\quad \entails{}{}
+\end{align*}
+\caption{Axioms of Na\"ive approach}
+\label{fig:axioms-naive}
 \end{figure}
 
 \subsection{Refined version}
