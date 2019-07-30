@@ -604,12 +604,117 @@ and replace the now free variable in its subexpression.
        \entails{\ovl a}{a}\\
 &\rightarrow \entails{\ovl a}{a_2}
 \end{align*}
-\end{example}
+\end{example}\quad\\
+%
+Rule C-Prog has similiar problems as the ones observed for rule C-Subst.
+The rule is again defined in a non-algorithmic way.\\
+The check if a program entailment exists in the program is done via
+the predicate \inprog(x, \ovl a, a) for strings $x$, constraint lists \ovl a and constraints $a$,
+where $x$ denotes a variable binding that can occur in \ovl a and $a$.
+The predicate models the existence of a declaration
+\progEnt{x}{\ovl a}{a} in the program.
+This is aggravated by the fact that the rule requires us
+to find a substitution from $x$ to some path $p$ to eliminate
+the bound variable of the program entailment $x$,
+since it would be otherwise free in the constraint entailment.\\
+\\
+To solve this problem we apply the same technique as
+we previously did with rule C-Subst.\\
+We can enumerate over all possible combinations of variable names and paths
+to eliminate the need to find a proper substitution.
+As well as finding a way to express the existence check
+of program entailments in a derivable way,
+where the quantified constraint $a$ can be used as an input
+and would result in an output to be usable as an instantiation for $\ovl a$.
+
+With this requirement specification we see that we want to have
+some sort of lookup function ranging from constraint $a$ to constraints $\ovl a$.
+Such a lookup function would need to be specifically generated for a program
+and we cannot give a universal function definition.
+%
+\begin{example}[Program entailment lookup function structure]\quad\\ % TODO: s/structure/generation
+\label{ex:lookup-fun}
+In this example we sketch the generation process
+of a lookup function that models the existence check in rule C-Prog.
+The program for which we generate a lookup function contains the following
+program entailment declarations.
+\begin{align*}
+&\progEnt{x}{\instOf{x}{B}}{\instOf{x}{A}}\\
+&\progEnt{x}{\instOf{x}{C}, \instOf{x.f}{D}}{\instOf{x}{A}}\\
+&\progEnt{x}{\instOf{x}{E}}{\instOf{x}{D}}
+\end{align*}
+Since program entailments are used to express inheritance
+relations these form the following class hierarchy.
+\begin{center}
+\begin{tikzpicture}
+  \node (A) at (-1,0) {A};
+  \node (B) at (-3,-1.5) {B};
+  \node (C) at (1,-1.5) {C};
+  \path (A) edge (B);
+  \path (A) edge (C);
+  
+  \node (D) at (3,0) {D};
+  \node (E) at (3,-1.5) {E};
+  \path (D) edge (E);
+% \node (comment) at (-0.5, -0.5) {asdf};
+\end{tikzpicture}
+\end{center}
+We recall from \Cref{fig:dcc-wf} that a program entailment \progEnt{y}{\ovl b}{b}
+is only well formed if constraint $b$ is
+of the form \instOf{q}{Cls} and $\instOf{q}{Cls'} \in \ovl b$.\\
+With this in mind, rule C-Prog states that to show that
+path $q$ is an instance of class $Cls$ it suffices to show
+that $q$ is an instance of subclass $Cls'$
+and that the field requirements of $Cls'$ are fulfilled.
+
+To traslate this into a lookup function,
+we use $b$ as an argument to the function and \ovl b as our return value.
+Since a function needs to be total we need to combine all
+existing program entailments into one function,
+as well as the need for a result in the case where no match exists.
+
+Since the well formedness requires \ovl b to contain at least
+one element \ovl b cannot be empty and we use the
+empty list $\nil$ as the return value for the non matching case.
+
+To differentiate between program entailments we use if statements
+to check if the input matches one of the program entailments.
+There can be more than one entailment with the same right-hand side constraint,
+as seen in the given program entailments.
+Since we do want to avoid shadowing of entailments,
+we need to change the return type of the lookup function
+from returning a list of constraints (\Constrs)
+to returning a list of a list of constraints (\Constrss).\\
+With this we can give the following function definition:
+\begin{align*}
+&\mIt{lookup}(a: \Constr): \Constrss = \\
+&\If a = \instOf{x}{A}\\
+&\Then [[\instOf{x}{B}], [\instOf{x}{C}, \instOf{x.f}{D}]]\\
+&\Else \If a = \instOf{x}{D}\\
+&\quad\Then [[\instOf{x}{E}]]\\
+&\quad\Else \nil\\
+\end{align*}
+\end{example}\quad\\
+%
+Since this solves only the non-algorithmic nature of the rule,
+we still need to find a suitable substitution of $a$ to input into the lookup function.
+We can incorporate the enumeration process into the generation
+of the lookup function to resolve this.
+% TODO
+% - enumerate vars + paths in lookup function
+% - give resulting C-Prog rule using lookup
 
 C-Prog\\
 - similiar problems as C-Subst\\
 - non algorithmic: in-prog predicate\\
-- hard to find substitution for the solver
+- hard to find substitution for the solver\\
+- apply same technique for solution\\
+- find way to express prog ent existence requirement in algorithmic way\\
+- enumerate varnames and paths to get rid of the substitution problem\\
+- look at how rule works\\
+  - since prog ent are used for inheritance\\
+  - to check entailment of some constraint it suffices to check for entailment of constraints of prog ent
+  - seen as inheritance problem: to show that path p is instance of class C, it suffices to show that p is instance of subclass of C + field requirements of subclass
 
 C-Perm\\
 - non structural rule\\
