@@ -95,8 +95,8 @@ The example is purely for demonstrating the syntax of the SMT-Lib format.
 \begin{subfigure}{1\textwidth}
 \begin{align*}
 &\forall x: \mathit{List[Int]}. \exists y: \mathit{List[Int]}. \\
-&\text{ let } h := head(x), t := tail(x)\\
-&\text{ in } insert(h, t) = y
+&\Let h := head(x), t := tail(x)\\
+&\In insert(h, t) = y
 \end{align*}
 \subcaption{First-order formula}
 \label{fig:smtlib-example-fo}

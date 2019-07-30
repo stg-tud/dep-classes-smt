@@ -28,30 +28,8 @@ which enables the usage of the constraint system for dynamic dispatch and expres
 \\ \\
 Here we show the calculus by Vaidas Gasiūnas.
 \subsubsection{Syntax}
-The syntax of $DC_C$ is given in \Cref{fig:dcc-syntax}.
-Types are lists of constraints to be satisfied by their instances.
-Types have the form \type{x}{\ovl{a}}, where $x$ is a bound variable
-and \ovl{a} is a list of constraints on $x$.
-An object belongs to a type if it fulfills its constraints.
-
-Constraints of the form $p \equiv q$ express that two paths $p$ and $q$ are equivalent
-and paths are considered to be equivalent if they refer to the same object at runtime.
-$p :: C$ specifies that path $p$ refers to an instance of class $C$.
-The stronger form $p.\textbf{cls} \equiv C$ denotes that
-path $p$ refers to an object instantiated by a constructor of class $C$,
-excluding indirect instances of $C$ inferred through inheritance rules.
-
-A Program $P$ consists of a list of declarations $D$.
-Possible declarations are constructor declarations,
-abstract method declarations, method implementations and constraint entailment rules.
-
-A Path expression can be a variable $x$ or navigation over fields starting from a variable e.g. $x.f$.
-
-Expressions can be variables, field access, object construction and method invocation.
-Field assignments are not supported since the calculus is functional.
-
 % begin syntax figure
-\begin{figure}[h]
+\begin{figure}[t]
 \begin{align*}
 \mathit{Program} &::= \ovl{Decl} \\
 \mathit{Decl} &::= \constr{C}{x}{\overline{Constr}} % C(x. $\overline{Constr}$)
@@ -82,45 +60,31 @@ $m \in$ method names
 \label{fig:dcc-syntax}
 \end{figure}
 % end syntax figure
+The syntax of $DC_C$ is given in \Cref{fig:dcc-syntax}.
+Types are lists of constraints to be satisfied by their instances.
+Types have the form \type{x}{\ovl{a}}, where $x$ is a bound variable
+and \ovl{a} is a list of constraints on $x$.
+An object belongs to a type if it fulfills its constraints.
+
+Constraints of the form $p \equiv q$ express that two paths $p$ and $q$ are equivalent
+and paths are considered to be equivalent if they refer to the same object at runtime.
+$p :: C$ specifies that path $p$ refers to an instance of class $C$.
+The stronger form $p.\textbf{cls} \equiv C$ denotes that
+path $p$ refers to an object instantiated by a constructor of class $C$,
+excluding indirect instances of $C$ inferred through inheritance rules.
+
+A Program $P$ consists of a list of declarations $D$.
+Possible declarations are constructor declarations,
+abstract method declarations, method implementations and constraint entailment rules.
+
+A Path expression can be a variable $x$ or navigation over fields starting from a variable e.g. $x.f$.
+
+Expressions can be variables, field access, object construction and method invocation.
+Field assignments are not supported since the calculus is functional.
 
 \subsubsection{Constraint System}
-The constraint system is given in the style of the sequent calculus
-and the rules for the constraint system are specified in \Cref{fig:dcc-constraint-entailment}.
-The sequent \entails{\ovl{a}}{a} is interpreted as constraint entailment:
-constraints \ovl{a} entail constraint $a$.
-The constraints on the left-hand side are referred to as the context
-and the constraint on the right-hand side as the constraint entailed by the context.
-The notion \entails{\ovl{a}}{\ovl{b}} is used differently than in the sequent calculus.
-For $DC_C$ it is used as a shortcut for a list of judgments
-\entails{\ovl{a}}{b_i} for each $b_i \in \ovl{b}$,
-meaning that all $b_i$ are entailed by \ovl{a}.
-
-Rules C-Ident and C-Cut are standard rules of the sequent calculus,
-the remainder of the rules are specific to the programming language.
-The standard structural rules of the sequent calculus allowing
-permutation, weakening and contraction of the context
-are implicitly assumed to be specified.
-
-The properties of path equivalence are specified with rules C-Refl and C-Subst.
-Rule C-Refl establishes reflexivity of path equivalence.
-Rule C-Subst specifies that paths can be substituted with equivalent paths
-at any position of any other constraint.
-Other typical rules of equivalence as symmetry and transitivity can be
-derived from these rules.
-
-Rule C-Class specifies that a direct instance of a class
-is an instance of that class, describing that
-\instOf{p}{C} is a weaker relationship than \instBy{p}{C}.
-
-With Rule C-Prog it is possible to specify new axioms for the constraint system in programs.
-This is used to express inheritance declarations between dependent classes:
-the constraint at the right-hand side of the implication must be \instOf{x}{p},
-where $x$ is the bound variable of the rule.
-The rule is restricted to avoid an undecidable constraint system
-and the restrictions are specified by the well-formedness rule WF-RD in \Cref{fig:dcc-wf}.
-
 % begin constraint system figure
-\begin{figure}
+\begin{figure}[t]
 % C-Ident
 \begin{prooftree}
 \AxiomC{}
@@ -164,56 +128,44 @@ and the restrictions are specified by the well-formedness rule WF-RD in \Cref{fi
 \label{fig:dcc-constraint-entailment}
 \end{figure}
 % end constraint system figure
+The constraint system is given in the style of the sequent calculus
+and the rules for the constraint system are specified in \Cref{fig:dcc-constraint-entailment}.
+The sequent \entails{\ovl{a}}{a} is interpreted as constraint entailment:
+constraints \ovl{a} entail constraint $a$.
+The constraints on the left-hand side are referred to as the context
+and the constraint on the right-hand side as the constraint entailed by the context.
+The notion \entails{\ovl{a}}{\ovl{b}} is used differently than in the sequent calculus.
+For $DC_C$ it is used as a shortcut for a list of judgments
+\entails{\ovl{a}}{b_i} for each $b_i \in \ovl{b}$,
+meaning that all $b_i$ are entailed by \ovl{a}.
+
+Rules C-Ident and C-Cut are standard rules of the sequent calculus,
+the remainder of the rules are specific to the programming language.
+The standard structural rules of the sequent calculus allowing
+permutation, weakening and contraction of the context
+are implicitly assumed to be specified.
+
+The properties of path equivalence are specified with rules C-Refl and C-Subst.
+Rule C-Refl establishes reflexivity of path equivalence.
+Rule C-Subst specifies that paths can be substituted with equivalent paths
+at any position of any other constraint.
+Other typical rules of equivalence as symmetry and transitivity can be
+derived from these rules.
+
+Rule C-Class specifies that a direct instance of a class
+is an instance of that class, describing that
+\instOf{p}{C} is a weaker relationship than \instBy{p}{C}.
+
+With Rule C-Prog it is possible to specify new axioms for the constraint system in programs.
+This is used to express inheritance declarations between dependent classes:
+the constraint at the right-hand side of the implication must be \instOf{x}{p},
+where $x$ is the bound variable of the rule.
+The rule is restricted to avoid an undecidable constraint system
+and the restrictions are specified by the well-formedness rule WF-RD in \Cref{fig:dcc-wf}.
 
 \subsubsection{Operational Semantics}
-The operational semantics is given in \Cref{fig:dcc-opsemantics}.
-It is defined as a small-step reduction relation of a heap and an expression.
-A heap is a list of mappings from variables to objects.
-Each object is specified by a class and a list of the values of its fields,
-which are again references in the heap.
-For heaps $h$ and variables $x$, $h(x)$ denotes the object of $h$ referenced by $x$.
-
-The function $HC$ takes a heap and gives the constraints satisfied by all variables of the heap.
-The function $OC$ converts an object %definition TODO: keep this?
-to a list of constraints on a given variable.
-A Constraint $a$ is satisfied by a heap $h$, if $\entails{HC(h)}{a}$ holds.
-
-Evaluation in $DC_C$ is a process of moving information from the expression to the heap
-and the values of $DC_C$ are references in the heap.
-Evaluation must yield a heap and a variable.
-During reduction only new objects can be added to the heap,
-while existing objects remain unchanged.
-
-The congruence rules RC-Field, RC-New and RC-Call propagate reduction to subexpressions.
-The computation rules R-Field, R-New and R-Call can only be applied
-when all subexpressions of an expression are reduced to normal forms (variables).
-
-Field access $x.f$ is reducible to the value of $x.f$ in the heap
-if the heap constraints include \pathEq{x.f}{y},
-where $y$ represents the value retrieved from the heap.
-$x$ does not have field $f$ in the heap if the constraint is not included.
-
-Object construction \newInst{C}{\ovl{f}}{\ovl{x}} is reduced
-to a fresh variable $x$ representing the new object,
-as well as extending the heap with an object $o = \obj{C}{\ovl{f}}{\ovl{x}}$ of class $C$ with
-\ovl{x} as the values of the fields of that object.
-It is checked that a constructor of class $C$ exists in the program
-and that the constraints \ovl{b} specified by the constructor
-are satisfied by the new object \entails{HC(h),OC(x,o)}{\ovl{b}}.
-
-A method call $m(x)$ is reduced to the body of the most specific applicable method implementation.
-Applicability of the implementations and selection of the most specific one
-are determined by constraints.
-A method declaration is applicable if its arguments are entailed by the context.
-Set $S$ contains the applicable methods.
-A method declaration with argument constraints \ovl{a}
-is more specific than a method declaration with argument constraints \ovl{a'}
-if \entails{\ovl{a'}}{\ovl{a}},
-but not the other way around $\neg\entails{\ovl{a}}{\ovl{a'}}$.
-
 % begin Operational Semantics figure}
-\begin{figure}
-% TODO: both alignments side-by-side
+\begin{figure}[h]
 \begin{align*}
 o &::= \stdobj && \text{(objects)} \\ % \langle C; \overline{f} \equiv \overline{x} \rangle \\
 h &::= \stdheap\ \ (x_i \text{ distinct}) && \text{(heaps)}
@@ -301,80 +253,56 @@ HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \map
           {e', \overline{f'} \equiv \overline{e'}}}
 }
 \end{prooftree}
-
 \caption{Operational Semantics}
 \label{fig:dcc-opsemantics}
 \end{figure}
 % end Operational Semantics figure
+The operational semantics is given in \Cref{fig:dcc-opsemantics}.
+It is defined as a small-step reduction relation of a heap and an expression.
+A heap is a list of mappings from variables to objects.
+Each object is specified by a class and a list of the values of its fields,
+which are again references in the heap.
+For heaps $h$ and variables $x$, $h(x)$ denotes the object of $h$ referenced by $x$.
+
+The function $HC$ takes a heap and gives the constraints satisfied by all variables of the heap.
+The function $OC$ converts an object %definition TODO: keep this?
+to a list of constraints on a given variable.
+A Constraint $a$ is satisfied by a heap $h$, if $\entails{HC(h)}{a}$ holds.
+
+Evaluation in $DC_C$ is a process of moving information from the expression to the heap
+and the values of $DC_C$ are references in the heap.
+Evaluation must yield a heap and a variable.
+During reduction only new objects can be added to the heap,
+while existing objects remain unchanged.
+
+The congruence rules RC-Field, RC-New and RC-Call propagate reduction to subexpressions.
+The computation rules R-Field, R-New and R-Call can only be applied
+when all subexpressions of an expression are reduced to normal forms (variables).
+
+Field access $x.f$ is reducible to the value of $x.f$ in the heap
+if the heap constraints include \pathEq{x.f}{y},
+where $y$ represents the value retrieved from the heap.
+$x$ does not have field $f$ in the heap if the constraint is not included.
+
+Object construction \newInst{C}{\ovl{f}}{\ovl{x}} is reduced
+to a fresh variable $x$ representing the new object,
+as well as extending the heap with an object $o = \obj{C}{\ovl{f}}{\ovl{x}}$ of class $C$ with
+\ovl{x} as the values of the fields of that object.
+It is checked that a constructor of class $C$ exists in the program
+and that the constraints \ovl{b} specified by the constructor
+are satisfied by the new object \entails{HC(h),OC(x,o)}{\ovl{b}}.
+
+A method call $m(x)$ is reduced to the body of the most specific applicable method implementation.
+Applicability of the implementations and selection of the most specific one
+are determined by constraints.
+A method declaration is applicable if its arguments are entailed by the context.
+Set $S$ contains the applicable methods.
+A method declaration with argument constraints \ovl{a}
+is more specific than a method declaration with argument constraints \ovl{a'}
+if \entails{\ovl{a'}}{\ovl{a}},
+but not the other way around $\neg\entails{\ovl{a}}{\ovl{a'}}$.
 
 \subsubsection{Type Checking}
-Type assignment for expressions is defined in \Cref{fig:dcc-typeass}.
-The context of type assignment is a list of constraints providing information
-about variables that occur in the expression.
-The typing rules ensure that all free variables of the assigned types
-appear in the context.
-An expression type \type{x}{\ovl{a}} is a collection of constraints \ovl{a}
-with a bound variable $x$
-that will hold for all possible values of the expression at runtime,
-if the runtime environment satisfies the constraints of the context.
-The relation does not guarantee unique type assignments,
-since it is possible to have different constraints satisfied by an expression.
-The rule T-Sub explicitly allows weakening the type of an expression.
-
-The type of a variable $x$ is specified by rule T-Var.
-The type of $x$ asserts equivalence of the bound variable $y$ of the type to $x$.
-Further it is checked that \instOf{x}{C} can be satisfied by the context for some class $C$.
-
-Rule T-Field specifies type assignment of a field access $e.f$.
-The constraints of such a field access are the constraints on $x.f$
-entailed by the type of $e$
-, where $x$ is the bound variable of the type of $e$.
-The elimination of $x$ is done via the usage of
-constraints free of $x$ entailed by the type of $e$ and \pathEq{y}{x.f},
-where $y$ is used as the bound variable of the type of $e.f$
-and \entails{\ovl{c},\ovl{a}}{\instOf{x.f}{C}} is used to check if
-field $f$ of $e$ is available at runtime.
-
-Rule T-Call specifies type assignment of method calls $m(e)$.
-The type of $e$ is \type{x}{\ovl{a}}.
-The rule checks the existence of a declaration of $m$,
-whose parameter constrains are \ovl{a'} and return type constraints are \ovl{b}.
-It is checked with \entails{\ovl{c},\ovl{a}}{\ovl{a'}} if
-the parameter constraints are entailed by the type of $e$.
-The type constraints of $m(e)$ are derived from the declared return type of $m$
-and the type of the argument $e$.
-The argument variable $x$ is eliminated, because it does not appear in the context
-and the entailed constraints of the return types and the argument types
-free of $x$ are taken.
-
-Rule T-New specifies type assignment of object constructions.
-The type \type{x}{\ovl{b}} of an object construction \newInst{C}{\ovl{f}}{\ovl{e}}
-consists of a constraint stating that $C$ is the class of the object and the constraints of its fields.
-The field constraints are taken from the types of the expressions $e_i$
-assigned to the fields $f_i$.
-Additionally \entails{\ovl{c},\ovl{b}}{\ovl{b'}} checks
-that the new object satisfies the constraints of at least
-one constructor \constr{C}{x}{\ovl{b'}} of class $C$.
-\\
-\\
-Typechecking a program is defined in \Cref{fig:dcc-wf}.
-A program is well formed if all its declarations are well formed,
-method implementations need to be unique and complete
-and all declarations of a method need to have the same return type.
-A declaration is well-formed if its used variables are bound.
-Rule WF-MI additionally checks if the body of a method declaration
-respects the declared return type.
-Rule WF-RD restricts constraint derivation rules:
-constraints of the form \instOf{x}{C} can only be derived
-if some other class of $x$ is known.
-Such derivation rules are used to encode inheritance between
-dependent classes.
-
-Completeness and uniqueness of method implementations are defined
-based on well-formed heaps.
-Since it is not possible to generate all heaps
-these properties cannot be directly implemented.
-
 % begin Type assignment figure
 \begin{figure}
 % T-Field
@@ -425,8 +353,57 @@ these properties cannot be directly implemented.
 \label{fig:dcc-typeass}
 \end{figure}
 % end Type assignment figure
+Type assignment for expressions is defined in \Cref{fig:dcc-typeass}.
+The context of type assignment is a list of constraints providing information
+about variables that occur in the expression.
+The typing rules ensure that all free variables of the assigned types
+appear in the context.
+An expression type \type{x}{\ovl{a}} is a collection of constraints \ovl{a}
+with a bound variable $x$
+that will hold for all possible values of the expression at runtime,
+if the runtime environment satisfies the constraints of the context.
+The relation does not guarantee unique type assignments,
+since it is possible to have different constraints satisfied by an expression.
+The rule T-Sub explicitly allows weakening the type of an expression.
+
+The type of a variable $x$ is specified by rule T-Var.
+The type of $x$ asserts equivalence of the bound variable $y$ of the type to $x$.
+Further it is checked that \instOf{x}{C} can be satisfied by the context for some class $C$.
+
+Rule T-Field specifies type assignment of a field access $e.f$.
+The constraints of such a field access are the constraints on $x.f$
+entailed by the type of $e$
+, where $x$ is the bound variable of the type of $e$.
+The elimination of $x$ is done via the usage of
+constraints free of $x$ entailed by the type of $e$ and \pathEq{y}{x.f},
+where $y$ is used as the bound variable of the type of $e.f$
+and \entails{\ovl{c},\ovl{a}}{\instOf{x.f}{C}} is used to check if
+field $f$ of $e$ is available at runtime.
+
+Rule T-Call specifies type assignment of method calls $m(e)$.
+The type of $e$ is \type{x}{\ovl{a}}.
+The rule checks the existence of a declaration of $m$,
+whose parameter constrains are \ovl{a'} and return type constraints are \ovl{b}.
+It is checked with \entails{\ovl{c},\ovl{a}}{\ovl{a'}} if
+the parameter constraints are entailed by the type of $e$.
+The type constraints of $m(e)$ are derived from the declared return type of $m$
+and the type of the argument $e$.
+The argument variable $x$ is eliminated, because it does not appear in the context
+and the entailed constraints of the return types and the argument types
+free of $x$ are taken.
+
+Rule T-New specifies type assignment of object constructions.
+The type \type{x}{\ovl{b}} of an object construction \newInst{C}{\ovl{f}}{\ovl{e}}
+consists of a constraint stating that $C$ is the class of the object and the constraints of its fields.
+The field constraints are taken from the types of the expressions $e_i$
+assigned to the fields $f_i$.
+Additionally \entails{\ovl{c},\ovl{b}}{\ovl{b'}} checks
+that the new object satisfies the constraints of at least
+one constructor \constr{C}{x}{\ovl{b'}} of class $C$.
+\\
+\\
 % begin Type Checking figure
-\begin{figure}
+\begin{figure}[t]
 % WF-CD
 \begin{prooftree}
 \AxiomC{\FVeq{\ovl{a}}{x}}
@@ -471,6 +448,23 @@ these properties cannot be directly implemented.
 \label{fig:dcc-wf}
 \end{figure}
 % end Type Checking figure
+Typechecking a program is defined in \Cref{fig:dcc-wf}.
+A program is well formed if all its declarations are well formed,
+method implementations need to be unique and complete
+and all declarations of a method need to have the same return type.
+A declaration is well-formed if its used variables are bound.
+Rule WF-MI additionally checks if the body of a method declaration
+respects the declared return type.
+Rule WF-RD restricts constraint derivation rules:
+constraints of the form \instOf{x}{C} can only be derived
+if some other class of $x$ is known.
+Such derivation rules are used to encode inheritance between
+dependent classes.
+
+Completeness and uniqueness of method implementations are defined
+based on well-formed heaps.
+Since it is not possible to generate all heaps
+these properties cannot be directly implemented.
 
 %%% Local Variables: 
 %%% mode: latex

@@ -96,7 +96,7 @@ object SMTLibConverter {
     * x == p: no generalization, x generalized with x is x
     * x == q: no substitution, x substituted with x is x
     **/
-  private def substRuleTemplate(variable: Id, p1: Path, p2: Path): Term = {
+  private def substRuleTemplate(variable: Id, p1: Path, p2: Path): Term = { //TODO: swap p1 + p2, because p == q
     val x: Term = convertId(variable)
     val p: Term = convertPath(p1)
     val q: Term = convertPath(p2)

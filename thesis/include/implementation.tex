@@ -1,178 +1,19 @@
 \chapter{$DC_C$ Implementation}
-- implementation in scala
-- general structure of impl
-  - constraint system solved with SMT solver
-  - SMT solver input is SMTLib format
-  - "connection" to smt solver simple external process call
+%- general structure of impl
+%  - constraint system solved with SMT solver
+%  - SMT solver input is SMTLib format
+%  - "connection" to smt solver simple external process call
+%- constraint system in DCc given as sequent calculus
+%- in order to use SMT on constraint system
+%  → transform sequent calculus into first order axioms
+%  → use SMTlib representation of these axioms as input to solver
+In this chapter we show our implementation of the $DC_C$ Calculus presented in \Cref{sec:dcc}.
+We use Scala~\cite{scala} for the implementation.
+The constraint system will be solved using SMT with Z3 prover~\cite{z3}.
 
-\section{Constraint System}
-- constraint system in DCc given as sequent calculus
-- in order to use SMT on constraint system
-  → transform sequent calculus into first order axioms
-  → use SMTlib representation of these axioms as input to solver
-\subsection{Na\"ive approach}
-- naive approach
-- goal is to be as close to the calculus rules as possible
-- "preserve" structure of calculus rules
-
-- make figure of needed functions, predicates, sorts
-- make figure of rules
-- explain rules
-- list problems of these rules
-  - too complex (e.g. quantified variables, no direct way of deduction in subst rule)
-  - not "structured" (permutation)
-- fo syntax description for special stuff
-  - pattern matching
-  - let bindings
-  - if statements (inline + multiline)
-  - sort (type) specifications
-  - parametrized list type
-- pretty printing
-  - symbols for functions, etc
-  - substitution
-  - generalization
-  - list notion
-  - list concatenation + inserting
-
-\begin{figure}[t] % sorts, predicates, functions figure
-% Sorts
-\begin{subfigure}[c]{1\textwidth}
-\centering
-\begin{subfigure}[c]{0.45\textwidth}
-% BNF
-\begin{align*}
-\mIt{Path} &::=
-     \mIt{String}\\
-  &\quad|\ \mIt{Path.String}
-\end{align*}
-\end{subfigure}
-\begin{subfigure}[c]{0.45\textwidth}
-% BNF
-\begin{align*}
-\mIt{Constraint} &::=
-     \pathEq{Path}{Path}\\
-  &\quad|\ \instOf{Path}{String}\\
-  &\quad|\ \instBy{Path}{String}
-\end{align*}
-\end{subfigure}
-% Set
-%\begin{align*}
-%\mIt{Path} := \{\\
-%  &\mIt{var} &&\text{where } \mIt{var}\in \mIt{String}\\
-%  &\mIt{obj.field} &&\text{where } \mIt{obj} \in \mIt{Path}, \mIt{field} \in \mIt{String}\\ \}\\
-%\mIt{Constraint} := \{\\
-%  &\pathEq{\pleft}{\pright} &&\text{where } \pleft,\pright \in \mIt{Path}\\
-%  &\instOf{instance}{cls} &&\text{where } \mIt{instance} \in \mIt{Path}, \mIt{cls} \in \mIt{String}\\
-%  &\instBy{object}{clsname} &&\text{where } \mIt{object} \in \mIt{Path}, \mIt{clsname} \in \mIt{String}\\ \}
-%\end{align*}
-%
-%\[
-%\begin{aligned}
-%\mIt{Path} :=\\
-%  &x &&\text{where } x\in \mIt{String}\\
-%  &obj.field &&\text{where } \mIt{obj} \in \mIt{Path}, \mIt{field} \in \mIt{String}\\
-%\mIt{Constraint} :=\\
-%  &\pathEq{p}{q} &&\text{where } p,q \in \mIt{Path}\\
-%  &\instOf{instance}{cls} &&\text{where } \mIt{instance} \in \mIt{Path}, \mIt{cls} \in \mIt{String}\\
-%  &\instBy{object}{clsname} &&\text{where } \mIt{object} \in \mIt{Path}, \mIt{clsname} \in \mIt{String}
-%\end{aligned}
-%\]
-\subcaption{Sorts}
-\label{subfig:axioms-naive-general-sorts}
-\end{subfigure}\\
-\hrule
-% Predicates
-\begin{subfigure}[c]{1\textwidth}
-\centering
-\begin{align*}
-&\mathit{class}(\mathit{String}) \\
-&\mathit{variable}(\mathit{String})\\
-&\inprog(\mathit{String},\mathit{List[Constraint]}, \mathit{Constraint}) \\
-&\mathit{entails}(\mathit{List[Constraint]}, \mathit{Constraint})
-\end{align*}
-\subcaption{Predicates}
-\label{subfig:axioms-naive-general-predicates}
-\end{subfigure}\\
-\hrule
-% Functions
-\begin{subfigure}[c]{1\textwidth}
-\centering
-\begin{align*}
-% path substitution
-&\substpath{p_1: Path}{x: String}{p_2: Path}:\mIt{Path} = p_1 \match\\
-&\quad y \Rightarrow \ite{x=y}{p_2}{p_1}\\
-&\quad q.f \Rightarrow \substpath{q}{x}{p_2}.f\\
-%&\quad \If \is{var}(p_1) \\
-%&\qquad \Then x = \ite{id(p_1)}{p_2}{p_1}\\ % replace id(p_1)
-%&\qquad \Else \substpath{obj(p_1)}{x}{p_2}.f\\ %: replace obj(p_1) and f
-\\
-% constraint substitution
-&\substconstr{c: Constraint}{x: String}{p: Path}\mathit{: Constraint} = c \match \\
-&\quad \case{\pathEq{q_1}{q_2}}
-  {\pathEq
-    {\substconstr{q_1}{x}{p}}
-    {\substconstr{q_2}{x}{p}}}\\
-&\quad \case{\instOf{q}{C}}
-  {\instOf{\substconstr{q}{x}{p}}{C}}\\
-&\quad \case{\instBy{q}{C}}
-  {\instBy{\substconstr{q}{x}{p}}{C}}\\\\
-% constraints substitution
-&\substconstrs{cs: List[Constraint]}{x: String}{p: Path}\mathit{: List[Constraint]} =\\
-&\quad cs \match\\
-&\qquad \case{\epsilon}{\epsilon}\\
-&\qquad \case{hd :: tl}
-  {\substconstr{hd}{x}{p} ::
-  \substconstrs{tl}{x}{p}}\\\\
-&\mathit{subst(c_1: Constraint, x: String, p: Path, c_2: Constraint)} = \\
-&\quad\substconstr{c_1}{x}{p} = c_2 \\\\
-&\mathit{Entails(cs_1: List[Constraint], cs_2: List[Constraint])} = cs_2 \match\\
-&\quad \case{\epsilon}{true}\\
-&\quad \case{hd :: tl}{\mIt{entails}(cs_1, hd)} \land \mIt{Entails}(cs_1, tl)
-\end{align*}
-\subcaption{Functions}
-\label{subfig:axioms-naive-general-funs}
-\end{subfigure}
-\caption{Sorts, Predicates, Functions of Na\"ive approach}
-\label{fig:axioms-naive-general}
-\end{figure}
-
-% figure naive axioms
-\begin{figure} % TODO: split standard structural rules (weak, perm, contract) into own fig
-\begin{align*}
-&\forall c: \Constr.\ \entails{[c]}{c} && \text{(C-Ident)} \\
-&\forall p: \Path.\ \entails{\nil}{\pathEq{p}{p}} && \text{(C-Refl)} \\
-&\forall \ovl{a}: \Constrs, p: \Path, C: \String.&& \text{(C-Class)} \\
-&\quad \mIt{class}(C) \land \entails{\ovl{a}}{\instBy{p}{C}}
-       \rightarrow \entails{\ovl{a}}{\instBy{p}{C}} \\
-&\forall \ovl{a}, \ovl{a'}: \Constrs, b, c: \Constr. && \text{(C-Cut)} \\
-&\quad \entails{\ovl a}{c} \land \entails{c :: \ovl{a'}}{b}
-       \rightarrow \entails{\ovl a, \ovl{a'}}{b}\\
-&\forall \ovl a: \Constrs, x: \String, p_1, p_2: \Path, a, a_1, a_2: \Constr. && \text{(C-Subst)} \\
-&\quad \entails{\ovl a}{\pathEq{p_2}{p_1}} \land \mIt{variable}(x)
-         \land \mIt{subst}(a, x, p_1, a_1) \land \mIt{subst}(a, x, p_2, a_2)\\
-&\quad   \land \entails{\ovl a}{a_1}
-       \rightarrow \entails{\ovl a}{a_2} \\
-&\forall \ovl a, \ovl b: \Constrs, a: \Constr, x: \String, p: \Path. && \text{(C-Prog)} \\
-&\quad \inprog(x, \ovl a, a) \land \entails{\ovl b}{\subst{\ovl a}{x}{p}}
-       \rightarrow \entails{\ovl b}{\subst{a}{x}{p}} \\
-&\forall \ovl a: \Constrs, a, b: \Constr. && \text{(C-Weak)} \\
-&\quad \entails{\ovl a}{b}
-       \rightarrow \entails{a :: \ovl a}{b}\\
-&\forall ???.\ \entails{}{} && \text{(C-???)}\\
-&\forall ???. && \text{(C-???)} \\
-&\quad \entails{}{}
-\end{align*}
-\caption{Axioms of Na\"ive approach}
-\label{fig:axioms-naive}
-\end{figure}
-
-\subsection{Refined version}
-\subsection{Scala integration}
-
-\section{Interpreter}
-\section{Type Relation}
-\subsection{Well formedness of Programs}
-\subsection{Type assignments for Expressions}
+\input{include/implementation-constraints}
+\input{include/implementation-semantics}
+\input{include/implementation-types}
 
 %%% Local Variables: 
 %%% mode: latex

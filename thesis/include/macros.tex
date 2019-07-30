@@ -66,18 +66,25 @@
 \newcommand{\substconstr}[3]{\ensuremath{\substc(\mathit{#1}, \mathit{#2}, \mathit{#3})}}
 \newcommand{\substconstrs}[3]{\ensuremath{\substcs(\mathit{#1}, \mathit{#2}, \mathit{#3})}}
 \newcommand{\subst}[3]{\ensuremath{\mathit{#1}_{\mathit{#2} \mapsto \mathit{#3}}}}
+\newcommand*{\genp}{\ensuremath{\mathit{gen\mhyphen path}}}
+\newcommand*{\genc}{\ensuremath{\mathit{gen\mhyphen constraint}}}
+\newcommand{\gen}[3]{\ensuremath{\subst{#1}{#2}{#3}}}
 \newcommand{\is}[1]{\ensuremath{\mathit{is\mhyphen #1}}}
 \newcommand{\ite}[3]{\ensuremath{#1\ ?\ #2\ :\ #3}}
 \newcommand*{\If}{\textbf{if }}
 \newcommand*{\Then}{\textbf{then }}
 \newcommand*{\Else}{\textbf{else }}
+\newcommand*{\Let}{\textbf{let }}
+\newcommand*{\In}{\textbf{in }}
 \newcommand*{\match}{\textbf{ match}}
 \newcommand{\case}[2]{\ensuremath{\mathit{#1} \Rightarrow \mathit{#2}}}
-\newcommand*{\nil}{\mathit{nil}}
-\newcommand*{\Path}{\mathit{Path}}
-\newcommand*{\Constr}{\mathit{Constraint}}
-\newcommand*{\Constrs}{\mathit{List[\Constr]}}
-\newcommand*{\String}{\mathit{String}}
+\newcommand*{\nil}{\ensuremath{\mathit{nil}}}
+\newcommand*{\Path}{\ensuremath{\mathit{Path}}}
+\newcommand*{\Constr}{\ensuremath{\mathit{Constraint}}}
+\newcommand*{\Constrs}{\ensuremath{\mathit{List[\Constr]}}}
+\newcommand*{\String}{\ensuremath{\mathit{String}}}
+\newcommand\conc{\ensuremath{\mathbin{+\mkern-10mu+}}}
+\newcommand{\str}[1]{\texttt{"#1"}}
 
 % SMTLib format stuff
 
