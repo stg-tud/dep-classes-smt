@@ -920,10 +920,54 @@ can also be closed by C-Ident and vice versa.
 We replace rule C-Ident with rule C-DirectIdent.
 
 \subsection{Scala Integration}
-- for scala integration\\
-  - translate model to SMTLib\\
-  - implement prepocessing procedure for generating subst rules and prog ent lookup function\\
-  - entailments can then be checked by calling SMT solver
+To integrate the model of the sequent calculus
+into the Scala implementation, we need to translate the
+first-order model into the SMT-Lib format.
+We also need a procedure for preprocessing,
+since we enumerated over variable names and paths
+in the refined rules C-Subst and C-Prog.
+Entailments can then be checked by calling the SMT solver
+with the translated and preprocessed model
+and the entailment to check.
+
+\subsubsection{SMTLib Representation}
+First we give a SMTLib representation for
+the sort, predicate and functions definitions
+and the non-preprocessed rules.\\
+\\
+We translate the sorts defined in \Cref{subfig:axioms-naive-general-predicates}.
+The parametrized list datatype used is predefined in Z3.
+To increase compatibility with other solvers
+and to avoid ambiguities with the usage of \Constrs and \Constrss
+we also define two extra sorts.
+We define sort \mIt{CList} for \Constrs
+and sort \mIt{CsList} for \Constrss.
+The SMTLib representation is defined in \Cref{fig:smtlib-sorts}.
+All datatypes are defined with unique constructor- and selector names.
+%
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+(declare-datatype Path (
+  (var (id String))
+  (pth (obj Path) (field String))))
+(declare-datatype Constraint (
+  (path-eq (p-left Path) (p-right Path))
+  (instance-of (instance Path) (cls String))
+  (instantiated-by (object Path) (clsname String))))
+(declare-datatype CList (
+  (empty)
+  (construct (first Constraint) (rest CList))))
+(declare-datatype CsList (
+  (nan)
+  (cons (hd CList) (tl CsList))))
+\end{lstlisting}
+\caption{SMTLib sort definitions}
+\label{fig:smtlib-sorts}
+\end{figure}\\
+%
+
+\subsubsection{Preprocessing}
+\subsubsection{Calling the Solver}
 
 %%% Local Variables: 
 %%% mode: latex

@@ -102,11 +102,11 @@ The example is purely for demonstrating the syntax of the SMT-Lib format.
 \label{fig:smtlib-example-fo}
 \end{subfigure}
 \begin{subfigure}{1\textwidth}
-\centering
-\qquad\\\qquad\\
-(forall ((x (List Int))) (exists ((y (List Int))) \\
-(let ((h (head x)) (t (tail x))) \\
-(= (insert h t) y))))
+\begin{lstlisting}[language=smtlib]
+(forall ((x (List Int))) (exists ((y (List Int)))
+  (let ((h (head x)) (t (tail x)))
+    (= (insert h t) y))))
+\end{lstlisting}
 \subcaption{SMTLib representation}
 \label{fig:smtlib-example-smtlib}
 \end{subfigure}

@@ -88,6 +88,14 @@
 \newcommand{\str}[1]{\texttt{"#1"}}
 
 % SMTLib format stuff
+% SMT-Lib language definition for listings
+\lstdefinelanguage{smtlib}{
+  alsoletter=-, % '-' is usable in keywords
+  morekeywords={declare-datatype,let,forall,exists},
+  sensitive=false, % keywords are not case-sensitive
+  morestring=[b]", % defines that strings are enclosed in double quotes
+  basicstyle=\small % or \small, \tiny, \footnotesize, etc: sets text size
+}
 
 %% misc
 %%%%%%%%%
