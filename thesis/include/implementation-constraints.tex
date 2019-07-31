@@ -410,7 +410,11 @@ In the example we used rule C-Subst and chose the quantified variables
 to fulfill the various requirements of the rule.
 These requirements included \mIt{variable} and \mIt{subst} as well
 as the relationship between variables $a$, $a_1$ and $a_2$.
-We found that making these variable instantiations is diffucult for the solver.
+We found that making these variable instantiations is diffucult for the solver
+and we refine the modeled rules for better usage with the solver.
+
+\subsubsection{Rule C-Subst}
+We start with refining rule C-Subst.
 The identified problems of this rule are
 \begin{enumerate}
     \item the amount of quantified variables and
@@ -594,7 +598,9 @@ We can omit
 By omitting the generalization or the substitution
 we can remove the respective let binding
 and replace the now free variable in its subexpression.
+\Cref{ex:subst-optimzed} shows this for the case $x = p_1$.
 \begin{example}[Optimzed subst rule with $x = p_1$]
+\label{ex:subst-optimzed}
 \begin{align*}
 &\forall \ovl a: \Constrs, a_2: \Constr.\\
 &\quad \Let a := \gen{a_2}{\mathbf{p_2}}{\mathbf{x}}\\
@@ -604,8 +610,9 @@ and replace the now free variable in its subexpression.
        \entails{\ovl a}{a}\\
 &\rightarrow \entails{\ovl a}{a_2}
 \end{align*}
-\end{example}\quad\\
+\end{example}
 %
+\subsubsection{Rule C-Prog}
 Rule C-Prog has similiar problems as the ones observed for rule C-Subst.
 The rule is again defined in a non-algorithmic way.\\
 The check if a program entailment exists in the program is done via
@@ -767,6 +774,7 @@ With this in mind we generate a lookup function for the
 program entailments shown in \Cref{ex:progent-inheritance}
 with valid paths $y$ and $y.g$.
 The resulting lookup function is shown in \Cref{ex:lookup-fun}.
+\newpage
 \begin{example}[Program entailment lookup function]\quad\\
 \label{ex:lookup-fun}
 \begin{align*}
@@ -793,7 +801,7 @@ we can refine rule \mbox{C-Prog}.
 We do this by replacing the declarative requirement of the $\inprog$ predicate
 with the algorithmic call to the lookup function.
 %
-\begin{figure}[t]
+\begin{figure}[h]
 \begin{align*}
 &\forall \ovl a: \Constrs, a: \Constr. && \text{(C-Prog)}\\
 &\Let \ovl{\ovl a} := lookup(a)\\   %\bar{\bar a}
@@ -826,6 +834,7 @@ but a general rule that does not need any preprocessing.
 This is the case because we moved the enumeration process
 of possible paths into the generation of the lookup function.
 
+\subsubsection{Rule C-Perm}
 C-Perm\\
 - non structural rule\\
 - good for checking the property on existing entailments\\
