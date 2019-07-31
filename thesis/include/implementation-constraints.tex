@@ -4,7 +4,7 @@ is specified in the style of the sequent calculus.
 In order to use a SMT solver on the constraint system
 we model the sequent calculus in sorted first-order logic.
 The integration of the SMT solving with the Scala implementation
-is done via calling the SMT solver as a subprocess and using
+is done via calling the SMT solver as a sub-process and using
 the SMT-Lib format for communicating information between
 the Scala implementation and the solver process.
 \\ \\
@@ -41,7 +41,7 @@ If statements can be written inline as \ite{b}{x}{y} or using
 the keywords \If, \Then and \textbf{else}.
 Pattern matching is written using the notion $x \match$ to start matching some $x$
 and patterns are specified using \case{y}{z},
-where variables occuring in $y$ are bound in $z$.
+where variables occurring in $y$ are bound in $z$.
 Pattern matching can be written as a combination of if statements and let bindings
 and is therefore used for better readability.
 
@@ -852,9 +852,9 @@ Rule C-Ident requires a list containing only one
 element for its context and rule C-Weak can only
 eliminate the first element from the context.
 Therefore to close a proof for \entails{\ovl c}{c} with C-Ident
-where $c \in \ovl c$ and $\neg(head(\ovl c) = c)$, % TODO: head() stimmt nicht! sollte last sein. remove this?
+where $c \in \ovl c$ and $\neg (last(\ovl c) = c)$,
 we need to find a permutation \ovl{c'} of \ovl c
-where $head(\ovl{c'}) = c$.
+where $last(\ovl{c'}) = c$.
 %
 \begin{figure}[h]
 \begin{align*}
@@ -905,7 +905,7 @@ since rule C-Perm does not require
 both lists to be of equal length and
 we know that $c \in \ovl c$.
 From there we repeatedly apply rule C-Weak
-until we need are left with the subgoal \entails{[c]}{c}.
+until we are left with the subgoal \entails{[c]}{c}.
 We show this entailment by applying rule C-Ident.\\
 \\
 Each entailment \entails{\ovl c}{c} closable with rule C-Ident
