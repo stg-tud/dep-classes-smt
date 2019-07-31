@@ -1024,6 +1024,7 @@ All datatypes are defined with unique constructor- and selector names.
 \caption{SMTLib Function Definitions}
 \label{fig:smtlib-funs}
 \end{figure}\\
+%
 \begin{figure}[h]
 \begin{lstlisting}[language=smtlib]
 // Base Properties
@@ -1039,7 +1040,69 @@ All datatypes are defined with unique constructor- and selector names.
 \end{lstlisting}
 \caption{SMTLib Predicate Definitions}
 \label{fig:smtlib-predicates}
+\end{figure}\\
+%
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+(assert (!
+  (forall ((cs CList) (a Constraint) (b Constraint))
+    (=> (entails cs b)
+        (entails (construct a cs) b)))
+  :named C-Weak))
+(assert (!
+  (forall ((cs1 CList) (cs2 CList) (c Constraint))
+    (=> (and (forall ((a Constraint))
+               (and (=> (elem a cs1) (elem a cs2))
+                    (=> (not (elem a cs1)) (not (elem a cs2)))
+             ))
+             (entails cs1 c))
+        (entails cs2 c)))
+  :named C-Perm))
+\end{lstlisting}
+\caption{SMTLib Structural Rules}
+\label{fig:smtlib-structural-rules}
 \end{figure}\quad\\
+%
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+(assert (!
+  (forall ((p Path)) (entails empty (path-eq p p)))
+  :named C-Refl))
+(assert (!
+  (forall ((c Constraint) (cs CList))
+    (=> (elem c cs) (entails cs c)))
+  :named C-Ident))
+(assert (!
+  (forall ((cs CList) (p Path) (c String))
+    (=> (and (class c)
+        (and (path-exists p)
+             (entails cs (instantiated-by p c))))
+        (entails cs (instance-of p c))))
+  :named C-Class))
+(assert (!
+  (forall ((cs1 CList) (cs2 CList)
+           (b Constraint) (c Constraint))
+    (=> (and (entails cs1 c)
+             (entails (construct c cs2) b))
+        (entails (conc cs1 cs2) b)))
+  :named C-Cut))
+\end{lstlisting}
+\caption{SMTLib $DC_C$ Rules}
+\label{fig:smtlib-basic-rules}
+\end{figure}\quad\\
+%
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+(define-fun-rec big-or-Entails ((ccs CsList) (cs CList)) Bool
+  (ite (is-cons ccs)
+    (or (Entails cs (hd ccs))
+        (big-or-Entails (tl ccs) cs))
+     false))
+\end{lstlisting}
+\caption{SMTLib Preprocess Helper Function}
+\label{fig:smtlib-preproc-helper}
+\end{figure}\quad\\
+%
 
 \subsubsection{Preprocessing}
 \subsubsection{Calling the Solver}
