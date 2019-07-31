@@ -835,15 +835,61 @@ This is the case because we moved the enumeration process
 of possible paths into the generation of the lookup function.
 
 \subsubsection{Rule C-Perm}
-C-Perm\\
-- non structural rule\\
-- good for checking the property on existing entailments\\
-- bad for generating permutations out of one entailment\\
-- mostly used for closure with C-Ident in our model since list based\\
-- introduce C-DirectIdent that omits weakening\\
-- C-DirectIdent introduces new quantified var\\
-  - not a problem because it can be directly matched against the rhs of the implication
-  - checking the property elem of list is easy for the solver
+The permutation rule C-Perm is defined in a
+non-structural way.
+The SMT solver can use the rule without a problem to check for
+two known entailments \entails{\ovl a}{a} and \entails{\ovl b}{a}
+if \ovl a is a permutation of \ovl b.
+The solver struggels with using this rule
+for generating new entailments \entails{\ovl b}{a}
+from a single known entailment \entails{\ovl a}{a},
+such that \ovl b is a permutation of \ovl a.\\
+\\
+The permutation generating aspect is, in our model,
+used for closures with rule C-Ident in combination with rule C-Weak
+since our model is list based.
+Rule C-Ident requires a list containing only one
+element for its context and rule C-Weak can only
+eliminate the first element from the context.
+Therefore to close a proof for \entails{\ovl c}{c} with C-Ident
+where $c \in \ovl c$ and $\neg(head(\ovl c) = c)$,
+we need to find a permutation \ovl{c'} of \ovl c
+where $head(\ovl{c'}) = c$.
+%
+\begin{figure}[h]
+\begin{align*}
+&\forall \ovl c: \Constrs, c: \Constr. && \text{C-DirectIdent}\\
+&\quad c \in \ovl c \rightarrow \entails{\ovl c}{c}
+\end{align*}
+\caption{Rule C-DirectIdent}
+\label{fig:axioms-cdirectident}
+\end{figure}\\
+%
+To avoid the generation of permutations by the solver,
+we define a rule for direct closure for such entailments
+using rule C-Ident.\\
+We introduce rule C-DirectIdent in \Cref{fig:axioms-cdirectident}.
+Rule C-DirectIdent can be used to directly close entailments
+of the form \entails{\ovl c}{c} if $c \in \ovl c$.\\
+Rule C-DirectIdent introduces a new quantified variable,
+potentially leading to an increased search space for the solver.
+This is not the case for the rule.
+The newly introduced quantified variable \ovl c
+is contained in the entailment we want to show
+and therefore used in an input position
+which can be easily matched by the solver.
+This is also true for the the quantified variable $c$
+in combination with the element of check.
+Both quantified variables are used in input positions.
+Therefore the solver does not need to generate
+instantiations that match the property $c \in \ovl c$,
+but can rather check if the property is fulfilled
+for the known values.\\
+\\
+We replace rule C-Ident with rule C-DirectIdent. % TODO: maybe remove this from here? (just state why directident is safe)
+% TODO: DirectIdent is safe, because yadda yadda...
+\\
+- for each proof: if closable with direct ident, then closable with combination of Perm, Weak, Ident
 
 \subsection{Scala Integration}
 - for scala integration\\
