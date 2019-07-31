@@ -852,7 +852,7 @@ Rule C-Ident requires a list containing only one
 element for its context and rule C-Weak can only
 eliminate the first element from the context.
 Therefore to close a proof for \entails{\ovl c}{c} with C-Ident
-where $c \in \ovl c$ and $\neg(head(\ovl c) = c)$,
+where $c \in \ovl c$ and $\neg(head(\ovl c) = c)$, % TODO: head() stimmt nicht! sollte last sein. remove this?
 we need to find a permutation \ovl{c'} of \ovl c
 where $head(\ovl{c'}) = c$.
 %
@@ -886,10 +886,38 @@ instantiations that match the property $c \in \ovl c$,
 but can rather check if the property is fulfilled
 for the known values.\\
 \\
-We replace rule C-Ident with rule C-DirectIdent. % TODO: maybe remove this from here? (just state why directident is safe)
-% TODO: DirectIdent is safe, because yadda yadda...
+Rule C-DirectIdent does not contradict any of the other rules.
+It can solely be used as a "shortcut" for rule C-Ident.
+We show that rule C-DirectIdent and rule C-Ident are interchangeable.\\
 \\
-- for each proof: if closable with direct ident, then closable with combination of Perm, Weak, Ident
+Each entailment \entails{\ovl c}{c} closable with rule C-DirectIdent
+can also be closed with the usage of rule C-Ident.
+We produce a derivation for \entails{\ovl c}{c}
+without the usage of C-DirectIdent.
+Since the entailment is closable by C-DirectIdent,
+we know that $c \in \ovl c$.
+We generate a permutation \ovl{c'} of \ovl c
+with the property $last(\ovl{c'}) = c$.
+We do this by appending $c$ at the end of \ovl c
+and obtain $\ovl{c'} := \ovl c \conc [c]$.
+\ovl{c'} is a valid permutation in our model,
+since rule C-Perm does not require
+both lists to be of equal length and
+we know that $c \in \ovl c$.
+From there we repeatedly apply rule C-Weak
+until we need are left with the subgoal \entails{[c]}{c}.
+We show this entailment by applying rule C-Ident.\\
+\\
+Each entailment \entails{\ovl c}{c} closable with rule C-Ident
+can also be closed with the usage of rule C-DirectIdent.
+The entailment is closable with rule C-Ident,
+we therefore know that \ovl c is of the form $[c]$.
+Since $c \in [c]$, we show the entailment \entails{[c]}{c}
+by directly applying rule C-Ident.\\
+\\
+We showed that each entailment closable by C-DirectIdent
+can also be closed by C-Ident and vice versa.
+We replace rule C-Ident with rule C-DirectIdent.
 
 \subsection{Scala Integration}
 - for scala integration\\
