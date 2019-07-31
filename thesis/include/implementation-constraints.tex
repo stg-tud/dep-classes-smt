@@ -525,7 +525,7 @@ of $p$ and $x$.
 %
 \begin{figure}[h]
 \begin{align*}
-&\forall \ovl a: \Constrs, a_2: \Constr.\\
+&\forall \ovl a: \Constrs, a_2: \Constr. && \text{(C-Subst)}\\
 &\quad \Let a := \gen{a_2}{\mathbf{p_2}}{\mathbf{x}}\ \In\\%\genc(a_2, \mathbf{p_2}, \mathbf{x})\ \In\\
 &\qquad \Let a_1 := \subst{a}{\mathbf{x}}{\mathbf{p_1}}\\ %\substc(a, \mathbf{x}, \mathbf{p_1})\\
 &\qquad \In
@@ -631,20 +631,23 @@ With this requirement specification we see that we want to have
 some sort of lookup function ranging from constraint $a$ to constraints $\ovl a$.
 Such a lookup function would need to be specifically generated for a program
 and we cannot give a universal function definition.
+
+We develop the generation process of a lookup function which models
+the existence check from rule C-Prog through a series of examples.
+Since such a lookup function needs to be specific to a given program,
+we start by defining a set of program entailments in \Cref{ex:progent-inheritance}.
 %
-\begin{example}[Program entailment lookup function structure]\quad\\ % TODO: s/structure/generation
-\label{ex:lookup-fun}
-In this example we sketch the generation process
-of a lookup function that models the existence check in rule C-Prog.
-The program for which we generate a lookup function contains the following
-program entailment declarations.
+\begin{example}[Program entailment class hierarchy]\quad\\
+\label{ex:progent-inheritance}
+The program for which we want to generate a lookup function
+contains the following entailment declarations.
 \begin{align*}
 &\progEnt{x}{\instOf{x}{B}}{\instOf{x}{A}}\\
 &\progEnt{x}{\instOf{x}{C}, \instOf{x.f}{D}}{\instOf{x}{A}}\\
 &\progEnt{x}{\instOf{x}{E}}{\instOf{x}{D}}
 \end{align*}
-Since program entailments are used to express inheritance
-relations these form the following class hierarchy.
+Since program entailments are used to express inheritance relations,
+the given entailments form the following class hierarchy.
 \begin{center}
 \begin{tikzpicture}
   \node (A) at (-1,0) {A};
@@ -659,6 +662,7 @@ relations these form the following class hierarchy.
 % \node (comment) at (-0.5, -0.5) {asdf};
 \end{tikzpicture}
 \end{center}
+\end{example}\quad\\
 We recall from \Cref{fig:dcc-wf} that a program entailment \progEnt{y}{\ovl b}{b}
 is only well formed if constraint $b$ is
 of the form \instOf{q}{Cls} and $\instOf{q}{Cls'} \in \ovl b$.\\
@@ -675,17 +679,46 @@ as well as the need for a result in the case where no match exists.
 
 Since the well formedness requires \ovl b to contain at least
 one element \ovl b cannot be empty and we use the
-empty list $\nil$ as the return value for the non matching case.
-
+empty list $\nil$ as the return value for the non matching case.\\
 To differentiate between program entailments we use if statements
-to check if the input matches one of the program entailments.
-There can be more than one entailment with the same right-hand side constraint,
-as seen in the given program entailments.
-Since we do want to avoid shadowing of entailments,
+to check if the input matches one of the program entailments.\\
+Such a lookup function is shown in \Cref{ex:lookup-fun-ite}.
+
+\begin{example}[Lookup function using if statements]
+\label{ex:lookup-fun-ite}
+\begin{align*}
+&\mIt{lookup}(a: \Constr): \Constrs = \\
+&\If a = \instOf{x}{A}\\
+&\Then [\instOf{x}{B}]\\
+&\Else \If a = \instOf{x}{A}\\
+&\quad \Then [\instOf{x}{C}, \instOf{x.f}{D}]\\
+&\quad \Else\If a = \instOf{x}{D}\\
+&\qquad \Then [[\instOf{x}{E}]]\\
+&\qquad \Else \nil\\
+\end{align*}
+\end{example}
+%
+We can observe in \Cref{ex:lookup-fun-ite} that we
+created one if statement per program entailment.
+This practice can lead to the shadowing of program entailments
+as seen in the example, where the first and the second if statement share the same guard.
+This is the case because there can be more than one entailment
+with the same right-hand side constraint,
+as seen in the given program entailments in \Cref{ex:progent-inheritance}.
+This leads to shadowing, since we use the
+right-hand side as the guard for the if statements.\\
+\\
+To avoid this shadowing of entailments,
 we need to change the return type of the lookup function
 from returning a list of constraints (\Constrs)
 to returning a list of a list of constraints (\Constrss).\\
-With this we can give the following function definition:
+This enables us to merge program entailments that
+share the same right-hand side together.
+With this we can give the function definition shown in
+\Cref{ex:lookup-fun-shadowing} that avoids shadowing.
+%
+\begin{example}[Avoid shadowing in lookup]
+\label{ex:lookup-fun-shadowing}
 \begin{align*}
 &\mIt{lookup}(a: \Constr): \Constrss = \\
 &\If a = \instOf{x}{A}\\
@@ -694,27 +727,104 @@ With this we can give the following function definition:
 &\quad\Then [[\instOf{x}{E}]]\\
 &\quad\Else \nil\\
 \end{align*}
-\end{example}\quad\\
+\end{example}
 %
-Since this solves only the non-algorithmic nature of the rule,
-we still need to find a suitable substitution of $a$ to input into the lookup function.
-We can incorporate the enumeration process into the generation
-of the lookup function to resolve this.
-% TODO
-% - enumerate vars + paths in lookup function
-% - give resulting C-Prog rule using lookup
+We can see in \Cref{ex:lookup-fun-shadowing}
+that we merged the two entailments whose right-hand side
+is $\instOf{x}{A}$ and return both possible constraint lists
+as the result for a match to these entailments.
 
-C-Prog\\
-- similiar problems as C-Subst\\
-- non algorithmic: in-prog predicate\\
-- hard to find substitution for the solver\\
-- apply same technique for solution\\
-- find way to express prog ent existence requirement in algorithmic way\\
-- enumerate varnames and paths to get rid of the substitution problem\\
-- look at how rule works\\
-  - since prog ent are used for inheritance\\
-  - to check entailment of some constraint it suffices to check for entailment of constraints of prog ent
-  - seen as inheritance problem: to show that path p is instance of class C, it suffices to show that p is instance of subclass of C + field requirements of subclass
+To translate program entailments \progEnt{y}{\ovl b}{b}
+we used $b$ to check for equality to the argument to the function
+and \ovl b as the return value.
+As of now we neglected the bound variable $y$ of the program entailment.\\
+So we only solved the non-algorithmic nature of the rule
+and we still need to find a suitable substitution
+of the quantified variable $a$ from rule C-Prog
+to input into the lookup function, such that the substitution of $a$ matches $b$.
+We can incorporate the enumeration of combinations of variable names and paths
+into the lookup function generation to resolve this.\\
+\\
+To do this we look at rule C-Prog and
+see that the bound variable of the program entailment is used
+for the substitution.
+This is because, according to the well formedness,
+for program entailments \progEnt{y}{\ovl b}{b}
+only the bound variable $y$ can occur in \ovl b
+and $b$ needs to be of the form \instOf{y}{Cls}
+for some class name \mIt{Cls}.
+So for finding a valid substitution,
+we can fix the variable name to be substituted to $y$.\\
+Since we fixed the variable name to be substituted,
+what remains is the need to instantiate each program entailment
+with each possible path.
+Previously we only needed to generate a lookup function per program.
+Now we need to generate a new lookup function
+for each constraint entailment we want to show,
+since we enumerate over all possible paths.
+
+With this in mind we generate a lookup function for the
+program entailments shown in \Cref{ex:progent-inheritance}
+with valid paths $y$ and $y.g$.
+The resulting lookup function is shown in \Cref{ex:lookup-fun}.
+\begin{example}[Program entailment lookup function]\quad\\
+\label{ex:lookup-fun}
+\begin{align*}
+&\mIt{lookup}(a: \Constr): \Constrss = \\
+&\If a = \instOf{y}{A}\\
+&\Then [[\instOf{y}{B}], [\instOf{y}{C}, \instOf{y.f}{D}]]\\
+&\Else \If a = \instOf{y}{D}\\
+&\quad \Then [[\instOf{y}{E}]]\\
+&\quad \Else \If a = \instOf{y.g}{A}\\
+&\qquad \Then [[\instOf{y.g}{B}], [\instOf{y.g}{C}, \instOf{y.g.f}{D}]]\\
+&\qquad \Else \If a = \instOf{y.g}{D} \\
+&\qquad\quad \Then [[\instOf{y.g}{E}]]\\
+&\qquad\quad \Else \nil
+\end{align*}
+\end{example}
+If we compare \Cref{ex:lookup-fun-shadowing} and \Cref{ex:lookup-fun},
+we can observe that the function in \Cref{ex:lookup-fun} uses
+twice as much if statements as the function in \Cref{ex:lookup-fun-shadowing}.
+This is because we instantiated each of the entailments with two possible paths,
+doubling the amount of cases to consider.\\
+\\
+With the final lookup function definition from \Cref{ex:lookup-fun}
+we can refine rule \mbox{C-Prog}.
+We do this by replacing the declarative requirement of the $\inprog$ predicate
+with the algorithmic call to the lookup function.
+%
+\begin{figure}[t]
+\begin{align*}
+&\forall \ovl a: \Constrs, a: \Constr. && \text{(C-Prog)}\\
+&\Let \ovl{\ovl a} := lookup(a)\\   %\bar{\bar a}
+&\In
+     \neg (\ovl{\ovl a} = \nil)
+   \land
+     \bigvee_{\ovl b \in \ovl{\ovl a}}{\entails{\ovl a}{\ovl b}}
+   \rightarrow \entails{\ovl a}{a}
+\end{align*}
+\caption{Rule C-Prog Using Lookup}
+\label{fig:axioms-cprog}
+\end{figure}\\\\
+%
+The refined rule C-Prog is defined in \Cref{fig:axioms-cprog}.\\
+The rule calls function \mIt{lookup} to check
+if a entailment declaration matching $a$ exists in the program.
+The result is a list containing possible constraint lists
+to evaluate for entailment to $a$.\\
+Since we modeled the lookup function to return the empty list $\nil$
+if no matching entailment declaration exists,
+we require the lookup result \ovl{\ovl a} to be non empty.\\
+Since we merged entailment declarations with matching right-hand sides
+to avoid shadowing, it suffices to show that at least one
+of the constraits lists contained in \ovl{\ovl a}
+is entailed by \ovl a to show that $a$ is entailed by \ovl{a}.\\
+\\
+The refined rule C-Prog does not contain any free variables
+and is therefore not a template like the refined C-Subst,
+but a general rule that does not need any preprocessing.
+This is the case because we moved the enumeration process
+of possible paths into the generation of the lookup function.
 
 C-Perm\\
 - non structural rule\\

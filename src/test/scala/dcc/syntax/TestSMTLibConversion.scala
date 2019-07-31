@@ -204,9 +204,9 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     def instOf(x: Term, cls: String) = Apply(SimpleSymbol("instance-of"), Seq(x, SMTLibString(cls)))
     def instBy(x: Term, cls: String) = Apply(SimpleSymbol("instantiated-by"), Seq(x, SMTLibString(cls)))
     def pEq(p: Term, q: Term) = Apply(SimpleSymbol("path-eq"), Seq(p, q))
-    def insert(x: Term, xs: Term) = Apply(SimpleSymbol("insert"), Seq(x, xs))
+    def insert(x: Term, xs: Term) = Apply(SimpleSymbol("construct"), Seq(x, xs))
     def cons(x: Term, xs: Term) = Apply(SimpleSymbol("cons"), Seq(x, xs))
-    val nil = SimpleSymbol("nil") //IdentifierAs(SimpleSymbol("nil"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+    val nil = SimpleSymbol("empty") //IdentifierAs(SimpleSymbol("nil"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
     val nan = SimpleSymbol("nan")
 
     val expected = DefineFun(FunctionDef(SimpleSymbol("lookup-program-entailment"),
@@ -257,7 +257,21 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
       )
     ))
 
-    assert(actual == expected)
+    assert(expected == actual)
+  }
+
+  test ("thesis lookup function") {
+    val p: Program = List(
+      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('B))), InstanceOf(Id('x), Id('A))),
+      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('C)), InstanceOf(FieldPath(Id('x), Id('f)), Id('D))), InstanceOf(Id('x), Id('A))),
+      ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('E))), InstanceOf(Id('x), Id('D)))
+    )
+
+    val paths: List[Path] = List(Id('y), FieldPath(Id('y), Id('f)))
+
+    val actual = SMTLibConverter.makeProgramEntailmentLookupFunction(p, paths)
+
+    println(actual.format())
   }
 
   test("instantiateSubstRule(x, p, q)") {
