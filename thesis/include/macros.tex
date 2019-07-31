@@ -91,8 +91,11 @@
 % SMT-Lib language definition for listings
 \lstdefinelanguage{smtlib}{
   alsoletter=-, % '-' is usable in keywords
-  morekeywords={declare-datatype,let,forall,exists},
+  morekeywords={declare-datatype,declare-fun,define-fun-rec,define-fun},
+  morekeywords={ite,let},
+  morekeywords={true,false,and,or,forall,exists},
   sensitive=false, % keywords are not case-sensitive
+  morecomment=[l]{//}, % l is for line comment
   morestring=[b]", % defines that strings are enclosed in double quotes
   basicstyle=\small % or \small, \tiny, \footnotesize, etc: sets text size
 }

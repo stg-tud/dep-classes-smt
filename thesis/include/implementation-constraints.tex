@@ -961,10 +961,85 @@ All datatypes are defined with unique constructor- and selector names.
   (nan)
   (cons (hd CList) (tl CsList))))
 \end{lstlisting}
-\caption{SMTLib sort definitions}
+\caption{SMTLib Datatype Declarations}
 \label{fig:smtlib-sorts}
 \end{figure}\\
 %
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+// List functions
+(define-fun-rec conc ((l1 CList) (l2 CList)) CList
+  (ite (is-construct l1)
+    (construct (first l1) (conc (rest l1) l2))
+     l2))
+(define-fun-rec elem ((c Constraint) (cs CList)) Bool
+  (ite (is-construct cs)
+    (ite (= c (first cs))
+       true
+      (elem c (rest cs)))
+     false))
+// Substitution
+(define-fun-rec subst-path
+  ((p1 Path) (x String) (p2 Path)) Path
+  (ite (is-var p1)
+    (ite (= x (id p1))
+      p2
+      p1)
+    (pth (subst-path (obj p1) x p2) (field p1))))
+(define-fun subst-constraint
+  ((c Constraint) (x String) (p Path)) Constraint
+  (ite (is-path-eq c)
+    (path-eq (subst-path (p-left c) x p)
+             (subst-path (p-right c) x p))
+    (ite (is-instance-of c)
+      (instance-of (subst-path (instance c) x p) (cls c))
+      (instantiated-by (subst-path (object c) x p) (clsname c)
+     ))))
+(define-fun-rec subst-constraints
+  ((cs CList) (x String) (p Path)) CList
+  (ite (is-construct cs)
+    (construct (subst-constraint
+                 (first cs) x p)
+                 (subst-constraints (rest cs) x p))
+     empty))
+// Generalization
+(define-fun-rec generalize-path
+  ((p1 Path) (p2 Path) (x String)) Path
+  (ite (= p1 p2)
+    (var x)
+    (ite (is-var p1)
+       p1
+      (pth (generalize-path (obj p1) p2 x)
+           (field p1)))))
+(define-fun generalize-constraint
+  ((c Constraint) (p Path) (x String)) Constraint
+  (ite (is-path-eq c)
+    (path-eq (generalize-path (p-left c) p x)
+             (generalize-path (p-right c) p x))
+    (ite (is-instance-of c)
+      (instance-of (generalize-path (instance c) p x) (cls c))
+      (instantiated-by (generalize-path (object c) p x)
+                       (clsname c)))))
+\end{lstlisting}
+\caption{SMTLib Function Definitions}
+\label{fig:smtlib-funs}
+\end{figure}\\
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+// Base Properties
+(declare-fun class (String) Bool)
+(declare-fun path-exists (Path) Bool)
+// DCC Properties
+(declare-fun entails (CList Constraint) Bool)
+(define-fun-rec Entails ((cs1 CList) (cs2 CList)) Bool
+  (ite (is-construct cs2)
+    (and (entails cs1 (first cs2))
+         (Entails cs1 (rest cs2)))
+     true))
+\end{lstlisting}
+\caption{SMTLib Predicate Definitions}
+\label{fig:smtlib-predicates}
+\end{figure}\quad\\
 
 \subsubsection{Preprocessing}
 \subsubsection{Calling the Solver}
