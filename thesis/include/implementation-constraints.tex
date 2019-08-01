@@ -965,9 +965,11 @@ All datatypes are defined with unique constructor- and selector names.
 \label{fig:smtlib-sorts}
 \end{figure}\\
 %
+\Cref{fig:smtlib-funs-list} shows a SMTLib translation
+of the list functions defined in \Cref{fig:fo-list-funs}.\\
+%
 \begin{figure}[h]
 \begin{lstlisting}[language=smtlib]
-// List functions
 (define-fun-rec conc ((l1 CList) (l2 CList)) CList
   (ite (is-construct l1)
     (construct (first l1) (conc (rest l1) l2))
@@ -978,7 +980,15 @@ All datatypes are defined with unique constructor- and selector names.
        true
       (elem c (rest cs)))
      false))
-// Substitution
+\end{lstlisting}
+\caption{SMTLib List Functions}
+\label{fig:smtlib-funs-list}
+\end{figure}\\
+A SMTLib translation for substitution is given in \Cref{fig:smtlib-funs-subst}
+and for generalization for \Cref{fig:smtlib-funs-gen}.
+%
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
 (define-fun-rec subst-path
   ((p1 Path) (x String) (p2 Path)) Path
   (ite (is-var p1)
@@ -1002,7 +1012,13 @@ All datatypes are defined with unique constructor- and selector names.
                  (first cs) x p)
                  (subst-constraints (rest cs) x p))
      empty))
-// Generalization
+\end{lstlisting}
+\caption{SMTLib Representation of Substitution}
+\label{fig:smtlib-funs-subst}
+\end{figure}\\
+%
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
 (define-fun-rec generalize-path
   ((p1 Path) (p2 Path) (x String)) Path
   (ite (= p1 p2)
@@ -1021,8 +1037,8 @@ All datatypes are defined with unique constructor- and selector names.
       (instantiated-by (generalize-path (object c) p x)
                        (clsname c)))))
 \end{lstlisting}
-\caption{SMTLib Function Definitions}
-\label{fig:smtlib-funs}
+\caption{SMTLib Representation of Generalization}
+\label{fig:smtlib-funs-gen}
 \end{figure}\\
 %
 \begin{figure}[h]
