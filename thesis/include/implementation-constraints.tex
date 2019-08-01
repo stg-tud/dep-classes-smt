@@ -182,8 +182,9 @@ as seen in rule C-Prog in \Cref{fig:dcc-constraint-entailment}.
 For strings $x$, constraint lists \ovl{a} and constraints $a$,
 $\inprog(x, \ovl{a}, a)$ ensures that a declaration \progEnt{x}{\ovl{a}}{a}
 exists in the program.
-The predicate \mIt{entails} models the entailment judgement of the sequent calculus
-and \mIt{Entails} models the entailment judgement for multiple constraints.
+The predicate \mIt{entails} models the entailment judgement of the sequent calculus.
+The predicate \mIt{Entails} models the entailment judgement for multiple constraints,
+which is defined as $\entails{\ovl a}{\ovl b} = \bigwedge_{b \in \ovl b}{\entails{\ovl a}{b}}$.
 For constraint lists \ovl{a} and constraints $a$
 $\mIt{entails}(\ovl{a}, a)$ ensures that \entails{\ovl{a}}{a} holds.
 For constraint lists \ovl{a} and constraint lists \ovl{b},
@@ -967,8 +968,27 @@ All datatypes are defined with unique constructor- and selector names.
 %
 \Cref{fig:smtlib-funs-list} shows a SMTLib translation
 of the list functions defined in \Cref{fig:fo-list-funs}.\\
+We can define recursive functions in the SMTLib format
+with the keyword \lstinline[language=smtlib]{define-fun-rec}.
+The functions in the first-order model used pattern matching
+for better readability. While SMTLib supports pattern matching,
+it is not fully supported by the latest version of Z3.
+We translated the pattern matching using if statements,
+where the guard checks for specific constructors of a datatype.\\
+This can be observed in the translation of the list concatenating \mIt{conc}.
+We used an if statement to check wheter the first argument $l1$
+is a list construction with \mIt{\is{construct}(l1)}.
+These constructor checking functions get automatically
+generated for each constructor of a datatype declaration.
+Since the \mIt{CList} datatype has only two constructors,
+the else part of the if statement must match the empty list
+and we do not need to further check for its constrcutor.
+
+We avoided the introduction of new local variable bindings
+through let where the new binding would be used only once.
+We directly applied the selectors for those occurences.
 %
-\begin{figure}[h]
+\begin{figure}[t]
 \begin{lstlisting}[language=smtlib]
 (define-fun-rec conc ((l1 CList) (l2 CList)) CList
   (ite (is-construct l1)
@@ -984,10 +1004,32 @@ of the list functions defined in \Cref{fig:fo-list-funs}.\\
 \caption{SMTLib List Functions}
 \label{fig:smtlib-funs-list}
 \end{figure}\\
-A SMTLib translation for substitution is given in \Cref{fig:smtlib-funs-subst}
-and for generalization for \Cref{fig:smtlib-funs-gen}.
 %
 \begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+(define-fun-rec generalize-path
+  ((p1 Path) (p2 Path) (x String)) Path
+  (ite (= p1 p2)
+    (var x)
+    (ite (is-var p1)
+       p1
+      (pth (generalize-path (obj p1) p2 x)
+           (field p1)))))
+(define-fun generalize-constraint
+  ((c Constraint) (p Path) (x String)) Constraint
+  (ite (is-path-eq c)
+    (path-eq (generalize-path (p-left c) p x)
+             (generalize-path (p-right c) p x))
+    (ite (is-instance-of c)
+      (instance-of (generalize-path (instance c) p x) (cls c))
+      (instantiated-by (generalize-path (object c) p x)
+                       (clsname c)))))
+\end{lstlisting}
+\caption{SMTLib Representation of Generalization}
+\label{fig:smtlib-funs-gen}
+\end{figure}\\
+%
+\begin{figure}[t]
 \begin{lstlisting}[language=smtlib]
 (define-fun-rec subst-path
   ((p1 Path) (x String) (p2 Path)) Path
@@ -1015,37 +1057,22 @@ and for generalization for \Cref{fig:smtlib-funs-gen}.
 \end{lstlisting}
 \caption{SMTLib Representation of Substitution}
 \label{fig:smtlib-funs-subst}
-\end{figure}\\
-%
-\begin{figure}[h]
-\begin{lstlisting}[language=smtlib]
-(define-fun-rec generalize-path
-  ((p1 Path) (p2 Path) (x String)) Path
-  (ite (= p1 p2)
-    (var x)
-    (ite (is-var p1)
-       p1
-      (pth (generalize-path (obj p1) p2 x)
-           (field p1)))))
-(define-fun generalize-constraint
-  ((c Constraint) (p Path) (x String)) Constraint
-  (ite (is-path-eq c)
-    (path-eq (generalize-path (p-left c) p x)
-             (generalize-path (p-right c) p x))
-    (ite (is-instance-of c)
-      (instance-of (generalize-path (instance c) p x) (cls c))
-      (instantiated-by (generalize-path (object c) p x)
-                       (clsname c)))))
-\end{lstlisting}
-\caption{SMTLib Representation of Generalization}
-\label{fig:smtlib-funs-gen}
-\end{figure}\\
+\end{figure}
+A SMTLib translation for substitution defined in \Cref{subfig:axioms-naive-general-funs}
+is given in \Cref{fig:smtlib-funs-subst}
+and the SMTLib representation for generalization
+defined in \Cref{fig:axioms-general-gen} can be found in \Cref{fig:smtlib-funs-gen}.\\
+The translations for substitution and generalization
+follow the same pattern regarding pattern matching
+as the translation of the list functions shown previously.
+We define non-recursive functions using the keywords \smtlib{define-fun},
+so we strictly distinguish syntactically between recursive
+and non-recursive functions in the SMTLib format.
 %
 \begin{figure}[h]
 \begin{lstlisting}[language=smtlib]
 // Base Properties
 (declare-fun class (String) Bool)
-(declare-fun path-exists (Path) Bool)
 // DCC Properties
 (declare-fun entails (CList Constraint) Bool)
 (define-fun-rec Entails ((cs1 CList) (cs2 CList)) Bool
@@ -1057,6 +1084,18 @@ and for generalization for \Cref{fig:smtlib-funs-gen}.
 \caption{SMTLib Predicate Definitions}
 \label{fig:smtlib-predicates}
 \end{figure}\\
+A SMTLib representation of the predicates defined in \Cref{subfig:axioms-naive-general-predicates}
+is given in \Cref{fig:smtlib-predicates}.
+We can declare undefined functions with the keywords \smtlib{declare-fun}.
+Those function declarations are specified,
+like the predicates in the first-order model,
+through requiring that specific instances of the function hold.
+\\
+Since our refined rules C-Subst and C-Prog enumerate
+over valid variable names and paths,
+we kept only the predicate \mIt{class}
+and the entailment predicates \mIt{entails} and \mIt{Entails}.
+The predicate \mIt{Entails} is defined as a recusive function.
 %
 \begin{figure}[h]
 \begin{lstlisting}[language=smtlib]
@@ -1091,8 +1130,7 @@ and for generalization for \Cref{fig:smtlib-funs-gen}.
 (assert (!
   (forall ((cs CList) (p Path) (c String))
     (=> (and (class c)
-        (and (path-exists p)
-             (entails cs (instantiated-by p c))))
+             (entails cs (instantiated-by p c)))
         (entails cs (instance-of p c))))
   :named C-Class))
 (assert (!
