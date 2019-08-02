@@ -1159,7 +1159,7 @@ by returning the names of the violated rules.
 \label{fig:smtlib-structural-rules}
 \end{figure}\\
 %
-\begin{figure}[t] % TODO: add to fig: C-Prog
+\begin{figure}[t]
 \begin{lstlisting}[language=smtlib]
 (define-fun-rec big-or-Entails ((ccs CsList) (cs CList)) Bool
   (ite (is-cons ccs)
@@ -1187,9 +1187,68 @@ The function \smtlib{lookup-program-entailment} is a lookup
 function of the form seen in \Cref{ex:lookup-fun}.
 
 \subsubsection{SMTLib Format in Scala}
-- describe SMTLib format impl\\
-  - AST structure\\
-  - each node knows to format itself using a trait
+%
+\lstset{ language=scala,basicstyle=\small }
+%
+We modeled the SMTLib format in Scala as an AST.
+Each node of the AST knows how to format itself
+and formatting will be propagated to each sub-node.\\
+\Cref{fig:scala-format} shows 
+\lstinline{trait SMTLibFormatter}, as well as
+\lstinline{object SMTLibFormatter}.
+The trait provides the function \lstinline{format}
+and each node inherits from this trait.
+The singleton \lstinline{object SMTLibFormatter}
+provides a function for formatting a SMTLib formattable
+sequence using a specifiable separator.
+%
+\begin{figure}[h]
+\begin{subfigure}[c]{1\textwidth}
+\begin{lstlisting}
+trait SMTLibFormatter {
+  def format(): String
+}
+\end{lstlisting}
+\end{subfigure}
+\begin{subfigure}[c]{1\textwidth}
+\begin{lstlisting}
+object SMTLibFormatter {
+  def format(seq: Seq[SMTLibFormatter]
+           , separator: String = " "): String =
+    seq.foldRight(""){
+    (x, xs) => s"${x.format()}$separator$xs"}.dropRight(1)
+}
+\end{lstlisting}
+\end{subfigure}
+\caption{SMTLib Formatting in Scala}
+\label{fig:scala-format}
+\end{figure}\\
+%
+\Cref{ex:scala-format} shows the implementation
+of the universal quantifier.\\
+The \lstinline{trait Term} models the category \textit{term}
+of the SMTLib format.
+The universal quantifier is a member of this category
+and therfore \lstinline{case class Forall}\ inherits from \lstinline{trait Term}.\\
+The format of an universal quantifier is defined
+in \lstinline{case class Forall} and starts
+with the keyword \smtlib{forall}.
+The keyword is followed by the format of the quantified variables
+enclosed in parens and by the format of the body.
+Finally the formatted components are enclosed in parens
+to obtain the format of the quantifier.
+%
+\begin{example}[SMTLib Implementation: Universal quantification]
+\label{ex:scala-format}
+\begin{lstlisting}
+trait Term extends SMTLibFormatter
+
+case class Forall(vars: Seq[SortedVar], body: Term) extends Term {
+  override def format(): String =
+    s"(forall (${SMTLibFormatter.format(vars)}) ${body.format()})"
+}
+\end{lstlisting}
+\end{example}
 
 \subsubsection{Preprocessing}
 - lookup function generation\\
