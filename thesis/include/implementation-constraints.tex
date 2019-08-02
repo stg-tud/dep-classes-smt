@@ -1331,19 +1331,32 @@ accumulated constraints for $c$.
 We repeat this until no declaration remains
 and return the accumulated mappings.\\
 \\
-- makeBody\\
-- responsible for creating the body of the lookup function\\
-  - given a set of mappings from \Constr to \Constrss\\
-  - iterate over mappings\\
-  - gen if statement for each mapping \\
-    - where guard: x = c\\
-    - then (if match): return ccs\\
-    - else: repeat with rest\\
-\quad\\
-- function makeProgamEntailmentLookupFunction\\
-  - arguments: program, paths to instantiate\\
-  - returns: SMTLib AST function definition\\
-- signature of returned function (maps from to): constraint → \Constrs
+The function \lstinline{makeProgramEntailmentLookupFunctionBody}
+is responsible for creating the body of the lookup function.
+It implements the process of generating a series
+of if statements out of mappings from $\Constr$ to \Constrss.\\
+%
+We match $c \mapsto ccs :: rst$
+and create an if statement with the guard $x = c$,
+where $x$ is the argument of the lookup function.
+In the then brach, we put the SMTLib representation of $ccs$.
+The else branch then constains a recursive call with $rst$.
+We repeat this until all mappings are processed.\\
+\\
+The function \lstinline{makeProgamEntailmentLookupFunction}
+generates a lookup function for entailment declarations in programs.
+It takes a program and a list of paths as argument
+and instantiates each path with each
+entailment declaration in the program.
+The function returns a SMTLib representation usable by the solver.\\
+%
+We set $x$ to be the argument of the function to be created.
+We map function \lstinline{instantiateProgramEntailments}
+over the provided paths and obtain a list of mappings $m$.
+We pass $m$ into \lstinline{makeProgramEntailmentLookupFunctionBody}
+to obtain a series of if statements $body$ as a SMTLib representation.
+We then create the lookup function with the signature
+$\Constr \rightarrow \Constrss$ and the body $body$.
 
 
 \paragraph{Subst Rule}
