@@ -1091,34 +1091,13 @@ Those function declarations are specified,
 like the predicates in the first-order model,
 through requiring that specific instances of the function hold.
 \\
-Since our refined rules C-Subst and C-Prog enumerate
-over valid variable names and paths,
-we kept only the predicate \mIt{class}
-and the entailment predicates \mIt{entails} and \mIt{Entails}.
-The predicate \mIt{Entails} is defined as a recusive function.
+We kept only the predicate \mIt{class}, since the refined rules
+C-Subst and C-Prog enumerate over valid variable names and paths,
+and the entailment predicates. %\mIt{entails} and \mIt{Entails}.
+%The predicate \mIt{Entails} is defined as a recusive function. % TODO: readd these? (removed because too long and ugly in pdf)
+\\
 %
-\begin{figure}[h]
-\begin{lstlisting}[language=smtlib]
-(assert (!
-  (forall ((cs CList) (a Constraint) (b Constraint))
-    (=> (entails cs b)
-        (entails (construct a cs) b)))
-  :named C-Weak))
-(assert (!
-  (forall ((cs1 CList) (cs2 CList) (c Constraint))
-    (=> (and (forall ((a Constraint))
-               (and (=> (elem a cs1) (elem a cs2))
-                    (=> (not (elem a cs1)) (not (elem a cs2)))
-             ))
-             (entails cs1 c))
-        (entails cs2 c)))
-  :named C-Perm))
-\end{lstlisting}
-\caption{SMTLib Structural Rules}
-\label{fig:smtlib-structural-rules}
-\end{figure}\quad\\
-%
-\begin{figure}[h]
+\begin{figure}[t]
 \begin{lstlisting}[language=smtlib]
 (assert (!
   (forall ((p Path)) (entails empty (path-eq p p)))
@@ -1143,22 +1122,71 @@ The predicate \mIt{Entails} is defined as a recusive function.
 \end{lstlisting}
 \caption{SMTLib $DC_C$ Rules}
 \label{fig:smtlib-basic-rules}
-\end{figure}\quad\\
+\end{figure}
+A SMTLib representation for the $DC_C$ rules C-Refl,
+C-Ident, C-Class and \mbox{C-Cut}, that do not
+require enumeration, is given in \Cref{fig:smtlib-basic-rules}.
+The structural rules of the sequent calculus C-Weak and C-Perm
+are defined in \Cref{fig:smtlib-structural-rules}.\\
+The keyword \smtlib{assert} is used to add an assertion
+to the solver and the keyword \smtlib{!} can be used to
+annotate a formula.
+Annotation is done via adding a key-value pair to a formula,
+where the key specifies the name of the annotated property.\\
+We \textit{named} the rules according to their names in the calculus.
+This enables the solver to produce an unsatisfiable core
+for an unsatisfiable entailment,
+by returning the names of the violated rules.
 %
 \begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+(assert (!
+  (forall ((cs CList) (a Constraint) (b Constraint))
+    (=> (entails cs b)
+        (entails (construct a cs) b)))
+  :named C-Weak))
+(assert (!
+  (forall ((cs1 CList) (cs2 CList) (c Constraint))
+    (=> (and (forall ((a Constraint))
+               (and (=> (elem a cs1) (elem a cs2))
+                    (=> (not (elem a cs1)) (not (elem a cs2)))
+             ))
+             (entails cs1 c))
+        (entails cs2 c)))
+  :named C-Perm))
+\end{lstlisting}
+\caption{SMTLib Structural Rules}
+\label{fig:smtlib-structural-rules}
+\end{figure}\\
+%
+\begin{figure}[t] % TODO: add to fig: C-Prog
 \begin{lstlisting}[language=smtlib]
 (define-fun-rec big-or-Entails ((ccs CsList) (cs CList)) Bool
   (ite (is-cons ccs)
     (or (Entails cs (hd ccs))
         (big-or-Entails (tl ccs) cs))
      false))
+(assert (!
+  (forall ((cs CList) (c Constraint))
+    (let ((ccs (lookup-program-entailment c)))
+      (=> (and (not (= ccs nan))
+               (big-or-Entails ccs cs))
+          (entails cs c))))
+  :named C-Prog))
 \end{lstlisting}
-\caption{SMTLib Preprocess Helper Function}
+\caption{SMTLib C-Prog and Helper Function}
 \label{fig:smtlib-preproc-helper}
-\end{figure}\quad\\
+\end{figure}
 %
+- big-or-Entails is $\bigvee$ from prog rule
 
 \subsubsection{Preprocessing}
+- describe SMTLib format impl\\
+- AST structure\\
+- each node knows to format itself using a trait\\
+\\
+- lookup function generation\\
+- subst rules generation
 \subsubsection{Calling the Solver}
 
 %%% Local Variables: 
