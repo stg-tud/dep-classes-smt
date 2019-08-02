@@ -1261,8 +1261,8 @@ is the process described in \Cref{sec:rule-refinement},
 with the goal to generate a function modeling
 the existence check of program entailments
 combined with the search for a substitution
-to match the right-hand side from the entailment
-to be shown to an entailment declaration of the program.
+matching the right-hand side from the entailment
+to be shown, to an entailment declaration of the program.
 
 \begin{lstlisting}[caption={Lookup Function Generation},label=lst:lookup,captionpos=b,frame={lines}]
 def makeProgramEntailmentLookupFunction(
@@ -1359,10 +1359,14 @@ We then create the lookup function with the signature
 $\Constr \rightarrow \Constrss$ and the body $body$.
 
 \newpage
-\paragraph{C-Subst preprocessing} is the process of enumeration
+\paragraph{C-Subst preprocessing} is the process of enumeration,
 to ground the quantification over variable names and paths
-in rule C-Subst, as shown in \Cref{sec:rule-refinement}.
-
+in rule C-Subst as shown in \Cref{sec:rule-refinement}.
+An implementation of the C-Subst template from \Cref{fig:axioms-csubst}
+incorporating the optimizations demonstrated with \Cref{ex:subst-optimzed}
+is given in \Cref{lst:subst-template}.
+The process of generating instances of this template
+is implemented in \Cref{lst:subst}.
 %
 \begin{lstlisting}[caption={Rule Generation for C-Subst},label=lst:subst,captionpos=b,frame={lines}]
 def generateSubstRules(
@@ -1387,6 +1391,48 @@ private def instantiateSubstRule(
         , SimpleSymbol("C-Subst")))))
 \end{lstlisting}
 %
+The function \lstinline{generateSubstRules} takes
+a list of variables and a list of paths as argument
+and returns a sequence of C-Subst rules.
+In the function, we iterate over all variables $x$
+and for each $x$ we iterate over all paths $p$ and $q$.
+We call \lstinline{instantiateSubstRule} with $x$, $p$ and $q$
+to generate a rule C-Subst and append it to the sequence
+of already generated rules.
+We skip cases where $x = p = q$.
+Finally, we return the collected rules.\\
+\\
+The function \lstinline{instantiateSubstRule}
+creates the surrounding frame of rule C-Subst
+and calls \lstinline{substRuleTemplate} to
+instantiate the template of rule C-Subst.\\
+\\
+The function \lstinline{substRuleTemplate}
+takes a variable and two paths as argument
+and returns a SMTLib representation
+of rule C-Subst.
+In the function, we convert the given variable
+and paths into their counterpart $x$, $p$ and $q$
+in the SMTLib format.
+The function defines three subroutines.
+These subroutines implement the optimizations
+discussed in \Cref{sec:rule-refinement}.\\
+We check in the subroutine \lstinline{gen}
+if variable $x$ equals path $p$.
+If not, we generalize constraint $a2$
+and call subroutine \lstinline{subst}
+with the generalized constraint.
+Otherwise we skip the generalization and proceed
+with \lstinline{subst} directly.\\
+Subroutine \lstinline{subst} takes a term $a$
+representing a constraint as argument.
+We check if variable $x$ equals path $q$.
+If not, we substitute $a$ and call
+subroutine \lstinline{conjunction}
+on the result of the substitution.
+Otherwise we call \lstinline{conjunction},
+without substituting the argument.\\
+%
 \begin{lstlisting}[caption={C-Subst Template},label=lst:subst-template,captionpos=b,frame={lines}]
 private def substRuleTemplate(
     variable: Id, p1: Path, p2: Path): Term = {
@@ -1394,7 +1440,7 @@ private def substRuleTemplate(
   val p: Term = convertPath(p1)
   val q: Term = convertPath(p2)
 
-  def conjecture(a1: Term) =
+  def conjunction(a1: Term) =
     if (p1 == p2)
       Apply(SimpleSymbol("entails"),
         Seq(SimpleSymbol("cs"), a1))
@@ -1407,13 +1453,13 @@ private def substRuleTemplate(
       )
   def subst(a: Term) =
     if(variable == p2)
-      conjecture(a)
+      conjunction(a)
     else
       Let(
         Seq(VarBinding(SimpleSymbol("a1"),
           Apply(SimpleSymbol("subst-constraint"), Seq(a, x, q))
         )),
-        conjecture(SimpleSymbol("a1"))
+        conjunction(SimpleSymbol("a1"))
       )
   val gen =
     if (variable == p1)
@@ -1440,6 +1486,19 @@ private def substRuleTemplate(
   )
 }
 \end{lstlisting}
+Subroutine \lstinline{conjunction} takes
+a term $a1$ representing a constraint as argument.
+We check if path $p$ equals path $q$.
+If not, we build the conjunction
+of the entailments \entails{cs}{\pathEq{p}{q}}
+and \entails{cs}{a1}.
+Otherwise we build the entailment \entails{cs}{a1}
+and skip the check for equivalent paths.\\
+In \lstinline{substRuleTemplate},
+we create the SMTLib representation of
+\[ \forall a_2: \Constr, cs: \Constr.\ \mathbf{gen} \rightarrow \entails{cs}{a_2} \]
+where $\mathbf{gen}$ is a call to subroutine \lstinline{gen}
+as our return value.
 
 \subsubsection{Calling the Solver}
 
