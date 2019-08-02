@@ -1358,12 +1358,87 @@ to obtain a series of if statements $body$ as a SMTLib representation.
 We then create the lookup function with the signature
 $\Constr \rightarrow \Constrss$ and the body $body$.
 
+\newpage
+\paragraph{C-Subst preprocessing}
 
-\paragraph{Subst Rule}
+\begin{lstlisting}[caption={Rule Generation for C-Subst},label=lst:subst,captionpos=b,frame={lines}]
+def generateSubstRules(
+    vars: List[Id], paths: List[Path]): Seq[SMTLibCommand] = {
+  var rules: Seq[SMTLibCommand] = Seq()
+  val pathPairs = makePathPairs(paths)
 
-- these are lookup and subst rules gen \\
-- lookup function generation\\
-- subst rules generation
+  vars.foreach(x => pathPairs.foreach{
+    case (p, q) if x == p && p == q => () // skip
+    case (p, q) => rules = rules
+                         :+ instantiateSubstRule(x, p, q)
+  })
+  rules
+}
+
+private def instantiateSubstRule(
+    variable: Id, p: Path, q: Path): SMTLibCommand =
+  Assert(
+    Annotate(
+      substRuleTemplate(variable, p, q),
+      Seq(KeyValueAttribute(Keyword("named")
+        , SimpleSymbol("C-Subst")))))
+
+private def substRuleTemplate(
+    variable: Id, p1: Path, p2: Path): Term = {
+  val x: Term = convertId(variable)
+  val p: Term = convertPath(p1)
+  val q: Term = convertPath(p2)
+
+  def conjecture(a1: Term) =
+    if (p1 == p2)
+      Apply(SimpleSymbol("entails"),
+        Seq(SimpleSymbol("cs"), a1))
+    else
+      And(
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"),
+          Apply(SimpleSymbol("path-eq"), Seq(p, q)))),
+        Apply(SimpleSymbol("entails"),
+          Seq(SimpleSymbol("cs"), a1))
+      )
+
+  def subst(a: Term) =
+    if(variable == p2)
+      conjecture(a)
+    else
+      Let(
+        Seq(VarBinding(SimpleSymbol("a1"),
+          Apply(SimpleSymbol("subst-constraint"), Seq(a, x, q))
+        )),
+        conjecture(SimpleSymbol("a1"))
+      )
+
+  val gen =
+    if (variable == p1)
+      subst(SimpleSymbol("a2"))
+    else
+      Let(
+        Seq(VarBinding(SimpleSymbol("a"),
+          Apply(SimpleSymbol("generalize-constraint"),
+            Seq(SimpleSymbol("a2"), p, x))
+        )),
+        subst(SimpleSymbol("a"))
+      )
+
+  Forall(
+    Seq(
+      SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
+      SortedVar(SimpleSymbol("cs"), SimpleSymbol("CList"))
+    ),
+    Implies(
+      gen,
+      Apply(SimpleSymbol("entails"),
+        Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
+    )
+  )
+}
+\end{lstlisting}
+%
+
 \subsubsection{Calling the Solver}
 
 %%% Local Variables: 
