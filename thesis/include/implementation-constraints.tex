@@ -941,7 +941,7 @@ We translate the sorts defined in \Cref{subfig:axioms-naive-general-predicates}.
 The parametrized list datatype used is predefined in Z3.
 We define sorts \mIt{CList} and \mIt{CsList},
 to increase compatibility with other solvers
-and to avoid ambiguities with the usage of \Constrs and \Constrss
+and to avoid ambiguities with the usage of \Constrs and \Constrss.
 We write \Constrs for \mIt{CList}
 and \Constrss for \mIt{CsList}.
 The SMTLib representation is defined in \Cref{fig:smtlib-sorts}.
@@ -1312,8 +1312,34 @@ private def makeProgramEntailmentLookupFunctionBody(
 \end{lstlisting}
 %
 \Cref{lst:lookup} shows the Scala implementation
-of the lookup function generation.
-
+of the lookup function generation.\\
+\\
+The function \lstinline{instantiateProgramEntailments}
+implements the instantiation of entailment declarations
+for a program $p$ with a given path $path$.
+The already instantiated entailments are accumulated
+in \mIt{entailments}
+and returned if no uninstantiated declaration remains.\\
+%
+We match entailment declarations \progEnt{x}{as}{a}
+and substitutes the bound variable $x$ with $path$ in $as$ and $a$.
+We declare $cs := \subst{as}{x}{path}$ and $c := \subst{a}{x}{path}$.
+We check if we previously instantiated a constraint matching $c$.
+If not, we create an entry mapping from $c$ to $cs$.
+If we did, we add the constraints $cs$ to the already
+accumulated constraints for $c$.
+We repeat this until no declaration remains
+and return the accumulated mappings.\\
+\\
+- makeBody\\
+- responsible for creating the body of the lookup function\\
+  - given a set of mappings from \Constr to \Constrss\\
+  - iterate over mappings\\
+  - gen if statement for each mapping \\
+    - where guard: x = c\\
+    - then (if match): return ccs\\
+    - else: repeat with rest\\
+\quad\\
 - function makeProgamEntailmentLookupFunction\\
   - arguments: program, paths to instantiate\\
   - returns: SMTLib AST function definition\\
