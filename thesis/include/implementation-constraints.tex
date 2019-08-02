@@ -1175,16 +1175,23 @@ by returning the names of the violated rules.
   :named C-Prog))
 \end{lstlisting}
 \caption{SMTLib C-Prog and Helper Function}
-\label{fig:smtlib-preproc-helper}
+\label{fig:smtlib-cprog}
 \end{figure}
 %
-- big-or-Entails is $\bigvee$ from prog rule
+\Cref{fig:smtlib-cprog} shows a SMTLib representation
+of the refined rule C-Prog defined in \Cref{fig:axioms-cprog}.\\
+The function \smtlib{big-or-Entails} models
+$\bigvee_{\ovl b \in ccs}{\entails{cs}{\ovl b}}$
+as used in the refined model of rule C-Prog.
+The function \smtlib{lookup-program-entailment} is a lookup
+function of the form seen in \Cref{ex:lookup-fun}.
+
+\subsubsection{SMTLib Format in Scala}
+- describe SMTLib format impl\\
+  - AST structure\\
+  - each node knows to format itself using a trait
 
 \subsubsection{Preprocessing}
-- describe SMTLib format impl\\
-- AST structure\\
-- each node knows to format itself using a trait\\
-\\
 - lookup function generation\\
 - subst rules generation
 \subsubsection{Calling the Solver}
