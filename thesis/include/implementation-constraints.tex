@@ -614,6 +614,7 @@ and replace the now free variable in its subexpression.
 \end{example}
 %
 \subsubsection{Rule C-Prog}
+\label{sec:cprog}
 Rule C-Prog has similiar problems as the ones observed for rule C-Subst.
 The rule is again defined in a non-algorithmic way.\\
 The check if a program entailment exists in the program is done via
@@ -938,11 +939,11 @@ and the non-preprocessed rules.\\
 \\
 We translate the sorts defined in \Cref{subfig:axioms-naive-general-predicates}.
 The parametrized list datatype used is predefined in Z3.
-To increase compatibility with other solvers
+We define sorts \mIt{CList} and \mIt{CsList},
+to increase compatibility with other solvers
 and to avoid ambiguities with the usage of \Constrs and \Constrss
-we also define two extra sorts.
-We define sort \mIt{CList} for \Constrs
-and sort \mIt{CsList} for \Constrss.
+We write \Constrs for \mIt{CList}
+and \Constrss for \mIt{CsList}.
 The SMTLib representation is defined in \Cref{fig:smtlib-sorts}.
 All datatypes are defined with unique constructor- and selector names.
 %
@@ -1250,7 +1251,78 @@ case class Forall(vars: Seq[SortedVar], body: Term) extends Term {
 \end{lstlisting}
 \end{example}
 
-\subsubsection{Preprocessing}
+\subsubsection{Preprocessing Variable Names and Paths}
+The previously shown SMTLib representation is
+missing the refined components of the model,
+which enumerate over variable names and paths.
+
+\paragraph{Lookup Function generation}
+is the process described in \Cref{sec:cprog},
+with the goal to generate a function modeling
+the existence check of program entailments
+combined with the search for a substitution
+to match the right-hand side from the entailment
+to be shown to an entailment declaration of the program.
+
+\begin{lstlisting}[caption={Lookup Function Generation},label=lst:lookup,captionpos=b,frame={lines}]
+def makeProgramEntailmentLookupFunction(
+        p: Program, paths: List[Path]): SMTLibCommand = {
+  val x = SimpleSymbol("c")
+  val body = makeProgramEntailmentLookupFunctionBody(
+        paths.flatMap(instantiateProgramEntailments(p, _)), x)
+
+  DefineFun(FunctionDef(
+    SimpleSymbol("lookup-program-entailment"),
+    Seq(SortedVar(x, SimpleSymbol("Constraint"))),
+    SimpleSymbol("CsList"),
+    body
+  ))
+}
+
+private def instantiateProgramEntailments(p: Program, path: Path
+  , entailments: Map[Constraint, List[List[Constraint]]] = Map())
+              : Map[Constraint, List[List[Constraint]]] = p match {
+  case Nil => entailments
+  case ConstraintEntailment(x, as, a) :: rst =>
+    val cs: List[Constraint] = substitute(x, path, as)
+    val c: Constraint = substitute(x, path, a)
+    entailments.get(c) match {
+      case None => instantiateProgramEntailments(
+                     rst, path, entailments + (c -> List(cs)))
+      case Some(ccs) => instantiateProgramEntailments(
+                     rst, path, entailments + (c -> (cs :: ccs)))
+    }
+  case _ :: rst => instantiateProgramEntailments(
+                     rst, path, entailments)
+}
+
+private def makeProgramEntailmentLookupFunctionBody(
+   entailments: List[(Constraint, List[List[Constraint]])], x: Term)
+                          : Term = entailments match {
+  case Nil => SimpleSymbol("nan")
+  case (c, ccs) :: rst =>
+    Ite(
+      Eq(x, convertConstraint(c)),
+      Axioms.makeCsList(
+        ccs.map(cs => Axioms.makeList(cs.map(convertConstraint)))
+      ),
+      makeProgramEntailmentLookupFunctionBody(rst, x)
+    )
+}
+\end{lstlisting}
+%
+\Cref{lst:lookup} shows the Scala implementation
+of the lookup function generation.
+
+- function makeProgamEntailmentLookupFunction\\
+  - arguments: program, paths to instantiate\\
+  - returns: SMTLib AST function definition\\
+- signature of returned function (maps from to): constraint → \Constrs
+
+
+\paragraph{Subst Rule}
+
+- these are lookup and subst rules gen \\
 - lookup function generation\\
 - subst rules generation
 \subsubsection{Calling the Solver}
