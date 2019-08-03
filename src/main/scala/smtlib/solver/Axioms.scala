@@ -941,7 +941,7 @@ object Axioms {
   }
 
   // TODO: evaluate generalization + substitution for C-Prog
-  def preprocessProgRule(): Term =
+  private val progTerm: Term =
     Forall(
       Seq(
         SortedVar("cs", Constraints),
@@ -960,7 +960,7 @@ object Axioms {
       )
     )
 
-  // TODO: assert prog rule with annotation
+  val cProg = Assert(Annotate(progTerm, Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
 
   /**
     * Generates a Term representing a List

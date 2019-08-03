@@ -206,7 +206,15 @@ object SMTLibConverter {
     )
   }
 
-  private def extractVariablesPathsClasses
+  def convertVariablesPathsClasses(vars: List[String], paths: List[Path], classes: List[String]): (List[Term], List[Term], List[Term]) = {
+    (
+      vars.map(x => Apply(SimpleSymbol("variable"), Seq(SMTLibString(x)))),
+      paths.map(p => Apply(SimpleSymbol("path-exists"), Seq(convertPath(p)))),
+      classes.map(cls => Apply(SimpleSymbol("class"), Seq(SMTLibString(cls))))
+    )
+  }
+
+  def extractVariablesPathsClasses
     (constraints: List[Constraint],
      vars: List[String] = List(),
      paths: List[Path] = List(),

@@ -1501,6 +1501,85 @@ where $\mathbf{gen}$ is a call to subroutine \lstinline{gen}
 as our return value.
 
 \subsubsection{Calling the Solver}
+With the SMTLib representation and preprocessing
+of the model defined, we can call the solver
+to evaluate if entailments \entails{\ovl a}{a}
+hold in the model.
+For this we define \lstinline{trait SMTSolver}
+in \Cref{lst:smtsolver} as an interface for SMT solvers
+and function \lstinline{entails} to check entailments
+in \Cref{lst:entails}.
+%
+\begin{lstlisting}[caption={SMTSolver Interface},label=lst:smtsolver,captionpos=b,frame={lines}]
+trait SMTSolver {
+  val axioms: SMTLibScript
+
+  def addCommand(command: SMTLibCommand): Boolean
+  def addCommands(commands: Seq[SMTLibCommand]): Boolean
+  def addScript(script: SMTLibScript): Boolean
+  def flush(): Unit
+
+  /**
+    * Executes the SMTSolver with the currently held commands.
+    * @param timeout The timeout for each query
+             to the SMTSolver in milliseconds.
+    * @return The return code of the SMTSolver
+                or -1 in case of a timeout
+    *         and the raw output of the solver.
+    */
+  def execute(timeout: Int = 1000): (Int, Seq[String])
+
+  /**
+    * Executes the SMTSolver with the currently held commands
+    * and checks them for satisfiability.
+    * @param timeout The timeout for each query
+             to the SMTSolver in milliseconds.
+    * @return `Sat` if the input is satisfiable
+    *        `Unsat` if the infput is unsatisfiable
+    *        `Unknown` if the solver can't decide.
+    */
+  def checksat(timeout: Int = 1000): CheckSatResponse
+}
+\end{lstlisting}
+- trait SMTSolver
+  - defines functionallity necessary for a SMT solver
+  - responsible for process handling
+  - in and output of the solver.
+- class Z3Solver implements SMTSolver
+- function entails
+  - preprocess: lookup + subst
+  - calls the solver
+\begin{lstlisting}[caption={Entailment Function},label=lst:entails,captionpos=b,frame={lines}]
+  def entails(
+      ctx: List[Constraint], cs: List[Constraint]): Boolean =
+    cs.forall(c => entails(ctx, c))
+
+  def entails(
+      context: List[Constraint], c: Constraint): Boolean = {
+      val (vars, pths, clss) = [...]
+
+      // SMTLib representation
+      val entailment = [...]
+      val (variables, paths, classes) = [...]
+
+      val solver: SMTSolver = new Z3Solver(Axioms.all)
+      solver.addCommands(
+        SMTLibConverter.makeAsserts(classes))
+      solver.addCommands(
+        SMTLibConverter.generateSubstRules(vars, pths))
+      solver.addCommand(SMTLibConverter
+          .makeProgramEntailmentLookupFunction(P, pths))
+      solver.addCommand(Axioms.cProg)
+      solver.addCommand(Assert(Not(entailment)))
+
+      solver.checksat() match {
+        case Sat => false
+        case Unsat => true
+        case Unknown => false
+      }
+    }
+  }
+\end{lstlisting}
 
 %%% Local Variables: 
 %%% mode: latex

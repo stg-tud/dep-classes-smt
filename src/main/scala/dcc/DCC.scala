@@ -35,14 +35,14 @@ class DCC(P: Program) {
       case (ctx, _) =>
         val entailment = SMTLibConverter.convertEntailment(ctx, c)
         // TODO: remove variables from this monstrous beast, convert them from added argument vars
-        val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(c :: ctx)
-
-        // TODO: replace with lookup function
-        val programEntailments: List[Term] = List() // SMTLibConverter.instantiateProgramEntailments(P, vars)
+        // TODO: alternatively
+        // TODO: maybe change List[String] for vars to List[Id], such that it is usable by generateSubstRules
+        // TODO:   then remove argument vars from entails function again
+        val (strs, pths, clss) = SMTLibConverter.extractVariablesPathsClasses(c :: ctx)
+        val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(strs, pths, clss)
 
         // debug output
         println(entailment.format())
-        programEntailments.foreach(c => println(c.format()))
         variables.foreach(c => println(c.format()))
         paths.foreach(c => println(c.format()))
         classes.foreach(c => println(c.format()))
@@ -52,7 +52,9 @@ class DCC(P: Program) {
         solver.addCommands(SMTLibConverter.makeAsserts(variables))
         solver.addCommands(SMTLibConverter.makeAsserts(paths))
         solver.addCommands(SMTLibConverter.makeAsserts(classes))
-        solver.addCommands(SMTLibConverter.makeAsserts(programEntailments))
+        solver.addCommands(SMTLibConverter.generateSubstRules(vars, pths))
+        solver.addCommand(SMTLibConverter.makeProgramEntailmentLookupFunction(P, pths))
+        solver.addCommand(Axioms.cProg)
         // TODO: check if not entailment is unsat or entailment is sat?
         solver.addCommand(Assert(Not(entailment)))
 
