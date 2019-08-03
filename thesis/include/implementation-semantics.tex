@@ -1,8 +1,8 @@
 \section{Interpreter}
-In this section we will implement
+In this section we implement
 the operational semantics of the $DC_C$ calculus
 presented in \Cref{fig:dcc-opsemantics}.
-For this we will define an interpreter,
+For this we define an interpreter,
 which will evaluate expressions relative to a heap.
 The operational semantics is a small-step semantics over
 the structure of expressions.
@@ -41,8 +41,8 @@ def interp(heap: Heap, expr: Expression)
     (heap, e)
   // R-New
   case ObjectConstruction(cls, args)
-    if args.foldRight(true){ // if args are values (Id)
-      case ((_, Id(_)), rst) => rst
+    if args.forall{ // if args are values (Id)
+      case (_, Id(_)) => true
       case _ => false
     } =>
     val x: Id  = freshvar()
@@ -52,7 +52,7 @@ def interp(heap: Heap, expr: Expression)
     // cls in Program: alpha renaming of y to x in b
     val (y: Id, b: List[Constraint]) =
       classInProgram(cls, P).getOrElse(return (heap, expr))
-    val b1 = alphaConversion(y, x, b)
+    val b1 = substitute(y, x, b)
     // heap constraints entail cls constraints
     if (entails(HC(heap) ++ OC(x, o), b1))
       (heap + (x -> o), x)
@@ -88,6 +88,8 @@ def interp(heap: Heap, expr: Expression)
     } else {
       interp(h1, ObjectConstruction(cls, args1))
     }
+    
+    case Id(_) => (heap, expr) // variables are values
 }
 \end{lstlisting}
 %
@@ -102,7 +104,42 @@ and allows to recreate each rule from \Cref{fig:dcc-opsemantics}
 as a separate case in the implementation.
 
 % TODO: describe cases
-
+- no small-step implementation, do not return intermediate results
+- field access
+  - requires subexpr to be variable
+  - stable identifiers X, F
+    - used in filter
+    - search heap constraints for path eq X.F = y
+    - return y
+- method call
+  - requires arg to be variable
+  - generate list of applicable methods
+    by calling mImplSubst
+  - mImplSubst does incorporate implicit unification of formal argument to x
+  - determine most specific method
+    - set first applicable as most specific
+    - for each applipacle method
+      - try if more suitable than current
+  - return most specific method body
+- object creation
+  - requires arguments to be evaluated to vars
+  - fresh var for the object to be created
+  - args1: typechange of args since object type requires List[Id]
+  - create new object, set fields from args
+  - search if constructor for class exists in program
+    + retrieve constructor/class constraints
+  - if class not in program → stuck
+  - substitute bound var of class constraints
+    with var of newly created object
+  - check if the heap entails the class constraints
+  - if so, put the new object on the heap
+    otherwise stuck
+- recursive cases
+  - stuck terms to avoid endless recursion
+  - for new obj: interp arguments in one go  
+- added special case Id(_)
+  - variables are values in DCC
+  - add case to avoid undefined function input
 
 %%% Local Variables: 
 %%% mode: latex
