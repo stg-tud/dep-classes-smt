@@ -70,15 +70,16 @@ class DCC(P: Program) {
 
   // TODO: change return type to Either or Option?
   def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
+    case x@Id(_) => (heap, expr) // variables are values
     // R-Field
-    case FieldAccess(X@Id(_), F@Id(_)) =>
+    case FieldAccess(x@Id(_), f) =>
       HC(heap).filter{
-          case PathEquivalence(FieldPath(X, F), Id(_)) => true
-          case PathEquivalence(Id(_), FieldPath(X, F)) => true
+          case PathEquivalence(FieldPath(`x`, `f`), Id(_)) => true
+          case PathEquivalence(Id(_), FieldPath(`x`, `f`)) => true
           case _ => false
           } match {
-        case PathEquivalence(FieldPath(X, F), y@Id(_)) :: _ => (heap, y)
-        case PathEquivalence(y@Id(_), FieldPath(X, F)) :: _ => (heap, y)
+        case PathEquivalence(FieldPath(`x`, `f`), y@Id(_)) :: _ => (heap, y)
+        case PathEquivalence(y@Id(_), FieldPath(`x`, `f`)) :: _ => (heap, y)
         case _ => (heap, expr) // x does not have field f TODO: return type
       }
     // R-Call
@@ -381,7 +382,7 @@ class DCC(P: Program) {
       case (MethodImplementation(`m`, `x`, a, _, e), rst) => (a, e) :: rst
       case (_, rst) => rst
     }
-  
+
   private def mImplSubst(m: Id, x: Id): List[(List[Constraint], Expression)] =
     P.foldRight(Nil: List[(List[Constraint], Expression)]){
       case (MethodImplementation(`m`, xImpl, a, _, e), rst) =>
