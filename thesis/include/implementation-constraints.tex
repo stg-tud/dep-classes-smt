@@ -1541,34 +1541,54 @@ trait SMTSolver {
   def checksat(timeout: Int = 1000): CheckSatResponse
 }
 \end{lstlisting}
-- trait SMTSolver
-  - defines functionallity necessary for a SMT solver
-  - responsible for process handling
-  - in and output of the solver.
-- class Z3Solver implements SMTSolver
-- function entails
-  - preprocess: lookup + subst
-  - calls the solver
+%
+The trait \lstinline{SMTSolver} defines
+functionality for calling a SMT solver.
+The trait defines a set of \lstinline{axioms}
+which are true for each query to the solver,
+as well as functions \lstinline{addCommand},
+\lstinline{addCommands} and \lstinline{addScript}
+for adding additional commands to be passed to the solver.
+The function \lstinline{flush} removes all added commands
+and keeps only the axioms.\\
+Function \lstinline{execute} calls
+and uses the \lstinline{axioms} as well as
+all added commands as input for the solver.
+The function returns the exit code
+and the raw output of the solver.\\
+Function \lstinline{checksat} does call
+the solver like \lstinline{execute}, with the
+additional smtlib input \smtlib{(check-sat)}.
+It then parses the output of the solver
+and returns either
+\smtlib{sat} if the input was satisfiable,
+\smtlib{unsat} if the input was unsatisfiable or
+\smtlib{unknown} if the solver could not decide
+whether the input was satisfiable or unsatisfiable.
+The result \smtlib{unknown} does not imply
+that the input formula is undecidable.
+There can be other reasons resulting
+in the output \smtlib{unknown}, as timeouts.
+%
 \begin{lstlisting}[caption={Entailment Function},label=lst:entails,captionpos=b,frame={lines}]
   def entails(
-      ctx: List[Constraint], cs: List[Constraint]): Boolean =
-    cs.forall(c => entails(ctx, c))
-
-  def entails(
       context: List[Constraint], c: Constraint): Boolean = {
-      val (vars, pths, clss) = [...]
+      val (vars, paths, classes) = [...]
 
       // SMTLib representation
-      val entailment = [...]
-      val (variables, paths, classes) = [...]
+      val entailment =
+          SMTLibConverter.convertEntailment(ctx, c)
+      val classPredicates = classes.map(
+          cls => Apply(SimpleSymbol("class"),
+                       Seq(SMTLibString(cls))))
 
       val solver: SMTSolver = new Z3Solver(Axioms.all)
       solver.addCommands(
-        SMTLibConverter.makeAsserts(classes))
+        SMTLibConverter.makeAsserts(classPredicates))
       solver.addCommands(
-        SMTLibConverter.generateSubstRules(vars, pths))
+        SMTLibConverter.generateSubstRules(vars, paths))
       solver.addCommand(SMTLibConverter
-          .makeProgramEntailmentLookupFunction(P, pths))
+          .makeProgramEntailmentLookupFunction(P, paths))
       solver.addCommand(Axioms.cProg)
       solver.addCommand(Assert(Not(entailment)))
 
@@ -1579,7 +1599,54 @@ trait SMTSolver {
       }
     }
   }
+
+  def entails(
+      ctx: List[Constraint], cs: List[Constraint]): Boolean =
+    cs.forall(c => entails(ctx, c))
 \end{lstlisting}
+%
+The function \lstinline{entails} can be used
+to check constraint entailments.
+It has two implementations.
+The first implementation models \entails{context}{c}
+for constraint lists $context$ and constraints $c$.
+The second implementation models \entails{ctx}{cs}
+for constraint lists $ctx$ and $cs$.
+It requires that \lstinline{entails(ctx, c)} holds for
+all $c \in cs$.\\
+\\
+The function is responsible for
+invoking the preprocessing process.
+For this, we implemented the function as follows:
+We first extract the variable names, paths
+and class names from the function arguments.
+We then convert the arguments and create
+a SMTLib representation \entails{context}{c}
+as well as generating $\mIt{class}(cls)$
+for each class name $cls \in \mIt{classes}$.
+
+We create an instance of \lstinline{SMTSolver}
+with \lstinline{Axioms.all}, where \lstinline{Axioms.all}
+contains the SMTLib representations of all
+declarations, definitions and rules.
+The axioms exclude rule C-Subst, rule C-Prog
+and a definition of a lookup function.
+We add the generated class predicates to the solver.
+Afterwards we call \lstinline{generateSubstRules}
+to enumerate over variable names and paths to
+generate rules C-Subst
+and \lstinline{makeProgramEntailmentLookupFunction}
+to generate a lookup function from the program and paths.
+We add the generated C-Subst rules as well,
+as the lookup function and rule C-Prog to the solver.
+Finally, we add the negation of the generated
+entailment \entails{context}{c} to the solver.
+
+We call \lstinline{solver.checksat} to check
+for satisfiability with the SMT solver.
+We return true if the call returns \smtlib{unsat},
+because the entailment \entails{context}{c}
+is valid if its negation is unsatisfiable.
 
 %%% Local Variables: 
 %%% mode: latex

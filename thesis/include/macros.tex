@@ -91,7 +91,8 @@
 % SMT-Lib language definition for listings
 \lstdefinelanguage{smtlib}{
   alsoletter={-,!,:,=,>}, % '-' is usable in keywords
-  morekeywords={assert,!,:named,declare-datatype,declare-fun,define-fun-rec,define-fun},
+  morekeywords={assert,!,:named,check-sat},
+  morekeywords={declare-datatype,declare-fun,define-fun-rec,define-fun},
   morekeywords={ite,let},
   morekeywords={true,false,and,or,forall,exists},
   sensitive=false, % keywords are not case-sensitive
