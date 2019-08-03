@@ -970,7 +970,7 @@ All datatypes are defined with unique constructor- and selector names.
 \Cref{fig:smtlib-funs-list} shows a SMTLib translation
 of the list functions defined in \Cref{fig:fo-list-funs}.\\
 We can define recursive functions in the SMTLib format
-with the keyword \lstinline[language=smtlib]{define-fun-rec}.
+with the keyword \smtlib{define-fun-rec}.
 The functions in the first-order model used pattern matching
 for better readability. While SMTLib supports pattern matching,
 it is not fully supported by the latest version of Z3.
@@ -1195,11 +1195,11 @@ We modeled the SMTLib format in Scala as an AST.
 Each node of the AST knows how to format itself
 and formatting will be propagated to each sub-node.\\
 \Cref{fig:scala-format} shows 
-\lstinline{trait SMTLibFormatter}, as well as
-\lstinline{object SMTLibFormatter}.
-The trait provides the function \lstinline{format}
+\scala{trait SMTLibFormatter}, as well as
+\scala{object SMTLibFormatter}.
+The trait provides the function \scala{format}
 and each node inherits from this trait.
-The singleton \lstinline{object SMTLibFormatter}
+The singleton \scala{object SMTLibFormatter}
 provides a function for formatting a SMTLib formattable
 sequence using a specifiable separator.
 %
@@ -1227,12 +1227,12 @@ object SMTLibFormatter {
 %
 \Cref{ex:scala-format} shows the implementation
 of the universal quantifier.\\
-The \lstinline{trait Term} models the category \textit{term}
+The \scala{trait Term} models the category \textit{term}
 of the SMTLib format.
 The universal quantifier is a member of this category
-and therfore \lstinline{case class Forall}\ inherits from \lstinline{trait Term}.\\
+and therfore \scala{case class Forall}\ inherits from \scala{trait Term}.\\
 The format of an universal quantifier is defined
-in \lstinline{case class Forall} and starts
+in \scala{case class Forall} and starts
 with the keyword \smtlib{forall}.
 The keyword is followed by the format of the quantified variables
 enclosed in parens and by the format of the body.
@@ -1314,7 +1314,7 @@ private def makeProgramEntailmentLookupFunctionBody(
 \Cref{lst:lookup} shows the Scala implementation
 of the lookup function generation.\\
 \\
-The function \lstinline{instantiateProgramEntailments}
+The function \scala{instantiateProgramEntailments}
 implements the instantiation of entailment declarations
 for a program $p$ with a given path $path$.
 The already instantiated entailments are accumulated
@@ -1331,7 +1331,7 @@ accumulated constraints for $c$.
 We repeat this until no declaration remains
 and return the accumulated mappings.\\
 \\
-The function \lstinline{makeProgramEntailmentLookupFunctionBody}
+The function \scala{makeProgramEntailmentLookupFunctionBody}
 is responsible for creating the body of the lookup function.
 It implements the process of generating a series
 of if statements out of mappings from $\Constr$ to \Constrss.\\
@@ -1343,7 +1343,7 @@ In the then brach, we put the SMTLib representation of $ccs$.
 The else branch then constains a recursive call with $rst$.
 We repeat this until all mappings are processed.\\
 \\
-The function \lstinline{makeProgamEntailmentLookupFunction}
+The function \scala{makeProgamEntailmentLookupFunction}
 generates a lookup function for entailment declarations in programs.
 It takes a program and a list of paths as argument
 and instantiates each path with each
@@ -1351,9 +1351,9 @@ entailment declaration in the program.
 The function returns a SMTLib representation usable by the solver.\\
 %
 We set $x$ to be the argument of the function to be created.
-We map function \lstinline{instantiateProgramEntailments}
+We map function \scala{instantiateProgramEntailments}
 over the provided paths and obtain a list of mappings $m$.
-We pass $m$ into \lstinline{makeProgramEntailmentLookupFunctionBody}
+We pass $m$ into \scala{makeProgramEntailmentLookupFunctionBody}
 to obtain a series of if statements $body$ as a SMTLib representation.
 We then create the lookup function with the signature
 $\Constr \rightarrow \Constrss$ and the body $body$.
@@ -1391,23 +1391,23 @@ private def instantiateSubstRule(
         , SimpleSymbol("C-Subst")))))
 \end{lstlisting}
 %
-The function \lstinline{generateSubstRules} takes
+The function \scala{generateSubstRules} takes
 a list of variables and a list of paths as argument
 and returns a sequence of C-Subst rules.
 In the function, we iterate over all variables $x$
 and for each $x$ we iterate over all paths $p$ and $q$.
-We call \lstinline{instantiateSubstRule} with $x$, $p$ and $q$
+We call \scala{instantiateSubstRule} with $x$, $p$ and $q$
 to generate a rule C-Subst and append it to the sequence
 of already generated rules.
 We skip cases where $x = p = q$.
 Finally, we return the collected rules.\\
 \\
-The function \lstinline{instantiateSubstRule}
+The function \scala{instantiateSubstRule}
 creates the surrounding frame of rule C-Subst
-and calls \lstinline{substRuleTemplate} to
+and calls \scala{substRuleTemplate} to
 instantiate the template of rule C-Subst.\\
 \\
-The function \lstinline{substRuleTemplate}
+The function \scala{substRuleTemplate}
 takes a variable and two paths as argument
 and returns a SMTLib representation
 of rule C-Subst.
@@ -1417,20 +1417,20 @@ in the SMTLib format.
 The function defines three subroutines.
 These subroutines implement the optimizations
 discussed in \Cref{sec:rule-refinement}.\\
-We check in the subroutine \lstinline{gen}
+We check in the subroutine \scala{gen}
 if variable $x$ equals path $p$.
 If not, we generalize constraint $a2$
-and call subroutine \lstinline{subst}
+and call subroutine \scala{subst}
 with the generalized constraint.
 Otherwise we skip the generalization and proceed
-with \lstinline{subst} directly.\\
-Subroutine \lstinline{subst} takes a term $a$
+with \scala{subst} directly.\\
+Subroutine \scala{subst} takes a term $a$
 representing a constraint as argument.
 We check if variable $x$ equals path $q$.
 If not, we substitute $a$ and call
-subroutine \lstinline{conjunction}
+subroutine \scala{conjunction}
 on the result of the substitution.
-Otherwise we call \lstinline{conjunction},
+Otherwise we call \scala{conjunction},
 without substituting the argument.\\
 %
 \begin{lstlisting}[caption={C-Subst Template},label=lst:subst-template,captionpos=b,frame={lines}]
@@ -1486,7 +1486,7 @@ private def substRuleTemplate(
   )
 }
 \end{lstlisting}
-Subroutine \lstinline{conjunction} takes
+Subroutine \scala{conjunction} takes
 a term $a1$ representing a constraint as argument.
 We check if path $p$ equals path $q$.
 If not, we build the conjunction
@@ -1494,10 +1494,10 @@ of the entailments \entails{cs}{\pathEq{p}{q}}
 and \entails{cs}{a1}.
 Otherwise we build the entailment \entails{cs}{a1}
 and skip the check for equivalent paths.\\
-In \lstinline{substRuleTemplate},
+In \scala{substRuleTemplate},
 we create the SMTLib representation of
 \[ \forall a_2: \Constr, cs: \Constr.\ \mathbf{gen} \rightarrow \entails{cs}{a_2} \]
-where $\mathbf{gen}$ is a call to subroutine \lstinline{gen}
+where $\mathbf{gen}$ is a call to subroutine \scala{gen}
 as our return value.
 
 \subsubsection{Calling the Solver}
@@ -1505,9 +1505,9 @@ With the SMTLib representation and preprocessing
 of the model defined, we can call the solver
 to evaluate if entailments \entails{\ovl a}{a}
 hold in the model.
-For this we define \lstinline{trait SMTSolver}
+For this we define \scala{trait SMTSolver}
 in \Cref{lst:smtsolver} as an interface for SMT solvers
-and function \lstinline{entails} to check entailments
+and function \scala{entails} to check entailments
 in \Cref{lst:entails}.
 %
 \begin{lstlisting}[caption={SMTSolver Interface},label=lst:smtsolver,captionpos=b,frame={lines}]
@@ -1542,22 +1542,22 @@ trait SMTSolver {
 }
 \end{lstlisting}
 %
-The trait \lstinline{SMTSolver} defines
+The trait \scala{SMTSolver} defines
 functionality for calling a SMT solver.
-The trait defines a set of \lstinline{axioms}
+The trait defines a set of \scala{axioms}
 which are true for each query to the solver,
-as well as functions \lstinline{addCommand},
-\lstinline{addCommands} and \lstinline{addScript}
+as well as functions \scala{addCommand},
+\scala{addCommands} and \scala{addScript}
 for adding additional commands to be passed to the solver.
-The function \lstinline{flush} removes all added commands
+The function \scala{flush} removes all added commands
 and keeps only the axioms.\\
-Function \lstinline{execute} calls
-and uses the \lstinline{axioms} as well as
+Function \scala{execute} calls
+and uses the \scala{axioms} as well as
 all added commands as input for the solver.
 The function returns the exit code
 and the raw output of the solver.\\
-Function \lstinline{checksat} does call
-the solver like \lstinline{execute}, with the
+Function \scala{checksat} does call
+the solver like \scala{execute}, with the
 additional smtlib input \smtlib{(check-sat)}.
 It then parses the output of the solver
 and returns either
@@ -1605,14 +1605,14 @@ in the output \smtlib{unknown}, as timeouts.
     cs.forall(c => entails(ctx, c))
 \end{lstlisting}
 %
-The function \lstinline{entails} can be used
+The function \scala{entails} can be used
 to check constraint entailments.
 It has two implementations.
 The first implementation models \entails{context}{c}
 for constraint lists $context$ and constraints $c$.
 The second implementation models \entails{ctx}{cs}
 for constraint lists $ctx$ and $cs$.
-It requires that \lstinline{entails(ctx, c)} holds for
+It requires that \scala{entails(ctx, c)} holds for
 all $c \in cs$.\\
 \\
 The function is responsible for
@@ -1625,24 +1625,24 @@ a SMTLib representation \entails{context}{c}
 as well as generating $\mIt{class}(cls)$
 for each class name $cls \in \mIt{classes}$.
 
-We create an instance of \lstinline{SMTSolver}
-with \lstinline{Axioms.all}, where \lstinline{Axioms.all}
+We create an instance of \scala{SMTSolver}
+with \scala{Axioms.all}, where \scala{Axioms.all}
 contains the SMTLib representations of all
 declarations, definitions and rules.
 The axioms exclude rule C-Subst, rule C-Prog
 and a definition of a lookup function.
 We add the generated class predicates to the solver.
-Afterwards we call \lstinline{generateSubstRules}
+Afterwards we call \scala{generateSubstRules}
 to enumerate over variable names and paths to
 generate rules C-Subst
-and \lstinline{makeProgramEntailmentLookupFunction}
+and \scala{makeProgramEntailmentLookupFunction}
 to generate a lookup function from the program and paths.
 We add the generated C-Subst rules as well,
 as the lookup function and rule C-Prog to the solver.
 Finally, we add the negation of the generated
 entailment \entails{context}{c} to the solver.
 
-We call \lstinline{solver.checksat} to check
+We call \scala{solver.checksat} to check
 for satisfiability with the SMT solver.
 We return true if the call returns \smtlib{unsat},
 because the entailment \entails{context}{c}
