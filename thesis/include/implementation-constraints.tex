@@ -718,9 +718,9 @@ This leads to shadowing, since we use the
 right-hand side as the guard for the if statements.\\
 \\
 To avoid this shadowing of entailments,
-we need to change the return type of the lookup function
+we change the return type of the lookup function
 from returning a list of constraints (\Constrs)
-to returning a list of a list of constraints (\Constrss).\\
+to a list of constraint lists (\Constrss).\\
 This enables us to merge program entailments that
 share the same right-hand side together.
 With this we can give the function definition shown in
