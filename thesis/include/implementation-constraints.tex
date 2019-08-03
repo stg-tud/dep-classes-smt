@@ -47,7 +47,7 @@ and is therefore used for better readability.
 
 The parametrized sort \mIt{List} models lists and
 is predefined in Z3.
-The constructor \nil represents the empty list and
+The constructor $\nil$ represents the empty list and
 the constructor \mIt{insert} is used for list constructions
 and \mIt{insert(x, l)} will also be written as $x :: l$
 for elements $x$ and lists $l$ with matching sorts.
@@ -95,7 +95,7 @@ These definitions form the general structure of the model
 and provide basic functionality needed in the modeling of the calculus rules.
 
 Sorts for paths and constraints are defined in \Cref{subfig:axioms-naive-general-sorts}.
-The definitions are similiar to the syntax specification in \Cref{fig:dcc-syntax}.
+The definitions are similar to the syntax specification in \Cref{fig:dcc-syntax}.
 A path is either a variable name or a field path consiting
 of another path followed by a field name, where variable and field names
 are modeled as strings.
@@ -260,7 +260,7 @@ The weakening rule in the $DC_C$ sequent calculus would look as follows:
 \AxiomC{\entails{\ovl a}{b}}
 \UnaryInfC{\entails{a, \ovl a}{b}}
 \end{prooftree}
-The rule states that it is always possible to restrict the context of an entailment.
+The rule states that the context of an entailment can always be restricted.
 The first-order representation of this rule models this as follows:
 For constraint lists \ovl a and constraints $a, b$,
 if \entails{\ovl a}{b} holds then \entails{a :: \ovl a}{b} holds as well.
@@ -371,7 +371,7 @@ Since there are no valid classnames we do not have to add any requirements for t
 To show \entails{\pathEq{x}{y}}{\pathEq{y}{x}} we instantiate rule C-Subst.
 Since we want to show the entailment we need it to appear on the right-hand side of the implication,
 for this we instantiate \ovl a as $[\pathEq{x}{y}]$ and $a_2$ as \pathEq{y}{x}.
-We then choose $x := \str x$, $p_1 := y$ amd $p_2 := x$ for usage in the substitutions.
+We then choose $x := \str x$, $p_1 := y$ and $p_2 := x$ for usage in the substitutions.
 The instantiation of $x$ with $\str x$ ensures that \mIt{variable(x)} holds.
 With the instantiations of $x$, $p_1$, $p_2$ and $a_2$ we get
 \mIt{subst(a, \str x, y, a_1)} and \mIt{subst(a, \str x, x, \pathEq{y}{x})}.
@@ -395,7 +395,7 @@ This leads to the new subgoal \entails{\nil}{\pathEq{y}{y}} which can be
 resolved using rule C-Refl and instantiating $p := y$.\\
 \\
 By comparing the application of the sequent calculus with the application of our model,
-we can see that both derivations are similiar.
+we can see that both derivations are similar.
 Both derivations use the same rule applications in the same order to obtain the result
 that the entailment holds.
 We can also observe that we chose the variable instantiations of rule C-Subst
@@ -412,8 +412,8 @@ In the example we used rule C-Subst and chose the quantified variables
 to fulfill the various requirements of the rule.
 These requirements included \mIt{variable} and \mIt{subst} as well
 as the relationship between variables $a$, $a_1$ and $a_2$.
-We found that making these variable instantiations is diffucult for the solver
-and we refine the modeled rules for better usage with the solver.
+We found it difficult for the solver to make these variable instantiations
+and we refine the modeled rules to improve usage with the solver.
 
 \subsubsection{Rule C-Subst}
 We start with refining rule C-Subst.
@@ -472,7 +472,7 @@ for $a$ to afterwards check if the requirements on $a$ are met
 instead of following the observed instantiation pattern we did manually.
 To resolve this problem we need to change the rule that $a$ can be
 instantiated by direct derivating from $a_2$.
-As previously stated we used $a$ on a input position
+As previously stated we used $a$ on an input position
 and $a_2$ on the output position of a function call.
 To reverse these positions, we introduce \mIt{generalization} as
 the inverse of substitution.
@@ -525,7 +525,7 @@ to be generalized.
 
 For the notation of generalization we use \gen{c}{p}{x} for
 generalizing paths $p$ with variable names $x$ in constraints $c$.
-This notion is similiar to the one used for substitution.
+This notion is similar to the one used for substitution.
 We can distinguish both notations based on the swapped positions
 of $p$ and $x$.
 %
@@ -615,7 +615,7 @@ and replace the now free variable in its subexpression.
 \end{example}
 %
 \subsubsection{Rule C-Prog}
-Rule C-Prog has similiar problems as the ones observed for rule C-Subst.
+Rule C-Prog has similar problems as the ones observed for rule C-Subst.
 The rule is again defined in a non-algorithmic way.\\
 The check if a program entailment exists in the program is done via
 the predicate \inprog(x, \ovl a, a) for strings $x$, constraint lists \ovl a and constraints $a$,
@@ -639,7 +639,7 @@ and would result in an output to be usable as an instantiation for $\ovl a$.
 With this requirement specification we see that we want to have
 some sort of lookup function ranging from constraint $a$ to constraints $\ovl a$.
 Such a lookup function would need to be specifically generated for a program
-and we cannot give a universal function definition.
+and we cannot give an universal function definition.
 
 We develop the generation process of a lookup function which models
 the existence check from rule C-Prog through a series of examples.
@@ -680,7 +680,7 @@ path $q$ is an instance of class $Cls$ it suffices to show
 that $q$ is an instance of subclass $Cls'$
 and that the field requirements of $Cls'$ are fulfilled.
 
-To traslate this into a lookup function,
+To translate this into a lookup function,
 we use $b$ as an argument to the function and \ovl b as our return value.
 Since a function needs to be total we need to combine all
 existing program entailments into one function,
@@ -761,7 +761,7 @@ This is because, according to the well formedness,
 for program entailments \progEnt{y}{\ovl b}{b}
 only the bound variable $y$ can occur in \ovl b
 and $b$ needs to be of the form \instOf{y}{Cls}
-for some class name \mIt{Cls}.
+for class names \mIt{Cls}.
 So for finding a valid substitution,
 we can fix the variable name to be substituted to $y$.\\
 Since we fixed the variable name to be substituted,
@@ -819,7 +819,7 @@ with the algorithmic call to the lookup function.
 %
 The refined rule C-Prog is defined in \Cref{fig:axioms-cprog}.\\
 The rule calls function \mIt{lookup} to check
-if a entailment declaration matching $a$ exists in the program.
+if an entailment declaration matching $a$ exists in the program.
 The result is a list containing possible constraint lists
 to evaluate for entailment to $a$.\\
 Since we modeled the lookup function to return the empty list $\nil$
@@ -827,7 +827,7 @@ if no matching entailment declaration exists,
 we require the lookup result \ovl{\ovl a} to be non empty.\\
 Since we merged entailment declarations with matching right-hand sides
 to avoid shadowing, it suffices to show that at least one
-of the constraits lists contained in \ovl{\ovl a}
+of the constraint lists contained in \ovl{\ovl a}
 is entailed by \ovl a to show that $a$ is entailed by \ovl{a}.\\
 \\
 The refined rule C-Prog does not contain any free variables
