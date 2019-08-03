@@ -105,9 +105,9 @@ class DCC(P: Program) {
       (heap, e)
     // R-New
     case ObjectConstruction(cls, args)
-      if args.foldRight(true){ // if args are values (Id)
-        case ((_, Id(_)), rst) => rst // true && rst
-        case _ => false // false && rst
+      if args.forall{ // if args are values (Id)
+        case (_, Id(_)) => true
+        case _ => false
       } =>
       val vars = boundVars(heap)
       val x: Id  = freshvar()
@@ -115,7 +115,8 @@ class DCC(P: Program) {
       val o: Obj = (cls, args1)
       // cls in Program: alpha renaming of y to x in b and orElse stuck/error
       val (y: Id, b: List[Constraint]) = classInProgram(cls, P).getOrElse(return (heap, expr))
-      val b1 = alphaConversion(y, x, b)
+      //val b1 = alphaConversion(y, x, b)
+      val b1 = substitute(y, x, b)
       // heap constraints entail cls constraints
       if (entails(HC(heap) ++ OC(x, o), b1, x :: vars))
         (heap + (x -> o), x)

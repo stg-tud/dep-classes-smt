@@ -881,7 +881,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 
     val preprocess = Seq(
       lookup,
-      Assert(Annotate(Axioms.preprocessProgRule(), Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
+      Axioms.cProg
     )
 
     val knowledge = Seq(
@@ -1049,7 +1049,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 
     val preprocess = Seq(
       lookup,
-      Assert(Annotate(Axioms.preprocessProgRule(), Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
+      Axioms.cProg
     ) ++ Axioms.preprocessSubstRules(varsTerms, pathTerms)
 
     val knowledge = Seq(
@@ -1136,7 +1136,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val preprocessed = Axioms.preprocessSubstRules(vars.map(x => SMTLibConverter.convertId(x)), pathsTerms) ++
       Seq(
         lookup,
-        Assert(Annotate(Axioms.preprocessProgRule(), Seq(KeyValueAttribute(Keyword("named"), "C-Prog"))))
+        Axioms.cProg
       )
     val assertion = Assert(Not(Axioms.entails(Seq(x1Zero, x2Succ, x2Px1), x2Nat)))
 //    val assertion = Assert(Not(Axioms.entails(Seq(x1Zero, x2Succ, x2Px1), Axioms.pathEq(x2P, x2)))) // -> unsat. WTF?
