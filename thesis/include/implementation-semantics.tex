@@ -4,7 +4,9 @@ the operational semantics of the $DC_C$ calculus
 presented in \Cref{fig:dcc-opsemantics}.
 For this we will define an interpreter,
 which will evaluate expressions relative to a heap.
-
+The operational semantics is a small-step semantics over
+the structure of expressions.
+%
 \begin{lstlisting}[caption={Interpreter},label=lst:interp,captionpos=b,frame={lines}]
 def interp(heap: Heap, expr: Expression)
           : (Heap, Expression) = expr match {
@@ -90,7 +92,17 @@ def interp(heap: Heap, expr: Expression)
 \end{lstlisting}
 %
 \newpage
-The function \lstinline{interp} \scala{interp} defined 
+We define function \scala{interp} in \Cref{lst:interp}.
+The function takes a heap and an expression
+as arguments and returns a heap and an expression.
+The implementation follows the structure of the operational
+semantics.
+This is done via pattern matching on the argument expression
+and allows to recreate each rule from \Cref{fig:dcc-opsemantics}
+as a separate case in the implementation.
+
+% TODO: describe cases
+
 
 %%% Local Variables: 
 %%% mode: latex
