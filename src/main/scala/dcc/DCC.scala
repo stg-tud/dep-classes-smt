@@ -86,14 +86,14 @@ class DCC(P: Program) {
       val vars = boundVars(heap)
 
       // Applicable methods
-      val S: List[(List[Constraint], Expression)] = mImpl(m, x).filter{case (as, _) => entails(HC(heap), as, vars)}
+      val S: List[(List[Constraint], Expression)] = mImplSubst(m, x).filter{case (as, _) => entails(HC(heap), as, vars)}
 
       // Most specific method
       var (a, e) = S.head
 
       S.foreach{
         case (a1, e1) if e != e1 =>
-          if (entails(a1, a, vars) && !entails(a, a1, vars)) { // TODO: alpha renaming (footnote page 208)
+          if (entails(a1, a, vars) && !entails(a, a1, vars)) {
             //(a, e) = (a1, e1)
             a = a1
             e = e1
@@ -263,7 +263,7 @@ class DCC(P: Program) {
         for ((a1, b) <- mTypeSubst(m, x, y)) {
           val entailsArgs = entails(context ++ a, a1, List(x))
 
-          val b1 = (a1 ++ b).foldRight(Nil: List[Constraint]) { // TODO: take both a1 and b or only b? (strong feeling that it should only be b)
+          val b1 = (a1 ++ b).foldRight(Nil: List[Constraint]) {
             case (c, cs) if !FV(c).contains(x) => c :: cs
             case (_, cs) => cs
           }
@@ -371,12 +371,21 @@ class DCC(P: Program) {
     P.foldRight(Nil: List[(List[Constraint], List[Constraint])]){
       case (AbstractMethodDeclaration(`m`, xDecl, a, Type(yDecl, b)), rst) =>
         (substitute(xDecl, x, a), substitute(yDecl, y, b)) :: rst
+      case (MethodImplementation(`m`, xImpl, a, Type(yImpl, b), _), rst) =>
+        (substitute(xImpl, x, a), substitute(yImpl, y, b)) :: rst
       case (_, rst) => rst}
 
   // Method Implementation
   private def mImpl(m: Id, x: Id): List[(List[Constraint], Expression)] =
     P.foldRight(Nil: List[(List[Constraint], Expression)]){
       case (MethodImplementation(`m`, `x`, a, _, e), rst) => (a, e) :: rst
+      case (_, rst) => rst
+    }
+  
+  private def mImplSubst(m: Id, x: Id): List[(List[Constraint], Expression)] =
+    P.foldRight(Nil: List[(List[Constraint], Expression)]){
+      case (MethodImplementation(`m`, xImpl, a, _, e), rst) =>
+        (substitute(xImpl, x, a), alphaRename(xImpl, x, e)) :: rst
       case (_, rst) => rst
     }
 

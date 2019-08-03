@@ -32,4 +32,14 @@ object Util {
 
   def substitute(x: Id, p: Path, cs: List[Constraint]): List[Constraint] =
     cs.map(substitute(x, p, _))
+
+  def alphaRename(x: Id, y: Id, expr: Expression): Expression = expr match {
+    case `x` => y
+    case z@Id(_) => z
+    case FieldAccess(e, f) => FieldAccess(alphaRename(x, y, e), f)
+    case ObjectConstruction(cls, args) => ObjectConstruction(cls, args.map{
+      case (z, e) => (z, alphaRename(x, y, e))
+    })
+    case MethodCall(m, e) => MethodCall(m, alphaRename(x, y, e))
+  }
 }
