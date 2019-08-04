@@ -46,9 +46,7 @@ def interp(heap: Heap, expr: Expression)
       case _ => false
     } =>
     val x: Id  = freshvar()
-    val args1: List[(Id, Id)] = args.map{
-      case (f, Id(z)) => (f, Id(z))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id TODO: remove this comment after describing the case because its too friggin long for the thesis
-    val o: Obj = (cls, args1)
+    val o: Obj = (cls, args.asInstanceOf[List[(Id, Id)]])
     // cls in Program: alpha renaming of y to x in b
     val (y: Id, b: List[Constraint]) =
       classInProgram(cls, P).getOrElse(return (heap, expr))
@@ -122,7 +120,7 @@ corresponding to $x$ in the heap.
 We return the arguments $(heap, expr)$
 as there are no subsequent transitions.\\
 \\
-For rule R-Call, we math for method calls $m(x)$,
+For rule R-Call, we match for method calls $m(x)$,
 where $x$ is a value.
 First, we generate the list of applicable methods $S$.
 For this we call $\mIt{mImplSubst}(m, x)$
@@ -166,27 +164,33 @@ The implementation of $\mIt{mImplSubst}(m, x)$ is given in \Cref{fig:scala-mimpl
 In the implementation we fold over declarations of program $P$.
 In the case of a method implementation \mImpl{m}{y}{a}{\_}{e},
 we substitute the formal argument $y$ with $x$ in constraints $a$
-and apply $\alpha$-renaming of $y$ to $x$ in the method body $e$.
+and apply $\alpha$-renaming of $y$ to $x$ in the method body $e$.\\
+%
+For rule R-New we match for object creations \objConstr{cls}{args},
+where $\mIt{args}$ has the type \scala{List[(Id, Expression)]}
+and the argument expressions are reduced to values.\\
+We generate a fresh variable $x$ for the object to be constructed
+and set object $o := (\mIt{cls}, \mIt{args})$, % $o := (\mIt{cls}, \mIt{args.asInstanceOf}[\mIt{List}[(\mIt{Id}, \mIt{Id})]])$,
+where \mIt{args} are cast to \scala{List[(Id, Id)]}.
+This is a safe typecast, since we ensured
+that the argument expressions are values.\\
+We search for a constructor \constr{cls}{y}{b} in the program.
+If there is no constructor for class \mIt{cls},
+we can not reduce \objConstr{cls}{args}.
+If we found a constructor,
+we substitute the formal argument of the constructor $y$
+with the variable of the object to be created $x$
+in the constructor constraints $b$.
+We obtain $b_1 := \subst{b}{y}{x}$.
+We check if the heap constraints combined
+with the constraints of $o$ entail $b_1$.
+If so, we reduce \objConstr{cls}{args} to $x$
+and extend the heap with the new object.
+Otherwise, we can not reduce \objConstr{cls}{args}.
 
 
 \quad\\\\\\
 % TODO: describe cases
-- field access
-  - requires subexpr to be variable
-  - stable identifiers X, F
-    - used in filter
-    - search heap constraints for path eq X.F = y
-    - return y
-- method call
-  - requires arg to be variable
-  - generate list of applicable methods
-    by calling mImplSubst
-  - mImplSubst does incorporate implicit unification of formal argument to x
-  - determine most specific method
-    - set first applicable as most specific
-    - for each applipacle method
-      - try if more suitable than current
-  - return most specific method body
 - object creation
   - requires arguments to be evaluated to vars
   - fresh var for the object to be created
