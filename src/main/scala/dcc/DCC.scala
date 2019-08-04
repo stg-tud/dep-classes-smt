@@ -115,8 +115,8 @@ class DCC(P: Program) {
       } =>
       val vars = boundVars(heap)
       val x: Id  = freshvar()
-      val args1: List[(Id, Id)] = args.map{case (f, Id(z)) => (f, Id(z))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
-      val o: Obj = (cls, args1)
+      //val args1: List[(Id, Id)] = args.map{case (f, Id(z)) => (f, Id(z))} // case (f, _) => (f, Id('notReduced)) guard makes sure everything is an Id
+      val o: Obj = (cls, args.asInstanceOf[List[(Id, Id)]])
       // cls in Program: alpha renaming of y to x in b and orElse stuck/error
       val (y: Id, b: List[Constraint]) = classInProgram(cls, P).getOrElse(return (heap, expr))
       //val b1 = alphaConversion(y, x, b)
