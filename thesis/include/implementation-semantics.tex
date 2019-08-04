@@ -64,7 +64,7 @@ def interp(heap: Heap, expr: Expression)
     if(h1 == heap && e1 == e) {
       (heap, expr) // stuck
     } else {
-      interp(h1, FieldAccess(e1, f)) // recursive call for big-step TODO: remove this comment like the one above
+      interp(h1, FieldAccess(e1, f))
     }
     
   // RC-Call
@@ -186,17 +186,88 @@ We check if the heap constraints combined
 with the constraints of $o$ entail $b_1$.
 If so, we reduce \objConstr{cls}{args} to $x$
 and extend the heap with the mapping from $x$ to $o$.
-Otherwise, we can not reduce \objConstr{cls}{args}.
+Otherwise, we can not reduce \objConstr{cls}{args}.\\
+\\
+We implemented the rules RC-Field, RC-Call and RC-New
+by matching for their respective expression structure
+and the rules have no requirements on the subexpressions.\\
+\\
+For field access expressions $e.f$,
+we interpret subexpression $e$ in the heap $heap$
+to obtain an updated heap $h_1$ and evaluated subexpression $e_1$.
+We check if $e = e_1$ and $heap = h_1$.
+If not, we proceed with interpreting $e_1.f$ in the heap $h_1$.
+Otherwise, the subexpression can not be reduced
+and we return $(\mIt{heap}, \mIt{expr})$ to avoid endless recursion.\\
+\\
+The implementation for method calls $m(e)$ is the same
+as the previously shown implementation for field access expressions $e.f$.
+We evaluate subexpression $e$ to $e_1$ and proceed
+interpreting $m(e_1)$ if we are not stuck.
+%
+\begin{figure}[h]
+\begin{lstlisting}
+private def objArgsInterp(
+    heap: Heap, args: List[(Id, Expression)])
+      : (Heap, List[(Id, Expression)]) = args match {
+  case Nil => (heap, Nil)
+  case (f, x@Id(_)) :: rst =>
+    val (h1, args1) = objArgsInterp(heap, rst)
+    (h1, (f, x) :: args1)
+  case (f, e) :: rst =>
+    val (h1, e1) = interp(heap, e)
+    val (h2, args1) = objArgsInterp(h1, rst)
+    (h2, (f, e1) :: args1)
+}
+\end{lstlisting}
+\caption{Object Argument Interpretation}
+\label{fig:scala-objArgsInterp}
+\end{figure}\\
+%
+The implementation for object constructions \objConstr{cls}{args}
+is similar to the implementations for field access expressions $e.f$
+and method calls $m(e)$,
+but differs from the rule RC-New presented in \Cref{fig:dcc-opsemantics}.
+Rule RC-New is defined to only reduce one argument at a time.
+Out implementation interpret all the argument expressions in the same step.
+This argument interpretation is done via function \scala{objArgsInterp}
+and obtain a new heap $h_1$ and evaluated arguments $args_1$.
+We check if $\mIt{args} = \mIt{args_1}$ and $\mIt{heap} = h_1$.
+If not, we proceed with interpreting \objConstr{cls}{args_1} in heap $h_1$.
+Otherwise, we can not reduce \objConstr{cls}{args}.\\
+\\
+The function \scala{objArgsInterp} is defined in \Cref{fig:scala-objArgsInterp}.
+It iterates over each argument, evaluates it
+and passes the updated heap to the evaluation of the subsequent arguments
+to ensure that the side-effects occuring during evaluation
+of the argument expressions are respected.
+The function takes a heap $\mIt{heap}$ and a list of tuples of
+identifiers and expressions $\mIt{args}$ as arguments.
+It returns a heap and a list of tuples of identifiers and expressions.
+In the implementation, we match for the structure of the $args$ list.
 
+If the list is empty, we are done and return the input heap $heap$
+and the empty list \nil.
 
-\quad\\\\\\
-% TODO: describe cases
-- recursive cases / congruence rules
-  - stuck terms to avoid endless recursion
-  - for new obj: interp arguments in one go  
-- added special case Id(_)
-  - variables are values in DCC
-  - add case to avoid undefined function input
+If the first element is of the form $(f, x)$ where $x$ is a value,
+we continue with interpreting the rest of the list
+to obtain a new heap $h_1$ and evaluated arguments $\mIt{args_1}$.
+We return the updated heap $h_1$ and evaluated arguments $(f, x) :: \mIt{args_1}$.
+
+If the first element is of the form $(f, e)$,
+we interpret $e$ and obtain heap $h_1$ and the evaluated expression $e_1$.
+We proceed to interpret the rest of the list in heap $h_1$
+to obtain an updated heap $h_2$ and evaluated arguments $\mIt{args_1}$.
+We return the latest heap $h_2$ and $(f, e_1) :: \mIt{args_1}$.\\
+\\
+The \scala{case Id(_) => (heap, expr)} does not implement
+a rule from the operational semantics presented in \Cref{fig:dcc-opsemantics}.
+We added the case in the implementation,
+to avoid that the function has undefined inputs.
+Since variables are the values of the language,
+we do not need to further evaluate them.
+
+% TODO: example
 
 %%% Local Variables: 
 %%% mode: latex
