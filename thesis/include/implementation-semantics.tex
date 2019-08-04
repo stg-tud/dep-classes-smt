@@ -239,7 +239,7 @@ Otherwise, we can not reduce \objConstr{cls}{args}.\\
 The function \scala{objArgsInterp} is defined in \Cref{fig:scala-objArgsInterp}.
 It iterates over each argument, evaluates it
 and passes the updated heap to the evaluation of the subsequent arguments
-to ensure that the side-effects occuring during evaluation
+to ensure that the side-effects occurring during evaluation
 of the argument expressions are respected.
 The function takes a heap $\mIt{heap}$ and a list of tuples of
 identifiers and expressions $\mIt{args}$ as arguments.
