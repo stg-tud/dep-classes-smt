@@ -10,8 +10,7 @@ the structure of expressions.
 \begin{lstlisting}[caption={Interpreter},label=lst:interp,captionpos=b,frame={lines}]
 def interp(heap: Heap, expr: Expression)
           : (Heap, Expression) = expr match {
-  // R-Field
-  case FieldAccess(X@Id(_), F@Id(_)) =>
+  case FieldAccess(X@Id(_), F@Id(_)) =>   // R-Field
     HC(heap).filter{
         case PathEquivalence(FieldPath(X, F), Id(_)) => true
         case PathEquivalence(Id(_), FieldPath(X, F)) => true
@@ -21,7 +20,7 @@ def interp(heap: Heap, expr: Expression)
         (heap, y)
       case PathEquivalence(y@Id(_), FieldPath(X, F)) :: _ =>
         (heap, y)
-      case _ => (heap, expr) // x does not has field f
+      case _ => (heap, expr) // f no field of x
     }
   // R-Call
   case MethodCall(m, x@Id(_)) =>
@@ -29,16 +28,17 @@ def interp(heap: Heap, expr: Expression)
     val S: List[(List[Constraint], Expression)] =
         mImplSubst(m, x).filter{
           case (as, _) => entails(HC(heap), as)}
+    if (S.isEmpty) // m not in program
+      (heap, expr)
 
     var (a, e) = S.head // Most specific method
     S.foreach{
       case (a1, e1) if e != e1 =>
         if (entails(a1, a) && !entails(a, a1)) {
-          a = a1
-          e = e1
+          a = a1; e = e1
         }
     }
-    (heap, e)
+    interp(heap, e)
   // R-New
   case ObjectConstruction(cls, args)
     if args.forall{ // if args are values (Id)
@@ -95,16 +95,82 @@ def interp(heap: Heap, expr: Expression)
 %
 \newpage
 We define function \scala{interp} in \Cref{lst:interp}.
-The function takes a heap and an expression
+The function takes a heap $heap$ and an expression $expr$
 as arguments and returns a heap and an expression.
+We do not return intermediate steps in the function,
+but fully evaluate the argument expression to a value.
 The implementation follows the structure of the operational
 semantics.
 This is done via pattern matching on the argument expression
 and allows to recreate each rule from \Cref{fig:dcc-opsemantics}
-as a separate case in the implementation.
+as a separate case in the implementation.\\
+\\
+The first case implements rule R-Field,
+it is marked in the Scala code with the comment R-Field.
+We match for field access $e.f$, where the subexpression $e$
+is evaluated to a variable.
+Variables are the values of the $DC_C$ calculus.
+We then build the heap constraints $HC(heap)$
+and filter them to check if they contain \pathEq{x.f}{y}
+or \pathEq{y}{x.f} for some variable $y$.
+If such a path equivalence exists, we
+reduce $x.f$ to $y$ and return
+the pair $(heap, y)$.
+Otherwise we can not reduce $x.f$,
+because field $f$ is not a member of the object
+corresponding to $x$ in the heap.
+We return the arguments $(heap, expr)$
+as there are no subsequent transitions.\\
+\\
+For rule R-Call, we math for method calls $m(x)$,
+where $x$ is a value.
+First, we generate the list of applicable methods $S$.
+For this we call $\mIt{mImplSubst}(m, x)$
+to search for all implementations of method $m$
+and filter its result to check if the
+argument constraints are entailed by the heap.
+Function \mIt{mImplSubst} implements \mIt{mImpl}
+defined in \Cref{fig:dcc-syntax}.
+In \mIt{mImplSubst} we explicitly incorporated the unification
+of the formal argument of method implementations with $x$,
+since the unification is implicit in the operational semantics.
+If $S$ is empty, there is no implementation for $m$ in the program
+and we can not reduce $m(x)$.
+Afterwards, we determine the most specific method implementation.
+With $(a, e) := S.head$, we set the first applicable method
+as the currently most specific method.
+We then try for each applicable method $(a_1, e_1)$ where $e \not= e_1$,
+if \entails{a_1}{a} and not \entails{a}{a_1}.
+If so we update the most specific method $(a, e) := (a_1, e_1)$.
+After all applicable methods have been checked, we reduce
+$m(x)$ to the body $e$ of the most specific implementation of $m$.
+Since we do not want to produce intermediate results and $e$
+is not guaranteed to be a value we recursively call \scala{interp(heap, e)}.
+%
+\begin{figure}[h]
+\begin{lstlisting}
+private def mImplSubst(
+    m: Id, x: Id): List[(List[Constraint], Expression)] =
+  P.foldRight(Nil: List[(List[Constraint], Expression)]){
+    case (MethodImplementation(`m`, y, a, _, e), rst) =>
+      (substitute(y, x, a),
+       alphaRename(y, x, e)) :: rst
+    case (_, rst) => rst
+  }
+\end{lstlisting}
+\caption{Function \scala{mImplSubst}}
+\label{fig:scala-mimpl}
+\end{figure}\\
+%
+The implementation of $\mIt{mImplSubst}(m, x)$ is given in \Cref{fig:scala-mimpl}.
+In the implementation we fold over declarations of program $P$.
+In the case of a method implementation \mImpl{m}{y}{a}{\_}{e},
+we substitute the formal argument $y$ with $x$ in constraints $a$
+and apply $\alpha$-renaming of $y$ to $x$ in the method body $e$.
 
+
+\quad\\\\\\
 % TODO: describe cases
-- no small-step implementation, do not return intermediate results
 - field access
   - requires subexpr to be variable
   - stable identifiers X, F
