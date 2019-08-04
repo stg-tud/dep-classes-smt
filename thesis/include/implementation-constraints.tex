@@ -942,8 +942,8 @@ The parametrized list datatype used is predefined in Z3.
 We define sorts \mIt{CList} and \mIt{CsList},
 to increase compatibility with other solvers
 and to avoid ambiguities with the usage of \Constrs and \Constrss.
-We write \Constrs for \mIt{CList}
-and \Constrss for \mIt{CsList}.
+%We write \Constrs for \mIt{CList} TODO: gets too long and sort of repeats the above
+%and \Constrss for \mIt{CsList}.
 The SMTLib representation is defined in \Cref{fig:smtlib-sorts}.
 All datatypes are defined with unique constructor- and selector names.
 %
@@ -1263,14 +1263,13 @@ the existence check of program entailments
 combined with the search for a substitution
 matching the right-hand side from the entailment
 to be shown, to an entailment declaration of the program.
-
+%
 \begin{lstlisting}[caption={Lookup Function Generation},label=lst:lookup,captionpos=b,frame={lines}]
 def makeProgramEntailmentLookupFunction(
         p: Program, paths: List[Path]): SMTLibCommand = {
   val x = SimpleSymbol("c")
   val body = makeProgramEntailmentLookupFunctionBody(
         paths.flatMap(instantiateProgramEntailments(p, _)), x)
-
   DefineFun(FunctionDef(
     SimpleSymbol("lookup-program-entailment"),
     Seq(SortedVar(x, SimpleSymbol("Constraint"))),

@@ -81,6 +81,29 @@ A Path expression can be a variable $x$ or navigation over fields starting from 
 
 Expressions can be variables, field access, object construction and method invocation.
 Field assignments are not supported since the calculus is functional.
+%
+\begin{example}[Natural Numbers]
+\label{ex:dcc-naturalnumbers}
+\begin{align*}
+&\constr{\texttt{Zero}}{x}{\epsilon}\\
+&\progEnt{x}{\instOf{x}{\texttt{Zero}}}{\instOf{x}{\texttt{Nat}}}\\
+&\constr{\texttt{Succ}}{x}{\instOf{x.p}{\texttt{Nat}}}\\
+&\progEnt{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\instOf{x}{\texttt{Nat}}}\\
+&\mDecl{\texttt{prev}}{x}{\instOf{x}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}\\
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Zero}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{\newInstNoArgs{\texttt{Zero}}}\\
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x.p}
+\end{align*}
+\end{example}
+%
+\Cref{ex:dcc-naturalnumbers} shows a program defining natural numbers.
+The program has constructors \texttt{Zero} representing zero
+and \texttt{Succ} representing the successor of its field $p$.
+The inheritance of \texttt{Zero} and \texttt{Succ} to \texttt{Nat}
+is expressed through the two constraint entailment rules.
+The method \texttt{prev}is abstractely declared to
+be a function from \texttt{Nat} to \texttt{Nat}.
+It has two implementations,
+one for \texttt{Zero} and one for \texttt{Succ}.
 
 \subsubsection{Constraint System}
 % begin constraint system figure
@@ -164,99 +187,6 @@ The rule is restricted to avoid an undecidable constraint system
 and the restrictions are specified by the well-formedness rule WF-RD in \Cref{fig:dcc-wf}.
 
 \subsubsection{Operational Semantics}
-% begin Operational Semantics figure}
-\begin{figure}[h]
-\begin{align*}
-o &::= \stdobj && \text{(objects)} \\ % \langle C; \overline{f} \equiv \overline{x} \rangle \\
-h &::= \stdheap\ \ (x_i \text{ distinct}) && \text{(heaps)}
-\end{align*}
-\begin{align*}
-OC(x, o) &= (\instBy{x}{C}, \pathEq{x.\overline{f}}{\overline{x}}) &&\text{where } o = \stdobj \\ % \langle C; \overline{f}\equiv\overline{x} \rangle \\
-HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \mapsto \overline{o}
-\end{align*}
-% vertical inference rule example
-%\begin{prooftree}
-%\AxiomC{$A\lor B$}
-%\AxiomC{$[A]$}
-%\noLine
-%\UnaryInfC{$C$}
-%\AxiomC{$[B]$}
-%\noLine
-%\UnaryInfC{$C$}
-%\TrinaryInfC{$C$}
-%\end{prooftree}
-% R-New
-\begin{prooftree}
-\AxiomC{$x \not \in dom(h)$} % 1
-\noLine
-\UnaryInfC{$\constr{C}{x}{\overline{b}} \in P$} % 3
-\AxiomC{o = \stdobj} % 2
-\noLine
-\UnaryInfC{\entails{HC(h), OC(x, o)}{\overline{b}}} % 4
-\RightLabel{R-New}
-\BinaryInfC{$\eval{h}{\newInst{C}{\overline{f}}{\overline{x}}}{h, x \mapsto o}{x}$}
-\end{prooftree}
-% R-Field
-\begin{prooftree}
-\AxiomC{$(\pathEq{x.f}{y}) \in HC(h)$}
-\RightLabel{R-Field}
-\UnaryInfC{\eval{h}{x.f}{h}{y}}
-\end{prooftree}
-% R-Call
-\begin{prooftree}
-\AxiomC{$S = \{ \pair{\overline{a}}{e}\ |\ \pair{\overline{a}}{e} \in MImpl(m, x) \land \entails{HC(h)}{\overline{a}} \}$}
-\AxiomC{$\pair{\overline{a}}{e} \in S$}
-\noLine
-\BinaryInfC{$\forall \pair{\overline{a'}}{e'} \in S.\ (e' \neq e) \longrightarrow (\entails{\overline{a'}}{\overline{a}}) \land \neg(\entails{\overline{a}}{\overline{a'}})$}
-\RightLabel{R-Call}
-\UnaryInfC{\eval{h}{m(x)}{h}{e}}
-\end{prooftree}
-% RC-Field
-\begin{prooftree}
-\AxiomC{\eval{h}{e}{h'}{e'}}
-\RightLabel{RC-Field}
-\UnaryInfC{\eval{h}{e.f}{h'}{e'.f}}
-\end{prooftree}
-% RC-Call
-\begin{prooftree}
-\AxiomC{\eval{h}{e}{h'}{e'}}
-\RightLabel{RC-Call}
-\UnaryInfC{\eval{h}{m(e)}{j'}{m(e')}}
-\end{prooftree}
-% RC-New
-\begin{prooftree}
-\AxiomC{\eval{h}{e}{h'}{e'}}
-\RightLabel{RC-New}
-%\UnaryInfC{
-%  \eval
-%    {h}
-%    {\newInst{C}
-%      {\overline{f} \equiv \overline{x}, f}
-%      {e, \overline{f'} \equiv \overline{e'}}}
-%    {h'}
-%    {\newInst{C}
-%      {\overline{f} \equiv \overline{x}, f}
-%      {e', \overline{f'} \equiv \overline{e'}}}}
-\UnaryInfC{
-    \pair
-        {h}
-        {\newInst{C}
-          {\overline{f} \equiv \overline{x}, f}
-          {e, \overline{f'} \equiv \overline{e'}}}
-    \ \ \ \ \ \ \ }
-\noLine
-\UnaryInfC{\ \ \ \ \ \ \ $\rightarrow$
-    \pair
-        {h'}
-        {\newInst{C}
-          {\overline{f} \equiv \overline{x}, f}
-          {e', \overline{f'} \equiv \overline{e'}}}
-}
-\end{prooftree}
-\caption{Operational Semantics}
-\label{fig:dcc-opsemantics}
-\end{figure}
-% end Operational Semantics figure
 The operational semantics is given in \Cref{fig:dcc-opsemantics}.
 It is defined as a small-step reduction relation of a heap and an expression.
 A heap is a list of mappings from variables to objects.
@@ -465,6 +395,100 @@ Completeness and uniqueness of method implementations are defined
 based on well-formed heaps.
 Since it is not possible to generate all heaps
 these properties cannot be directly implemented.
+
+% begin Operational Semantics figure}
+\begin{figure}[h]
+\begin{align*}
+o &::= \stdobj && \text{(objects)} \\ % \langle C; \overline{f} \equiv \overline{x} \rangle \\
+h &::= \stdheap\ \ (x_i \text{ distinct}) && \text{(heaps)}
+\end{align*}
+\begin{align*}
+OC(x, o) &= (\instBy{x}{C}, \pathEq{x.\overline{f}}{\overline{x}}) &&\text{where } o = \stdobj \\ % \langle C; \overline{f}\equiv\overline{x} \rangle \\
+HC(h) &= \bigcup_i OC(x_i, o_i) &&\text{where } h = \stdheap % \overline{x} \mapsto \overline{o}
+\end{align*}
+% vertical inference rule example
+%\begin{prooftree}
+%\AxiomC{$A\lor B$}
+%\AxiomC{$[A]$}
+%\noLine
+%\UnaryInfC{$C$}
+%\AxiomC{$[B]$}
+%\noLine
+%\UnaryInfC{$C$}
+%\TrinaryInfC{$C$}
+%\end{prooftree}
+% R-New
+\begin{prooftree}
+\AxiomC{$x \not \in dom(h)$} % 1
+\noLine
+\UnaryInfC{$\constr{C}{x}{\overline{b}} \in P$} % 3
+\AxiomC{o = \stdobj} % 2
+\noLine
+\UnaryInfC{\entails{HC(h), OC(x, o)}{\overline{b}}} % 4
+\RightLabel{R-New}
+\BinaryInfC{$\eval{h}{\newInst{C}{\overline{f}}{\overline{x}}}{h, x \mapsto o}{x}$}
+\end{prooftree}
+% R-Field
+\begin{prooftree}
+\AxiomC{$(\pathEq{x.f}{y}) \in HC(h)$}
+\RightLabel{R-Field}
+\UnaryInfC{\eval{h}{x.f}{h}{y}}
+\end{prooftree}
+% R-Call
+\begin{prooftree}
+\AxiomC{$S = \{ \pair{\overline{a}}{e}\ |\ \pair{\overline{a}}{e} \in MImpl(m, x) \land \entails{HC(h)}{\overline{a}} \}$}
+\AxiomC{$\pair{\overline{a}}{e} \in S$}
+\noLine
+\BinaryInfC{$\forall \pair{\overline{a'}}{e'} \in S.\ (e' \neq e) \longrightarrow (\entails{\overline{a'}}{\overline{a}}) \land \neg(\entails{\overline{a}}{\overline{a'}})$}
+\RightLabel{R-Call}
+\UnaryInfC{\eval{h}{m(x)}{h}{e}}
+\end{prooftree}
+% RC-Field
+\begin{prooftree}
+\AxiomC{\eval{h}{e}{h'}{e'}}
+\RightLabel{RC-Field}
+\UnaryInfC{\eval{h}{e.f}{h'}{e'.f}}
+\end{prooftree}
+% RC-Call
+\begin{prooftree}
+\AxiomC{\eval{h}{e}{h'}{e'}}
+\RightLabel{RC-Call}
+\UnaryInfC{\eval{h}{m(e)}{j'}{m(e')}}
+\end{prooftree}
+% RC-New
+\begin{prooftree}
+\AxiomC{\eval{h}{e}{h'}{e'}}
+\RightLabel{RC-New}
+%\UnaryInfC{
+%  \eval
+%    {h}
+%    {\newInst{C}
+%      {\overline{f} \equiv \overline{x}, f}
+%      {e, \overline{f'} \equiv \overline{e'}}}
+%    {h'}
+%    {\newInst{C}
+%      {\overline{f} \equiv \overline{x}, f}
+%      {e', \overline{f'} \equiv \overline{e'}}}}
+\UnaryInfC{
+    \pair
+        {h}
+        {\newInst{C}
+          {\overline{f} \equiv \overline{x}, f}
+          {e, \overline{f'} \equiv \overline{e'}}}
+    \ \ \ \ \ \ \ }
+\noLine
+\UnaryInfC{\ \ \ \ \ \ \ $\rightarrow$
+    \pair
+        {h'}
+        {\newInst{C}
+          {\overline{f} \equiv \overline{x}, f}
+          {e', \overline{f'} \equiv \overline{e'}}}
+}
+\end{prooftree}
+\caption{Operational Semantics}
+\label{fig:dcc-opsemantics}
+\end{figure}
+% end Operational Semantics figure
 
 %%% Local Variables: 
 %%% mode: latex
