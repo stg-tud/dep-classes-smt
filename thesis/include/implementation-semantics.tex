@@ -185,26 +185,13 @@ We obtain $b_1 := \subst{b}{y}{x}$.
 We check if the heap constraints combined
 with the constraints of $o$ entail $b_1$.
 If so, we reduce \objConstr{cls}{args} to $x$
-and extend the heap with the new object.
+and extend the heap with the mapping from $x$ to $o$.
 Otherwise, we can not reduce \objConstr{cls}{args}.
 
 
 \quad\\\\\\
 % TODO: describe cases
-- object creation
-  - requires arguments to be evaluated to vars
-  - fresh var for the object to be created
-  - args1: typechange of args since object type requires List[Id]
-  - create new object, set fields from args
-  - search if constructor for class exists in program
-    + retrieve constructor/class constraints
-  - if class not in program → stuck
-  - substitute bound var of class constraints
-    with var of newly created object
-  - check if the heap entails the class constraints
-  - if so, put the new object on the heap
-    otherwise stuck
-- recursive cases
+- recursive cases / congruence rules
   - stuck terms to avoid endless recursion
   - for new obj: interp arguments in one go  
 - added special case Id(_)
