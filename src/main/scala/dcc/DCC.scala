@@ -89,6 +89,9 @@ class DCC(P: Program) {
       // Applicable methods
       val S: List[(List[Constraint], Expression)] = mImplSubst(m, x).filter{case (as, _) => entails(HC(heap), as, vars)}
 
+      if (S.isEmpty) // m not in P
+        (heap, expr)
+
       // Most specific method
       var (a, e) = S.head
 
@@ -102,7 +105,8 @@ class DCC(P: Program) {
         case _ => /* noop */
       }
 
-      (heap, e)
+      // TODO: interp correct? we dont want intermediate results
+      interp(heap, e)
     // R-New
     case ObjectConstruction(cls, args)
       if args.forall{ // if args are values (Id)
