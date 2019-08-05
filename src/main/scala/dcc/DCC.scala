@@ -334,15 +334,35 @@ class DCC(P: Program) {
 
   // FV: free variables
   // wf P: well formed program
-  def typecheck(P: Program): Boolean = P match {
-    case decl => typecheck(decl) // TODO: add guard to check for other properties
+  def typecheck(P: Program): Boolean = {
+    val x = freshvar()
+    val y = freshvar()
+
+    methods.forall { m =>
+      val mTypes = mTypeSubst(m, x, y)
+
+      // TODO: should be sufficient to check for mTypes.head if all mTypes are equal,
+      //  since == is transitive?
+      mTypes.forall {
+        case (a, b) =>
+          mTypes.forall {
+            case (a1, b1) =>
+              b.size == b1.size &&
+              b.forall(c => b1.contains(c))
+          }
+      }
+    } && P.forall(typecheck)
   }
 
   def typecheck(D: Declaration): Boolean = D match {
     // WF-CD
     case ConstructorDeclaration(cls, x, a) => FV(a) == List(x)
     // WF-RD
-    case ConstraintEntailment(x, a, InstanceOf(y, _)) if x == y => FV(a) == List(x) && a.contains(InstanceOf(x, Id('placeholder))) // TODO: a.contains(InstanceOf(x, _))
+    case ConstraintEntailment(x, a, InstanceOf(y, _)) if x == y =>
+      FV(a) == List(x) && a.exists {
+        case InstanceOf(`x`, _) => true
+        case _ => false
+      }
     // WF-MS
     case AbstractMethodDeclaration(m, x, a, Type(y, b)) =>
       val vars = FV(b) // TODO: check if x != y for size check?
@@ -351,7 +371,7 @@ class DCC(P: Program) {
     case MethodImplementation(m, x, a, t@Type(y, b), e) =>
       val vars = FV(b) // TODO: check if x != y for size check?
       FV(a) == List(x) && vars.size == 2 && vars.contains(x) && vars.contains(y) &&
-      typeassignment1(a, e, t) // TODO: type as return value or not?
+      typeass(a, e).contains(t)
   }
 
   private def classInProgram(Cls: Id, p: Program): Option[(Id, List[Constraint])] = p match {
@@ -364,6 +384,14 @@ class DCC(P: Program) {
     case Nil => Nil
     case ConstructorDeclaration(cls, _, _) :: rst => cls :: classes(rst)
     case _ :: rst => classes(rst)
+  }
+
+  private def methods: List[Id] = P.flatMap(methodName).distinct
+
+  private def methodName(d: Declaration): Option[Id] = d match {
+    case AbstractMethodDeclaration(m, _, _, _) => Some(m)
+    case MethodImplementation(m, _, _, _, _) => Some(m)
+    case _ => None
   }
 
   private def objArgsInterp(heap: Heap, args: List[(Id, Expression)]): (Heap, List[(Id, Expression)]) = args match {
@@ -394,6 +422,7 @@ class DCC(P: Program) {
   private def mType(m: Id, x: Id, y: Id): List[(List[Constraint], List[Constraint])] =
     P.foldRight(Nil: List[(List[Constraint], List[Constraint])]){
       case (AbstractMethodDeclaration(`m`, `x`, a, Type(`y`, b)), rst) => (a, b) :: rst
+      case (MethodImplementation(`m`, `x`, a, Type(`y`, b), _), rst) => (a, b) :: rst
       case (_, rst) => rst}
 
   // MType where the bound variables of declared argument and return type constraints are
@@ -429,7 +458,7 @@ class DCC(P: Program) {
   private def freshvar(): Id = Id(freshname())
 
   // add .distinct to remove duplicates
-  private def FV(constraints: List[Constraint]): List[Id] = constraints.flatMap(FV)
+  private def FV(constraints: List[Constraint]): List[Id] = constraints.flatMap(FV).distinct
 
   private def FV(constraint: Constraint): List[Id] = constraint match {
     case PathEquivalence(p, q) => varname(p) :: varname(q) :: Nil
@@ -486,17 +515,30 @@ object Main extends App {
 //  val (h1, e1) = dcc.interp(h, ObjectConstruction(Id('Succ), List((Id('p), e))))
 //  val e1 = Id('x2)
 //  val h1 = h + (e1 -> (Id('Succ), List((Id('p), e.asInstanceOf[Id]))))
-  val (h2, e2) = dcc.interp(h, MethodCall(Id('prev), e))
+//  val (h2, e2) = dcc.interp(h, MethodCall(Id('prev), e))
 
   println("Heap:")
   h.foreach(println)
   println("Expr:" + e)
-  println("Heap1:")
+//  println("Heap1:")
 //  h1.foreach(println)
 //  println("Expr1:" + e1)
-  println("Heap2:")
-  h2.foreach(println)
-  println("Expr2:" + e2)
+//  println("Heap2:")
+//  h2.foreach(println)
+//  println("Expr2:" + e2)
+
+  val exists = List(
+    InstanceOf(Id('x), Id('C)),
+    InstanceOf(Id('y), Id('C)),
+    InstanceOf(Id('z), Id('C)),
+    InstanceOf(Id('h), Id('C)),
+    InstanceOf(Id('g), Id('C))
+  ).exists {
+        case InstanceOf(Id('z), _) => true
+        case _ => false
+      }
+
+  println(exists)
 }
 
 //combinations = []
