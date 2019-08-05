@@ -50,7 +50,7 @@ trait SMTSolver {
     * @return The return code of the SMTSolver or -1 in case of a timeout
     *         and the stdout of the solver.
     */
-  def execute(timeout: Int = 1000): (Int, Seq[String])
+  def execute(timeout: Int = 2000): (Int, Seq[String])
 
   /**
     * Executes the SMTSolver with the currently held commands
@@ -60,7 +60,7 @@ trait SMTSolver {
     *        `Unsat` if the infput is unsatisfiable
     *        `Unknown` if the solver can't decide.
     */
-  def checksat(timeout: Int = 1000): CheckSatResponse
+  def checksat(timeout: Int = 2000): CheckSatResponse
 
   /**
     * Executes the SMTSolver with the currently held commands

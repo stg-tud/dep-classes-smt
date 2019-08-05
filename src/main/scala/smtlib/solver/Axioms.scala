@@ -825,8 +825,8 @@ object Axioms {
 
   private val datatypes = Seq(pathDatatype, constraintDatatype, constraintListDatatype, constraintsListDatatype)
   private val funs = Seq(concat, elem)
-  private val subst = Seq(substPath, substConstraint, substConstraints, substProp)
-  private val gen = Seq(genPath, genConstraint, genConstraints, genProp)
+  private val subst = Seq(substPath, substConstraint, substConstraints/*, substProp*/)
+  private val gen = Seq(genPath, genConstraint/*, genConstraints, genProp*/)
   private val baseProps = Seq(classProp, varProp, pathProp)
   private val dccProps = Seq(entailsProp, EntailsProp)
   private val structuralRules = Seq(cWeak, cPerm)

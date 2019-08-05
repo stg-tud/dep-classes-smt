@@ -68,7 +68,21 @@ class DCC(P: Program) {
         sat match {
           case Sat => false
           case Unsat => true
-          case Unknown => false
+          case Unknown =>
+            solver.flush()
+            solver.addCommands(SMTLibConverter.generateSubstRules(vars, pths, true))
+            solver.addCommand(lookup)
+            solver.addCommand(Axioms.cProg)
+            solver.addCommands(SMTLibConverter.makeAsserts(classes))
+            solver.addCommands(SMTLibConverter.makeAsserts(paths))
+            solver.addCommands(SMTLibConverter.makeAsserts(variables))
+            solver.addCommand(Assert(Not(entailment)))
+
+            solver.checksat(3000) match {
+              case Sat => false
+              case Unsat => true
+              case Unknown => false
+            }
         }
     }
   }
