@@ -268,7 +268,7 @@ the given entailments form the following class hierarchy.
 \end{center}
 \end{example}\quad\\
 We recall from \Cref{fig:dcc-wf} that a program entailment \progEnt{y}{\ovl b}{b}
-is only well formed if constraint $b$ is
+is only well-formed if constraint $b$ is
 of the form \instOf{q}{Cls} and $\instOf{q}{Cls'} \in \ovl b$.\\
 With this in mind, rule C-Prog states that to show that
 path $q$ is an instance of class $Cls$ it suffices to show
@@ -281,7 +281,7 @@ Since a function needs to be total we need to combine all
 existing program entailments into one function,
 as well as the need for a result in the case where no match exists.
 
-Since the well formedness requires \ovl b to contain at least
+Since the well-formedness requires \ovl b to contain at least
 one element \ovl b cannot be empty and we use the
 empty list $\nil$ as the return value for the non matching case.\\
 To differentiate between program entailments we use if statements
@@ -352,7 +352,7 @@ into the lookup function generation to resolve this.\\
 To do this we look at rule C-Prog and
 see that the bound variable of the program entailment is used
 for the substitution.
-This is because, according to the well formedness,
+This is because, according to the well-formedness,
 for program entailments \progEnt{y}{\ovl b}{b}
 only the bound variable $y$ can occur in \ovl b
 and $b$ needs to be of the form \instOf{y}{Cls}
