@@ -647,38 +647,37 @@ There can be other reasons resulting
 in the output \smtlib{unknown}, as timeouts.
 %
 \begin{lstlisting}[caption={Entailment Function},label=lst:entails,captionpos=b,frame={lines}]
-  def entails(
-      context: List[Constraint], c: Constraint): Boolean = {
-      val (vars, paths, classes) = [...]
+def entails(
+    context: List[Constraint], c: Constraint): Boolean = {
+  val (vars, paths, classes) = [...]
 
-      // SMTLib representation
-      val entailment =
-          SMTLibConverter.convertEntailment(ctx, c)
-      val classPredicates = classes.map(
-          cls => Apply(SimpleSymbol("class"),
-                       Seq(SMTLibString(cls))))
+  // SMTLib representation
+  val entailment =
+      SMTLibConverter.convertEntailment(ctx, c)
+  val classPredicates = classes.map(
+      cls => Apply(SimpleSymbol("class"),
+                   Seq(SMTLibString(cls))))
 
-      val solver: SMTSolver = new Z3Solver(Axioms.all)
-      solver.addCommands(
-        SMTLibConverter.makeAsserts(classPredicates))
-      solver.addCommands(
-        SMTLibConverter.generateSubstRules(vars, paths))
-      solver.addCommand(SMTLibConverter
-          .makeProgramEntailmentLookupFunction(P, paths))
-      solver.addCommand(Axioms.cProg)
-      solver.addCommand(Assert(Not(entailment)))
+  val solver: SMTSolver = new Z3Solver(Axioms.all)
+  solver.addCommands(
+    SMTLibConverter.generateSubstRules(vars, paths))
+  solver.addCommand(SMTLibConverter
+      .makeProgramEntailmentLookupFunction(P, paths))
+  solver.addCommand(Axioms.cProg)
+  solver.addCommands(
+    SMTLibConverter.makeAsserts(classPredicates))
+  solver.addCommand(Assert(Not(entailment)))
 
-      solver.checksat() match {
-        case Sat => false
-        case Unsat => true
-        case Unknown => false
-      }
-    }
+  solver.checksat() match {
+    case Sat => false
+    case Unsat => true
+    case Unknown => false
   }
+}
 
-  def entails(
-      ctx: List[Constraint], cs: List[Constraint]): Boolean =
-    cs.forall(c => entails(ctx, c))
+def entails(
+    ctx: List[Constraint], cs: List[Constraint]): Boolean =
+  cs.forall(c => entails(ctx, c))
 \end{lstlisting}
 %
 The function \scala{entails} can be used

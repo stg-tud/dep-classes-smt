@@ -1,0 +1,95 @@
+\subsection{Pruning}
+We found that the solver sometimes times out
+on valid entailments, if we supply rules
+that are unused in the proof of the entailment.
+This we observed this in combination
+with the enumeration of variables and paths of rule C-Subst.\\
+\\
+While all the generated rules C-Subst are valid,
+the solver does sometimes focus on one substitution
+and loop instantiations of the same rule
+building an implication chain of the same rule.
+This happens if the substitution produces implications
+of the form $\entails{\ovl a}{a} \rightarrow \entails{\ovl a}{a}$
+for the input.
+In our observations, this happened with reflexive path pairs \pathEq{p}{p}.
+To counter this behaviour we introduce \textit{pruning} into function \scala{generateSubstRules},
+through skipping the generation of rules C-Subst for reflexive paths.
+%
+\begin{figure}[h]
+\begin{lstlisting}
+def generateSubstRules(
+  vars: List[Id], paths: List[Path], pruning: Boolean = false)
+    : Seq[SMTLibCommand] = {
+  var rules: Seq[SMTLibCommand] = Seq()
+  val pathPairs = makePathPairs(paths)
+
+  vars.foreach(x => pathPairs.foreach{
+    case (p, q) if x == p && p == q => () // skip
+    case (p, q) if pruning && p == q => () // skip
+    case (p, q) => rules = rules
+                         :+ instantiateSubstRule(x, p, q)
+  })
+  rules
+}
+\end{lstlisting}
+\caption{Pruning}
+\label{fig:scala-pruning}
+\end{figure}\\
+The incorporation of pruning into function \scala{generateSubstRules}
+is given in \Cref{fig:scala-pruning}.
+We extended the arguments of the function with a
+boolean parameter \mIt{pruning} with the default value \mIt{false}.
+In the implementation, we skip rule generations
+if \mIt{pruning} is enabled and $p = q$.\\
+\\
+Pruning removes potentially needed rules.
+Therefore, we incorporate pruning into function
+\scala{entails} as a two-pass process.
+\Cref{fig:scala-entails-twopass} shows the updated
+implementation of function \scala{entails} defined in \Cref{lst:entails}.
+In the updated implementation, we enable the \mIt{pruning} parameter
+for the first call to \scala{generateSubstRules}.
+We check for the result of the solver.
+In case its \smtlib{unknown},
+meaning that either the input is undecidable or
+the solver timed out,
+we start a second run of the solver without pruning.
+For this, we flush the added commands to the solver.
+Afterwards we add the flushed rules again,
+but this time we call \scala{generateSubstRules} with disabled pruning.
+%
+\begin{figure}[t]
+\begin{lstlisting}
+def entails(
+    context: List[Constraint], c: Constraint): Boolean = {
+  [...]
+  solver.addCommands( // pruning enabled
+    SMTLibConverter.generateSubstRules(vars, paths, true))
+  [...]
+
+  solver.checksat() match {
+    case Sat => false
+    case Unsat => true
+    case Unknown =>
+      solver.flush() // Second pass without pruning
+      solver.addCommands(
+        SMTLibConverter.generateSubstRules(vars, pths, false))
+      [...]
+
+      solver.checksat() match {
+        case Unsat => true
+        case _ => false
+      }
+  }
+}
+\end{lstlisting}
+\caption{Function Entails With Pruning}
+\label{fig:scala-entails-twopass}
+\end{figure}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../thesis"
+%%% End: 
