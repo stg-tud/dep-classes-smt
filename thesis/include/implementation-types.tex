@@ -1,6 +1,55 @@
 \section{Type Relation}
 \subsection{Type Assignments for Expressions}
+
 \subsection{Well-formedness of Programs}
+%\begin{figure}
+\begin{lstlisting}[caption={Well-formedness},label=lst:wf,captionpos=b,frame={lines}]
+def typecheck(P: Program): Boolean = {
+  val x = freshvar()
+  val y = freshvar()
+
+  methods.forall { m =>
+    val mTypes = mTypeSubst(m, x, y)
+
+    mTypes.forall {
+      case (a, b) =>
+        mTypes.forall {
+          case (a1, b1) =>
+            b.size == b1.size &&
+            b.forall(c => b1.contains(c))
+        }
+    }
+  } && P.forall(typecheck)
+}
+
+def typecheck(D: Declaration): Boolean = D match {
+  // WF-CD
+  case ConstructorDeclaration(cls, x, a) =>
+    FV(a) == List(x)
+  // WF-RD
+  case ConstraintEntailment(x, a, InstanceOf(y, _))
+   if x == y =>
+    FV(a) == List(x) && a.exists {
+      case InstanceOf(`x`, _) => true
+      case _ => false
+    }
+  // WF-MS
+  case AbstractMethodDeclaration(m, x, a, Type(y, b)) =>
+    val vars = FV(b)
+    FV(a) == List(x) && vars.size == 2 &&
+      vars.contains(x) && vars.contains(y)
+  // WF-MI
+  case MethodImplementation(m, x, a, Type(y, b), e) =>
+    val vars = FV(b)
+    FV(a) == List(x) && vars.size == 2 &&
+    vars.contains(x) && vars.contains(y) &&
+    typeass(a, e).contains{
+      case Type(z, c) =>
+        substitute(z, y, c).forall(b.contains(_))
+    }
+}
+\end{lstlisting}
+%\end{figure}
 
 %%% Local Variables: 
 %%% mode: latex
