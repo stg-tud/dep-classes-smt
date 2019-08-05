@@ -1,0 +1,730 @@
+\subsection{Scala Integration}
+To integrate the model of the sequent calculus
+into the Scala implementation, we need to translate the
+first-order model into the SMT-Lib format.
+We also need a procedure for preprocessing,
+since we enumerated over variable names and paths
+in the refined rules C-Subst and C-Prog.
+Entailments can then be checked by calling the SMT solver
+with the translated and preprocessed model
+and the entailment to check.
+
+\subsubsection{SMTLib Representation}
+First we give a SMTLib representation for
+the sort, predicate and functions definitions
+and the non-preprocessed rules.\\
+\\
+We translate the sorts defined in \Cref{subfig:axioms-naive-general-predicates}.
+The parametrized list datatype used is predefined in Z3.
+We define sorts \mIt{CList} and \mIt{CsList},
+to increase compatibility with other solvers
+and to avoid ambiguities with the usage of \Constrs and \Constrss.
+%We write \Constrs for \mIt{CList} TODO: gets too long and sort of repeats the above
+%and \Constrss for \mIt{CsList}.
+The SMTLib representation is defined in \Cref{fig:smtlib-sorts}.
+All datatypes are defined with unique constructor- and selector names.
+%
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+(declare-datatype Path (
+  (var (id String))
+  (pth (obj Path) (field String))))
+(declare-datatype Constraint (
+  (path-eq (p-left Path) (p-right Path))
+  (instance-of (instance Path) (cls String))
+  (instantiated-by (object Path) (clsname String))))
+(declare-datatype CList (
+  (empty)
+  (construct (first Constraint) (rest CList))))
+(declare-datatype CsList (
+  (nan)
+  (cons (hd CList) (tl CsList))))
+\end{lstlisting}
+\caption{SMTLib Datatype Declarations}
+\label{fig:smtlib-sorts}
+\end{figure}\\
+%
+\Cref{fig:smtlib-funs-list} shows a SMTLib translation
+of the list functions defined in \Cref{fig:fo-list-funs}.\\
+We can define recursive functions in the SMTLib format
+with the keyword \smtlib{define-fun-rec}.
+The functions in the first-order model used pattern matching
+for better readability. While SMTLib supports pattern matching,
+it is not fully supported by the latest version of Z3.
+We translated the pattern matching using if statements,
+where the guard checks for specific constructors of a datatype.\\
+This can be observed in the translation of the list concatenating \mIt{conc}.
+We used an if statement to check wheter the first argument $l1$
+is a list construction with \mIt{\is{construct}(l1)}.
+These constructor checking functions get automatically
+generated for each constructor of a datatype declaration.
+Since the \mIt{CList} datatype has only two constructors,
+the else part of the if statement must match the empty list
+and we do not need to further check for its constrcutor.
+
+We avoided the introduction of new local variable bindings
+through let where the new binding would be used only once.
+We directly applied the selectors for those occurences.
+%
+\begin{figure}[t]
+\begin{lstlisting}[language=smtlib]
+(define-fun-rec conc ((l1 CList) (l2 CList)) CList
+  (ite (is-construct l1)
+    (construct (first l1) (conc (rest l1) l2))
+     l2))
+(define-fun-rec elem ((c Constraint) (cs CList)) Bool
+  (ite (is-construct cs)
+    (ite (= c (first cs))
+       true
+      (elem c (rest cs)))
+     false))
+\end{lstlisting}
+\caption{SMTLib List Functions}
+\label{fig:smtlib-funs-list}
+\end{figure}\\
+%
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+(define-fun-rec generalize-path
+  ((p1 Path) (p2 Path) (x String)) Path
+  (ite (= p1 p2)
+    (var x)
+    (ite (is-var p1)
+       p1
+      (pth (generalize-path (obj p1) p2 x)
+           (field p1)))))
+(define-fun generalize-constraint
+  ((c Constraint) (p Path) (x String)) Constraint
+  (ite (is-path-eq c)
+    (path-eq (generalize-path (p-left c) p x)
+             (generalize-path (p-right c) p x))
+    (ite (is-instance-of c)
+      (instance-of (generalize-path (instance c) p x) (cls c))
+      (instantiated-by (generalize-path (object c) p x)
+                       (clsname c)))))
+\end{lstlisting}
+\caption{SMTLib Representation of Generalization}
+\label{fig:smtlib-funs-gen}
+\end{figure}\\
+%
+\begin{figure}[t]
+\begin{lstlisting}[language=smtlib]
+(define-fun-rec subst-path
+  ((p1 Path) (x String) (p2 Path)) Path
+  (ite (is-var p1)
+    (ite (= x (id p1))
+      p2
+      p1)
+    (pth (subst-path (obj p1) x p2) (field p1))))
+(define-fun subst-constraint
+  ((c Constraint) (x String) (p Path)) Constraint
+  (ite (is-path-eq c)
+    (path-eq (subst-path (p-left c) x p)
+             (subst-path (p-right c) x p))
+    (ite (is-instance-of c)
+      (instance-of (subst-path (instance c) x p) (cls c))
+      (instantiated-by (subst-path (object c) x p) (clsname c)
+     ))))
+(define-fun-rec subst-constraints
+  ((cs CList) (x String) (p Path)) CList
+  (ite (is-construct cs)
+    (construct (subst-constraint
+                 (first cs) x p)
+                 (subst-constraints (rest cs) x p))
+     empty))
+\end{lstlisting}
+\caption{SMTLib Representation of Substitution}
+\label{fig:smtlib-funs-subst}
+\end{figure}
+A SMTLib translation for substitution defined in \Cref{subfig:axioms-naive-general-funs}
+is given in \Cref{fig:smtlib-funs-subst}
+and the SMTLib representation for generalization
+defined in \Cref{fig:axioms-general-gen} can be found in \Cref{fig:smtlib-funs-gen}.\\
+The translations for substitution and generalization
+follow the same pattern regarding pattern matching
+as the translation of the list functions shown previously.
+We define non-recursive functions using the keywords \smtlib{define-fun},
+so we strictly distinguish syntactically between recursive
+and non-recursive functions in the SMTLib format.
+%
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+// Base Properties
+(declare-fun class (String) Bool)
+// DCC Properties
+(declare-fun entails (CList Constraint) Bool)
+(define-fun-rec Entails ((cs1 CList) (cs2 CList)) Bool
+  (ite (is-construct cs2)
+    (and (entails cs1 (first cs2))
+         (Entails cs1 (rest cs2)))
+     true))
+\end{lstlisting}
+\caption{SMTLib Predicate Definitions}
+\label{fig:smtlib-predicates}
+\end{figure}\\
+A SMTLib representation of the predicates defined in \Cref{subfig:axioms-naive-general-predicates}
+is given in \Cref{fig:smtlib-predicates}.
+We can declare undefined functions with the keywords \smtlib{declare-fun}.
+Those function declarations are specified,
+like the predicates in the first-order model,
+through requiring that specific instances of the function hold.
+\\
+We kept only the predicate \mIt{class}, since the refined rules
+C-Subst and C-Prog enumerate over valid variable names and paths,
+and the entailment predicates. %\mIt{entails} and \mIt{Entails}.
+%The predicate \mIt{Entails} is defined as a recusive function. % TODO: readd these? (removed because too long and ugly in pdf)
+\\
+%
+\begin{figure}[t]
+\begin{lstlisting}[language=smtlib]
+(assert (!
+  (forall ((p Path)) (entails empty (path-eq p p)))
+  :named C-Refl))
+(assert (!
+  (forall ((c Constraint) (cs CList))
+    (=> (elem c cs) (entails cs c)))
+  :named C-Ident))
+(assert (!
+  (forall ((cs CList) (p Path) (c String))
+    (=> (and (class c)
+             (entails cs (instantiated-by p c)))
+        (entails cs (instance-of p c))))
+  :named C-Class))
+(assert (!
+  (forall ((cs1 CList) (cs2 CList)
+           (b Constraint) (c Constraint))
+    (=> (and (entails cs1 c)
+             (entails (construct c cs2) b))
+        (entails (conc cs1 cs2) b)))
+  :named C-Cut))
+\end{lstlisting}
+\caption{SMTLib $DC_C$ Rules}
+\label{fig:smtlib-basic-rules}
+\end{figure}
+A SMTLib representation for the $DC_C$ rules C-Refl,
+C-Ident, C-Class and \mbox{C-Cut}, that do not
+require enumeration, is given in \Cref{fig:smtlib-basic-rules}.
+The structural rules of the sequent calculus C-Weak and C-Perm
+are defined in \Cref{fig:smtlib-structural-rules}.\\
+The keyword \smtlib{assert} is used to add an assertion
+to the solver and the keyword \smtlib{!} can be used to
+annotate a formula.
+Annotation is done via adding a key-value pair to a formula,
+where the key specifies the name of the annotated property.\\
+We \textit{named} the rules according to their names in the calculus.
+This enables the solver to produce an unsatisfiable core
+for an unsatisfiable entailment,
+by returning the names of the violated rules.
+%
+\begin{figure}[h]
+\begin{lstlisting}[language=smtlib]
+(assert (!
+  (forall ((cs CList) (a Constraint) (b Constraint))
+    (=> (entails cs b)
+        (entails (construct a cs) b)))
+  :named C-Weak))
+(assert (!
+  (forall ((cs1 CList) (cs2 CList) (c Constraint))
+    (=> (and (forall ((a Constraint))
+               (and (=> (elem a cs1) (elem a cs2))
+                    (=> (not (elem a cs1)) (not (elem a cs2)))
+             ))
+             (entails cs1 c))
+        (entails cs2 c)))
+  :named C-Perm))
+\end{lstlisting}
+\caption{SMTLib Structural Rules}
+\label{fig:smtlib-structural-rules}
+\end{figure}\\
+%
+\begin{figure}[t]
+\begin{lstlisting}[language=smtlib]
+(define-fun-rec big-or-Entails ((ccs CsList) (cs CList)) Bool
+  (ite (is-cons ccs)
+    (or (Entails cs (hd ccs))
+        (big-or-Entails (tl ccs) cs))
+     false))
+(assert (!
+  (forall ((cs CList) (c Constraint))
+    (let ((ccs (lookup-program-entailment c)))
+      (=> (and (not (= ccs nan))
+               (big-or-Entails ccs cs))
+          (entails cs c))))
+  :named C-Prog))
+\end{lstlisting}
+\caption{SMTLib C-Prog and Helper Function}
+\label{fig:smtlib-cprog}
+\end{figure}
+%
+\Cref{fig:smtlib-cprog} shows a SMTLib representation
+of the refined rule C-Prog defined in \Cref{fig:axioms-cprog}.\\
+The function \smtlib{big-or-Entails} models
+$\bigvee_{\ovl b \in ccs}{\entails{cs}{\ovl b}}$
+as used in the refined model of rule C-Prog.
+The function \smtlib{lookup-program-entailment} is a lookup
+function of the form seen in \Cref{ex:lookup-fun}.
+
+\subsubsection{SMTLib Format in Scala}
+%
+\lstset{ language=scala,basicstyle=\small }
+%
+We modeled the SMTLib format in Scala as an AST.
+Each node of the AST knows how to format itself
+and formatting will be propagated to each sub-node.\\
+\Cref{fig:scala-format} shows 
+\scala{trait SMTLibFormatter}, as well as
+\scala{object SMTLibFormatter}.
+The trait provides the function \scala{format}
+and each node inherits from this trait.
+The singleton \scala{object SMTLibFormatter}
+provides a function for formatting a SMTLib formattable
+sequence using a specifiable separator.
+%
+\begin{figure}[h]
+\begin{subfigure}[c]{1\textwidth}
+\begin{lstlisting}
+trait SMTLibFormatter {
+  def format(): String
+}
+\end{lstlisting}
+\end{subfigure}
+\begin{subfigure}[c]{1\textwidth}
+\begin{lstlisting}
+object SMTLibFormatter {
+  def format(seq: Seq[SMTLibFormatter]
+           , separator: String = " "): String =
+    seq.foldRight(""){
+    (x, xs) => s"${x.format()}$separator$xs"}.dropRight(1)
+}
+\end{lstlisting}
+\end{subfigure}
+\caption{SMTLib Formatting in Scala}
+\label{fig:scala-format}
+\end{figure}\\
+%
+\Cref{ex:scala-format} shows the implementation
+of the universal quantifier.\\
+The \scala{trait Term} models the category \textit{term}
+of the SMTLib format.
+The universal quantifier is a member of this category
+and therfore \scala{case class Forall}\ inherits from \scala{trait Term}.\\
+The format of an universal quantifier is defined
+in \scala{case class Forall} and starts
+with the keyword \smtlib{forall}.
+The keyword is followed by the format of the quantified variables
+enclosed in parens and by the format of the body.
+Finally the formatted components are enclosed in parens
+to obtain the format of the quantifier.
+%
+\begin{example}[SMTLib Implementation: Universal quantification]
+\label{ex:scala-format}
+\begin{lstlisting}
+trait Term extends SMTLibFormatter
+
+case class Forall(vars: Seq[SortedVar], body: Term) extends Term {
+  override def format(): String =
+    s"(forall (${SMTLibFormatter.format(vars)}) ${body.format()})"
+}
+\end{lstlisting}
+\end{example}
+
+\subsubsection{Preprocessing Variable Names and Paths}
+The previously shown SMTLib representation is
+missing the refined components of the model,
+which enumerate over variable names and paths.
+
+\paragraph{Lookup Function generation}
+is the process described in \Cref{sec:rule-refinement},
+with the goal to generate a function modeling
+the existence check of program entailments
+combined with the search for a substitution
+matching the right-hand side from the entailment
+to be shown, to an entailment declaration of the program.
+%
+\begin{lstlisting}[caption={Lookup Function Generation},label=lst:lookup,captionpos=b,frame={lines}]
+def makeProgramEntailmentLookupFunction(
+        p: Program, paths: List[Path]): SMTLibCommand = {
+  val x = SimpleSymbol("c")
+  val body = makeProgramEntailmentLookupFunctionBody(
+        paths.flatMap(instantiateProgramEntailments(p, _)), x)
+  DefineFun(FunctionDef(
+    SimpleSymbol("lookup-program-entailment"),
+    Seq(SortedVar(x, SimpleSymbol("Constraint"))),
+    SimpleSymbol("CsList"),
+    body
+  ))
+}
+
+private def instantiateProgramEntailments(p: Program, path: Path
+  , entailments: Map[Constraint, List[List[Constraint]]] = Map())
+              : Map[Constraint, List[List[Constraint]]] = p match {
+  case Nil => entailments
+  case ConstraintEntailment(x, as, a) :: rst =>
+    val cs: List[Constraint] = substitute(x, path, as)
+    val c: Constraint = substitute(x, path, a)
+    entailments.get(c) match {
+      case None => instantiateProgramEntailments(
+                     rst, path, entailments + (c -> List(cs)))
+      case Some(ccs) => instantiateProgramEntailments(
+                     rst, path, entailments + (c -> (cs :: ccs)))
+    }
+  case _ :: rst => instantiateProgramEntailments(
+                     rst, path, entailments)
+}
+
+private def makeProgramEntailmentLookupFunctionBody(
+   entailments: List[(Constraint, List[List[Constraint]])], x: Term)
+                          : Term = entailments match {
+  case Nil => SimpleSymbol("nan")
+  case (c, ccs) :: rst =>
+    Ite(
+      Eq(x, convertConstraint(c)),
+      Axioms.makeCsList(
+        ccs.map(cs => Axioms.makeList(cs.map(convertConstraint)))
+      ),
+      makeProgramEntailmentLookupFunctionBody(rst, x)
+    )
+}
+\end{lstlisting}
+%
+\Cref{lst:lookup} shows the Scala implementation
+of the lookup function generation.\\
+\\
+The function \scala{instantiateProgramEntailments}
+implements the instantiation of entailment declarations
+for a program $p$ with a given path $path$.
+The already instantiated entailments are accumulated
+in \mIt{entailments}
+and returned if no uninstantiated declaration remains.\\
+%
+We match entailment declarations \progEnt{x}{as}{a}
+and substitutes the bound variable $x$ with $path$ in $as$ and $a$.
+We declare $cs := \subst{as}{x}{path}$ and $c := \subst{a}{x}{path}$.
+We check if we previously instantiated a constraint matching $c$.
+If not, we create an entry mapping from $c$ to $cs$.
+If we did, we add the constraints $cs$ to the already
+accumulated constraints for $c$.
+We repeat this until no declaration remains
+and return the accumulated mappings.\\
+\\
+The function \scala{makeProgramEntailmentLookupFunctionBody}
+is responsible for creating the body of the lookup function.
+It implements the process of generating a series
+of if statements out of mappings from $\Constr$ to \Constrss.\\
+%
+We match $c \mapsto ccs :: rst$
+and create an if statement with the guard $x = c$,
+where $x$ is the argument of the lookup function.
+In the then brach, we put the SMTLib representation of $ccs$.
+The else branch then constains a recursive call with $rst$.
+We repeat this until all mappings are processed.\\
+\\
+The function \scala{makeProgamEntailmentLookupFunction}
+generates a lookup function for entailment declarations in programs.
+It takes a program and a list of paths as argument
+and instantiates each path with each
+entailment declaration in the program.
+The function returns a SMTLib representation usable by the solver.\\
+%
+We set $x$ to be the argument of the function to be created.
+We map function \scala{instantiateProgramEntailments}
+over the provided paths and obtain a list of mappings $m$.
+We pass $m$ into \scala{makeProgramEntailmentLookupFunctionBody}
+to obtain a series of if statements $body$ as a SMTLib representation.
+We then create the lookup function with the signature
+$\Constr \rightarrow \Constrss$ and the body $body$.
+
+\newpage
+\paragraph{C-Subst preprocessing} is the process of enumeration,
+to ground the quantification over variable names and paths
+in rule C-Subst as shown in \Cref{sec:rule-refinement}.
+An implementation of the C-Subst template from \Cref{fig:axioms-csubst}
+incorporating the optimizations demonstrated with \Cref{ex:subst-optimzed}
+is given in \Cref{lst:subst-template}.
+The process of generating instances of this template
+is implemented in \Cref{lst:subst}.
+%
+\begin{lstlisting}[caption={Rule Generation for C-Subst},label=lst:subst,captionpos=b,frame={lines}]
+def generateSubstRules(
+    vars: List[Id], paths: List[Path]): Seq[SMTLibCommand] = {
+  var rules: Seq[SMTLibCommand] = Seq()
+  val pathPairs = makePathPairs(paths)
+
+  vars.foreach(x => pathPairs.foreach{
+    case (p, q) if x == p && p == q => () // skip
+    case (p, q) => rules = rules
+                         :+ instantiateSubstRule(x, p, q)
+  })
+  rules
+}
+
+private def instantiateSubstRule(
+    variable: Id, p: Path, q: Path): SMTLibCommand =
+  Assert(
+    Annotate(
+      substRuleTemplate(variable, p, q),
+      Seq(KeyValueAttribute(Keyword("named")
+        , SimpleSymbol("C-Subst")))))
+\end{lstlisting}
+%
+The function \scala{generateSubstRules} takes
+a list of variables and a list of paths as argument
+and returns a sequence of C-Subst rules.
+In the function, we iterate over all variables $x$
+and for each $x$ we iterate over all paths $p$ and $q$.
+We call \scala{instantiateSubstRule} with $x$, $p$ and $q$
+to generate a rule C-Subst and append it to the sequence
+of already generated rules.
+We skip cases where $x = p = q$.
+Finally, we return the collected rules.\\
+\\
+The function \scala{instantiateSubstRule}
+creates the surrounding frame of rule C-Subst
+and calls \scala{substRuleTemplate} to
+instantiate the template of rule C-Subst.\\
+\\
+The function \scala{substRuleTemplate}
+takes a variable and two paths as argument
+and returns a SMTLib representation
+of rule C-Subst.
+In the function, we convert the given variable
+and paths into their counterpart $x$, $p$ and $q$
+in the SMTLib format.
+The function defines three subroutines.
+These subroutines implement the optimizations
+discussed in \Cref{sec:rule-refinement}.\\
+We check in the subroutine \scala{gen}
+if variable $x$ equals path $p$.
+If not, we generalize constraint $a2$
+and call subroutine \scala{subst}
+with the generalized constraint.
+Otherwise we skip the generalization and proceed
+with \scala{subst} directly.\\
+Subroutine \scala{subst} takes a term $a$
+representing a constraint as argument.
+We check if variable $x$ equals path $q$.
+If not, we substitute $a$ and call
+subroutine \scala{conjunction}
+on the result of the substitution.
+Otherwise we call \scala{conjunction},
+without substituting the argument.\\
+%
+\begin{lstlisting}[caption={C-Subst Template},label=lst:subst-template,captionpos=b,frame={lines}]
+private def substRuleTemplate(
+    variable: Id, p1: Path, p2: Path): Term = {
+  val x: Term = convertId(variable)
+  val p: Term = convertPath(p1)
+  val q: Term = convertPath(p2)
+
+  def conjunction(a1: Term) =
+    if (p1 == p2)
+      Apply(SimpleSymbol("entails"),
+        Seq(SimpleSymbol("cs"), a1))
+    else
+      And(
+        Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"),
+          Apply(SimpleSymbol("path-eq"), Seq(p, q)))),
+        Apply(SimpleSymbol("entails"),
+          Seq(SimpleSymbol("cs"), a1))
+      )
+  def subst(a: Term) =
+    if(variable == p2)
+      conjunction(a)
+    else
+      Let(
+        Seq(VarBinding(SimpleSymbol("a1"),
+          Apply(SimpleSymbol("subst-constraint"), Seq(a, x, q))
+        )),
+        conjunction(SimpleSymbol("a1"))
+      )
+  val gen =
+    if (variable == p1)
+      subst(SimpleSymbol("a2"))
+    else
+      Let(
+        Seq(VarBinding(SimpleSymbol("a"),
+          Apply(SimpleSymbol("generalize-constraint"),
+            Seq(SimpleSymbol("a2"), p, x))
+        )),
+        subst(SimpleSymbol("a"))
+      )
+
+  Forall(
+    Seq(
+      SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
+      SortedVar(SimpleSymbol("cs"), SimpleSymbol("CList"))
+    ),
+    Implies(
+      gen,
+      Apply(SimpleSymbol("entails"),
+        Seq(SimpleSymbol("cs"), SimpleSymbol("a2")))
+    )
+  )
+}
+\end{lstlisting}
+Subroutine \scala{conjunction} takes
+a term $a1$ representing a constraint as argument.
+We check if path $p$ equals path $q$.
+If not, we build the conjunction
+of the entailments \entails{cs}{\pathEq{p}{q}}
+and \entails{cs}{a1}.
+Otherwise we build the entailment \entails{cs}{a1}
+and skip the check for equivalent paths.\\
+In \scala{substRuleTemplate},
+we create the SMTLib representation of
+\[ \forall a_2: \Constr, cs: \Constr.\ \mathbf{gen} \rightarrow \entails{cs}{a_2} \]
+where $\mathbf{gen}$ is a call to subroutine \scala{gen}
+as our return value.
+
+\subsubsection{Calling the Solver}
+With the SMTLib representation and preprocessing
+of the model defined, we can call the solver
+to evaluate if entailments \entails{\ovl a}{a}
+hold in the model.
+For this we define \scala{trait SMTSolver}
+in \Cref{lst:smtsolver} as an interface for SMT solvers
+and function \scala{entails} to check entailments
+in \Cref{lst:entails}.
+%
+\begin{lstlisting}[caption={SMTSolver Interface},label=lst:smtsolver,captionpos=b,frame={lines}]
+trait SMTSolver {
+  val axioms: SMTLibScript
+
+  def addCommand(command: SMTLibCommand): Boolean
+  def addCommands(commands: Seq[SMTLibCommand]): Boolean
+  def addScript(script: SMTLibScript): Boolean
+  def flush(): Unit
+
+  /**
+    * Executes the SMTSolver with the currently held commands.
+    * @param timeout The timeout for each query
+             to the SMTSolver in milliseconds.
+    * @return The return code of the SMTSolver
+                or -1 in case of a timeout
+    *         and the raw output of the solver.
+    */
+  def execute(timeout: Int = 1000): (Int, Seq[String])
+
+  /**
+    * Executes the SMTSolver with the currently held commands
+    * and checks them for satisfiability.
+    * @param timeout The timeout for each query
+             to the SMTSolver in milliseconds.
+    * @return `Sat` if the input is satisfiable
+    *        `Unsat` if the infput is unsatisfiable
+    *        `Unknown` if the solver can't decide.
+    */
+  def checksat(timeout: Int = 1000): CheckSatResponse
+}
+\end{lstlisting}
+%
+The trait \scala{SMTSolver} defines
+functionality for calling a SMT solver.
+The trait defines a set of \scala{axioms}
+which are true for each query to the solver,
+as well as functions \scala{addCommand},
+\scala{addCommands} and \scala{addScript}
+for adding additional commands to be passed to the solver.
+The function \scala{flush} removes all added commands
+and keeps only the axioms.\\
+Function \scala{execute} calls
+and uses the \scala{axioms} as well as
+all added commands as input for the solver.
+The function returns the exit code
+and the raw output of the solver.\\
+Function \scala{checksat} does call
+the solver like \scala{execute}, with the
+additional smtlib input \smtlib{(check-sat)}.
+It then parses the output of the solver
+and returns either
+\smtlib{sat} if the input was satisfiable,
+\smtlib{unsat} if the input was unsatisfiable or
+\smtlib{unknown} if the solver could not decide
+whether the input was satisfiable or unsatisfiable.
+The result \smtlib{unknown} does not imply
+that the input formula is undecidable.
+There can be other reasons resulting
+in the output \smtlib{unknown}, as timeouts.
+%
+\begin{lstlisting}[caption={Entailment Function},label=lst:entails,captionpos=b,frame={lines}]
+  def entails(
+      context: List[Constraint], c: Constraint): Boolean = {
+      val (vars, paths, classes) = [...]
+
+      // SMTLib representation
+      val entailment =
+          SMTLibConverter.convertEntailment(ctx, c)
+      val classPredicates = classes.map(
+          cls => Apply(SimpleSymbol("class"),
+                       Seq(SMTLibString(cls))))
+
+      val solver: SMTSolver = new Z3Solver(Axioms.all)
+      solver.addCommands(
+        SMTLibConverter.makeAsserts(classPredicates))
+      solver.addCommands(
+        SMTLibConverter.generateSubstRules(vars, paths))
+      solver.addCommand(SMTLibConverter
+          .makeProgramEntailmentLookupFunction(P, paths))
+      solver.addCommand(Axioms.cProg)
+      solver.addCommand(Assert(Not(entailment)))
+
+      solver.checksat() match {
+        case Sat => false
+        case Unsat => true
+        case Unknown => false
+      }
+    }
+  }
+
+  def entails(
+      ctx: List[Constraint], cs: List[Constraint]): Boolean =
+    cs.forall(c => entails(ctx, c))
+\end{lstlisting}
+%
+The function \scala{entails} can be used
+to check constraint entailments.
+It has two implementations.
+The first implementation models \entails{context}{c}
+for constraint lists $context$ and constraints $c$.
+The second implementation models \entails{ctx}{cs}
+for constraint lists $ctx$ and $cs$.
+It requires that \scala{entails(ctx, c)} holds for
+all $c \in cs$.\\
+\\
+The function is responsible for
+invoking the preprocessing process.
+For this, we implemented the function as follows:
+We first extract the variable names, paths
+and class names from the function arguments.
+We then convert the arguments and create
+a SMTLib representation \entails{context}{c}
+as well as generating $\mIt{class}(cls)$
+for each class name $cls \in \mIt{classes}$.
+
+We create an instance of \scala{SMTSolver}
+with \scala{Axioms.all}, where \scala{Axioms.all}
+contains the SMTLib representations of all
+declarations, definitions and rules.
+The axioms exclude rule C-Subst, rule C-Prog
+and a definition of a lookup function.
+We add the generated class predicates to the solver.
+Afterwards we call \scala{generateSubstRules}
+to enumerate over variable names and paths to
+generate rules C-Subst
+and \scala{makeProgramEntailmentLookupFunction}
+to generate a lookup function from the program and paths.
+We add the generated C-Subst rules as well,
+as the lookup function and rule C-Prog to the solver.
+Finally, we add the negation of the generated
+entailment \entails{context}{c} to the solver.
+
+We call \scala{solver.checksat} to check
+for satisfiability with the SMT solver.
+We return true if the call returns \smtlib{unsat},
+because the entailment \entails{context}{c}
+is valid if its negation is unsatisfiable.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../thesis"
+%%% End: 

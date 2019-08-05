@@ -1,0 +1,347 @@
+\subsection{Na\"ive approach}
+%- naive approach
+%- goal is to be as close to the calculus rules as possible
+%- "preserve" structure of calculus rules
+The goal of this model of the constraint system is to
+be close to the given sequent calculus and to preserve
+the structure of the calculus rules in the first-order formulae.\\
+% Sorts
+\begin{figure}[t]
+\centering
+\begin{subfigure}[c]{0.45\textwidth}
+% BNF
+\begin{align*}
+\mIt{Path} &::=
+     \mIt{String}\\
+  &\quad|\ \mIt{Path.String}
+\end{align*}
+\end{subfigure}
+\begin{subfigure}[c]{0.45\textwidth}
+% BNF
+\begin{align*}
+\mIt{Constraint} &::=
+     \pathEq{Path}{Path}\\
+  &\quad|\ \instOf{Path}{String}\\
+  &\quad|\ \instBy{Path}{String}
+\end{align*}
+\end{subfigure}
+\caption{Sorts}
+\label{subfig:axioms-naive-general-sorts}
+\end{figure}\\
+First we define a set of sorts, predicates and functions.
+These definitions form the general structure of the model
+and provide basic functionality needed in the modeling of the calculus rules.
+
+Sorts for paths and constraints are defined in \Cref{subfig:axioms-naive-general-sorts}.
+The definitions are similar to the syntax specification in \Cref{fig:dcc-syntax}.
+A path is either a variable name or a field path consiting
+of another path followed by a field name, where variable and field names
+are modeled as strings.
+The three types of $DC_C$ constraints are translate as follows in our model:
+\begin{itemize}
+  \item For two paths $p, q$ the constraint \pathEq{p}{q} requires $p$ and $q$
+        to be equivalent.
+  \item For a path $p$ and a class name $C$ modeled as a string,
+        \instOf{p}{C} requires path $p$ to be an instance of class $C$.
+  \item For a path $p$ and a class name $C$ modeled as a string,
+        \instBy{p}{C} requires path $p$ to be directly instantiated by class $C$.
+\end{itemize}\quad
+% Functions for substitution
+\begin{figure}[t]
+\centering
+\begin{align*}
+% path substitution
+&\substpath{p_1: Path}{x: String}{p_2: Path}:\mIt{Path} = p_1 \match\\
+&\quad y \Rightarrow \ite{x=y}{p_2}{p_1}\\
+&\quad q.f \Rightarrow \substpath{q}{x}{p_2}.f\\
+%&\quad \If \is{var}(p_1) \\
+%&\qquad \Then x = \ite{id(p_1)}{p_2}{p_1}\\ % replace id(p_1)
+%&\qquad \Else \substpath{obj(p_1)}{x}{p_2}.f\\ %: replace obj(p_1) and f
+\\
+% constraint substitution
+&\substconstr{c: Constraint}{x: String}{p: Path}\mathit{: Constraint} = c \match \\
+&\quad \case{\pathEq{q_1}{q_2}}
+  {\pathEq
+    {\substpath{q_1}{x}{p}}
+    {\substpath{q_2}{x}{p}}}\\
+&\quad \case{\instOf{q}{C}}
+  {\instOf{\substpath{q}{x}{p}}{C}}\\
+&\quad \case{\instBy{q}{C}}
+  {\instBy{\substpath{q}{x}{p}}{C}}\\\\
+% constraints substitution
+&\substconstrs{cs: List[Constraint]}{x: String}{p: Path}\mathit{: List[Constraint]} =\\
+&\quad cs \match\\
+&\qquad \case{\epsilon}{\epsilon}\\
+&\qquad \case{hd :: tl}
+  {\substconstr{hd}{x}{p} ::
+  \substconstrs{tl}{x}{p}}
+\end{align*}
+\caption{Path Substitution Functions}
+\label{subfig:axioms-naive-general-funs}
+\end{figure}\\
+Functions defining path substitution are given in \Cref{subfig:axioms-naive-general-funs}.
+Path substitution is the process of substituting the variable name of a path
+with another path.
+Therefore substitution can only occur on the innermost part of a path and
+substitution only happens if the variable name of the path equals the variable name to be substituted.
+Substitution for constraints propagates substitution to each path contained within a constraint.\\
+E.g. for path equivalence constraints \pathEq{p_1}{p_2} a substitution from $x$ to $q$
+substitutes both $p_1$ and $p_2$ with the substitution from $x$ to $q$.
+Substitution for lists of constraints applies the substitution
+to each constraint contained in the list.
+Substitution for strings $x$ and paths $p$ will be written
+for constraints $a$ as \subst{a}{x}{p} and
+for constraint lists \ovl a as \subst{\ovl a}{x}{p},
+function application is distinguishable based on the sort of the first argument.
+% Predicates
+\begin{figure}[h]
+\centering
+\begin{align*}
+&\mathit{class}(\mathit{String}) \\
+&\mathit{variable}(\mathit{String})\\
+&\inprog(\mathit{String},\mathit{List[Constraint]}, \mathit{Constraint}) \\
+&\mathit{entails}(\mathit{List[Constraint]}, \mathit{Constraint})\\\\
+&\mathit{Entails(cs_1: List[Constraint], cs_2: List[Constraint])} = cs_2 \match\\
+&\quad \case{\epsilon}{true}\\
+&\quad \case{hd :: tl}{\mIt{entails}(cs_1, hd)} \land \mIt{Entails}(cs_1, tl)\\\\
+&\mathit{subst(c_1: Constraint, x: String, p: Path, c_2: Constraint)} = \\
+&\quad\substconstr{c_1}{x}{p} = c_2
+\end{align*}
+\caption{Predicates}
+\label{subfig:axioms-naive-general-predicates}
+\end{figure}\\
+Predicates are declared in \Cref{subfig:axioms-naive-general-predicates}.
+The predicate \mIt{class(C)} ensures that $C$ is a valid class name
+and \mIt{variable(x)} ensures that $x$ is a valid variable name
+of the program.
+Class- and variable names are modeled as strings.
+The predicate \inprog\ models the existence check of program entailments
+as seen in rule C-Prog in \Cref{fig:dcc-constraint-entailment}.
+For strings $x$, constraint lists \ovl{a} and constraints $a$,
+$\inprog(x, \ovl{a}, a)$ ensures that a declaration \progEnt{x}{\ovl{a}}{a}
+exists in the program.
+The predicate \mIt{entails} models the entailment judgement of the sequent calculus.
+The predicate \mIt{Entails} models the entailment judgement for multiple constraints,
+which is defined as $\entails{\ovl a}{\ovl b} = \bigwedge_{b \in \ovl b}{\entails{\ovl a}{b}}$.
+For constraint lists \ovl{a} and constraints $a$
+$\mIt{entails}(\ovl{a}, a)$ ensures that \entails{\ovl{a}}{a} holds.
+For constraint lists \ovl{a} and constraint lists \ovl{b},
+$\mIt{Entails}(\ovl{a}, \ovl{b})$ holds if
+$\mIt{entails}(\ovl{a}, b)$ holds for each $b \in \ovl{b}$.
+For better readability in the rules, we write
+%$\inprog(x, \ovl{a}, a)$ as $\progEnt{x}{\ovl{a}}{a} \in P$ and
+$\mIt{entails}(\ovl{a}, a)$ as \entails{\ovl{a}}{a} and
+$\mIt{Entails}(\ovl{a}, \ovl{b})$ as \entails{\ovl{a}}{\ovl{b}}.
+The writing styles of \mIt{entails} and \mIt{Entails} can be distinguished
+based on the sort of the right-hand side argument.
+The predicate \mIt{subst} models constraint equality after substitution.
+For constraints $a, b$, strings $x$, paths $p$
+$\mIt{subst}(a, x, p, b)$ holds if
+$x$ substituted with $p$ in $a$ equals $b$.
+%- explain rules
+%- list problems of these rules
+%  - too complex (e.g. quantified variables, no direct way of deduction in subst rule)
+%  - not "structured" (permutation)
+%- pretty printing
+%  - symbols for functions, etc
+%  - substitution
+%  - generalization
+%  - list notion
+%  - list concatenation + inserting
+% figure naive axioms
+\begin{figure}[h]
+\begin{align*}
+&\forall c: \Constr.\ \entails{[c]}{c} && \text{(C-Ident)} \\
+&\forall p: \Path.\ \entails{\nil}{\pathEq{p}{p}} && \text{(C-Refl)} \\
+&\forall \ovl{a}: \Constrs, p: \Path, C: \String.&& \text{(C-Class)} \\
+&\quad \mIt{class}(C) \land \entails{\ovl{a}}{\instBy{p}{C}}
+       \rightarrow \entails{\ovl{a}}{\instOf{p}{C}} \\
+&\forall \ovl{a}, \ovl{a'}: \Constrs, b, c: \Constr. && \text{(C-Cut)} \\
+&\quad \entails{\ovl a}{c} \land \entails{c :: \ovl{a'}}{b}
+       \rightarrow \entails{\ovl a \conc \ovl{a'}}{b}\\
+&\forall \ovl a: \Constrs, x: \String, p_1, p_2: \Path, a, a_1, a_2: \Constr. && \text{(C-Subst)} \\
+&\quad \entails{\ovl a}{\pathEq{p_2}{p_1}} \land \mIt{variable}(x)
+         \land \mIt{subst}(a, x, p_1, a_1) \land \mIt{subst}(a, x, p_2, a_2)\\
+&\quad   \land \entails{\ovl a}{a_1}
+       \rightarrow \entails{\ovl a}{a_2} \\
+&\forall \ovl a, \ovl b: \Constrs, a: \Constr, x: \String, p: \Path. && \text{(C-Prog)} \\
+&\quad \inprog(x, \ovl a, a) \land \entails{\ovl b}{\subst{\ovl a}{x}{p}}
+       \rightarrow \entails{\ovl b}{\subst{a}{x}{p}} \\
+&\forall \ovl a: \Constrs, a, b: \Constr. && \text{(C-Weak)} \\
+&\quad \entails{\ovl a}{b}
+       \rightarrow \entails{a :: \ovl a}{b}\\
+&\forall \ovl a, \ovl b: \Constrs, a: \Constr. && \text{(C-Perm)} \\
+&\quad \forall b: \Constr.\ 
+           b \in \ovl a \rightarrow b \in \ovl b
+           \land
+           \neg b \in \ovl a \rightarrow \neg b \in \ovl b\\
+&\quad \land \entails{\ovl a}{a}
+       \rightarrow \entails{\ovl b}{a}
+\end{align*}
+\caption{First-order Model Of Constraint Entailment}
+\label{fig:axioms-naive}
+\end{figure}\\
+With the previous sort, predicate and function definitions
+we can model the calculus rules.
+A first-order representation of the calculus rules is given in \Cref{fig:axioms-naive}
+
+We start with the structural rules for weakening, contraction and permutation
+of the sequent calculus that are implicitly assumed in the $DC_C$ constraint system.
+Since the entailment judgement of the $DC_C$ constraint system
+has only a single constraint on its right-hand side
+we only need to consider structural rules on the left-hand side.
+
+Weakening allows the addition of arbitrary elements to a sequence.
+The weakening rule in the $DC_C$ sequent calculus would look as follows:
+\begin{prooftree}
+\RightLabel{C-Weak}
+\AxiomC{\entails{\ovl a}{b}}
+\UnaryInfC{\entails{a, \ovl a}{b}}
+\end{prooftree}
+The rule states that the context of an entailment can always be restricted.
+The first-order representation of this rule models this as follows:
+For constraint lists \ovl a and constraints $a, b$,
+if \entails{\ovl a}{b} holds then \entails{a :: \ovl a}{b} holds as well.
+Here we restrict the context \ovl a by prepending an additional constraint $a$.
+
+Contraction and permutation assure that the ordering of a sequent
+and the existence of multiple occurences of the same element in a sequent
+do not matter. Rule C-Perm covers both cases.
+For constraint lists \ovl a, \ovl b and constraints $a$:
+if \entails{\ovl a}{a} holds then \entails{\ovl b}{a} holds as well
+if both lists \ovl a and \ovl b consist of the same elements.
+This is checked with an additional quantifier ranging over constraints $b$.
+If $b$ is an element of \ovl a then it must also be an element of \ovl b
+and if $b$ is not in \ovl a then it must not be in \ovl b.
+This ensures that the ordering of the context does not matter
+and since we do not require the length of \ovl a and \ovl b to be equal
+it does also allow for the removal of multiple occurences of the same element
+as long as one remains.
+\\\\
+The modeling of the remaining rules follow the structure of the rules
+specified in the $DC_C$ constraint system in \Cref{fig:dcc-constraint-entailment}.
+
+Rules C-Ident and C-Refl are closure rules.
+Rule C-Ident states that each constraint entails itself.
+For all constraints $c$, $c$ is entailed by a context consisting
+of the identical constraint $[c]$.
+Rule C-Refl states that path equivalence is reflexive,
+each path is equivalent to itself without any prerequisites.
+For all constraints $p$, \pathEq{p}{p} is entailed by the empty context \nil.
+
+Rule C-Class establishes the fact that an object created with
+a constructor of a class is an instance of that class.
+For all constraints \ovl a, paths $p$ and strings $C$:
+\instOf{p}{c} is entailed by context \ovl a if
+\instBy{p}{C} is entailed by context \ovl a.
+We make sure that $C$ is a classname by requiring that \mIt{class(C)} holds.
+
+Rule C-Cut is a standard rule of the sequent calculus.
+It states that if a constraint $c$ is entailed by a context \ovl a
+and a constraint $b$ is entailed by a context \ovl b containing $c$
+then $b$ is also entailed by \ovl a and \ovl b without $c$,
+meaning that we can replace $c$ in \ovl b with constraints \ovl a
+entailing $c$.
+In our model we use the list structure of our context to
+make this replacement.
+In the model the context of $b$ is a list $\ovl b = c :: \ovl{a'}$
+and the context of $c$ is \ovl a.
+We then concatenate \ovl a with \ovl{a'}, which is the remainder
+of $b$ without $c$ to eliminate $c$ from the context of $b$.
+
+Rule C-Subst establishes that equivalent paths can be substituted
+within constraints.
+A constraint $a_2$ is entailed by \ovl a if
+a constraint $a_1$ is entailed by \ovl a
+and \ovl a entails the equivalence of paths $p_2$ and $p_1$.
+For this $a_2$ needs to be equal to the substitution of $a$ from $x$ to $p_2$
+and $a_1$ needs to be equal to the substitution of $a$ from $x$ to $p_1$.
+\mIt{variable(x)} ensures that $x$ is a valid variable name.
+
+Rule C-Prog applies program entailments expressing inheritance to the calculus.
+For constraint lists \ovl a, \ovl b, constraints $a$, strings $x$ and paths $p$:
+if a program entailment \progEnt{x}{\ovl a}{a} exists in the program
+and \ovl a is entailed by \ovl b then $a$ is entailed by \ovl b as well.
+$x$ is eliminated in \ovl a and $a$ through substitution,
+since $x$ is the bound variable name of the program entailment.
+The existence check of the program entailment is modeled with the predicate
+$\inprog(x, \ovl a, a)$.
+
+\begin{example}[Constraint entailment]
+\label{ex:application-entailment}
+In this example we will show the application of the sequent calculus for constraint entailment
+and compare it to the application of our model of the calculus.
+We will show the resolution of the entailment \entails{\pathEq{x}{y}}{\pathEq{y}{x}}
+stating the symmetry of path equivalence.\\
+\\
+We begin with the application of the sequent calculus:
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{C-Refl}
+\UnaryInfC{\entails{\epsilon}{\pathEq{y}{y}}}
+\RightLabel{C-Weak}
+\UnaryInfC{\entails{\pathEq{x}{y}}{\pathEq{y}{y}}}
+\UnaryInfC{\entails{\pathEq{x}{y}}{\subst{\pathEq{y}{x}}{x}{y}}}
+\AxiomC{}
+\RightLabel{C-Ident}
+\UnaryInfC{\entails{\pathEq{x}{y}}{\pathEq{x}{y}}}
+\RightLabel{C-Subst}
+\BinaryInfC{\entails{\pathEq{x}{y}}{\subst{\pathEq{y}{x}}{x}{x}}}
+\end{prooftree}
+For showing that \entails{\pathEq{x}{y}}{\pathEq{y}{x}} holds we
+apply rule C-Subst.
+We choose \pathEq{x}{y} to be our equivalent paths used for substitution.
+To show that \pathEq{x}{y} is entailed by \pathEq{x}{y} we use rule C-Ident
+to close this branch.
+What is left to show is that \pathEq{x}{y} entails \subst{\pathEq{y}{x}}{x}{y}.
+We apply the substitution to gain the constraint \pathEq{y}{y}.
+Finally we apply rule C-Weak to remove the information \pathEq{x}{y} from the context
+and apply rule C-Refl to show the entailment \entails{\epsilon}{\pathEq{y}{y}}
+and close the branch.
+With this derivation we showed \entails{\pathEq{x}{y}}{\subst{\pathEq{y}{x}}{x}{x}}.
+We apply the substitution to obtain our original goal \entails{\pathEq{x}{y}}{\pathEq{y}{x}}.\\
+\\
+We now try to find a solution for the same entailment in our model.
+The entailment has two valid variable names $x$ and $y$ which we need to add in our model.
+We do so by requiring \mIt{variable(\str x)} and \mIt{variable(\str y)}.
+Since there are no valid classnames we do not have to add any requirements for the \mIt{class} predicate.
+
+To show \entails{\pathEq{x}{y}}{\pathEq{y}{x}} we instantiate rule C-Subst.
+Since we want to show the entailment we need it to appear on the right-hand side of the implication,
+for this we instantiate \ovl a as $[\pathEq{x}{y}]$ and $a_2$ as \pathEq{y}{x}.
+We then choose $x := \str x$, $p_1 := y$ and $p_2 := x$ for usage in the substitutions.
+The instantiation of $x$ with $\str x$ ensures that \mIt{variable(x)} holds.
+With the instantiations of $x$, $p_1$, $p_2$ and $a_2$ we get
+\mIt{subst(a, \str x, y, a_1)} and \mIt{subst(a, \str x, x, \pathEq{y}{x})}.
+We now need to choose $a$ and $a_2$ such that both \mIt{subst} requirements are fulfilled.
+We instantiate $a := \pathEq{y}{x}$ and can resolve \mIt{subst(\pathEq{y}{x}, \str x, x, \pathEq{y}{x})}
+requiring $\subst{\pathEq{y}{x}}{\str x}{x} = \pathEq{y}{x}$.
+Applying the substitution shows that \pathEq{y}{x} is equal to \pathEq{y}{x}.
+From \mIt{subst(\pathEq{y}{x}, \str x, y, a_1)} we know that
+$a_1$ needs to be equal to $\subst{\pathEq{y}{x}}{\str x}{y} = \pathEq{y}{y}$
+and we choose $a_1 := \pathEq{y}{y}$.
+This leaves us with two new subgoals:
+\begin{enumerate}
+    \item \entails{[\pathEq{x}{y}]}{\pathEq{x}{y}} and
+    \item \entails{[\pathEq{x}{y}]}{\pathEq{y}{y}}.
+\end{enumerate}
+To show (1) we instantiate rule C-Ident with $c := \pathEq{x}{y}$.\\
+To show (2) we instantiate rule C-Weak with
+$a := \pathEq{x}{y}$ and $\ovl a := \nil$ to match the context
+and $b := \pathEq{y}{y}$ to match the constraint to be entailed by this context.
+This leads to the new subgoal \entails{\nil}{\pathEq{y}{y}} which can be
+resolved using rule C-Refl and instantiating $p := y$.\\
+\\
+By comparing the application of the sequent calculus with the application of our model,
+we can see that both derivations are similar.
+Both derivations use the same rule applications in the same order to obtain the result
+that the entailment holds.
+We can also observe that we chose the variable instantiations of rule C-Subst
+in the application of our model to match the path equivalence and substitution used
+in the application of the sequent calculus.
+\end{example}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../thesis"
+%%% End: 

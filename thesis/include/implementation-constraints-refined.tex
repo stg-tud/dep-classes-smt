@@ -1,0 +1,522 @@
+\subsection{Rule Refinement}
+\label{sec:rule-refinement}
+In \Cref{ex:application-entailment} we have seen the application of our model
+of the constraint entailment. The structure of the derivation followed the application
+of the sequent calculus.
+In the example we used rule C-Subst and chose the quantified variables
+to fulfill the various requirements of the rule.
+These requirements included \mIt{variable} and \mIt{subst} as well
+as the relationship between variables $a$, $a_1$ and $a_2$.
+We found it difficult for the solver to make these variable instantiations
+and we refine the modeled rules to improve usage with the solver.
+
+\subsubsection{Rule C-Subst}
+We start with refining rule C-Subst.
+The identified problems of this rule are
+\begin{enumerate}
+    \item the amount of quantified variables and
+    \item the non-algorithmic nature of the rule.
+\end{enumerate}
+\quad\\
+As observed in (1) the rule quantifies over seven variables.
+This leads to the explosion of the search space for this rule
+and the quantifier instantiation routines of the solver have a
+problem to instantiate the quantified variables in a fitting way.
+To solve this problem we try to ground at least some
+of the quantified variables of the rule.
+We notice that all variable names and paths are known at runtime
+and none of the rules introduces new ones.
+We can ground variables $x$, $p_1$ and $p_2$ of rule C-Subst
+by enumerating each possible combination of those variables
+and by creating a specialized subst rule for each of these combinations.
+
+Following this we can transform the rule C-Subst given in \Cref{fig:axioms-naive}
+by removing the quantified variables $x$, $p_1$ and $p_2$
+and since we enumerate over each variable name
+we do also remove the \mIt{variable(x)} requirement.
+With this we reduced the number of quantified variables
+of the rule to four.
+We note that these variables are now free in the rule
+and would need to be supplied from the outside.
+Since we do not want a single rule with free variables,
+but rather a template for generating subst rules,
+we treat the now free variables as placeholders for
+a routine that replaces these for each possible combination.
+For better visibility we write the placeholders in bold: % TODO: upper case bold?
+\begin{align*}
+&\forall \ovl a: \Constrs, a, a_1, a_2: \Constr. && \text{(C-Subst)} \\
+&\quad \entails{\ovl a}{\pathEq{\mathbf{p_2}}{\mathbf{p_1}}}
+         \land \mIt{subst}(a, \mathbf{x}, \mathbf{p_1}, a_1) \land \mIt{subst}(a, \mathbf{x}, \mathbf{p_2}, a_2)
+       \land \entails{\ovl a}{a_1}\\
+&\quad \rightarrow \entails{\ovl a}{a_2}
+\end{align*}
+%
+For (2) we take a look the instantiations of $a$, $a_1$ and $a_2$
+made in \Cref{ex:application-entailment}.
+In the example we started with instantiating $a_2$ to match
+the entailment to be shown.
+Afterwards we chose $a$ such that the substitution of
+$x$ with $p_2$ in $a$ would equal $a_2$.
+We see that to instantiate $a$ we solved a substitution
+where $a$ is used as the input and $a_2$ as the output of the substitution.
+Finally we instantiated $a_1$ with $x$ substituted with $p_1$ in $a$.
+We observe that this resembles a linear instantiation scheme starting with $a_2$,
+but we note that we had to make an educated guess for choosing $a$.
+So with the current rule, the solver needs to make random instantiations
+for $a$ to afterwards check if the requirements on $a$ are met
+instead of following the observed instantiation pattern we did manually.
+To resolve this problem we need to change the rule that $a$ can be
+instantiated by direct derivating from $a_2$.
+As previously stated we used $a$ on an input position
+and $a_2$ on the output position of a function call.
+To reverse these positions, we introduce \mIt{generalization} as
+the inverse of substitution.
+% Functions for generalization
+\begin{figure}[t]
+\centering
+\begin{align*}
+% path generalization
+&\genp(p_1: Path, p_2: Path, x: String):\mIt{Path} = \\
+&\quad\If p_1 = p_2\\
+&\qquad \Then x\\
+&\qquad \Else p_1 \match\\
+&\qquad\quad y \Rightarrow y\\
+&\qquad\quad q.f \Rightarrow \genp(q, p_2, x).f\\
+%\ite{(p_1 = p_2)}{x}{
+%p_1 \match\\
+%&\qquad y \Rightarrow y\\
+%&\qquad q.f \Rightarrow \genp(q, p_2, x).f
+%}\\
+\\
+% constraint generalization
+&\genc(c: \Constr, p: Path, x: String): \Constr = c \match\\
+&\quad \case{\pathEq{q_1}{q_2}}
+  {\pathEq
+    {\genp(q_1, p, x)}
+    {\genp(q_2, p, x)}}\\
+&\quad \case{\instOf{q}{C}}
+  {\instOf{\genp(q, p, x)}{C}}\\
+&\quad \case{\instBy{q}{C}}
+  {\instBy{\genp(q, p, x)}{C}}\\\\
+\end{align*}
+\caption{Path Generalization Functions}
+\label{fig:axioms-general-gen}
+\end{figure}\\
+Functions for generalizing paths and constraints are defined in \Cref{fig:axioms-general-gen}.
+Generalization for paths functions reverse of substitution for paths.
+Instead of substituting a variable with a path we generalize a subpath with a variable.
+This generalization of a subpath cannot happen at random places inside a path,
+but only starting on the innermost/leftmost variable of the path (the root of the path AST).
+For example we can generalize $x.f$ with $y$ in $x.f.g$ to obtain $y.g$,
+but we cannot generalize $f.g$ with $h$ in $x.f.g$
+since $f$ is not the innermost occurence in $x.f.g$.
+So we can only start generalization from the variable of a path and not its fields.
+For paths $p, q$ and strings $x$ path generalization is defined
+such that $gen(subst(p, x, q), q, x) = p$.\\
+Generalization for constraints does,
+as substitution for constraints did,
+propagate path generalization to the paths contained in the constraint
+to be generalized.
+
+For the notation of generalization we use \gen{c}{p}{x} for
+generalizing paths $p$ with variable names $x$ in constraints $c$.
+This notion is similar to the one used for substitution.
+We can distinguish both notations based on the swapped positions
+of $p$ and $x$.
+%
+\begin{figure}[h]
+\begin{align*}
+&\forall \ovl a: \Constrs, a_2: \Constr. && \text{(C-Subst)}\\
+&\quad \Let a := \gen{a_2}{\mathbf{p_2}}{\mathbf{x}}\ \In\\%\genc(a_2, \mathbf{p_2}, \mathbf{x})\ \In\\
+&\qquad \Let a_1 := \subst{a}{\mathbf{x}}{\mathbf{p_1}}\\ %\substc(a, \mathbf{x}, \mathbf{p_1})\\
+&\qquad \In
+        \entails{\ovl a}{\pathEq{\mathbf{p_2}}{\mathbf{p_1}}}
+        \land
+        \entails{\ovl a}{a_1}\\
+&\rightarrow \entails{\ovl a}{a_2}
+\end{align*}
+\caption{C-Subst Template}
+\label{fig:axioms-csubst}
+\end{figure}\\
+We can now solve the problem of choosing an instantiation for $a$.
+With the concept of generalization as previously presented
+we can choose $a$ to be a generalization of $a_2$,
+where $a_2$ is used in an input position
+and the output is used as the instantiation of $a$.
+This brings the instantiations of $a$, $a_1$ and $a_2$
+into a derivation chain starting from
+$a_2$ over $a$ to $a_1$.
+Since we can derive $a$ and $a_1$ from $a_2$ through a defined function,
+we can remove $a$ and $a_1$ from the list of quantified variables.\\
+\\
+We incorporate these changes into the template presented in step (1)
+to obtain the new template for rule C-Subst as shown in \Cref{fig:axioms-csubst}.
+In this template we reduced the amount of quantified variables to two.
+These two quantified variables can be used to match the right-hand side
+of the implication.
+We used let bindings to derive $a$ from $a_2$ and $a_1$ from $a$.\\
+\\
+We can combine the observations made in steps (1) and (2)
+to improve the rule generation out of the template.
+A procedure to generate subst rules out of the template
+needs to enumerate over all possible combinations of
+variable names and path pairs.
+
+The first observation to make is that in order to be complete
+we do not need all possible combinations.
+We can safely remove combinations where $x = p_1 = p_2$ for strings $x$ and paths $p_1, p_2$,
+since there is no new information to be gained out of such a combination.
+For $a$ we derive $\gen{a_2}{p_2}{x}$
+and since $p_2 = x$ we obtain $a := a_2$.
+The following derivation would then be $\subst{a}{x}{p_1}$
+and since $x = p_1$ and $a = a_2$ we obtain $a_1 := a_2$.
+This results in the implication:
+\[ \entails{\ovl a}{\pathEq{p_2}{p_1}} \land \entails{\ovl a}{a_1} \rightarrow \entails{\ovl a}{a_2} \]
+Since $p_1 = p_2$ and path equivalence is reflexive
+\entails{\ovl a}{\pathEq{p_2}{p_1}} holds for any \ovl a
+and since $a_2 = a = a_1$ we remain with
+\[ \entails{\ovl a}{a_2} \rightarrow \entails{\ovl a}{a_2} \]
+from where we can not gain any information.
+More so this could lead for the solver to repetitively try to use this rule
+and loop.\\
+\\
+The second observation follows from the first.
+We can omit
+\begin{enumerate}
+    \item the generalization \gen{a_2}{p_2}{x} if $x = p_2$,
+          since $\gen{a_2}{x}{x} = a_2$.
+    \item the substitution \subst{a}{x}{p_1} if $x = p_1$,
+          since $\subst{a}{x}{x} = a$.
+    \item the entailment check \entails{\ovl a}{\pathEq{p_2}{p_1}} if $p_1 = p_2$,
+          since \entails{\ovl a}{\pathEq{p}{p}} is derivable through using rule C-Weak
+          until we obtain \entails{\nil}{\pathEq{p}{p}} followed
+          by using rule C-Refl to close the proof.
+\end{enumerate}
+By omitting the generalization or the substitution
+we can remove the respective let binding
+and replace the now free variable in its subexpression.
+\Cref{ex:subst-optimzed} shows this for the case $x = p_1$.
+\begin{example}[Optimzed subst rule with $x = p_1$]
+\label{ex:subst-optimzed}
+\begin{align*}
+&\forall \ovl a: \Constrs, a_2: \Constr.\\
+&\quad \Let a := \gen{a_2}{\mathbf{p_2}}{\mathbf{x}}\\
+&\quad \In
+       \entails{\ovl a}{\pathEq{\mathbf{p_2}}{\mathbf{p_1}}}
+       \land
+       \entails{\ovl a}{a}\\
+&\rightarrow \entails{\ovl a}{a_2}
+\end{align*}
+\end{example}
+%
+\subsubsection{Rule C-Prog}
+Rule C-Prog has similar problems as the ones observed for rule C-Subst.
+The rule is again defined in a non-algorithmic way.\\
+The check if a program entailment exists in the program is done via
+the predicate \inprog(x, \ovl a, a) for strings $x$, constraint lists \ovl a and constraints $a$,
+where $x$ denotes a variable binding that can occur in \ovl a and $a$.
+The predicate models the existence of a declaration
+\progEnt{x}{\ovl a}{a} in the program.
+This is aggravated by the fact that the rule requires us
+to find a substitution from $x$ to some path $p$ to eliminate
+the bound variable of the program entailment $x$,
+since it would be otherwise free in the constraint entailment.\\
+\\
+To solve this problem we apply the same technique as
+we previously did with rule C-Subst.\\
+We can enumerate over all possible combinations of variable names and paths
+to eliminate the need to find a proper substitution.
+As well as finding a way to express the existence check
+of program entailments in a derivable way,
+where the quantified constraint $a$ can be used as an input
+and would result in an output to be usable as an instantiation for $\ovl a$.
+
+With this requirement specification we see that we want to have
+some sort of lookup function ranging from constraint $a$ to constraints $\ovl a$.
+Such a lookup function would need to be specifically generated for a program
+and we cannot give an universal function definition.
+
+We develop the generation process of a lookup function which models
+the existence check from rule C-Prog through a series of examples.
+Since such a lookup function needs to be specific to a given program,
+we start by defining a set of program entailments in \Cref{ex:progent-inheritance}.
+%
+\begin{example}[Program entailment class hierarchy]\quad\\
+\label{ex:progent-inheritance}
+The program for which we want to generate a lookup function
+contains the following entailment declarations.
+\begin{align*}
+&\progEnt{x}{\instOf{x}{B}}{\instOf{x}{A}}\\
+&\progEnt{x}{\instOf{x}{C}, \instOf{x.f}{D}}{\instOf{x}{A}}\\
+&\progEnt{x}{\instOf{x}{E}}{\instOf{x}{D}}
+\end{align*}
+Since program entailments are used to express inheritance relations,
+the given entailments form the following class hierarchy.
+\begin{center}
+\begin{tikzpicture}
+  \node (A) at (-1,0) {A};
+  \node (B) at (-3,-1.5) {B};
+  \node (C) at (1,-1.5) {C};
+  \path (A) edge (B);
+  \path (A) edge (C);
+  
+  \node (D) at (3,0) {D};
+  \node (E) at (3,-1.5) {E};
+  \path (D) edge (E);
+% \node (comment) at (-0.5, -0.5) {asdf};
+\end{tikzpicture}
+\end{center}
+\end{example}\quad\\
+We recall from \Cref{fig:dcc-wf} that a program entailment \progEnt{y}{\ovl b}{b}
+is only well formed if constraint $b$ is
+of the form \instOf{q}{Cls} and $\instOf{q}{Cls'} \in \ovl b$.\\
+With this in mind, rule C-Prog states that to show that
+path $q$ is an instance of class $Cls$ it suffices to show
+that $q$ is an instance of subclass $Cls'$
+and that the field requirements of $Cls'$ are fulfilled.
+
+To translate this into a lookup function,
+we use $b$ as an argument to the function and \ovl b as our return value.
+Since a function needs to be total we need to combine all
+existing program entailments into one function,
+as well as the need for a result in the case where no match exists.
+
+Since the well formedness requires \ovl b to contain at least
+one element \ovl b cannot be empty and we use the
+empty list $\nil$ as the return value for the non matching case.\\
+To differentiate between program entailments we use if statements
+to check if the input matches one of the program entailments.\\
+Such a lookup function is shown in \Cref{ex:lookup-fun-ite}.
+
+\begin{example}[Lookup function using if statements]
+\label{ex:lookup-fun-ite}
+\begin{align*}
+&\mIt{lookup}(a: \Constr): \Constrs = \\
+&\If a = \instOf{x}{A}\\
+&\Then [\instOf{x}{B}]\\
+&\Else \If a = \instOf{x}{A}\\
+&\quad \Then [\instOf{x}{C}, \instOf{x.f}{D}]\\
+&\quad \Else\If a = \instOf{x}{D}\\
+&\qquad \Then [[\instOf{x}{E}]]\\
+&\qquad \Else \nil\\
+\end{align*}
+\end{example}
+%
+We can observe in \Cref{ex:lookup-fun-ite} that we
+created one if statement per program entailment.
+This practice can lead to the shadowing of program entailments
+as seen in the example, where the first and the second if statement share the same guard.
+This is the case because there can be more than one entailment
+with the same right-hand side constraint,
+as seen in the given program entailments in \Cref{ex:progent-inheritance}.
+This leads to shadowing, since we use the
+right-hand side as the guard for the if statements.\\
+\\
+To avoid this shadowing of entailments,
+we change the return type of the lookup function
+from returning a list of constraints (\Constrs)
+to a list of constraint lists (\Constrss).\\
+This enables us to merge program entailments that
+share the same right-hand side together.
+With this we can give the function definition shown in
+\Cref{ex:lookup-fun-shadowing} that avoids shadowing.
+%
+\begin{example}[Avoid shadowing in lookup]
+\label{ex:lookup-fun-shadowing}
+\begin{align*}
+&\mIt{lookup}(a: \Constr): \Constrss = \\
+&\If a = \instOf{x}{A}\\
+&\Then [[\instOf{x}{B}], [\instOf{x}{C}, \instOf{x.f}{D}]]\\
+&\Else \If a = \instOf{x}{D}\\
+&\quad\Then [[\instOf{x}{E}]]\\
+&\quad\Else \nil\\
+\end{align*}
+\end{example}
+%
+We can see in \Cref{ex:lookup-fun-shadowing}
+that we merged the two entailments whose right-hand side
+is $\instOf{x}{A}$ and return both possible constraint lists
+as the result for a match to these entailments.
+
+To translate program entailments \progEnt{y}{\ovl b}{b}
+we used $b$ to check for equality to the argument to the function
+and \ovl b as the return value.
+As of now we neglected the bound variable $y$ of the program entailment.\\
+So we only solved the non-algorithmic nature of the rule
+and we still need to find a suitable substitution
+of the quantified variable $a$ from rule C-Prog
+to input into the lookup function, such that the substitution of $a$ matches $b$.
+We can incorporate the enumeration of combinations of variable names and paths
+into the lookup function generation to resolve this.\\
+\\
+To do this we look at rule C-Prog and
+see that the bound variable of the program entailment is used
+for the substitution.
+This is because, according to the well formedness,
+for program entailments \progEnt{y}{\ovl b}{b}
+only the bound variable $y$ can occur in \ovl b
+and $b$ needs to be of the form \instOf{y}{Cls}
+for class names \mIt{Cls}.
+So for finding a valid substitution,
+we can fix the variable name to be substituted to $y$.\\
+Since we fixed the variable name to be substituted,
+what remains is the need to instantiate each program entailment
+with each possible path.
+Previously we only needed to generate a lookup function per program.
+Now we need to generate a new lookup function
+for each constraint entailment we want to show,
+since we enumerate over all possible paths.
+
+With this in mind we generate a lookup function for the
+program entailments shown in \Cref{ex:progent-inheritance}
+with valid paths $y$ and $y.g$.
+The resulting lookup function is shown in \Cref{ex:lookup-fun}.
+\newpage
+\begin{example}[Program entailment lookup function]\quad\\
+\label{ex:lookup-fun}
+\begin{align*}
+&\mIt{lookup}(a: \Constr): \Constrss = \\
+&\If a = \instOf{y}{A}\\
+&\Then [[\instOf{y}{B}], [\instOf{y}{C}, \instOf{y.f}{D}]]\\
+&\Else \If a = \instOf{y}{D}\\
+&\quad \Then [[\instOf{y}{E}]]\\
+&\quad \Else \If a = \instOf{y.g}{A}\\
+&\qquad \Then [[\instOf{y.g}{B}], [\instOf{y.g}{C}, \instOf{y.g.f}{D}]]\\
+&\qquad \Else \If a = \instOf{y.g}{D} \\
+&\qquad\quad \Then [[\instOf{y.g}{E}]]\\
+&\qquad\quad \Else \nil
+\end{align*}
+\end{example}
+If we compare \Cref{ex:lookup-fun-shadowing} and \Cref{ex:lookup-fun},
+we can observe that the function in \Cref{ex:lookup-fun} uses
+twice as much if statements as the function in \Cref{ex:lookup-fun-shadowing}.
+This is because we instantiated each of the entailments with two possible paths,
+doubling the amount of cases to consider.\\
+\\
+With the final lookup function definition from \Cref{ex:lookup-fun}
+we can refine rule \mbox{C-Prog}.
+We do this by replacing the declarative requirement of the $\inprog$ predicate
+with the algorithmic call to the lookup function.
+%
+\begin{figure}[h]
+\begin{align*}
+&\forall \ovl a: \Constrs, a: \Constr. && \text{(C-Prog)}\\
+&\Let \ovl{\ovl a} := lookup(a)\\   %\bar{\bar a}
+&\In
+     \neg (\ovl{\ovl a} = \nil)
+   \land
+     \bigvee_{\ovl b \in \ovl{\ovl a}}{\entails{\ovl a}{\ovl b}}
+   \rightarrow \entails{\ovl a}{a}
+\end{align*}
+\caption{Rule C-Prog Using Lookup}
+\label{fig:axioms-cprog}
+\end{figure}\\\\
+%
+The refined rule C-Prog is defined in \Cref{fig:axioms-cprog}.\\
+The rule calls function \mIt{lookup} to check
+if an entailment declaration matching $a$ exists in the program.
+The result is a list containing possible constraint lists
+to evaluate for entailment to $a$.\\
+Since we modeled the lookup function to return the empty list $\nil$
+if no matching entailment declaration exists,
+we require the lookup result \ovl{\ovl a} to be non empty.\\
+Since we merged entailment declarations with matching right-hand sides
+to avoid shadowing, it suffices to show that at least one
+of the constraint lists contained in \ovl{\ovl a}
+is entailed by \ovl a to show that $a$ is entailed by \ovl{a}.\\
+\\
+The refined rule C-Prog does not contain any free variables
+and is therefore not a template like the refined C-Subst,
+but a general rule that does not need any preprocessing.
+This is the case because we moved the enumeration process
+of possible paths into the generation of the lookup function.
+
+\subsubsection{Rule C-Perm}
+The permutation rule C-Perm is defined in a
+non-structural way.
+The SMT solver can use the rule without a problem to check for
+two known entailments \entails{\ovl a}{a} and \entails{\ovl b}{a}
+if \ovl a is a permutation of \ovl b.
+The solver struggels with using this rule
+for generating new entailments \entails{\ovl b}{a}
+from a single known entailment \entails{\ovl a}{a},
+such that \ovl b is a permutation of \ovl a.\\
+\\
+The permutation generating aspect is, in our model,
+used for closures with rule C-Ident in combination with rule C-Weak
+since our model is list based.
+Rule C-Ident requires a list containing only one
+element for its context and rule C-Weak can only
+eliminate the first element from the context.
+Therefore to close a proof for \entails{\ovl c}{c} with C-Ident
+where $c \in \ovl c$ and $\neg (last(\ovl c) = c)$,
+we need to find a permutation \ovl{c'} of \ovl c
+where $last(\ovl{c'}) = c$.
+%
+\begin{figure}[h]
+\begin{align*}
+&\forall \ovl c: \Constrs, c: \Constr. && \text{C-DirectIdent}\\
+&\quad c \in \ovl c \rightarrow \entails{\ovl c}{c}
+\end{align*}
+\caption{Rule C-DirectIdent}
+\label{fig:axioms-cdirectident}
+\end{figure}\\
+%
+To avoid the generation of permutations by the solver,
+we define a rule for direct closure for such entailments
+using rule C-Ident.\\
+We introduce rule C-DirectIdent in \Cref{fig:axioms-cdirectident}.
+Rule C-DirectIdent can be used to directly close entailments
+of the form \entails{\ovl c}{c} if $c \in \ovl c$.\\
+Rule C-DirectIdent introduces a new quantified variable,
+potentially leading to an increased search space for the solver.
+This is not the case for the rule.
+The newly introduced quantified variable \ovl c
+is contained in the entailment we want to show
+and therefore used in an input position
+which can be easily matched by the solver.
+This is also true for the the quantified variable $c$
+in combination with the element of check.
+Both quantified variables are used in input positions.
+Therefore the solver does not need to generate
+instantiations that match the property $c \in \ovl c$,
+but can rather check if the property is fulfilled
+for the known values.\\
+\\
+Rule C-DirectIdent does not contradict any of the other rules.
+It can solely be used as a "shortcut" for rule C-Ident.
+We show that rule C-DirectIdent and rule C-Ident are interchangeable.\\
+\\
+Each entailment \entails{\ovl c}{c} closable with rule C-DirectIdent
+can also be closed with the usage of rule C-Ident.
+We produce a derivation for \entails{\ovl c}{c}
+without the usage of C-DirectIdent.
+Since the entailment is closable by C-DirectIdent,
+we know that $c \in \ovl c$.
+We generate a permutation \ovl{c'} of \ovl c
+with the property $last(\ovl{c'}) = c$.
+We do this by appending $c$ at the end of \ovl c
+and obtain $\ovl{c'} := \ovl c \conc [c]$.
+\ovl{c'} is a valid permutation in our model,
+since rule C-Perm does not require
+both lists to be of equal length and
+we know that $c \in \ovl c$.
+From there we repeatedly apply rule C-Weak
+until we are left with the subgoal \entails{[c]}{c}.
+We show this entailment by applying rule C-Ident.\\
+\\
+Each entailment \entails{\ovl c}{c} closable with rule C-Ident
+can also be closed with the usage of rule C-DirectIdent.
+The entailment is closable with rule C-Ident,
+we therefore know that \ovl c is of the form $[c]$.
+Since $c \in [c]$, we show the entailment \entails{[c]}{c}
+by directly applying rule C-Ident.\\
+\\
+We showed that each entailment closable by C-DirectIdent
+can also be closed by C-Ident and vice versa.
+We replace rule C-Ident with rule C-DirectIdent.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../thesis"
+%%% End: 
