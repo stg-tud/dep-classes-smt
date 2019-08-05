@@ -443,6 +443,59 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     assert(out(1) == "(C-Ident C-Class)")
   }
 
+  val naturalNumbers: Program = List(
+    ConstructorDeclaration(Id('Zero), Id('x), Nil),
+    ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
+    ConstructorDeclaration(Id('Succ), Id('x), List(InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat)))),
+    ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Succ)), InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))), InstanceOf(Id('x), Id('Nat))),
+    AbstractMethodDeclaration(Id('prev), Id('x), List(InstanceOf(Id('x), Id('Nat))), Type(Id('y), List(InstanceOf(Id('y), Id('Nat))))),
+    MethodImplementation(Id('prev), Id('x), List(InstanceOf(Id('x), Id('Zero))), Type(Id('y), List(InstanceOf(Id('y), Id('Nat)))),
+      ObjectConstruction(Id('Zero), Nil)),
+    MethodImplementation(Id('prev), Id('x), List(InstanceOf(Id('x), Id('Succ)), InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))), Type(Id('y), List(InstanceOf(Id('y), Id('Nat)))),
+      FieldAccess(Id('x), Id('p)))
+  )
+
+  test("C-Class (x1.cls ≡ Zero, x2.cls ≡ Succ, x2.p ≡ x1 |- x2 :: Succ)") {
+    val vars = List(Id('x1), Id('x2))
+    val paths = List(Id('x1), Id('x2), FieldPath(Id('x2), Id('p)))
+
+    val x1 = Axioms.path("x1")
+    val x2 = Axioms.path("x2")
+    val x2p = Axioms.path("x2.p")
+
+    val x1Zero = Axioms.instantiatedBy(x1, "Zero")
+    val x2Succ = Axioms.instantiatedBy(x2, "Succ")
+    val x2px1 = Axioms.pathEq(x2p, x1)
+    val x2SuccI = Axioms.instanceOf(x2, "Succ")
+
+    val knowledge = Seq(
+      Axioms.assertClass("Zero"),
+      Axioms.assertClass("Succ"),
+      Axioms.assertPath(x1),
+      Axioms.assertPath(x2),
+      Axioms.assertPath(x2p),
+      Axioms.assertVariable("x1"),
+      Axioms.assertVariable("x2")
+    )
+    val preprocess = SMTLibConverter.generateSubstRules(vars, paths) ++
+    Seq(SMTLibConverter.makeProgramEntailmentLookupFunction(naturalNumbers, paths), Axioms.cProg)
+    val assertion = Assert(Not(Axioms.entails(Seq(x1Zero, x2Succ, x2px1), x2SuccI)))
+
+    z3.addCommands(preprocess ++ knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute(2000)
+    z3.flush()
+
+    assert(exit == 0)
+    assert(out.size == 2)
+    assert(out.head == Unsat.format())
+    assert(out(1).contains("C-Ident"))
+    assert(out(1).contains("C-Class"))
+  }
+
+  test("C-Subst (x1.cls ≡ Zero, x2.cls ≡ Succ, x2.p ≡ x1 |- x2.p :: Nat)") {
+    // TODO: all the stuff. use handmade subst rule
+  }
+
   test("C-Weak (x = y, y = z |- y = z)") {
     val x = Axioms.path("x")
     val y = Axioms.path("y")

@@ -52,18 +52,18 @@ class DCC(P: Program) {
         classes.foreach(c => println(c.format()))
         println(entailment.format())
 
-        val solver = new Z3Solver(Axioms.all, debug=false)
+        val solver = new Z3Solver(Axioms.allDirectClosure, debug=false)
 
-        solver.addCommands(SMTLibConverter.makeAsserts(variables))
-        solver.addCommands(SMTLibConverter.makeAsserts(paths))
-        solver.addCommands(SMTLibConverter.makeAsserts(classes))
         solver.addCommands(substRules)
         solver.addCommand(lookup)
         solver.addCommand(Axioms.cProg)
+        solver.addCommands(SMTLibConverter.makeAsserts(classes))
+        solver.addCommands(SMTLibConverter.makeAsserts(paths))
+        solver.addCommands(SMTLibConverter.makeAsserts(variables))
         // TODO: check if not entailment is unsat or entailment is sat?
         solver.addCommand(Assert(Not(entailment)))
 
-        val sat = solver.checksat()
+        val sat = solver.checksat(3000)
 
         sat match {
           case Sat => false
@@ -92,10 +92,12 @@ class DCC(P: Program) {
       val vars = boundVars(heap)
 
       // Applicable methods
-      val S: List[(List[Constraint], Expression)] = mImplSubst(m, x).filter{case (as, _) => entails(HC(heap), as, vars)}
+      //val S: List[(List[Constraint], Expression)] = mImplSubst(m, x).filter{case (as, _) => entails(HC(heap), as, vars)}
+      val methods = mImplSubst(m, x)
+      val S = methods.filter{case (as, _) => entails(HC(heap), as, vars)}
 
       if (S.isEmpty) // m not in P
-        (heap, expr)
+        return (heap, expr)
 
       // Most specific method
       var (a, e) = S.head
@@ -463,9 +465,10 @@ object Main extends App {
   val dcc = new DCC(naturalNumbers)
 
   val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Zero), Nil))
-  val (h1, e1) = dcc.interp(h, ObjectConstruction(Id('Succ), List((Id('p), e))))
-//  val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Succ), List((Id('p), ObjectConstruction(Id('Zero), Nil)))))
-//  val (h1, e1) = dcc.interp(h, FieldAccess(e, Id('p)))
+  //val (h1, e1) = dcc.interp(h, ObjectConstruction(Id('Succ), List((Id('p), e))))
+  val e1 = Id('x2)
+  val h1 = h + (e1 -> (Id('Succ), List((Id('p), e.asInstanceOf[Id]))))
+  val (h2, e2) = dcc.interp(h1, MethodCall(Id('prev), e1))
 
   println("Heap:")
   h.foreach(println)
@@ -473,6 +476,9 @@ object Main extends App {
   println("Heap1:")
   h1.foreach(println)
   println("Expr1:" + e1)
+  println("Heap2:")
+  h2.foreach(println)
+  println("Expr2:" + e2)
 }
 
 //combinations = []

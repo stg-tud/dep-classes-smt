@@ -29,7 +29,7 @@ def interp(heap: Heap, expr: Expression)
         mImplSubst(m, x).filter{
           case (as, _) => entails(HC(heap), as)}
     if (S.isEmpty) // m not in program
-      (heap, expr)
+      return (heap, expr)
 
     var (a, e) = S.head // Most specific method
     S.foreach{
