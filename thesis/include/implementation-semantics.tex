@@ -92,6 +92,44 @@ def interp(heap: Heap, expr: Expression)
 \end{lstlisting}
 %
 \newpage
+\begin{figure}[h]
+\begin{lstlisting}
+// Heap Constraints
+private def HC(heap: Heap): List[Constraint] =
+  heap.flatMap{case (x, o) => OC(x, o)}.toList
+
+// Object Constraints
+private def OC(x: Id, o: Obj): List[Constraint] = o match {
+  case (cls, fields) =>
+    val init = InstantiatedBy(x, cls)
+    val fieldCs = fields.map{case (f, v) =>
+      PathEquivalence(FieldPath(x, f), v)}
+
+    init :: fieldCs
+}
+\end{lstlisting}
+\caption{Heap And Object Constraints}
+\label{fig:scala-heapconstr}
+\end{figure}
+%
+\Cref{fig:scala-heapconstr} implements functions \mIt{HC} and \mIt{OC}
+defined in \Cref{fig:dcc-opsemantics}.
+\\
+The constraints of a heap are the constraints
+on the objects contained in the heap.
+The implementation of $\mIt{HC}(heap)$ maps \mIt{OC} over
+all elements contained in $heap$.
+
+The constraints of an object state the class of the object
+and the values of its fields.
+In our implementation, a object consists of a class name
+and a list of pairs of field names and variable names.
+In the implementation of $\mIt{OC}(x, o)$ with $o := (\mIt{cls}, \mIt{fields})$,
+we create a constraint \instBy{x}{cls} stating the class of $o$.
+Further, we create for each field-value pair $(f, v) \in \mIt{fields}$
+a constraint \pathEq{x.f}{v} stating that field $f$ of $x$ has value $v$.
+\\
+\\
 We define function \scala{interp} in \Cref{lst:interp}.
 The function takes a heap $heap$ and an expression $expr$
 as arguments and returns a heap and an expression.
@@ -266,10 +304,30 @@ We added the case in the implementation,
 to avoid that the function has undefined inputs.
 Since variables are the values of the language,
 we do not need to further evaluate them.
-
+%
 % TODO: example
 % - prev(Zero) or prev(Succ(Zero))
 % - maybe have the parameter be a variable already on the heap
+\begin{example}[Interpreting a method call]\quad\\
+In this example we demonstrate the process of interpreting expressions.
+For this, we take the program describing natural numbers from \Cref{ex:dcc-naturalnumbers}.
+We set a heap $h := [x \mapsto (\texttt{Zero}, [])]$, containing
+a mapping from variable $x$ to an instance of class \texttt{Zero}.
+Our expression to interpret is $\texttt{prev}(x)$.
+We call \scala{interp} with arguments $h$ and $\texttt{prev}(x)$.\\
+\\
+The expression $\texttt{prev}(x)$ is a method call and
+$x$ is a value.
+We match the implementation of R-Call.
+First we build the list of applicable methods.
+We call \scala{mImplSubst} to retrieve
+the argument constraints and the bodies of
+implementations of method $\texttt{prev}$.
+Method $\texttt{prev}$ has two implementations.
+
+\end{example}
+
+% TODO: add pruning to genSubstRules
 
 %%% Local Variables: 
 %%% mode: latex

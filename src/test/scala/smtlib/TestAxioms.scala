@@ -1100,7 +1100,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val vars = List(Id('x))
     val paths = List(Id('x), FieldPath(Id('y), Id('p)))
 
-    val preprocessed = SMTLibConverter.generateSubstRules(vars, paths, true)
+    val preprocessed = SMTLibConverter.generateSubstRules(vars, paths, pruning = true)
 
     val knowledge = Seq(
       Axioms.assertVariable("x"),
