@@ -42,19 +42,19 @@ class DCC(P: Program) {
         val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(strs, pths, clss)
 
         val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(P, pths)
-        val substRules = SMTLibConverter.generateSubstRules(vars, pths)
+        val substRulesPruned = SMTLibConverter.generateSubstRules(vars, pths, true)
 
         // debug output
-        substRules.foreach(c => println(c.format()))
-        println(lookup.format())
-        variables.foreach(c => println(c.format()))
-        paths.foreach(c => println(c.format()))
-        classes.foreach(c => println(c.format()))
-        println(entailment.format())
+//        substRulesPruned.foreach(c => println(c.format()))
+//        println(lookup.format())
+//        variables.foreach(c => println(c.format()))
+//        paths.foreach(c => println(c.format()))
+//        classes.foreach(c => println(c.format()))
+//        println(entailment.format())
 
         val solver = new Z3Solver(Axioms.allDirectClosure, debug=false)
 
-        solver.addCommands(substRules)
+        solver.addCommands(substRulesPruned)
         solver.addCommand(lookup)
         solver.addCommand(Axioms.cProg)
         solver.addCommands(SMTLibConverter.makeAsserts(classes))
@@ -65,12 +65,14 @@ class DCC(P: Program) {
 
         val sat = solver.checksat(3000)
 
+        println(s"\t${sat.format()}")
+
         sat match {
           case Sat => false
           case Unsat => true
           case Unknown =>
-            solver.flush()
-            solver.addCommands(SMTLibConverter.generateSubstRules(vars, pths, true))
+            solver.flush() // Second round without pruning
+            solver.addCommands(SMTLibConverter.generateSubstRules(vars, pths))
             solver.addCommand(lookup)
             solver.addCommand(Axioms.cProg)
             solver.addCommands(SMTLibConverter.makeAsserts(classes))
@@ -78,10 +80,12 @@ class DCC(P: Program) {
             solver.addCommands(SMTLibConverter.makeAsserts(variables))
             solver.addCommand(Assert(Not(entailment)))
 
-            solver.checksat(3000) match {
-              case Sat => false
+            val sat2 = solver.checksat()
+            println(s"\t${sat2.format()}")
+
+            sat2 match {
               case Unsat => true
-              case Unknown => false
+              case _ => false
             }
         }
     }

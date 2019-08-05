@@ -493,7 +493,71 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
   }
 
   test("C-Subst (x1.cls ≡ Zero, x2.cls ≡ Succ, x2.p ≡ x1 |- x2.p :: Nat)") {
-    // TODO: all the stuff. use handmade subst rule
+    val vars = List(Id('x1), Id('x2))
+    val paths = List(Id('x1), Id('x2), FieldPath(Id('x2), Id('p)))
+
+    val x1 = Axioms.path("x1")
+    val x2 = Axioms.path("x2")
+    val x2p = Axioms.path("x2.p")
+
+    val x1Zero = Axioms.instantiatedBy(x1, "Zero")
+    val x2Succ = Axioms.instantiatedBy(x2, "Succ")
+    val x2px1 = Axioms.pathEq(x2p, x1)
+    val x2pNat = Axioms.instanceOf(x2p, "Nat")
+
+    val knowledge = Seq(
+      Axioms.assertClass("Zero"),
+      Axioms.assertClass("Succ"),
+      Axioms.assertPath(x1),
+      Axioms.assertPath(x2),
+      Axioms.assertPath(x2p),
+      Axioms.assertVariable("x1"),
+      Axioms.assertVariable("x2")
+    )
+
+    val assertion = Assert(Not(Axioms.entails(Seq(x1Zero, x2Succ, x2px1), x2pNat)))
+
+    val handwritten = Assert(Annotate(
+        Forall(Seq(
+          SortedVar("a2", "Constraint"),
+          SortedVar("cs", "CList")
+        ),
+          Implies(
+            Let(
+              Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", x2p, SMTLibString("x1"))))),
+              And(
+                Apply("entails", Seq("cs", Apply("path-eq", Seq(x2p, x1)))),
+                Apply("entails", Seq("cs", "a")) // Apply("subst-constraint", Seq("a", SMTLibString("x"), x)) // TODO: timeout with subst
+              )
+            ),
+            Apply("entails", Seq("cs", "a2"))
+          )
+//          Let(
+//            Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yp, SMTLibString("x"))))),
+//            Implies(
+//              And(
+//                Apply("entails", Seq("cs", Apply("path-eq", Seq(yp, x)))),
+//                Apply("entails", Seq("cs", "a"))
+//              ),
+//              Apply("entails", Seq("cs", "a2"))
+//            )
+//          )
+        ),
+        Seq(KeyValueAttribute(Keyword("named"), "C-Subst-x1-x2.p-x1"))))
+
+    val substRules = SMTLibConverter.generateSubstRules(vars, paths)
+
+    assert(substRules.contains(handwritten))
+
+    //val preprocess = SMTLibConverter.generateSubstRules(vars, paths) ++ Seq(
+    val preprocess = Seq(handwritten,
+      SMTLibConverter.makeProgramEntailmentLookupFunction(naturalNumbers, paths),
+      Axioms.cProg
+    )
+
+    z3.addCommands(preprocess ++ knowledge ++ Seq(assertion, CheckSat, GetUnsatCore))
+    val (exit, out) = z3.execute(2000)
+    z3.flush()
   }
 
   test("C-Weak (x = y, y = z |- y = z)") {
