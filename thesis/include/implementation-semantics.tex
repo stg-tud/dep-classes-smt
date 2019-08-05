@@ -311,7 +311,7 @@ we do not need to further evaluate them.
 \begin{example}[Interpreting a method call]\quad\\
 In this example we demonstrate the process of interpreting expressions.
 For this, we take the program describing natural numbers from \Cref{ex:dcc-naturalnumbers}.
-We set a heap $h := [x \mapsto (\texttt{Zero}, [])]$, containing
+We set heap $h := [x \mapsto o]$ with $o := (\texttt{Zero}, [])$, containing
 a mapping from variable $x$ to an instance of class \texttt{Zero}.
 Our expression to interpret is $\texttt{prev}(x)$.
 We call \scala{interp} with arguments $h$ and $\texttt{prev}(x)$.\\
@@ -322,8 +322,52 @@ We match the implementation of R-Call.
 First we build the list of applicable methods.
 We call \scala{mImplSubst} to retrieve
 the argument constraints and the bodies of
-implementations of method $\texttt{prev}$.
-Method $\texttt{prev}$ has two implementations.
+implementations of method $\texttt{prev}$
+and substitute the formal parameter
+of the implementations with $x$.
+Method $\texttt{prev}$ has two implementations
+and we obtain
+\[ [([\instOf{x}{\texttt{Zero}}], \newInstNoArgs{\texttt{Zero}}),
+    ([\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}], x.p)] \]
+from \scala{mImplSubst}.
+We check for each method implementaion $(\ovl a, e)$
+if \entails{HC(h)}{\ovl a}.
+We call $HC(h)$ to generate the constraints of the heap.
+Since $h$ contains only one object mapping from $x$ to $(\texttt{Zero}, [])$,
+we call $OC(x, o)$.
+From the call to $OC$ we obtain \instBy{x}{\texttt{Zero}}
+constrainting $x$ to be a direct instance of \texttt{Zero}.
+We do not generate further constraints, since object $o$ has no fields.
+
+We call function \scala{entails} to solve the entailment
+\entails{\instBy{x}{\texttt{Zero}}}{\instOf{x}{\texttt{Zero}}}
+with the result \mIt{true}
+as well as the entailment
+\entails{\instBy{x}{\texttt{Zero}}}{\instOf{x}{\texttt{Succ}}}
+with the result \mIt{false}.
+With this, we set the list of applicable methods
+\[ S := [([\instOf{x}{\texttt{Zero}}], \newInstNoArgs{\texttt{Zero}})]. \]
+We set $(a, e) := S.\mIt{head} = ([\instOf{x}{\texttt{Zero}}], \newInstNoArgs{\texttt{Zero}})$
+to be the most specific method
+and since $S$ has only one element we do not need to compare
+the method against the elements of $S$
+and $e$ is the most specific method body.\\
+\\
+We proceed with interpreting \newInstNoArgs{\texttt{Zero}} in $h$.
+We match the implementation of rule R-New.
+We generate a fresh variable $y$
+and set $o := (\texttt{Zero}, [])$.
+We search for a constructor of class $\texttt{Zero}$ in the program
+and retrieve \constr{\texttt{Zero}}{x}{\epsilon}.
+Since the constraints reqruired by the constructor are empty,
+we do not need to check if the heap entails the constructor constraints.
+We extend heap $h$ with the new object binding to obtain
+\[ h_1 := [x \mapsto (\texttt{Zero}, []), y \mapsto (\texttt{Zero}, [])] \]
+and return $(h_1, y)$ as the result of the evaluation of $\texttt{prev}(x)$ in $h$.
+We observe that we created a new object of class \texttt{Zero} in $h_1$,
+because the body of method \texttt{prev} for \texttt{Zero}
+is an object creation instead of a variable access.
+
 
 \end{example}
 
