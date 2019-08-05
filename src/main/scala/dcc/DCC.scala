@@ -364,14 +364,16 @@ class DCC(P: Program) {
         case _ => false
       }
     // WF-MS
-    case AbstractMethodDeclaration(m, x, a, Type(y, b)) =>
+    case AbstractMethodDeclaration(_, x, a, Type(y, b)) =>
       val vars = FV(b) // TODO: check if x != y for size check?
       FV(a) == List(x) && vars.size == 2 && vars.contains(x) && vars.contains(y)
     // WF-MI
-    case MethodImplementation(m, x, a, t@Type(y, b), e) =>
+    case MethodImplementation(_, x, a, Type(y, b), e) =>
       val vars = FV(b) // TODO: check if x != y for size check?
       FV(a) == List(x) && vars.size == 2 && vars.contains(x) && vars.contains(y) &&
-      typeass(a, e).contains(t)
+      typeass(a, e).contains {
+        case Type(z, c) => substitute(z, y, c).forall(b.contains(_))
+      }
   }
 
   private def classInProgram(Cls: Id, p: Program): Option[(Id, List[Constraint])] = p match {
