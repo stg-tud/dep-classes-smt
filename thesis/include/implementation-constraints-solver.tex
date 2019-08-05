@@ -346,6 +346,7 @@ def makeProgramEntailmentLookupFunction(
   val x = SimpleSymbol("c")
   val body = makeProgramEntailmentLookupFunctionBody(
         paths.flatMap(instantiateProgramEntailments(p, _)), x)
+
   DefineFun(FunctionDef(
     SimpleSymbol("lookup-program-entailment"),
     Seq(SortedVar(x, SimpleSymbol("Constraint"))),
@@ -361,6 +362,7 @@ private def instantiateProgramEntailments(p: Program, path: Path
   case ConstraintEntailment(x, as, a) :: rst =>
     val cs: List[Constraint] = substitute(x, path, as)
     val c: Constraint = substitute(x, path, a)
+
     entailments.get(c) match {
       case None => instantiateProgramEntailments(
                      rst, path, entailments + (c -> List(cs)))

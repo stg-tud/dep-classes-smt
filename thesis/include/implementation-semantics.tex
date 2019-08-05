@@ -22,8 +22,7 @@ def interp(heap: Heap, expr: Expression)
         (heap, y)
       case _ => (heap, expr) // f no field of x
     }
-  // R-Call
-  case MethodCall(m, x@Id(_)) =>
+  case MethodCall(m, x@Id(_)) =>   // R-Call
     // Applicable methods
     val S: List[(List[Constraint], Expression)] =
         mImplSubst(m, x).filter{
@@ -91,7 +90,23 @@ def interp(heap: Heap, expr: Expression)
 }
 \end{lstlisting}
 %
-\newpage
+\Cref{fig:scala-heapconstr} implements functions \mIt{HC} and \mIt{OC}
+defined in \Cref{fig:dcc-opsemantics}.
+\\
+The constraints of a heap are the constraints
+on the objects contained in the heap.
+The implementation of $\mIt{HC}(heap)$ maps \mIt{OC} over
+all elements contained in $heap$.
+
+The constraints of an object state the class of the object
+and the values of its fields.
+In our implementation, a object consists of a class name
+and a list of pairs of field names and variable names.
+In the implementation of $\mIt{OC}(x, o)$ with $o := (\mIt{cls}, \mIt{fields})$,
+we create a constraint \instBy{x}{cls} stating the class of $o$.
+Further, we create for each field-value pair $(f, v) \in \mIt{fields}$
+a constraint \pathEq{x.f}{v} stating that field $f$ of $x$ has value $v$.
+%
 \begin{figure}[h]
 \begin{lstlisting}
 // Heap Constraints
@@ -111,24 +126,6 @@ private def OC(x: Id, o: Obj): List[Constraint] = o match {
 \caption{Heap And Object Constraints}
 \label{fig:scala-heapconstr}
 \end{figure}
-%
-\Cref{fig:scala-heapconstr} implements functions \mIt{HC} and \mIt{OC}
-defined in \Cref{fig:dcc-opsemantics}.
-\\
-The constraints of a heap are the constraints
-on the objects contained in the heap.
-The implementation of $\mIt{HC}(heap)$ maps \mIt{OC} over
-all elements contained in $heap$.
-
-The constraints of an object state the class of the object
-and the values of its fields.
-In our implementation, a object consists of a class name
-and a list of pairs of field names and variable names.
-In the implementation of $\mIt{OC}(x, o)$ with $o := (\mIt{cls}, \mIt{fields})$,
-we create a constraint \instBy{x}{cls} stating the class of $o$.
-Further, we create for each field-value pair $(f, v) \in \mIt{fields}$
-a constraint \pathEq{x.f}{v} stating that field $f$ of $x$ has value $v$.
-\\
 \\
 We define function \scala{interp} in \Cref{lst:interp}.
 The function takes a heap $heap$ and an expression $expr$
