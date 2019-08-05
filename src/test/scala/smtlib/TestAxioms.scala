@@ -921,7 +921,8 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
 
     val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(p, paths)
 
-    val preprocess = Axioms.preprocessSubstRules(varsTerms, pathTerms)
+    //val preprocess = Axioms.preprocessSubstRules(varsTerms, pathTerms)
+    val preprocess = SMTLibConverter.generateSubstRules(vars, paths)
 //    ++
 //      Seq(
 //        lookup,
@@ -1050,7 +1051,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val preprocess = Seq(
       lookup,
       Axioms.cProg
-    ) ++ Axioms.preprocessSubstRules(varsTerms, pathTerms)
+    ) ++ SMTLibConverter.generateSubstRules(vars, paths)
 
     val knowledge = Seq(
       Axioms.assertVariable("x"),
@@ -1133,7 +1134,7 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
       Assert(Axioms.entails(Seq(), Axioms.instanceOf(x2P, "Zero")))
     )
 
-    val preprocessed = Axioms.preprocessSubstRules(vars.map(x => SMTLibConverter.convertId(x)), pathsTerms) ++
+    val preprocessed = SMTLibConverter.generateSubstRules(vars, paths) ++
       Seq(
         lookup,
         Axioms.cProg

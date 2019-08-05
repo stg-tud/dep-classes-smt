@@ -41,19 +41,24 @@ class DCC(P: Program) {
         val (strs, pths, clss) = SMTLibConverter.extractVariablesPathsClasses(c :: ctx)
         val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(strs, pths, clss)
 
+        val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(P, pths)
+        val substRules = SMTLibConverter.generateSubstRules(vars, pths)
+
         // debug output
-        println(entailment.format())
+        substRules.foreach(c => println(c.format()))
+        println(lookup.format())
         variables.foreach(c => println(c.format()))
         paths.foreach(c => println(c.format()))
         classes.foreach(c => println(c.format()))
+        println(entailment.format())
 
         val solver = new Z3Solver(Axioms.all, debug=false)
 
         solver.addCommands(SMTLibConverter.makeAsserts(variables))
         solver.addCommands(SMTLibConverter.makeAsserts(paths))
         solver.addCommands(SMTLibConverter.makeAsserts(classes))
-        solver.addCommands(SMTLibConverter.generateSubstRules(vars, pths))
-        solver.addCommand(SMTLibConverter.makeProgramEntailmentLookupFunction(P, pths))
+        solver.addCommands(substRules)
+        solver.addCommand(lookup)
         solver.addCommand(Axioms.cProg)
         // TODO: check if not entailment is unsat or entailment is sat?
         solver.addCommand(Assert(Not(entailment)))
@@ -462,9 +467,12 @@ object Main extends App {
 //  val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Succ), List((Id('p), ObjectConstruction(Id('Zero), Nil)))))
 //  val (h1, e1) = dcc.interp(h, FieldAccess(e, Id('p)))
 
-//  println("Heap:")
-//  h.foreach(println)
-//  println("Expr:" + e)
+  println("Heap:")
+  h.foreach(println)
+  println("Expr:" + e)
+  println("Heap1:")
+  h1.foreach(println)
+  println("Expr1:" + e1)
 }
 
 //combinations = []
