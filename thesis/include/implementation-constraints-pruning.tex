@@ -1,8 +1,8 @@
 \subsection{Pruning}
 We found that the solver sometimes times out
-on valid entailments, if we supply rules
+given a valid entailment, if we supply rules
 that are unused in the proof of the entailment.
-This we observed this in combination
+We observed this in combination
 with the enumeration of variables and paths of rule C-Subst.\\
 \\
 While all the generated rules C-Subst are valid,
@@ -13,7 +13,7 @@ This happens if the substitution produces implications
 of the form $\entails{\ovl a}{a} \rightarrow \entails{\ovl a}{a}$
 for the input.
 In our observations, this happened with reflexive path pairs \pathEq{p}{p}.
-To counter this behaviour we introduce \textit{pruning} into function \scala{generateSubstRules},
+To counter this behavior we introduce \textit{pruning} into function \scala{generateSubstRules},
 through skipping the generation of rules C-Subst for reflexive paths.
 %
 \begin{figure}[h]

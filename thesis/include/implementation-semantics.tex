@@ -330,13 +330,13 @@ and we obtain
 \[ [([\instOf{x}{\texttt{Zero}}], \newInstNoArgs{\texttt{Zero}}),
     ([\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}], x.p)] \]
 from \scala{mImplSubst}.
-We check for each method implementaion $(\ovl a, e)$
+We check for each method implementation $(\ovl a, e)$
 if \entails{HC(h)}{\ovl a}.
 We call $HC(h)$ to generate the constraints of the heap.
 Since $h$ contains only one object mapping from $x$ to $(\texttt{Zero}, [])$,
 we call $OC(x, o)$.
 From the call to $OC$ we obtain \instBy{x}{\texttt{Zero}}
-constrainting $x$ to be a direct instance of \texttt{Zero}.
+constraining $x$ to be a direct instance of \texttt{Zero}.
 We do not generate further constraints, since object $o$ has no fields.
 
 We call function \scala{entails} to solve the entailment
@@ -359,7 +359,7 @@ We generate a fresh variable $y$
 and set $o := (\texttt{Zero}, [])$.
 We search for a constructor of class $\texttt{Zero}$ in the program
 and retrieve \constr{\texttt{Zero}}{x}{\epsilon}.
-Since the constraints reqruired by the constructor are empty,
+Since the constraints required by the constructor are empty,
 we do not need to check if the heap entails the constructor constraints.
 We extend heap $h$ with the new object binding to obtain
 \[ h_1 := [x \mapsto (\texttt{Zero}, []), y \mapsto (\texttt{Zero}, [])] \]

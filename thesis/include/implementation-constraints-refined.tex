@@ -66,7 +66,7 @@ So with the current rule, the solver needs to make random instantiations
 for $a$ to afterwards check if the requirements on $a$ are met
 instead of following the observed instantiation pattern we did manually.
 To resolve this problem we need to change the rule that $a$ can be
-instantiated by direct derivating from $a_2$.
+instantiated by direct derivation from $a_2$.
 As previously stated we used $a$ on an input position
 and $a_2$ on the output position of a function call.
 To reverse these positions, we introduce \mIt{generalization} as
@@ -109,7 +109,7 @@ This generalization of a subpath cannot happen at random places inside a path,
 but only starting on the innermost/leftmost variable of the path (the root of the path AST).
 For example we can generalize $x.f$ with $y$ in $x.f.g$ to obtain $y.g$,
 but we cannot generalize $f.g$ with $h$ in $x.f.g$
-since $f$ is not the innermost occurence in $x.f.g$.
+since $f$ is not the innermost occurrence in $x.f.g$.
 So we can only start generalization from the variable of a path and not its fields.
 For paths $p, q$ and strings $x$ path generalization is defined
 such that $gen(subst(p, x, q), q, x) = p$.\\
@@ -196,7 +196,7 @@ By omitting the generalization or the substitution
 we can remove the respective let binding
 and replace the now free variable in its subexpression.
 \Cref{ex:subst-optimzed} shows this for the case $x = p_1$.
-\begin{example}[Optimzed subst rule with $x = p_1$]
+\begin{example}[Optimized subst rule with $x = p_1$]
 \label{ex:subst-optimzed}
 \begin{align*}
 &\forall \ovl a: \Constrs, a_2: \Constr.\\
@@ -437,7 +437,7 @@ non-structural way.
 The SMT solver can use the rule without a problem to check for
 two known entailments \entails{\ovl a}{a} and \entails{\ovl b}{a}
 if \ovl a is a permutation of \ovl b.
-The solver struggels with using this rule
+The solver struggles with using this rule
 for generating new entailments \entails{\ovl b}{a}
 from a single known entailment \entails{\ovl a}{a},
 such that \ovl b is a permutation of \ovl a.\\
