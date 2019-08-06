@@ -193,7 +193,7 @@ class DCC(P: Program) {
       Type(Id('notyetimplemented), List())
     // T-Var
     case x@Id(_) =>
-      classes(P).foldRight(Type(Id('tError), List())){ // first class to match wins
+      classes.foldRight(Type(Id('tError), List())){ // first class to match wins
         case (cls, _) if entails(context, InstanceOf(x, cls), Nil) => // TODO: replace Nil with vars
           val y = freshvar()
           Type(y, List(PathEquivalence(y, x)))
@@ -218,7 +218,7 @@ class DCC(P: Program) {
 
       !FV(b).contains(x) &&
       entails(PathEquivalence(FieldPath(x, f), y) :: context ++ a, b, Nil) &&
-      classes(P).foldRight(false){
+      classes.foldRight(false){
         case (cls, _) if entails(context ++ a, InstanceOf(FieldPath(x, f), cls), Nil) => true
         case (_, clss) => clss
       }
@@ -227,7 +227,7 @@ class DCC(P: Program) {
       t.constraints.size == 1 &&
         (t.constraints.head == PathEquivalence(t.x, x) ||
          t.constraints.head == PathEquivalence(x, t.x)) &&
-      classes(P).foldRight(false){ // first class to match wins
+      classes.foldRight(false){ // first class to match wins
         case (cls, _) if entails(context, InstanceOf(x, cls), Nil) => true
         case (_, clss) => clss
       }
@@ -243,8 +243,7 @@ class DCC(P: Program) {
     // T-Var
     case x@Id(_) =>
       //classes(P).foldRight(List(Type(Id('tError), List(PathEquivalence(x, Id('noValidClass)))))){
-      classes(P).foldRight(Nil: List[Type]) {
-        // TODO: list of vars: add context vars?
+      classes.foldRight(Nil: List[Type]) {
         case (cls, clss) if entails(context, InstanceOf(x, cls), List(x)) =>
           val y = freshvar()
           Type(y, List(PathEquivalence(y, x))) :: clss
@@ -256,19 +255,16 @@ class DCC(P: Program) {
     // T-Field
     case FieldAccess(e, f) =>
       val types = typeassignment(context, e)
-      // TODO:
-      // for each type
-      //   check x.f :: C
-      //   find b
+
       var ts: List[Type] = Nil
       types.foreach {
         case Type(x, a) =>
           val y = freshvar()
 
           // instance of relations for type constraints
-          val instOfs = classes(P).foldRight(Nil: List[Constraint]) { // TODO: list of vars in entails, like T-Var case
+          val instOfs = classes.foldRight(Nil: List[Constraint]) { // TODO: list of vars in entails, like T-Var case
             case (cls, clss) if entails(context ++ a, InstanceOf(FieldPath(x, f), cls), List(x)) =>
-              val c = InstanceOf(y, f)
+              val c = InstanceOf(y, cls)
               ts = Type(y, List(c)) :: ts
               c :: clss
             case (_, clss) => clss
@@ -384,10 +380,14 @@ class DCC(P: Program) {
     case _ :: rst => classInProgram(Cls, rst)
   }
 
-  private def classes(p: Program): List[Id] = p match {
-    case Nil => Nil
-    case ConstructorDeclaration(cls, _, _) :: rst => cls :: classes(rst)
-    case _ :: rst => classes(rst)
+  private def classes: List[Id] = P.flatMap(className).distinct
+
+  // TODO: add search for instance of for constraint entailment second param?
+  // TODO: search for class names in all constraints?
+  private def className(d: Declaration): Option[Id] = d match {
+    case ConstructorDeclaration(cls, _, _) => Some(cls)
+    case ConstraintEntailment(_, _, InstanceOf(_, cls)) => Some(cls)
+    case _ => None
   }
 
   private def methods: List[Id] = P.flatMap(methodName).distinct
@@ -531,18 +531,17 @@ object Main extends App {
 //  h2.foreach(println)
 //  println("Expr2:" + e2)
 
-  val exists = List(
-    InstanceOf(Id('x), Id('C)),
-    InstanceOf(Id('y), Id('C)),
-    InstanceOf(Id('z), Id('C)),
-    InstanceOf(Id('h), Id('C)),
-    InstanceOf(Id('g), Id('C))
-  ).exists {
-        case InstanceOf(Id('z), _) => true
-        case _ => false
-      }
+  val types = dcc.typeassignment(
+    List(
+      InstanceOf(Id('x), Id('Succ)),
+      InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat)),
+      InstanceOf(Id('y), Id('Zero)),
+      PathEquivalence(FieldPath(Id('x), Id('p)), Id('y))
+    ),
+    FieldAccess(Id('x), Id('p)))
 
-  println(exists)
+  println(types.size)
+  types.foreach(println)
 }
 
 //combinations = []
