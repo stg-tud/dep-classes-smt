@@ -583,7 +583,7 @@ object Main extends App {
 //            combine(terms[1:], item)
 
 object Foo extends App {
-  val l: List[List[Int]] = List(List(1, 2), List(3, 4, 5), List(6))
+  val l: List[List[Int]] = List(List(1, 2), List(3, 4), List(5))
   //    for (i <- l.head.indices) {
   //      for (j <- l(1).indices) {
   //        for (m <- l(2).indices) {
