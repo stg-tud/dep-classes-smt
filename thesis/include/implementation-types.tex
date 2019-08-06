@@ -77,7 +77,19 @@ after unification of the bound variable of the types.
 E.g. if \entails{context}{\instanceOf{x}{C}},
 we would generate a fresh variable $z$
 and obtain type \type{z}{\pathEq{z}{x}}
-and \subst{\type{z}{\pathEq{z}{x}}}{z}{y} = \type{y}{\pathEq{y}{x}}.
+and \subst{\type{z}{\pathEq{z}{x}}}{z}{y} = \type{y}{\pathEq{y}{x}}.\\
+\\
+For rule T-Field, we match for field access $e.f$.
+First, we call \scala{typeassignment} on subexpression $e$ to obtain
+the type assignments of $e$ and we create a list $\mIt{ts}$ to collect
+all the possible types for $e.f$.
+We iterate over each type \type{x}{a} of $e$ and generate a fresh variable $y$.
+We fold over all classes \mIt{cls} and check if \instOf{x.f}{cls}
+is entailed by the context concatenated with $a$.
+If so, we add \type{y}{\instOf{y}{cls}} to the collected types \mIt{ts}.
+The entailment check of \instOf{x}{cls} does consider subtyping,
+since we check for all classes and also add the subtype constraints $a$
+to the context.
 
 %
 \begin{lstlisting}[caption={Type Assignment},label=lst:typeass,captionpos=b,frame={lines}]
@@ -103,7 +115,7 @@ def typeassignment(context: List[Constraint], expr: Expression)
         val y = freshvar()
 
         // instance of relations for type constraints
-        val instOfs = classes.foldRight(Nil: List[Constraint]) {
+        classes.foldRight(Nil: List[Constraint]) {
           case (cls, clss)
           if entails(context ++ a,
                      InstanceOf(FieldPath(x, f), cls)) =>
@@ -159,7 +171,6 @@ def typeassignment(context: List[Constraint], expr: Expression)
 
         val b: List[Constraint] =
           InstantiatedBy(x, cls) :: argsConstraints
-
         val (x1, b1) = classInProgram(cls, P)
                          .getOrElse(return Nil)
 
@@ -170,7 +181,7 @@ def typeassignment(context: List[Constraint], expr: Expression)
 }
 \end{lstlisting}
 %
-
+We implement
 
 \subsection{Well-formedness of Programs}
 \label{sec:wf}
