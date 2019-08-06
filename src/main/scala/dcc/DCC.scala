@@ -329,7 +329,7 @@ class DCC(P: Program) {
 
             val (x1, b1) = classInProgram(cls, P).getOrElse(return List(Type(Id('tError), List(PathEquivalence(cls, Id('classNotFound))))))
 
-            if (entails(context ++ b, b1, List(x, x1)))
+            if (entails(context ++ b, substitute(x1, x, b1), List(x)))
               types = Type(x, b) :: types
         }
       }

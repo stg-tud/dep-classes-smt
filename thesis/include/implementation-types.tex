@@ -150,17 +150,17 @@ def typeassignment(context: List[Constraint], expr: Expression)
     
   // T-New
   case ObjectConstruction(cls, args) =>
+    val x = freshvar()
     if(args.isEmpty) {
       val b = List(InstantiatedBy(x, cls))
       val (x1, b1) = classInProgram(cls, P)
                        .getOrElse(return Nil)
-      if (entails(context ++ b, b1))
+      if (entails(context ++ b, substitute(x1, x, b1)))
         return List(Type(x, b))
     }
     val fields: List[Id] = args.map(_._1)
     val argsTypes: List[List[Type]] =
       args.map(arg => typeassignment(context, arg._2))
-    val x = freshvar()
     var types: List[Type] = Nil
     combinations(argsTypes).foreach {
       argsType =>
@@ -174,7 +174,7 @@ def typeassignment(context: List[Constraint], expr: Expression)
           InstantiatedBy(x, cls) :: argsConstraints
         val (x1, b1) = classInProgram(cls, P)
                          .getOrElse(return Nil)
-        if (entails(context ++ b, b1))
+        if (entails(context ++ b, substitute(x1, x, b1)))
           types = Type(x, b) :: types
     }
     types
@@ -199,7 +199,25 @@ We check this through the entailment \entails{context \conc a}{a1}.
 Finally, if \entails{context \conc a \conc b}{b_1} holds
 we set \type{y}{b_1} as one valid type of $m(e)$.\\
 \\
-For rule T-New, we check for object constructions \objConstr{cls}{args}.
+For rule T-New, we check for object constructions \objConstr{cls}{args}
+and generate a fresh variable $x$.
+There are two cases to consider.
+%
+\begin{enumerate}
+  \item The arguments are empty.
+  \item The arguments are not empty.
+\end{enumerate}
+%
+For (1), if there are no arguments supplied to the constructor
+we set $b := \instBy{x}{cls}$.
+We check if the program has a constructor \constr{cls}{x_1}{b_1}.
+If so, we check \entails{context \conc b}{\subst{b_1}{x_1}{x}}
+and return \type{x}{b}.
+Otherwise we return the empty list.\\
+\\
+For (2), if there are arguments supplied to the constructor.
+
+
 
 \subsection{Well-formedness of Programs}
 \label{sec:wf}
