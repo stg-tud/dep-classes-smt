@@ -311,19 +311,27 @@ class DCC(P: Program) {
       val x = freshvar()
       var types: List[Type] = Nil
 
-      combinations(argsTypes).foreach {
-        argsType =>
-          val argsPairs: List[(Id, Type)] = fields.zip(argsType)
-          val argsConstraints: List[Constraint] = argsPairs.flatMap{
-            case (fi, Type(xi, ai)) => substitute(xi, FieldPath(x, fi), ai)
-          }
-
-          val b: List[Constraint] = InstantiatedBy(x, cls) :: argsConstraints
-
+      argsTypes match {
+        case Nil =>
+          val b = List(InstantiatedBy(x, cls))
           val (x1, b1) = classInProgram(cls, P).getOrElse(return List(Type(Id('tError), List(PathEquivalence(cls, Id('classNotFound))))))
 
           if (entails(context ++ b, b1, List(x, x1)))
             types = Type(x, b) :: types
+        case _ => combinations(argsTypes).foreach {
+          argsType =>
+            val argsPairs: List[(Id, Type)] = fields.zip(argsType)
+            val argsConstraints: List[Constraint] = argsPairs.flatMap{
+              case (fi, Type(xi, ai)) => substitute(xi, FieldPath(x, fi), ai)
+            }
+
+            val b: List[Constraint] = InstantiatedBy(x, cls) :: argsConstraints
+
+            val (x1, b1) = classInProgram(cls, P).getOrElse(return List(Type(Id('tError), List(PathEquivalence(cls, Id('classNotFound))))))
+
+            if (entails(context ++ b, b1, List(x, x1)))
+              types = Type(x, b) :: types
+        }
       }
 
       types
@@ -540,18 +548,26 @@ object Main extends App {
 ////    , PathEquivalence(FieldPath(Id('x), Id('p)), Id('y))
 //    ),
 //    FieldAccess(Id('x), Id('p)))
-//
-//  println(types.size)
-//  types.foreach(println)
+
+  val types = dcc.typeassignment(
+    List(
+      InstanceOf(Id('x), Id('Zero))
+      //    , InstanceOf(Id('y), Id('Zero))
+      //    , PathEquivalence(FieldPath(Id('x), Id('p)), Id('y))
+    ),
+    ObjectConstruction(Id('Zero), List()))
+
+  println(types.size)
+  types.foreach(println)
 
   // subst with prog does time out for some reason
-  dcc.entails(
-    List(
-      InstanceOf(Id('x), Id('Succ)),
-      InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat)),
-      PathEquivalence(Id('y), Id('x))
-    ),
-    InstanceOf(Id('y), Id('Nat)), List())
+//  dcc.entails(
+//    List(
+//      InstanceOf(Id('x), Id('Succ)),
+//      InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat)),
+//      PathEquivalence(Id('y), Id('x))
+//    ),
+//    InstanceOf(Id('y), Id('Nat)), List())
 }
 
 //combinations = []

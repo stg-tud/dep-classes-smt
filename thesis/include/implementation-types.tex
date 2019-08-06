@@ -133,18 +133,15 @@ def typeassignment(context: List[Constraint], expr: Expression)
     val y = freshvar()
 
     var types: List[Type] = Nil
-
     // for all possible argument types
     for (Type(x, a) <- eTypes) {
       // for all method declarations
       for ((a1, b) <- mTypeSubst(m, x, y)) {
         val entailsArgs = entails(context ++ a, a1)
-
         val b1 = (a1 ++ b).foldRight(Nil: List[Constraint]) {
           case (c, cs) if !FV(c).contains(x) => c :: cs
           case (_, cs) => cs
         }
-
         if (entailsArgs && entails(context ++ a ++ b, b1))
           types = Type(y, b1) :: types
       }
@@ -156,10 +153,8 @@ def typeassignment(context: List[Constraint], expr: Expression)
     val fields: List[Id] = args.map(_._1)
     val argsTypes: List[List[Type]] =
       args.map(arg => typeassignment(context, arg._2))
-
     val x = freshvar()
     var types: List[Type] = Nil
-
     combinations(argsTypes).foreach {
       argsType =>
         val argsPairs: List[(Id, Type)] = fields.zip(argsType)
@@ -168,20 +163,34 @@ def typeassignment(context: List[Constraint], expr: Expression)
           case (fi, Type(xi, ai)) =>
             substitute(xi, FieldPath(x, fi), ai)
         }
-
         val b: List[Constraint] =
           InstantiatedBy(x, cls) :: argsConstraints
         val (x1, b1) = classInProgram(cls, P)
                          .getOrElse(return Nil)
-
         if (entails(context ++ b, b1))
           types = Type(x, b) :: types
+    }
+    if(args.isEmpty) {
+      val b = List(InstantiatedBy(x, cls))
+      val (x1, b1) = classInProgram(cls, P)
+                       .getOrElse(return Nil)
+      if (entails(context ++ b, b1, List(x, x1)))
+        types = Type(x, b) :: types
     }
     types
 }
 \end{lstlisting}
 %
-We implement
+We implement rule T-Call by matching for method calls $m(e)$.
+We call \scala{typeassignment} on the parameter $e$
+and create a fresh variable $y$.
+We iterate over each parameter type \type{x}{a}
+and call \scala{mTypeSubst} to obtain
+the types of method $m$,
+where the parameter constraints are substituted with $x$
+and the return type constraints are substituted with $y$.
+For each $(a_1, b)$ obtained from \scala{mTypeSubst},
+we check \entails{}{}
 
 \subsection{Well-formedness of Programs}
 \label{sec:wf}
@@ -307,6 +316,8 @@ For each type \type{z}{c} of $e$, we
 substitute $z$ with $y$ in $c$ to unify the type variable
 and check that each element of $c$ is also contained in $b$,
 as well as requiring that the size of $c$ equals the size of $b$.
+
+% TODO: example: wf natural numbers
 
 %%% Local Variables: 
 %%% mode: latex
