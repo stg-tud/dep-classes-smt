@@ -243,7 +243,11 @@ class DCC(P: Program) {
       classes.foldRight(Nil: List[Type]) {
         case (cls, clss) if entails(context, InstanceOf(x, cls), List(x)) =>
           val y = freshvar()
-          Type(y, List(PathEquivalence(y, x))) :: clss
+//          Type(y, List(PathEquivalence(y, x))) :: Nil// :: clss TODO: no need to find another one, as the type would be the same (after renaming)
+          List(
+            Type(y, List(PathEquivalence(y, x))),
+            Type(y, List(PathEquivalence(x, y)))
+          )
         case (_, clss) => clss
       } match {
         case Nil => List(Type(Id('tError), List(PathEquivalence(x, Id('noValidClass)))))
@@ -302,7 +306,7 @@ class DCC(P: Program) {
     case ObjectConstruction(cls, args) =>
       val fields: List[Id] = args.map(_._1)
       val argsTypes: List[List[Type]] = args.map(arg => typeassignment(context, arg._2))
-      //val argsTypes: List[(Id, List[Type])] = args.map{case (f, e) => (f, typeass(context, e))}
+      //val argsTypes: List[(Id, List[Type])] = args.map{case (f, e) => (f, typeassignment(context, e))}
 
       val x = freshvar()
       var types: List[Type] = Nil
