@@ -21,10 +21,7 @@ class DCC(P: Program) {
     // debug output
     context match {
       case Nil => println(s"ϵ |- $c")
-      case _ if context.size < 4 => println(s"${syntax.Util.commaSeparate(context)} |- $c")
-      case _ =>
-        context.foreach(println)
-        println(s"|- $c")
+      case _  => println(s"${syntax.Util.commaSeparate(context.distinct)} |- $c")
     }
 
     (context.distinct, c) match {
@@ -515,15 +512,15 @@ object Main extends App {
 
   val dcc = new DCC(naturalNumbers)
 
-  val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Zero), Nil))
+//  val (h, e) = dcc.interp(Map.empty, ObjectConstruction(Id('Zero), Nil))
 //  val (h1, e1) = dcc.interp(h, ObjectConstruction(Id('Succ), List((Id('p), e))))
 //  val e1 = Id('x2)
 //  val h1 = h + (e1 -> (Id('Succ), List((Id('p), e.asInstanceOf[Id]))))
 //  val (h2, e2) = dcc.interp(h, MethodCall(Id('prev), e))
 
-  println("Heap:")
-  h.foreach(println)
-  println("Expr:" + e)
+//  println("Heap:")
+//  h.foreach(println)
+//  println("Expr:" + e)
 //  println("Heap1:")
 //  h1.foreach(println)
 //  println("Expr1:" + e1)
@@ -531,17 +528,26 @@ object Main extends App {
 //  h2.foreach(println)
 //  println("Expr2:" + e2)
 
-  val types = dcc.typeassignment(
+//  val types = dcc.typeassignment(
+//    List(
+//      InstanceOf(Id('x), Id('Succ))
+//    , InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))
+////    , InstanceOf(Id('y), Id('Zero))
+////    , PathEquivalence(FieldPath(Id('x), Id('p)), Id('y))
+//    ),
+//    FieldAccess(Id('x), Id('p)))
+//
+//  println(types.size)
+//  types.foreach(println)
+
+  // subst with prog does time out for some reason
+  dcc.entails(
     List(
       InstanceOf(Id('x), Id('Succ)),
       InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat)),
-      InstanceOf(Id('y), Id('Zero)),
-      PathEquivalence(FieldPath(Id('x), Id('p)), Id('y))
+      PathEquivalence(Id('y), Id('x))
     ),
-    FieldAccess(Id('x), Id('p)))
-
-  println(types.size)
-  types.foreach(println)
+    InstanceOf(Id('y), Id('Nat)), List())
 }
 
 //combinations = []
