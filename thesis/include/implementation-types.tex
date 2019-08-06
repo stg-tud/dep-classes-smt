@@ -114,7 +114,7 @@ def typecheck(D: Declaration): Boolean = D match {
     val vars = FV(b)
     FV(a) == List(x) && vars.nonEmpty &&
       vars.forall(v => v == x || v == y) &&
-    typeass(a, e).exists {
+    typeassignment(a, e).exists {
       case Type(z, c) =>
         c.size == b.size &&
         substitute(z, y, c).forall(b.contains(_))
@@ -157,7 +157,7 @@ We require the free variables of $a$ to be $x$
 and the free variables of $b$ to be either $x$ or $y$.
 We further check if the type of the method body $e$
 matches the annotated type \type{y}{b}.
-For this, we call function \scala{typeass}
+For this, we call function \scala{typeassignment}
 with the context $a$ and expression $e$
 to obtain a list of types of $e$.
 For each type \type{z}{c} of $e$, we

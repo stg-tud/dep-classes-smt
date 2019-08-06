@@ -181,10 +181,10 @@ class DCC(P: Program) {
   }
 
   // TODO: change return type to boolean and move Type to the arguments? (to check if expr has type holds and not doing type inference)
-  def typeassignment(context: List[Constraint], expr: Expression): Type = expr match {
+  def _typeassignment(context: List[Constraint], expr: Expression): Type = expr match {
     // T-Field
     case FieldAccess(e, f) =>
-      val Type(x, a) = typeassignment(context, e)
+      val Type(x, a) = _typeassignment(context, e)
 
 //      val entails1 = entails(context ++ a, InstanceOf(FieldPath(x, f), ???)) // TODO: for all classes (like T-Var) to find suitable class
 //      val entails2 = entails(context ++ a :+ PathEquivalence(FieldPath(x, f), y), b) // TODO: how to find y, b -> use Type as argument and return boolean (see typeassignment1)
@@ -208,10 +208,10 @@ class DCC(P: Program) {
   }
 
   // TODO: replace Nil with vars in entails
-  def typeassignment1(context: List[Constraint], expr: Expression, t: Type): Boolean = expr match {
+  def _typeassignment1(context: List[Constraint], expr: Expression, t: Type): Boolean = expr match {
     // T-Field
     case FieldAccess(e, f) =>
-      val Type(x, a) = typeassignment(context, e)
+      val Type(x, a) = _typeassignment(context, e)
       // TODO: typeassignment1(context, e, Type(???, ???)) how to find x, y -> use type as return value (see typeassignment)
       val y = t.x
       val b = t.constraints
@@ -239,7 +239,7 @@ class DCC(P: Program) {
     case e => false
   }
 
-  def typeass(context: List[Constraint], expr: Expression): List[Type] = expr match {
+  def typeassignment(context: List[Constraint], expr: Expression): List[Type] = expr match {
     // T-Var
     case x@Id(_) =>
       //classes(P).foldRight(List(Type(Id('tError), List(PathEquivalence(x, Id('noValidClass)))))){
@@ -255,7 +255,7 @@ class DCC(P: Program) {
       }
     // T-Field
     case FieldAccess(e, f) =>
-      val types = typeass(context, e)
+      val types = typeassignment(context, e)
       // TODO:
       // for each type
       //   check x.f :: C
@@ -283,7 +283,7 @@ class DCC(P: Program) {
       ts
     // T-Call
     case MethodCall(m, e) =>
-      val eTypes = typeass(context, e)
+      val eTypes = typeassignment(context, e)
       val y = freshvar()
 
       var types: List[Type] = Nil
@@ -308,7 +308,7 @@ class DCC(P: Program) {
     // T-New
     case ObjectConstruction(cls, args) =>
       val fields: List[Id] = args.map(_._1)
-      val argsTypes: List[List[Type]] = args.map(arg => typeass(context, arg._2))
+      val argsTypes: List[List[Type]] = args.map(arg => typeassignment(context, arg._2))
       //val argsTypes: List[(Id, List[Type])] = args.map{case (f, e) => (f, typeass(context, e))}
 
       val x = freshvar()
@@ -371,7 +371,7 @@ class DCC(P: Program) {
     case MethodImplementation(_, x, a, Type(y, b), e) =>
       val vars = FV(b) // TODO: check if x != y for size check?
       FV(a) == List(x) && vars.nonEmpty && vars.forall(v => v == x || v == y) &&
-      typeass(a, e).exists {
+      typeassignment(a, e).exists {
         case Type(z, c) =>
           c.size == b.size &&
           substitute(z, y, c).forall(b.contains(_))
