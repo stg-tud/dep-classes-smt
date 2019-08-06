@@ -150,6 +150,13 @@ def typeassignment(context: List[Constraint], expr: Expression)
     
   // T-New
   case ObjectConstruction(cls, args) =>
+    if(args.isEmpty) {
+      val b = List(InstantiatedBy(x, cls))
+      val (x1, b1) = classInProgram(cls, P)
+                       .getOrElse(return Nil)
+      if (entails(context ++ b, b1))
+        return List(Type(x, b))
+    }
     val fields: List[Id] = args.map(_._1)
     val argsTypes: List[List[Type]] =
       args.map(arg => typeassignment(context, arg._2))
@@ -170,13 +177,6 @@ def typeassignment(context: List[Constraint], expr: Expression)
         if (entails(context ++ b, b1))
           types = Type(x, b) :: types
     }
-    if(args.isEmpty) {
-      val b = List(InstantiatedBy(x, cls))
-      val (x1, b1) = classInProgram(cls, P)
-                       .getOrElse(return Nil)
-      if (entails(context ++ b, b1, List(x, x1)))
-        types = Type(x, b) :: types
-    }
     types
 }
 \end{lstlisting}
@@ -190,7 +190,14 @@ the types of method $m$,
 where the parameter constraints are substituted with $x$
 and the return type constraints are substituted with $y$.
 For each $(a_1, b)$ obtained from \scala{mTypeSubst},
-we check \entails{}{}
+we set $b_1$ to be the constraints free of $x$
+from the parameter constraints $a_1$
+and the type constraints $b$.
+The provided parameter is applicable to the method,
+if the supplied parameter entails the formal argument of the method.
+We check this through the entailment \entails{context \conc a}{a1}.
+Finally, if \entails{context \conc a \conc b}{b_1} holds
+we set \type{y}{b_1} as one valid type of $m(e)$.
 
 \subsection{Well-formedness of Programs}
 \label{sec:wf}
