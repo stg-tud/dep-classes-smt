@@ -1,7 +1,19 @@
 \section{Type Relation}
+In this section we implement the type relations presented in \Cref{sec:dcc-types}.
+The $DC_C$ calculus defines type assignments for expressions
+shown in \Cref{fig:dcc-typeass}
+and well-formedness of programs shown in \Cref{fig:dcc-wf}.
+
 \subsection{Type Assignments for Expressions}
 
 \subsection{Well-formedness of Programs}
+In \Cref{lst:wf} we define a function \scala{typecheck},
+which implements well-formedness of programs.
+The function as two implementations,
+one taking a program $P$
+and the other taking a declaration $D$
+as argument.
+
 %\begin{figure}
 \begin{lstlisting}[caption={Well-formedness},label=lst:wf,captionpos=b,frame={lines}]
 def typecheck(P: Program): Boolean = {

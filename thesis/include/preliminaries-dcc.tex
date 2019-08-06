@@ -233,6 +233,7 @@ if \entails{\ovl{a'}}{\ovl{a}},
 but not the other way around $\neg\entails{\ovl{a}}{\ovl{a'}}$.
 
 \subsubsection{Type Checking}
+\label{sec:dcc-types}
 % begin Type assignment figure
 \begin{figure}
 % T-Field
@@ -382,6 +383,8 @@ Typechecking a program is defined in \Cref{fig:dcc-wf}.
 A program is well-formed if all its declarations are well-formed,
 method implementations need to be unique and complete
 and all declarations of a method need to have the same return type.
+Completeness and uniqueness of method implementations are properties
+of well-formed heaps.
 A declaration is well-formed if its used variables are bound.
 Rule WF-MI additionally checks if the body of a method declaration
 respects the declared return type.
@@ -390,11 +393,6 @@ constraints of the form \instOf{x}{C} can only be derived
 if some other class of $x$ is known.
 Such derivation rules are used to encode inheritance between
 dependent classes.
-
-Completeness and uniqueness of method implementations are defined
-based on well-formed heaps.
-Since it is not possible to generate all heaps
-these properties cannot be directly implemented.
 
 % begin Operational Semantics figure}
 \begin{figure}[h]
