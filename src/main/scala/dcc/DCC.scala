@@ -372,7 +372,9 @@ class DCC(P: Program) {
       val vars = FV(b) // TODO: check if x != y for size check?
       FV(a) == List(x) && vars.nonEmpty && vars.forall(v => v == x || v == y) &&
       typeass(a, e).exists {
-        case Type(z, c) => substitute(z, y, c).forall(b.contains(_))
+        case Type(z, c) =>
+          c.size == b.size &&
+          substitute(z, y, c).forall(b.contains(_))
       }
   }
 

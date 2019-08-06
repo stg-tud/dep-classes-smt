@@ -5,17 +5,19 @@ shown in \Cref{fig:dcc-typeass}
 and well-formedness of programs shown in \Cref{fig:dcc-wf}.
 
 \subsection{Type Assignments for Expressions}
+\label{sec:typeass}
 
 \subsection{Well-formedness of Programs}
-In \Cref{lst:wf} we define a function \scala{typecheck},
+\label{sec:wf}
+We define a function \scala{typecheck},
 which implements well-formedness of programs.
-The function as two implementations,
-one taking a program $P$
-and the other taking a declaration $D$
+The function has two implementations,
+one taking a program
+and the other taking a declaration
 as argument.
-
-%\begin{figure}
-\begin{lstlisting}[caption={Well-formedness},label=lst:wf,captionpos=b,frame={lines}]
+%
+\begin{figure}[h]
+\begin{lstlisting}
 def typecheck(P: Program): Boolean = {
   val x = freshvar()
   val y = freshvar()
@@ -24,20 +26,42 @@ def typecheck(P: Program): Boolean = {
     val mTypes = mTypeSubst(m, x, y)
 
     mTypes.forall {
-      case (a, b) =>
+      case (_, b) =>
         mTypes.forall {
-          case (a1, b1) =>
+          case (_, b1) =>
             b.size == b1.size &&
             b.forall(c => b1.contains(c))
         }
     }
   } && P.forall(typecheck)
 }
-
+\end{lstlisting}
+\caption{Well-formedness Of Programs}
+\label{fig:scala-wf-prog}
+\end{figure}\\
+%
+\Cref{fig:scala-wf-prog} shows the implementation
+of function \scala{typecheck} for program inputs.
+We generate fresh variables $x$ and $y$
+and for all methods $m$ and variables $x$ and $y$,
+we call \mIt{mTypeSubst} to obtain the argument- and return types for method $m$.
+We check for each combination of specified return types  $b$ and $b_1$,
+if $b$ and $b_1$ have the same number of elements
+and that each element from $b$ is also contained in $b_1$.
+This ensures that each implementation of method $m$
+have the same specified return type.
+%
+Additionally, we check if each declaration is well-formed,
+by passing function \scala{typecheck} to each declaration
+with \scala{P.forall(typecheck)}.
+%
+\begin{figure}[t]
+\begin{lstlisting}
 def typecheck(D: Declaration): Boolean = D match {
   // WF-CD
   case ConstructorDeclaration(cls, x, a) =>
-    FV(a) == List(x)
+    FV(a) == List(x) || FV(a).isEmpty
+    
   // WF-RD
   case ConstraintEntailment(x, a, InstanceOf(y, _))
    if x == y =>
@@ -45,23 +69,68 @@ def typecheck(D: Declaration): Boolean = D match {
       case InstanceOf(`x`, _) => true
       case _ => false
     }
+    
   // WF-MS
-  case AbstractMethodDeclaration(m, x, a, Type(y, b)) =>
+  case AbstractMethodDeclaration(_, x, a, Type(y, b)) =>
     val vars = FV(b)
-    FV(a) == List(x) && vars.size == 2 &&
-      vars.contains(x) && vars.contains(y)
+    FV(a) == List(x) && vars.nonEmpty &&
+      vars.forall(v => v == x || v == y)
+      
   // WF-MI
-  case MethodImplementation(m, x, a, Type(y, b), e) =>
+  case MethodImplementation(_, x, a, Type(y, b), e) =>
     val vars = FV(b)
-    FV(a) == List(x) && vars.size == 2 &&
-    vars.contains(x) && vars.contains(y) &&
-    typeass(a, e).contains{
+    FV(a) == List(x) && vars.nonEmpty &&
+      vars.forall(v => v == x || v == y) &&
+    typeass(a, e).exists {
       case Type(z, c) =>
+        c.size == b.size &&
         substitute(z, y, c).forall(b.contains(_))
     }
 }
 \end{lstlisting}
-%\end{figure}
+\caption{Well-formedness Of Declarations}
+\label{fig:scala-wf-decl}
+\end{figure}\\
+\\
+The implementation of well-formedness for declarations
+is given in \Cref{fig:scala-wf-decl}.
+The rules are syntax-directed and we match for the
+structure of the declarations in the implementation.\\
+\\
+For constructor declarations \constr{cls}{x}{a}
+we require the free variables of $a$ to be the bound
+variable of the constrcutor $x$ or to be empty.
+We allow the free variables to be empty,
+because the constructor \constr{\texttt{Zero}}{x}{\epsilon}
+as seen in \Cref{ex:dcc-naturalnumbers} is well-formed.\\
+\\
+In the implementation of rule WF-RD,
+we match for constrain entailments \progEnt{x}{a}{\instOf{y}{C}}
+with $x = y$.
+This pattern ensures that the entailed constraint
+expresses that $x$ is the instance of some class.
+Further we require that $x$ is the only variable free in $a$
+and that at least one constraint of the form \instOf{x}{C'}
+exists in $a$.\\
+\\
+In the implementation of rule WF-MS,
+we match for abstract method declarations \mDecl{m}{x}{a}{\type{y}{b}}.
+We require the free variables of $a$ to be $x$
+and the free variables of $b$ to be either $x$ or $y$.\\
+\\
+In the implementation of rule WF-MI,
+we match for method implementation declarations \mImpl{m}{x}{a}{\type{y}{b}}{e}.
+We require the free variables of $a$ to be $x$
+and the free variables of $b$ to be either $x$ or $y$.
+We further check if the type of the method body $e$
+matches the annotated type \type{y}{b}.
+For this, we call function \scala{typeass}
+with the context $a$ and expression $e$
+to obtain a list of types of $e$.
+For each type \type{z}{c} of $e$, we
+substitute $z$ with $y$ in $c$ to unify the type variable
+and check that each element of $c$ is also contained in $b$,
+as well as requiring that the size of $c$ equals the size of $b$.
 
 %%% Local Variables: 
 %%% mode: latex
