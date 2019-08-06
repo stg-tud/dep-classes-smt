@@ -38,7 +38,21 @@ For each match, we substitute $x_1$ with $x$ in $a$ and $y_1$ with $y$ in $b$.
 
 \subsection{Type Assignments for Expressions}
 \label{sec:typeass}
-\cite{tpl}
+In this section, we define a function \scala{typeassignment}
+implementing type assignments for expressions presented in \Cref{fig:dcc-typeass}.
+The type relation of the $DC_C$ calculus is not immediately suitable for implementation,
+as the rules are not syntax directed.
+The main obstacle is the rule of subsumption T-Sub,
+as the rule has a bare metavariable $e$ in its conclusion.
+The other rules apply only to a specific form of expressions.
+A process of transforming such a declarative system into an algorithmic one
+is shown in~\cite{tpl} for the simply typed lambda-calculus.
+This process includes the transformation of the declarative subtyping relation
+into an algoritmic subtyping.
+Since inheritance in the $DC_C$ calculus is expressed through constraint entailments,
+we can use the SMT solver to check for subtyping.
+
+
 
 \subsection{Well-formedness of Programs}
 \label{sec:wf}
