@@ -366,12 +366,12 @@ class DCC(P: Program) {
     // WF-MS
     case AbstractMethodDeclaration(_, x, a, Type(y, b)) =>
       val vars = FV(b) // TODO: check if x != y for size check?
-      FV(a) == List(x) && vars.size == 2 && vars.contains(x) && vars.contains(y)
+      FV(a) == List(x) && vars.nonEmpty && vars.forall(v => v == x || v == y)
     // WF-MI
     case MethodImplementation(_, x, a, Type(y, b), e) =>
       val vars = FV(b) // TODO: check if x != y for size check?
-      FV(a) == List(x) && vars.size == 2 && vars.contains(x) && vars.contains(y) &&
-      typeass(a, e).contains {
+      FV(a) == List(x) && vars.nonEmpty && vars.forall(v => v == x || v == y) &&
+      typeass(a, e).exists {
         case Type(z, c) => substitute(z, y, c).forall(b.contains(_))
       }
   }
