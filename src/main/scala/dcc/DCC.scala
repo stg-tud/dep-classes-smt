@@ -356,7 +356,7 @@ class DCC(P: Program) {
 
   def typecheck(D: Declaration): Boolean = D match {
     // WF-CD
-    case ConstructorDeclaration(cls, x, a) => FV(a) == List(x)
+    case ConstructorDeclaration(cls, x, a) => FV(a) == List(x) || FV(a).isEmpty
     // WF-RD
     case ConstraintEntailment(x, a, InstanceOf(y, _)) if x == y =>
       FV(a) == List(x) && a.exists {
