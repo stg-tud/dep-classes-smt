@@ -182,8 +182,8 @@ def typeassignment(context: List[Constraint], expr: Expression)
 \end{lstlisting}
 %
 We implement rule T-Call by matching for method calls $m(e)$.
-We call \scala{typeassignment} on the parameter $e$
-and create a fresh variable $y$.
+We create a fresh variable $y$
+and call \scala{typeassignment} on the parameter $e$.
 We iterate over each parameter type \type{x}{a}
 and call \scala{mTypeSubst} to obtain
 the types of method $m$,
@@ -197,7 +197,9 @@ The provided parameter is applicable to the method,
 if the supplied parameter entails the formal argument of the method.
 We check this through the entailment \entails{context \conc a}{a1}.
 Finally, if \entails{context \conc a \conc b}{b_1} holds
-we set \type{y}{b_1} as one valid type of $m(e)$.
+we set \type{y}{b_1} as one valid type of $m(e)$.\\
+\\
+For rule T-New, we check for object constructions \objConstr{cls}{args}.
 
 \subsection{Well-formedness of Programs}
 \label{sec:wf}
