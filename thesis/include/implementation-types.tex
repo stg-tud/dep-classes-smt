@@ -50,8 +50,126 @@ is shown in~\cite{tpl} for the simply typed lambda-calculus.
 This process includes the transformation of the declarative subtyping relation
 into an algoritmic subtyping.
 Since inheritance in the $DC_C$ calculus is expressed through constraint entailments,
-we can use the SMT solver to check for subtyping.
+we can use the SMT solver to check for subtyping
+and incorporate subtyping into the type rules.
 
+Type assignments in the $DC_C$ calculus are not unique.
+For this, we define the function \scala{typeassignment}
+to return a list of types, instead of a single type.\\
+\\
+The implementation of function \scala{typeassignment}
+is given in \Cref{lst:typeass}.
+The function takes a list of constraints as the type context
+and an expression to assign a type for as arguments.
+It returns as list of types.
+The function matches the structure of the expression.\\
+\\
+For rule T-Var, we match for variable access.
+To assign a type to variable $x$, we need to ensure
+that the variable is an instance of some class.
+We check for each class \mIt{cls} if \entails{context}{\instanceOf{x}{cls}}.
+If so, we generate a fresh variable $y$ and return \type{y}{\pathEq{y}{x}}.
+If $x$ is not an instance of any class, we return the empty list.
+For this case it is sufficient to return after the first match,
+because every further type assignment
+would result in the same type
+after unification of the bound variable of the types.
+E.g. if \entails{context}{\instanceOf{x}{C}},
+we would generate a fresh variable $z$
+and obtain type \type{z}{\pathEq{z}{x}}
+and \subst{\type{z}{\pathEq{z}{x}}}{z}{y} = \type{y}{\pathEq{y}{x}}.
+
+%
+\begin{lstlisting}[caption={Type Assignment},label=lst:typeass,captionpos=b,frame={lines}]
+def typeassignment(context: List[Constraint], expr: Expression)
+    : List[Type] = expr match {
+  // T-Var
+  case x@Id(_) =>
+    classes.foldRight(Nil: List[Type]) {
+      case (cls, _)
+      if entails(context, InstanceOf(x, cls)) =>
+        val y = freshvar()
+        Type(y, List(PathEquivalence(y, x))) :: Nil
+      case (_, clss) => clss
+    }
+    
+  // T-Field
+  case FieldAccess(e, f) =>
+    val types = typeassignment(context, e)
+
+    var ts: List[Type] = Nil
+    types.foreach {
+      case Type(x, a) =>
+        val y = freshvar()
+
+        // instance of relations for type constraints
+        val instOfs = classes.foldRight(Nil: List[Constraint]) {
+          case (cls, clss)
+          if entails(context ++ a,
+                     InstanceOf(FieldPath(x, f), cls)) =>
+            val c = InstanceOf(y, cls)
+            ts = Type(y, List(c)) :: ts
+            c :: clss
+          case (_, clss) => clss
+        }
+    }
+    ts
+    
+  // T-Call
+  case MethodCall(m, e) =>
+    val eTypes = typeassignment(context, e)
+    val y = freshvar()
+
+    var types: List[Type] = Nil
+
+    // for all possible argument types
+    for (Type(x, a) <- eTypes) {
+      // for all method declarations
+      for ((a1, b) <- mTypeSubst(m, x, y)) {
+        val entailsArgs = entails(context ++ a, a1)
+
+        val b1 = (a1 ++ b).foldRight(Nil: List[Constraint]) {
+          case (c, cs) if !FV(c).contains(x) => c :: cs
+          case (_, cs) => cs
+        }
+
+        if (entailsArgs && entails(context ++ a ++ b, b1))
+          types = Type(y, b1) :: types
+      }
+    }
+    types
+    
+  // T-New
+  case ObjectConstruction(cls, args) =>
+    val fields: List[Id] = args.map(_._1)
+    val argsTypes: List[List[Type]] =
+      args.map(arg => typeassignment(context, arg._2))
+
+    val x = freshvar()
+    var types: List[Type] = Nil
+
+    combinations(argsTypes).foreach {
+      argsType =>
+        val argsPairs: List[(Id, Type)] = fields.zip(argsType)
+        val argsConstraints: List[Constraint] =
+        argsPairs.flatMap {
+          case (fi, Type(xi, ai)) =>
+            substitute(xi, FieldPath(x, fi), ai)
+        }
+
+        val b: List[Constraint] =
+          InstantiatedBy(x, cls) :: argsConstraints
+
+        val (x1, b1) = classInProgram(cls, P)
+                         .getOrElse(return Nil)
+
+        if (entails(context ++ b, b1))
+          types = Type(x, b) :: types
+    }
+    types
+}
+\end{lstlisting}
+%
 
 
 \subsection{Well-formedness of Programs}
