@@ -3,6 +3,38 @@ In this section we implement the type relations presented in \Cref{sec:dcc-types
 The $DC_C$ calculus defines type assignments for expressions
 shown in \Cref{fig:dcc-typeass}
 and well-formedness of programs shown in \Cref{fig:dcc-wf}.
+%
+\begin{figure}[h]
+\begin{lstlisting}
+private def mTypeSubst(m: Id, x: Id, y: Id)
+    : List[(List[Constraint], List[Constraint])] =
+  P.foldRight(Nil: List[(List[Constraint], List[Constraint])]){
+    case (AbstractMethodDeclaration(
+            `m`, x1, a, Type(y1, b)), rst) =>
+      (substitute(x1, x, a),
+       substitute(y1, y, b)) :: rst
+    case (MethodImplementation(
+            `m`, x1, a, Type(y1, b), _), rst) =>
+      (substitute(x1, x, a),
+       substitute(y1, y, b)) :: rst
+    case (_, rst) => rst
+  }
+\end{lstlisting}
+\caption{Function mTypeSubst}
+\label{fig:scala-mtype}
+\end{figure}\\
+We define function \scala{mTypeSubst} in \Cref{fig:scala-mtype}.
+The function implements function \mIt{mType}
+presented in \Cref{fig:dcc-syntax}.
+The function takes a method name $m$ and
+variables $x$ and $y$ as arguments.
+In \scala{mTypeSubst}, we explicitly unify the formal argument
+with $x$ and the bound variable of the declared type with $y$.
+In the implementation we fold over the declarations of the program.
+We match abstract declarations \mDecl{m}{x_1}{a}{\type{y_1}{b}},
+as well as implementations \mImpl{m}{x_1}{a}{\type{y_1}{b}}{e} of method $m$.
+For each match, we substitute $x_1$ with $x$ in $a$ and $y_1$ with $y$ in $b$.
+
 
 \subsection{Type Assignments for Expressions}
 \label{sec:typeass}
