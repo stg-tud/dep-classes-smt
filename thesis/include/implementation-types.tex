@@ -131,13 +131,13 @@ structure of the declarations in the implementation.\\
 \\
 For constructor declarations \constr{cls}{x}{a}
 we require the free variables of $a$ to be the bound
-variable of the constrcutor $x$ or to be empty.
+variable of the constructor $x$ or to be empty.
 We allow the free variables to be empty,
 because the constructor \constr{\texttt{Zero}}{x}{\epsilon}
 as seen in \Cref{ex:dcc-naturalnumbers} is well-formed.\\
 \\
 In the implementation of rule WF-RD,
-we match for constrain entailments \progEnt{x}{a}{\instOf{y}{C}}
+we match for constraint entailment declarations \progEnt{x}{a}{\instOf{y}{C}}
 with $x = y$.
 This pattern ensures that the entailed constraint
 expresses that $x$ is the instance of some class.
