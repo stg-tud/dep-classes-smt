@@ -3,11 +3,41 @@ In the $DC_C$ calculus we need to solve a constraint system
 when interpreting an expression, as well when type checking a program.
 The need to solve a constraint system during runtime produces unwanted overhead,
 as solving the constraint system takes some time.
-For example, the time it takes to type check the natural numbers program
-as seen in \Cref{ex:wf-naturalnumbers} is already around 40 seconds
-with the provided implementation.
-While the implementation can surely be further optimized
-without touching the model of the constraint system,
+
+For example, we interpreted a method call in \Cref{ex:eval-call}.
+During evaluation, we needed to find the most specific method
+that was applicable to the provided parameter.
+For this we needed to solve a constraint entailment
+for each method implementation.
+Another example is the type checking of the natural numbers program
+as seen in \Cref{ex:wf-naturalnumbers}.
+There, we again needed to call the SMT solver.
+
+In both examples, we needed to solve constraint entailments during execution.
+There are two cases to consider: The solver
+\begin{enumerate}
+  \item does find a derivation.
+  \item does not find a derivation.
+\end{enumerate}
+For (1):
+If solver finds a derivation,
+the constraint entailment holds.
+The amount of time it takes the solver to find this derivation
+is between $0$ and \mIt{limit},
+where \mIt{limit} is the maximum amount of time before the solver returns \smtlib{unknown}.\\
+\\
+For (2):
+If the solver finds a contradiction of the constraint entailment to the rules,
+the execution time of the solver is between $0$ and \mIt{limit}.
+If the SMT solver does not a contradiction for the constraint entailment,
+the time it takes for the solver to return is \mIt{limit},
+as in those cases the solver needs to evaluate all possible rule instantiations
+to find either a derivation or a contradiction.
+In both examples, we try to solve constraint entailments that have no derivation.\\
+\\
+While the provided implementation of the $DC_C$ calculus
+can surely be further optimized without
+touching the model of the constraint system,
 this is an inherent problem of the $DC_C$ calculus.\\
 \\
 FOOOOOOOOOOOOOOO
@@ -19,7 +49,7 @@ FOOOOOOOOOOOOOOO
 %  - as solving can take a while
 %    - up to multiple minutes etc
 %    - eg typechecking the natural numbers program already takes ~40 sec in the provided implementation
-- would be cool if the need for solving a constraint system could be removed
+- would be cool if the need for solving a constraint system could be removed (benificial?)
 - removal is too optimistic (not doable)
 - alternative goal is to minimize the time needed to solve the constraint system
 - time needed for solving depends on the size of the search space
