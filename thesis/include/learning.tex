@@ -1,4 +1,33 @@
 \chapter{Improving Interpreter with Type Information}
+- in the $DC_C$ calculus it is needed to solve a constraint system during runtime
+- this produces overhead not wanted during runtime 
+  - as solving can take a while
+    - up to multiple minutes etc
+    - eg typechecking the natural numbers program already takes ~40 sec in the provided implementation
+- would be cool if the need for solving a constraint system could be removed
+- removal is too optimistic (not doable)
+- alternative goal is to minimize the time needed to solve the constraint system
+- time needed for solving depends on the size of the search space
+- the search space scales with
+  - the provided axioms
+    - amount of variables in a quantifier
+    - amount of rules
+  - the context of an entailment: context |- c
+    - we can add restrictions by adding constraints into the context
+- the quantified variables are used to match the entailment as an input
+- we need the amount of rules, to be able to show entailments
+- grounding variables introduces additional rules, as seen in the C-Subst generation
+- removal of rules, makes the model uncomplete. as seen in the pruning process
+- adding additional constraints to the context doesnt alter any rules
+- need to make sure that the added constraints do not contradict the context
+  - a contradiction in the context means that we could show anything and invalidating soundness (perhaps?)
+- how to find constraints that do not contradict?
+- types are constraints with a bound variable
+- if t := (x, a) is type of e
+  - then all constraints a hold for each possible instance of e
+- idea: add type constraints into the context when interpreting e
+- need to find substitution, since t has bound variable
+  - substitution must unify x with the variable e reduces to in a
 
 %%% Local Variables: 
 %%% mode: latex
