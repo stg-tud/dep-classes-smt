@@ -38,10 +38,75 @@ In both examples, we try to solve constraint entailments that have no derivation
 While the provided implementation of the $DC_C$ calculus
 can surely be further optimized without
 touching the model of the constraint system,
-this is an inherent problem of the $DC_C$ calculus.\\
-\\
-FOOOOOOOOOOOOOOO
+this is an inherent problem of the $DC_C$ calculus.
 
+\section{Formulating An Optimization Goal} % TODO: rename?
+\label{sec:goal}
+We have seen that solving a constraint system,
+even in the best case scenario,
+adds overhead to the execution time.
+Therefore a goal for optimization could be
+to remove the need to solve a constraint system,
+although the complete elimination of the constraint system
+might be too optimistic.
+
+An alternative, more realistic, goal
+is to minimize the time needed for the solver to find a solution.
+The time it takes the solver to find a derivation for a solvable
+constraint entailments, depends on the size of the search space.
+The size of the search space is affected by
+\begin{itemize}
+  \item the amount of variables in quantifiers.
+        Each additional quantified variables leads to an exponential growth in possible instantiations.
+  \item the amount of rules supplied to the solver.
+        Each additional rule, leads to new possible rule applications.
+  \item the amount of constraints in the context of a constraint entailment.
+        Each additional constraint, adds a restriction to the constraint entailment.
+\end{itemize}
+In \Cref{sec:rule-refinement},
+we explored the reduction of quantified variables.
+For rule C-Subst, we removed quantification
+for variables and paths through grounding.
+Additionally, we introduced generalization
+to find variables $a$ and $a_1$ algorithmically.
+In the process to ground the quantifications
+of variables and paths, we introduced
+new rules to the solver.
+We reduced the amount of possible instantiations of the rule,
+but at the same time added new rules.\\
+\\
+In \Cref{sec:pruning} we explored the removal of rules,
+through the introduction of pruning.
+Pruning removed valid rules,
+in order to solve constraint entailments
+where the solver would otherwise
+instantiate the same rule in a loop.
+We introduced pruning
+as an additional call to the solver
+to preserve completeness.
+We reduced the amount of rules,
+but at the same time added
+the need to solve the same constraint entailment twice,
+if the first try times out.\\
+\\
+Both, grounding and pruning, had positive effects
+as well as negative effects on the search space.
+Technically pruning did not increase the search space,
+but it has nonetheless negative effects on the execution time
+for a constraint entailment.
+Only the introduction of generalization removed quantified variables
+without introducing new rules or other means to increase execution time.\\
+\\
+- can not remove all vars or rules
+- the quantified variables are used to match the entailment as an input
+- we need the amount of rules, to be able to show entailments
+
+% TODO: add new section here?
+What we did non consider previously,
+is further restricting the context.
+
+- context restriction though introducing additional constraints
+- 
 
 \quad\\\\\\\\\\
 %- in the $DC_C$ calculus it is needed to solve a constraint system during runtime
@@ -49,20 +114,18 @@ FOOOOOOOOOOOOOOO
 %  - as solving can take a while
 %    - up to multiple minutes etc
 %    - eg typechecking the natural numbers program already takes ~40 sec in the provided implementation
-- would be cool if the need for solving a constraint system could be removed (benificial?)
-- removal is too optimistic (not doable)
-- alternative goal is to minimize the time needed to solve the constraint system
-- time needed for solving depends on the size of the search space
-- the search space scales with
-  - the provided axioms
-    - amount of variables in a quantifier
-    - amount of rules
-  - the context of an entailment: context |- c
-    - we can add restrictions by adding constraints into the context
-- the quantified variables are used to match the entailment as an input
-- we need the amount of rules, to be able to show entailments
-- grounding variables introduces additional rules, as seen in the C-Subst generation
-- removal of rules, makes the model uncomplete. as seen in the pruning process
+%- would be cool if the need for solving a constraint system could be removed (benificial?)
+%- removal is too optimistic (not doable)
+%- alternative goal is to minimize the time needed to solve the constraint system
+%- time needed for solving depends on the size of the search space
+%- the search space scales with
+%  - the provided axioms
+%    - amount of variables in a quantifier
+%    - amount of rules
+%  - the context of an entailment: context |- c
+%    - we can add restrictions by adding constraints into the context
+%- grounding variables introduces additional rules, as seen in the C-Subst generation
+%- removal of rules, makes the model uncomplete. as seen in the pruning process
 - adding additional constraints to the context doesnt alter any rules
 - need to make sure that the added constraints do not contradict the context
   - a contradiction in the context means that we could show anything and invalidating soundness (perhaps?)
