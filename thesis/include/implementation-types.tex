@@ -183,6 +183,11 @@ we set \type{y}{b_1} as one valid type of $m(e)$.\\
 \\
 For rule T-New, we check for object constructions \objConstr{cls}{args}
 and generate a fresh variable $x$.
+We also extract the field names from the arguments
+and set \mIt{argsTypes} as the mapping of
+\scala{typeassignment} over the values of the arguments.
+We create a list $\mIt{types}$ to collect
+the types of \objConstr{cls}{args}.
 There are two cases to consider.
 %
 \begin{enumerate}
@@ -249,19 +254,16 @@ For (1), if there are no arguments supplied to the constructor
 we set $b := \instBy{x}{cls}$.
 We check if the program has a constructor \constr{cls}{x_1}{b_1}.
 If so, we check \entails{context \conc b}{\subst{b_1}{x_1}{x}}
-and return \type{x}{b}.
-Otherwise we return the empty list.\\
+and add \type{x}{b} to \mIt{types}.
+Otherwise we return the empty list.
+Additionally, we examine subtyping through
+checking \entails{context \conc b}{\instOf{x}{C}} for all classes $C$.
+If the entailment holds, we add \type{x}{\instOf{x}{C}} to \mIt{types}.\\
 \\
-For (2), if there are arguments supplied to the constructor,
-we extract the field names from the arguments.
-We map \scala{typeassignment}
-over the values of the arguments
-and generate all the possible type combinations
-for the arguments from the result.
+For (2), we generate all possible combinations
+of the types of the arguments \mIt{argsTypes}.
 E.g. the possible combinations of lists $[[1, 2], [3, 4], [5]]$
 are the lists $[1, 3, 5]$, $[1, 4, 5]$, $[2, 3, 5]$ and $[2, 4, 5]$.
-We create a list $\mIt{types}$ to collect
-the possible types of the object construction.
 For each combination of types,
 we zip the extracted field names
 with the types of the arguments
@@ -282,7 +284,9 @@ If not, we can not create a new object of a non-existing class
 and return the empty list.
 Otherwise, if \entails{context \conc b}{\subst{b_1}{x_1}{x}}
 holds we add \type{x}{b} to \mIt{types}.
-
+We examine subtyping through
+checking \entails{context \conc b}{\instOf{x}{C}} for all classes $C$.
+If the entailment holds, we add \type{x}{\instOf{x}{C}} to \mIt{types}.
 
 \subsection{Well-formedness of Programs}
 \label{sec:wf}
