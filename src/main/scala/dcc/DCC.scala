@@ -241,12 +241,12 @@ class DCC(P: Program) {
     case x@Id(_) =>
       //classes(P).foldRight(List(Type(Id('tError), List(PathEquivalence(x, Id('noValidClass)))))){
       classes.foldRight(Nil: List[Type]) {
-        case (cls, clss) if entails(context, InstanceOf(x, cls), List(x)) =>
+        case (cls, _) if entails(context, InstanceOf(x, cls), List(x)) =>
           val y = freshvar()
 //          Type(y, List(PathEquivalence(y, x))) :: Nil// :: clss TODO: no need to find another one, as the type would be the same (after renaming)
           List(
-            Type(y, List(PathEquivalence(y, x))),
-            Type(y, List(PathEquivalence(x, y)))
+            Type(y, List(PathEquivalence(y, x)))
+            ,Type(y, List(PathEquivalence(x, y)))
           )
         case (_, clss) => clss
       } match {
@@ -256,12 +256,11 @@ class DCC(P: Program) {
     // T-Field
     case FieldAccess(e, f) =>
       val types = typeassignment(context, e)
+      val y = freshvar()
 
       var ts: List[Type] = Nil
       types.foreach {
         case Type(x, a) =>
-          val y = freshvar()
-
           // instance of relations for type constraints
           val instOfs = classes.foldRight(Nil: List[Constraint]) { // TODO: list of vars in entails, like T-Var case
             case (cls, clss) if entails(context ++ a, InstanceOf(FieldPath(x, f), cls), List(x)) =>
@@ -277,7 +276,7 @@ class DCC(P: Program) {
         //          if (entails(PathEquivalence(FieldPath(x, f), y) :: context ++ a, b, Nil))
         //            ts = Type(y, b) :: ts
       }
-      ts
+      ts.distinct
     // T-Call
     case MethodCall(m, e) =>
       val eTypes = typeassignment(context, e)
@@ -349,7 +348,7 @@ class DCC(P: Program) {
             }
         }
       }
-      types
+      types.distinct
   }
 
   // typecheck the current program
@@ -558,14 +557,19 @@ object Main extends App {
 //  h2.foreach(println)
 //  println("Expr2:" + e2)
 
-//  val types = dcc.typeassignment(
-//    List(
-//      InstanceOf(Id('x), Id('Succ))
-//    , InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))
-////    , InstanceOf(Id('y), Id('Zero))
-////    , PathEquivalence(FieldPath(Id('x), Id('p)), Id('y))
-//    ),
-//    FieldAccess(Id('x), Id('p)))
+  val xp = dcc.typeassignment(
+    List(
+      InstanceOf(Id('x), Id('Succ))
+    , InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))
+//    , InstanceOf(Id('y), Id('Zero))
+//    , PathEquivalence(FieldPath(Id('x), Id('p)), Id('y))
+    ),
+    FieldAccess(Id('x), Id('p)))
+//    Id('x))
+
+  println(xp.size)
+  xp.foreach(println)
+
 
 //  val types = dcc.typeassignment(
 //    List(
@@ -578,7 +582,7 @@ object Main extends App {
 //  println(types.size)
 //  types.foreach(println)
 
-  println(dcc.typecheck(naturalNumbers))
+//  println(dcc.typecheck(naturalNumbers))
 
   // subst with prog does time out for some reason
 //  dcc.entails(

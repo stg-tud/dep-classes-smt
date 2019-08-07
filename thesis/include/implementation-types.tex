@@ -417,7 +417,128 @@ as well as requiring that the size of $c$ equals the size of $b$.
 \begin{example}[Typechecking the Natural Numbers Program]\quad\\
 In this example, we check if the natural numbers program
 given in \Cref{ex:dcc-naturalnumbers} is well-formed.
-For this, we apply \scala{typecheck} to the program.
+For this, we apply \mIt{typecheck} to the program.\\
+\\
+We need to check if all the declarations
+of the same method have the same return type.
+The program declares one method \texttt{prev},
+with two implementations.
+We generate fresh variables $x$ and $y$.
+We apply \mIt{mTypeSubst(\texttt{prev}, x, y)}
+and obtain
+\begin{align*}
+[
+  &([\instOf{x}{Nat}], &[\instOf{y}{Nat}]),\\
+  &([\instOf{x}{Zero}], &[\instOf{y}{Nat}]),\\
+  &([\instOf{x}{Succ}, \instOf{x.p}{Nat}], &[\instOf{y}{Nat}])
+]
+\end{align*}
+We see that all return type constraints of \texttt{prev} are $\instOf{y}{Nat}$.
+
+Now we need to check if each declaration of the program is well-formed.
+We apply \mIt{typecheck} to each declaration.\\
+\\
+A constructor declaration \constr{C}{x}{a} is well-formed,
+if $x$ is the only variable free in $a$.
+The constructor \constr{\texttt{Zero}}{x}{\epsilon}
+specifies no constraints and does therefore contain no free variables.
+For constructor \constr{\texttt{Succ}}{x}{\instOf{x.p}{\texttt{Nat}}},
+we check $FV(\instOf{x.p}{\texttt{Nat}}) = [x]$.\\
+\\
+We check the constraint entailment \progEnt{x}{\instOf{x}{\texttt{Zero}}}{\instOf{x}{\texttt{Nat}}}.
+The entailment is well-formed, since the right-hand side is \instOf{x}{\texttt{Nat}}
+and the left-hand side contains \instOf{x}{\texttt{Zero}}.
+Both constraints have no free variable besides $x$.
+
+We check the constraint entailment \progEnt{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\instOf{x}{\texttt{Nat}}}.
+The entailment is well-formed, since the right-hand side is \instOf{x}{\texttt{Nat}}
+and the left-hand side contains \instOf{x}{\texttt{Succ}}.
+All constraints have no free variable besides $x$.\\
+\\
+We check the abstract method declaration
+\mDecl{\texttt{prev}}{x}{\instOf{x}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}.
+The declaration is well-formed,
+since $x$ is the only variable free in \instOf{x}{\texttt{Nat}}
+and $y$ is the only variable free in \instOf{y}{\texttt{Nat}}.\\
+\\
+We review the method implementation
+\[
+  \mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Zero}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{\newInstNoArgs{\texttt{Zero}}}.
+\]
+We check the free variables
+$FV(\instOf{x}{\texttt{Zero}}) = [x]$
+and
+$FV(\instOf{y}{\texttt{Nat}}) = [y]$.
+
+We apply \mIt{typeassignment([\instOf{x}{\texttt{Zero}}], \newInstNoArgs{\texttt{Zero}})}
+and match case T-New.
+We generate a fresh variable $x_{\mIt{Obj}}$.
+Since \newInstNoArgs{\texttt{Zero}} has no arguments,
+we set $b := [\instBy{x_{\mIt{Obj}}}{\texttt{Zero}}]$.
+The constructor \constr{\texttt{Zero}}{x}{\epsilon} exists in the program.
+Sine the constructor for \texttt{Zero} does not specify any constraints,
+we memorize the type
+\type{x_{\mIt{Obj}}}{\instBy{x_{\mIt{Obj}}}{\texttt{Zero}}}.
+
+We explore subtyping by checking the entailment
+\entails
+  {
+    \instOf{x}{\texttt{Zero}},
+    \instBy{x_{\mIt{Obj}}}{\texttt{Zero}}
+  }
+  {\instOf{ x_{\mIt{Obj}} }{C}}
+for each class $C$ in the program.
+We successfully solve the entailment for
+classes \texttt{Zero} and \texttt{Nat}.
+We can not solve the entailment for class \texttt{Succ}.
+We return types
+\[ [ \type{x_{\mIt{Obj}}}{\instBy{x_{\mIt{Obj}}}{\texttt{Zero}}},\\
+     \type{x_{\mIt{Obj}}}{\instOf{x_{\mIt{Obj}}}{\texttt{Zero}}},\\
+     \type{x_{\mIt{Obj}}}{\instOf{x_{\mIt{Obj}}}{\texttt{Nat}}} ] \]
+as the types of \newInstNoArgs{\texttt{Zero}}
+We check if the types of the object construction contain
+the return type of the method \type{y}{\instOf{y}{\texttt{Nat}}}.
+We see that
+\[\subst
+  { \type{x_{\mIt{Obj}}}{\instOf{x_{\mIt{Obj}}}{\texttt{Nat}}} }
+  {x_{\mIt{Obj}}}{y}
+ = \type{y}{\instOf{y}{\texttt{Nat}}}. \]
+The method implementation is well-formed,
+since all requirements are fullfilled.\\
+\\
+We check the method implementation
+\[
+  \mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x.p}
+\]
+and see that
+$FV(\instOf{x}{\texttt{Succ}}) = [x]$,
+$FV(\instOf{x.p}{\texttt{Nat}}) = [x]$,
+and
+$FV(\instOf{y}{\texttt{Nat}}) = [y]$.
+
+We apply \mIt{typeassignment([\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}], x.p)}
+and match case T-Field.
+We apply \mIt{typeassignment} on the subexpression $x$.
+Since the variable access $x$ can be related to a class in the context,
+we obtain $\mIt{types := [\type{x_\mIt{var}}{\pathEq{x_\mIt{var}}{x}}]}$.
+We create a fresh variable $y_p$
+and check if
+\entails{
+          \instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}},
+          \pathEq{x_\mIt{var}}{x}
+        }
+        {\instanceOf{x_\mIt{var}.p}{C}}
+for classes $C$.
+We can only successfully solve the entailment for class \texttt{Nat}
+and return type \type{y_p}{\instOf{y_p}{\texttt{Nat}}}.
+We unify the type variable $y_p$ with $y$ and obtain
+\[ \subst{\type{y_p}{\instOf{y_p}{\texttt{Nat}}}}{y_p}{y}
+    = \type{y}{\instOf{y}{\texttt{Nat}}}. \]
+The method implementation is well-formed,
+since all requirements are fullfilled.\\
+\\
+With the last declaration being well-formed,
+we conclude that the program is well-formed.
 
 \end{example}
 
