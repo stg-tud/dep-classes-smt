@@ -5,6 +5,9 @@ import dcc.syntax.Program.Program
 import org.scalatest.FunSuite
 
 class TestInterpreter extends FunSuite {
+  type Obj = (Id, List[(Id, Id)])
+  type Heap = Map[Id, Obj]
+
   val naturalNumbers: Program = List(
     ConstructorDeclaration(Id('Zero), Id('x), Nil),
     ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
@@ -40,5 +43,29 @@ class TestInterpreter extends FunSuite {
     assert(h2(Id('x2)) == (Id('Zero), List()))
     assert(h2(Id('x3)) == (Id('Succ), List((Id('p), Id('x2)))))
     assert(e2 == Id('x3))
+  }
+
+  test("prev(Zero)") {
+    val dcc = new DCC(naturalNumbers)
+    val (h1, e1) = dcc.interp(Map.empty, MethodCall(Id('prev), ObjectConstruction(Id('Zero), Nil)))
+
+    assert(h1.size == 2)
+    h1.forall{
+      case (_, (Id('Zero), Nil)) => true
+      case _ => false
+    }
+  }
+
+  test("prev(Succ)") {
+    val dcc = new DCC(naturalNumbers)
+    val h: Heap = Map(
+      Id('x) -> (Id('Zero), Nil),
+      Id('y) -> (Id('Succ), List((Id('p), Id('x)))))
+    val e = MethodCall(Id('prev), Id('y))
+
+    val (h1, e1) = dcc.interp(h, e)
+
+    h1.foreach(println)
+    println(e1)
   }
 }
