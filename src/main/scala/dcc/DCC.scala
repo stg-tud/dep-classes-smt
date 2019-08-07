@@ -304,6 +304,10 @@ class DCC(P: Program) {
       types
     // T-New
     case ObjectConstruction(cls, args) =>
+      /* TODO: the rule could use an overhaul:
+      *   - move classInProgram(cls, P) out of the match, no need to look it up multiple times
+      *   - subtyping check with classes.foreach could also use a rearrangement
+      *   - all in all: make it less self-repeating between both cases */
       val fields: List[Id] = args.map(_._1)
       val argsTypes: List[List[Type]] = args.map(arg => typeassignment(context, arg._2))
       //val argsTypes: List[(Id, List[Type])] = args.map{case (f, e) => (f, typeassignment(context, e))}
