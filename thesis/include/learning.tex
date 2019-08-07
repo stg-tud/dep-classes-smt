@@ -1,9 +1,24 @@
 \chapter{Improving Interpreter with Type Information}
-- in the $DC_C$ calculus it is needed to solve a constraint system during runtime
-- this produces overhead not wanted during runtime 
-  - as solving can take a while
-    - up to multiple minutes etc
-    - eg typechecking the natural numbers program already takes ~40 sec in the provided implementation
+In the $DC_C$ calculus we need to solve a constraint system
+when interpreting an expression, as well when type checking a program.
+The need to solve a constraint system during runtime produces unwanted overhead,
+as solving the constraint system takes some time.
+For example, the time it takes to type check the natural numbers program
+as seen in \Cref{ex:wf-naturalnumbers} is already around 40 seconds
+with the provided implementation.
+While the implementation can surely be further optimized
+without touching the model of the constraint system,
+this is an inherent problem of the $DC_C$ calculus.\\
+\\
+FOOOOOOOOOOOOOOO
+
+
+\quad\\\\\\\\\\
+%- in the $DC_C$ calculus it is needed to solve a constraint system during runtime
+%- this produces overhead not wanted during runtime 
+%  - as solving can take a while
+%    - up to multiple minutes etc
+%    - eg typechecking the natural numbers program already takes ~40 sec in the provided implementation
 - would be cool if the need for solving a constraint system could be removed
 - removal is too optimistic (not doable)
 - alternative goal is to minimize the time needed to solve the constraint system
