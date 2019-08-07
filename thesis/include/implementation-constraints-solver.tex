@@ -581,11 +581,20 @@ as our return value.
 With the SMTLib representation and preprocessing
 of the model defined, we can call the solver
 to evaluate if entailments \entails{\ovl a}{a}
-hold in the model.
+hold in the model.\\
+\\
 For this we define \scala{trait SMTSolver}
 in \Cref{lst:smtsolver} as an interface for SMT solvers
 and function \scala{entails} to check entailments
 in \Cref{lst:entails}.
+The conversion from the $DC_C$ syntax
+to the SMTLib format is done via \scala{object SMTLibConverter}.
+The object defines functions for converting variables, paths and constraints
+to their respective representation in the SMTLib format.
+The functions for preprocessing, e.g. \scala{generateSubstRules}
+and \scala{makeProgramEntailmentLookupFunction}, are also
+defined in \scala{SMTLibConverter}.
+
 %
 \begin{lstlisting}[caption={SMTSolver Interface},label=lst:smtsolver,captionpos=b,frame={lines}]
 trait SMTSolver {
