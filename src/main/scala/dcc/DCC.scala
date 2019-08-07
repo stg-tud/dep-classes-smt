@@ -318,6 +318,12 @@ class DCC(P: Program) {
 
           if (entails(context ++ b, b1, List(x, x1)))
             types = Type(x, b) :: types
+
+          classes.foreach{
+            c =>
+              if (entails(context ++ b, InstanceOf(x, c), List(x)))
+                types = Type(x, List(InstanceOf(x, c))) :: types
+          }
         case _ => combinations(argsTypes).foreach {
           argsType =>
             val argsPairs: List[(Id, Type)] = fields.zip(argsType)
@@ -331,6 +337,12 @@ class DCC(P: Program) {
 
             if (entails(context ++ b, substitute(x1, x, b1), List(x)))
               types = Type(x, b) :: types
+
+            classes.foreach{
+              c =>
+                if (entails(context ++ b, InstanceOf(x, c), List(x)))
+                  types = Type(x, List(InstanceOf(x, c))) :: types
+            }
         }
       }
 
