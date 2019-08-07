@@ -345,7 +345,6 @@ class DCC(P: Program) {
             }
         }
       }
-
       types
   }
 

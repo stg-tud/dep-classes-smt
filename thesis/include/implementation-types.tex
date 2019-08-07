@@ -38,6 +38,21 @@ For each match, we substitute $x_1$ with $x$ in $a$ and $y_1$ with $y$ in $b$.
 
 \subsection{Type Assignments for Expressions}
 \label{sec:typeass}
+%
+\begin{figure}[h]
+\begin{lstlisting}
+def typeassignment(context: List[Constraint], expr:Expression)
+    : List[Type] = expr match {
+  case x@Id(_) => [...] // T-Var
+  case FieldAccess(e, f) => [...] // T-Field
+  case MethodCall(m, e) => [...] // T-Call
+  case ObjectConstruction(cls, args) => [...] // T-New
+}
+\end{lstlisting}
+\caption{Type Assignment}
+\label{fig:scala-typeass}
+\end{figure}\quad\\
+%
 In this section, we define a function \scala{typeassignment}
 implementing type assignments for expressions presented in \Cref{fig:dcc-typeass}.
 The type relation of the $DC_C$ calculus is not immediately suitable for implementation,
@@ -58,12 +73,25 @@ For this, we define the function \scala{typeassignment}
 to return a list of types, instead of a single type.\\
 \\
 The implementation of function \scala{typeassignment}
-is given in \Cref{lst:typeass}.
+is given in \Cref{fig:scala-typeass}.
+The four cases of the pattern matching are given in
+\Cref{lst:scala-typeass-var,lst:scala-typeass-field,lst:scala-typeass-call,lst:scala-typeass-new}.
 The function takes a list of constraints as the type context
 and an expression to assign a type for as arguments.
 It returns as list of types.
-The function matches the structure of the expression.\\
-\\
+The function matches the structure of the expression.
+%
+\begin{lstlisting}[caption={Case T-Var},label=lst:scala-typeass-var,captionpos=b,frame={lines}]
+case x@Id(_) => // T-Var
+  classes.foldRight(Nil: List[Type]) {
+    case (cls, _)
+    if entails(context, InstanceOf(x, cls)) =>
+      val y = freshvar()
+      Type(y, List(PathEquivalence(y, x))) :: Nil
+    case (_, clss) => clss
+  }
+\end{lstlisting}
+%
 For rule T-Var, we match for variable access.
 To assign a type to variable $x$, we need to ensure
 that the variable is an instance of some class.
@@ -77,8 +105,29 @@ after unification of the bound variable of the types.
 E.g. if \entails{context}{\instanceOf{x}{C}},
 we would generate a fresh variable $z$
 and obtain type \type{z}{\pathEq{z}{x}}
-and \subst{\type{z}{\pathEq{z}{x}}}{z}{y} = \type{y}{\pathEq{y}{x}}.\\
-\\
+and \subst{\type{z}{\pathEq{z}{x}}}{z}{y} = \type{y}{\pathEq{y}{x}}.
+%
+\begin{lstlisting}[caption={Case T-Field},label=lst:scala-typeass-field,captionpos=b,frame={lines}]
+case FieldAccess(e, f) => // T-Field
+  val types = typeassignment(context, e)
+  var ts: List[Type] = Nil
+  types.foreach {
+    case Type(x, a) =>
+      val y = freshvar()
+      // instance of relations for type constraints
+      classes.foldRight(Nil: List[Constraint]) {
+        case (cls, clss)
+        if entails(context ++ a,
+                   InstanceOf(FieldPath(x, f), cls)) =>
+          val c = InstanceOf(y, cls)
+          ts = Type(y, List(c)) :: ts
+          c :: clss
+        case (_, clss) => clss
+      }
+  }
+  ts
+\end{lstlisting}
+%
 For rule T-Field, we match for field access $e.f$.
 First, we call \scala{typeassignment} on subexpression $e$ to obtain
 the type assignments of $e$ and we create a list $\mIt{ts}$ to collect
@@ -89,96 +138,29 @@ is entailed by the context concatenated with $a$.
 If so, we add \type{y}{\instOf{y}{cls}} to the collected types \mIt{ts}.
 The entailment check of \instOf{x}{cls} does consider subtyping,
 since we check for all classes and also add the subtype constraints $a$
-to the context.
-
+to the context.\\
 %
-\begin{lstlisting}[caption={Type Assignment},label=lst:typeass,captionpos=b,frame={lines}]
-def typeassignment(context: List[Constraint], expr: Expression)
-    : List[Type] = expr match {
-  // T-Var
-  case x@Id(_) =>
-    classes.foldRight(Nil: List[Type]) {
-      case (cls, _)
-      if entails(context, InstanceOf(x, cls)) =>
-        val y = freshvar()
-        Type(y, List(PathEquivalence(y, x))) :: Nil
-      case (_, clss) => clss
-    }
-    
-  // T-Field
-  case FieldAccess(e, f) =>
-    val types = typeassignment(context, e)
+\begin{lstlisting}[caption={Case T-Call},label=lst:scala-typeass-call,captionpos=b,frame={lines}]
+// T-Call
+case MethodCall(m, e) =>
+  val eTypes = typeassignment(context, e)
+  val y = freshvar()
 
-    var ts: List[Type] = Nil
-    types.foreach {
-      case Type(x, a) =>
-        val y = freshvar()
-
-        // instance of relations for type constraints
-        classes.foldRight(Nil: List[Constraint]) {
-          case (cls, clss)
-          if entails(context ++ a,
-                     InstanceOf(FieldPath(x, f), cls)) =>
-            val c = InstanceOf(y, cls)
-            ts = Type(y, List(c)) :: ts
-            c :: clss
-          case (_, clss) => clss
-        }
-    }
-    ts
-    
-  // T-Call
-  case MethodCall(m, e) =>
-    val eTypes = typeassignment(context, e)
-    val y = freshvar()
-
-    var types: List[Type] = Nil
-    // for all possible argument types
-    for (Type(x, a) <- eTypes) {
-      // for all method declarations
-      for ((a1, b) <- mTypeSubst(m, x, y)) {
-        val entailsArgs = entails(context ++ a, a1)
-        val b1 = (a1 ++ b).foldRight(Nil: List[Constraint]) {
-          case (c, cs) if !FV(c).contains(x) => c :: cs
-          case (_, cs) => cs
-        }
-        if (entailsArgs && entails(context ++ a ++ b, b1))
-          types = Type(y, b1) :: types
+  var types: List[Type] = Nil
+  // for all possible argument types
+  for (Type(x, a) <- eTypes) {
+    // for all method declarations
+    for ((a1, b) <- mTypeSubst(m, x, y)) {
+      val entailsArgs = entails(context ++ a, a1)
+      val b1 = (a1 ++ b).foldRight(Nil: List[Constraint]) {
+        case (c, cs) if !FV(c).contains(x) => c :: cs
+        case (_, cs) => cs
       }
+      if (entailsArgs && entails(context ++ a ++ b, b1))
+        types = Type(y, b1) :: types
     }
-    types
-    
-  // T-New
-  case ObjectConstruction(cls, args) =>
-    val x = freshvar()
-    if(args.isEmpty) {
-      val b = List(InstantiatedBy(x, cls))
-      val (x1, b1) = classInProgram(cls, P)
-                       .getOrElse(return Nil)
-      if (entails(context ++ b, substitute(x1, x, b1)))
-        return List(Type(x, b))
-    }
-    val fields: List[Id] = args.map(_._1)
-    val argsTypes: List[List[Type]] =
-      args.map(arg => typeassignment(context, arg._2))
-    var types: List[Type] = Nil
-    combinations(argsTypes).foreach {
-      argsType =>
-        val argsPairs: List[(Id, Type)] = fields.zip(argsType)
-        val argsConstraints: List[Constraint] =
-        argsPairs.flatMap {
-          case (fi, Type(xi, ai)) =>
-            substitute(xi, FieldPath(x, fi), ai)
-        }
-        val b: List[Constraint] =
-          InstantiatedBy(x, cls) :: argsConstraints
-        val (x1, b1) = classInProgram(cls, P)
-                         .getOrElse(return Nil)
-        if (entails(context ++ b, substitute(x1, x, b1)))
-          types = Type(x, b) :: types
-    }
-    types
-}
+  }
+  types
 \end{lstlisting}
 %
 We implement rule T-Call by matching for method calls $m(e)$.
@@ -207,7 +189,62 @@ There are two cases to consider.
   \item The arguments are empty.
   \item The arguments are not empty.
 \end{enumerate}
+\newpage
 %
+\begin{lstlisting}[caption={Case T-New},label=lst:scala-typeass-new,captionpos=b,frame={lines}]
+// T-New
+case ObjectConstruction(cls, args) =>
+  val fields: List[Id] = args.map(_._1)
+  val argsTypes: List[List[Type]] =
+    args.map(arg => typeassignment(context, arg._2))
+
+  val x = freshvar()
+  var types: List[Type] = Nil
+
+  argsTypes match {
+    case Nil =>
+      val b = List(InstantiatedBy(x, cls))
+      val (x1, b1) = classInProgram(cls, P)
+                       .getOrElse(return Nil)
+
+      if (entails(context ++ b, b1))
+        types = Type(x, b) :: types
+
+      classes.foreach{
+        c =>
+          if (entails(context ++ b, InstanceOf(x, c)))
+            types = Type(x, List(InstanceOf(x, c))) :: types
+      }
+    case _ => combinations(argsTypes).foreach {
+      argsType =>
+        val argsPairs: List[(Id, Type)] = fields.zip(argsType)
+        val argsConstraints: List[Constraint] =
+        argsPairs.flatMap{
+          case (fi, Type(xi, ai)) =>
+            substitute(xi, FieldPath(x, fi), ai)
+        }
+
+        val b: List[Constraint] =
+          InstantiatedBy(x, cls) :: argsConstraints
+
+        val (x1, b1) = classInProgram(cls, P)
+                         .getOrElse(return Nil)
+
+        if (entails(context ++ b, substitute(x1, x, b1)))
+          types = Type(x, b) :: types
+
+        classes.foreach{
+          c =>
+            if (entails(context ++ b, InstanceOf(x, c)))
+              types = Type(x, List(InstanceOf(x, c))) :: types
+        }
+    }
+  }
+  types
+\end{lstlisting}
+\newpage
+%
+\quad\\
 For (1), if there are no arguments supplied to the constructor
 we set $b := \instBy{x}{cls}$.
 We check if the program has a constructor \constr{cls}{x_1}{b_1}.
@@ -245,6 +282,7 @@ If not, we can not create a new object of a non-existing class
 and return the empty list.
 Otherwise, if \entails{context \conc b}{\subst{b_1}{x_1}{x}}
 holds we add \type{x}{b} to \mIt{types}.
+
 
 \subsection{Well-formedness of Programs}
 \label{sec:wf}
