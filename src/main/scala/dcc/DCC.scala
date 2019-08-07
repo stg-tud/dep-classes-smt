@@ -352,6 +352,9 @@ class DCC(P: Program) {
       types
   }
 
+  // typecheck the current program
+  def typecheck(): Boolean = typecheck(P)
+
   // FV: free variables
   // wf P: well formed program
   def typecheck(P: Program): Boolean = {
@@ -564,16 +567,18 @@ object Main extends App {
 //    ),
 //    FieldAccess(Id('x), Id('p)))
 
-  val types = dcc.typeassignment(
-    List(
-      InstanceOf(Id('x), Id('Zero))
-      //    , InstanceOf(Id('y), Id('Zero))
-      //    , PathEquivalence(FieldPath(Id('x), Id('p)), Id('y))
-    ),
-    ObjectConstruction(Id('Zero), List()))
+//  val types = dcc.typeassignment(
+//    List(
+//      InstanceOf(Id('x), Id('Zero))
+//      //    , InstanceOf(Id('y), Id('Zero))
+//      //    , PathEquivalence(FieldPath(Id('x), Id('p)), Id('y))
+//    ),
+//    ObjectConstruction(Id('Zero), List()))
+//
+//  println(types.size)
+//  types.foreach(println)
 
-  println(types.size)
-  types.foreach(println)
+  println(dcc.typecheck(naturalNumbers))
 
   // subst with prog does time out for some reason
 //  dcc.entails(
