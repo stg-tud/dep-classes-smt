@@ -1,9 +1,11 @@
 \chapter{Improving Interpreter with Type Information}
 In the $DC_C$ calculus we need to solve a constraint system
 when interpreting an expression, as well when type checking a program.
-The need to solve a constraint system during runtime produces unwanted overhead,
+The need to solve a constraint system produces overhead,
 as solving the constraint system takes some time.
-
+We are not concerned with the overhead during type checking (compile time),
+but only with the overhead during interpreting (runtime).\\
+\\
 For example, we interpreted a method call in \Cref{ex:eval-call}.
 During evaluation, we needed to find the most specific method
 that was applicable to the provided parameter.
@@ -46,11 +48,10 @@ We have seen that solving a constraint system,
 even in the best case scenario,
 adds overhead to the execution time.
 Therefore a goal for optimization could be
-to remove the need to solve a constraint system,
-although the complete elimination of the constraint system
-might be too optimistic.
+to remove the need to solve a constraint system.
 
-An alternative goal
+The complete elimination of the constraint system
+might be too optimistic. An alternative goal
 is to minimize the time needed for the solver to find a solution.
 The time it takes the solver to find a derivation for a solvable
 constraint entailment, depends on the size of the search space.
@@ -185,8 +186,8 @@ we want to show.
 %- grounding variables introduces additional rules, as seen in the C-Subst generation
 %- removal of rules, makes the model uncomplete. as seen in the pruning process
 %- adding additional constraints to the context doesnt alter any rules
-- need to make sure that the added constraints do not contradict the context
-  - a contradiction in the context means that we could show anything and invalidating soundness (perhaps?)
+%- need to make sure that the added constraints do not contradict the context
+%  - a contradiction in the context means that we could show anything and invalidating soundness (perhaps?)
 - how to find constraints that do not contradict?
 - types are constraints with a bound variable
 - if t := (x, a) is type of e
