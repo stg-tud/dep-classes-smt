@@ -418,8 +418,8 @@ as well as requiring that the size of $c$ equals the size of $b$.
 % TODO: example: wf natural numbers
 \begin{example}[Typechecking the Natural Numbers Program]\quad\\
 \label{ex:wf-naturalnumbers}
-In this example, we check if the natural numbers program
-given in \Cref{ex:dcc-naturalnumbers} is well-formed.
+In this example we check if the natural numbers program,
+given in \Cref{ex:dcc-naturalnumbers}, is well-formed.
 For this, we apply \mIt{typecheck} to the program.\\
 \\
 We need to check if all the declarations
@@ -499,7 +499,7 @@ We return types
      \type{x_{\mIt{Obj}}}{\instOf{x_{\mIt{Obj}}}{\texttt{Zero}}},\\
      \type{x_{\mIt{Obj}}}{\instOf{x_{\mIt{Obj}}}{\texttt{Nat}}} ] \]
 as the types of \newInstNoArgs{\texttt{Zero}}
-We check if the types of the object construction contain
+We check if the types of the object construction contains
 the return type of the method \type{y}{\instOf{y}{\texttt{Nat}}}.
 We see that
 \[\subst

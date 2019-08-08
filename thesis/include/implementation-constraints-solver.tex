@@ -416,8 +416,8 @@ of if statements out of mappings from $\Constr$ to \Constrss.\\
 We match $c \mapsto ccs :: rst$
 and create an if statement with the guard $x = c$,
 where $x$ is the argument of the lookup function.
-In the then brach, we put the SMTLib representation of $ccs$.
-The else branch then constains a recursive call with $rst$.
+In the then branch, we put the SMTLib representation of $ccs$.
+The else branch then contains a recursive call with $rst$.
 We repeat this until all mappings are processed.\\
 \\
 The function \scala{makeProgamEntailmentLookupFunction}

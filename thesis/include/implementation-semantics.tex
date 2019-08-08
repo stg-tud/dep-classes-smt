@@ -100,7 +100,7 @@ all elements contained in $heap$.
 
 The constraints of an object state the class of the object
 and the values of its fields.
-In our implementation, a object consists of a class name
+In our implementation, an object consists of a class name
 and a list of pairs of field names and variable names.
 In the implementation of $\mIt{OC}(x, o)$ with $o := (\mIt{cls}, \mIt{fields})$,
 we create a constraint \instBy{x}{cls} stating the class of $o$.
@@ -264,9 +264,10 @@ is similar to the implementations for field access expressions $e.f$
 and method calls $m(e)$,
 but differs from the rule RC-New presented in \Cref{fig:dcc-opsemantics}.
 Rule RC-New is defined to only reduce one argument at a time.
-Out implementation interpret all the argument expressions in the same step.
-This argument interpretation is done via function \scala{objArgsInterp}
-and obtain a new heap $h_1$ and evaluated arguments $args_1$.
+Our implementation interprets all the argument expressions in the same step.
+This argument interpretation is done via function \scala{objArgsInterp}.
+We obtain a new heap $h_1$ and evaluated arguments $args_1$
+from the call to \scala{objArgsInterp}.
 We check if $\mIt{args} = \mIt{args_1}$ and $\mIt{heap} = h_1$.
 If not, we proceed with interpreting \objConstr{cls}{args_1} in heap $h_1$.
 Otherwise, we can not reduce \objConstr{cls}{args}.\\
