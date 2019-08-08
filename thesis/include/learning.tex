@@ -50,10 +50,10 @@ to remove the need to solve a constraint system,
 although the complete elimination of the constraint system
 might be too optimistic.
 
-An alternative, more realistic, goal
+An alternative goal
 is to minimize the time needed for the solver to find a solution.
 The time it takes the solver to find a derivation for a solvable
-constraint entailments, depends on the size of the search space.
+constraint entailment, depends on the size of the search space.
 The size of the search space is affected by
 \begin{itemize}
   \item the amount of variables in quantifiers.
@@ -69,9 +69,8 @@ For rule C-Subst, we removed quantification
 for variables and paths through grounding.
 Additionally, we introduced generalization
 to find variables $a$ and $a_1$ algorithmically.
-In the process to ground the quantifications
-of variables and paths, we introduced
-new rules to the solver.
+In the process to ground the quantified variables
+we introduced new rules to the solver.
 We reduced the amount of possible instantiations of the rule,
 but at the same time added new rules.\\
 \\
@@ -97,16 +96,49 @@ for a constraint entailment.
 Only the introduction of generalization removed quantified variables
 without introducing new rules or other means to increase execution time.\\
 \\
-- can not remove all vars or rules
-- the quantified variables are used to match the entailment as an input
-- we need the amount of rules, to be able to show entailments
+For a constraint entailment \mIt{ce := \entails{\ovl a}{a}},
+the addition of new constraints to \ovl a
+does not require the introduction of
+additional rules or quantified variables into the model.
+It only affects the possible derivations of \mIt{ce}.
+It specifies information about the constraint entailment
+that was previously unknown.
+\newpage
 
-% TODO: add new section here?
-What we did non consider previously,
-is further restricting the context.
+\section{Reducing Evaluation Time} % TODO: other title? maybe: Context Enrichment
+In this section we want to explore,
+how we can enrich the context \ovl a
+of a constraint entailment \mIt{ce := \entails{\ovl a}{a}}
+with new information to reduce
+the time it takes the solver to find a derivation for \mIt{ce}.
+\\
+\\
+To add new information to such a constraint entailment,
+we can concatenate \ovl a with new constraints \ovl b
+and solve \entails{\ovl a \conc \ovl b}{a}.
+The SMT solver can with the addition of \ovl b,
+make new rule instantiations that
+can lead to new derivations for \mIt{ce}.\\
+\\
+The addition of new constraints \ovl b to the context
+can be dangerous.
+A misuse is possible, where the added constraints
+result in the SMT solver being able to
+prove an otherwise unsolvable constraint entailment.
+\Cref{ex:enrich-context-misuse} shows a faulty
+context enrichment.
 
-- context restriction though introducing additional constraints
-- 
+\begin{example}[Misuse of context enrichment]
+\label{ex:enrich-context-misuse}\quad\\
+The constraint entailment \entails{\instOf{x}{C}}{\instOf{y}{C}}
+is not solvable,
+as we have no way to derive the class of $y$ from the class of $x$.
+
+We enrich the context with \pathEq{x}{y} and obtain
+\entails{\instOf{x}{C}, \pathEq{x}{y}}{\instOf{y}{C}}.
+The enriched constraint entailment is solvable,
+because we added the information that $x$ and $y$ are equivalent.
+\end{example}
 
 \quad\\\\\\\\\\
 %- in the $DC_C$ calculus it is needed to solve a constraint system during runtime
@@ -126,7 +158,7 @@ is further restricting the context.
 %    - we can add restrictions by adding constraints into the context
 %- grounding variables introduces additional rules, as seen in the C-Subst generation
 %- removal of rules, makes the model uncomplete. as seen in the pruning process
-- adding additional constraints to the context doesnt alter any rules
+%- adding additional constraints to the context doesnt alter any rules
 - need to make sure that the added constraints do not contradict the context
   - a contradiction in the context means that we could show anything and invalidating soundness (perhaps?)
 - how to find constraints that do not contradict?
@@ -136,6 +168,11 @@ is further restricting the context.
 - idea: add type constraints into the context when interpreting e
 - need to find substitution, since t has bound variable
   - substitution must unify x with the variable e reduces to in a
+
+% TODO: for discussion?  
+- can not remove all vars or rules
+- the quantified variables are used to match the entailment as an input
+- we need the amount of rules, to be able to show entailments
 
 %%% Local Variables: 
 %%% mode: latex
