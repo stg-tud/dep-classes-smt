@@ -66,8 +66,7 @@ class TestInterpreter extends FunSuite {
 
     val (h1, e1) = dcc.interp(h, e)
 
-//    assert(h == h1)
-    h1.foreach(println)
-    println(e1)
+    assert(h == h1)
+    assert(e1 == Id('x))
   }
 }

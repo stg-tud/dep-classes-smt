@@ -71,7 +71,7 @@ object SMTLibConverter {
       )
   }
 
-  def generateSubstRules(vars: List[Id], paths: List[Path], pruning: Boolean = false): Seq[SMTLibCommand] = {
+  def generateSubstRules(vars: List[Id], paths: List[Path], pruning: Boolean = false, skipNoSubst: Boolean = true): Seq[SMTLibCommand] = {
     var rules: Seq[SMTLibCommand] = Seq()
     val pathPairs = makePathPairs(paths)
 
@@ -79,7 +79,7 @@ object SMTLibConverter {
       case (p, q) if x == p && p == q => () // skip
       // skip rule generation if no x is neither the var of p nor q, stangely invalidate tests it shouldnt
         // new: only apply this for refl paths, since thats what dangerous
-      case (p, q) if p == q && objectName(p) != x.toString => () // skip
+      case (p, q) if skipNoSubst && p == q && objectName(p) != x.toString => () // skip
       case (p, q) if pruning && p == q => () // skip
       case (p, q) => rules = rules :+ instantiateSubstRule(x, p, q)
     })

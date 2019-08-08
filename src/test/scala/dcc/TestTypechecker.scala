@@ -20,6 +20,6 @@ class TestTypechecker extends FunSuite {
   test ("wf natural numbers") {
     val dcc = new DCC(naturalNumbers)
 
-    assert(dcc.typecheck())
+    assert(dcc.typecheck(skipGen = false))
   }
 }

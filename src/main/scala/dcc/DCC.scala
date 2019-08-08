@@ -13,11 +13,11 @@ class DCC(P: Program) {
   type Obj = (Id, List[(Id, Id)])
   type Heap = Map[Id, Obj]
 
-  def entails(ctx: List[Constraint], cs: List[Constraint], vars: List[Id]): Boolean =
-    cs.forall(c => entails(ctx, c, vars))
+  def Entails(ctx: List[Constraint], cs: List[Constraint], vars: List[Id], skipNoSubst: Boolean = true): Boolean =
+    cs.forall(c => entails(ctx, c, vars, skipNoSubst = skipNoSubst))
 
   // constraint entailment
-  def entails(context: List[Constraint], c: Constraint, vars: List[Id]): Boolean = {
+  def entails(context: List[Constraint], c: Constraint, vars: List[Id], skipNoSubst: Boolean = true): Boolean = {
     // pre optimization TODO: kinda dirty here: move to somewhere else?
     var context1 = context.map{
       case InstantiatedBy(p, cls) => InstanceOf(p, cls)
@@ -66,7 +66,7 @@ class DCC(P: Program) {
         val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(strs, pths, clss)
 
         val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(P, pths)
-        val substRulesPruned = SMTLibConverter.generateSubstRules(vars, pths, pruning = true)
+        val substRulesPruned = SMTLibConverter.generateSubstRules(vars, pths, pruning = true, skipNoSubst = skipNoSubst)
 
         // debug output
 //        substRulesPruned.foreach(c => println(c.format()))
@@ -97,7 +97,7 @@ class DCC(P: Program) {
           case Unsat => true
           case Unknown =>
             solver.flush() // Second round without pruning
-            solver.addCommands(SMTLibConverter.generateSubstRules(vars, pths))
+            solver.addCommands(SMTLibConverter.generateSubstRules(vars, pths, skipNoSubst = skipNoSubst))
             solver.addCommand(lookup)
             solver.addCommand(Axioms.cProg)
             solver.addCommands(SMTLibConverter.makeAsserts(classes))
@@ -137,7 +137,7 @@ class DCC(P: Program) {
       // Applicable methods
       //val S: List[(List[Constraint], Expression)] = mImplSubst(m, x).filter{case (as, _) => entails(HC(heap), as, vars)}
       val methods = mImplSubst(m, x)
-      val S = methods.filter{case (as, _) => entails(HC(heap), as, vars)}
+      val S = methods.filter{case (as, _) => Entails(HC(heap), as, vars)}
 
       if (S.isEmpty) // m not in P
         return (heap, expr)
@@ -150,7 +150,7 @@ class DCC(P: Program) {
 
       S.foreach{
         case (a1, e1) if e != e1 =>
-          if (entails(a1, a, vars) && !entails(a, a1, vars)) {
+          if (Entails(a1, a, vars) && !Entails(a, a1, vars)) {
             println(s"Most specific:$a1, $e1")
             //(a, e) = (a1, e1)
             a = a1
@@ -176,7 +176,7 @@ class DCC(P: Program) {
       //val b1 = alphaConversion(y, x, b)
       val b1 = substitute(y, x, b)
       // heap constraints entail cls constraints
-      if (entails(HC(heap) ++ OC(x, o), b1, x :: vars))
+      if (Entails(HC(heap) ++ OC(x, o), b1, x :: vars))
         (heap + (x -> o), x)
       else
         (heap, expr) // stuck TODO: return type
@@ -246,7 +246,7 @@ class DCC(P: Program) {
       val b = t.constraints
 
       !FV(b).contains(x) &&
-      entails(PathEquivalence(FieldPath(x, f), y) :: context ++ a, b, Nil) &&
+      Entails(PathEquivalence(FieldPath(x, f), y) :: context ++ a, b, Nil) &&
       classes.foldRight(false){
         case (cls, _) if entails(context ++ a, InstanceOf(FieldPath(x, f), cls), Nil) => true
         case (_, clss) => clss
@@ -268,12 +268,12 @@ class DCC(P: Program) {
     case e => false
   }
 
-  def typeassignment(context: List[Constraint], expr: Expression): List[Type] = expr match {
+  def typeassignment(context: List[Constraint], expr: Expression, skipGen: Boolean = true): List[Type] = expr match {
     // T-Var
     case x@Id(_) =>
       //classes(P).foldRight(List(Type(Id('tError), List(PathEquivalence(x, Id('noValidClass)))))){
       classes.foldRight(Nil: List[Type]) {
-        case (cls, _) if entails(context, InstanceOf(x, cls), List(x)) =>
+        case (cls, _) if entails(context, InstanceOf(x, cls), List(x), skipNoSubst = skipGen) =>
           val y = freshvar()
 //          Type(y, List(PathEquivalence(y, x))) :: Nil// :: clss TODO: no need to find another one, as the type would be the same (after renaming)
           List(
@@ -295,7 +295,7 @@ class DCC(P: Program) {
         case Type(x, a) =>
           // instance of relations for type constraints
           val instOfs = classes.foldRight(Nil: List[Constraint]) { // TODO: list of vars in entails, like T-Var case
-            case (cls, clss) if entails(context ++ a, InstanceOf(FieldPath(x, f), cls), List(x)) =>
+            case (cls, clss) if entails(context ++ a, InstanceOf(FieldPath(x, f), cls), List(x), skipNoSubst = skipGen) =>
               val c = InstanceOf(y, cls)
               ts = Type(y, List(c)) :: ts
               c :: clss
@@ -320,14 +320,14 @@ class DCC(P: Program) {
       for (Type(x, a) <- eTypes) {
         // for all method declarations
         for ((a1, b) <- mTypeSubst(m, x, y)) {
-          val entailsArgs = entails(context ++ a, a1, List(x))
+          val entailsArgs = Entails(context ++ a, a1, List(x), skipNoSubst = skipGen)
 
           val b1 = (a1 ++ b).foldRight(Nil: List[Constraint]) {
             case (c, cs) if !FV(c).contains(x) => c :: cs
             case (_, cs) => cs
           }
 
-          if (entailsArgs && entails(context ++ a ++ b, b1, List(y)))
+          if (entailsArgs && Entails(context ++ a ++ b, b1, List(y), skipNoSubst = skipGen))
             types = Type(y, b1) :: types
         }
       }
@@ -351,12 +351,12 @@ class DCC(P: Program) {
           val b = List(InstantiatedBy(x, cls))
           val (x1, b1) = classInProgram(cls, P).getOrElse(return List(Type(Id('tError), List(PathEquivalence(cls, Id('classNotFound))))))
 
-          if (entails(context ++ b, b1, List(x, x1)))
+          if (Entails(context ++ b, b1, List(x, x1), skipNoSubst = skipGen))
             types = Type(x, b) :: types
 
           classes.foreach{
             c =>
-              if (entails(context ++ b, InstanceOf(x, c), List(x)))
+              if (entails(context ++ b, InstanceOf(x, c), List(x), skipNoSubst = skipGen))
                 types = Type(x, List(InstanceOf(x, c))) :: types
           }
         case _ => combinations(argsTypes).foreach {
@@ -370,12 +370,12 @@ class DCC(P: Program) {
 
             val (x1, b1) = classInProgram(cls, P).getOrElse(return List(Type(Id('tError), List(PathEquivalence(cls, Id('classNotFound))))))
 
-            if (entails(context ++ b, substitute(x1, x, b1), List(x)))
+            if (Entails(context ++ b, substitute(x1, x, b1), List(x), skipNoSubst = skipGen))
               types = Type(x, b) :: types
 
             classes.foreach{
               c =>
-                if (entails(context ++ b, InstanceOf(x, c), List(x)))
+                if (entails(context ++ b, InstanceOf(x, c), List(x), skipNoSubst = skipGen))
                   types = Type(x, List(InstanceOf(x, c))) :: types
             }
         }
@@ -383,12 +383,9 @@ class DCC(P: Program) {
       types.distinct
   }
 
-  // typecheck the current program
-  def typecheck(): Boolean = typecheck(P)
-
   // FV: free variables
   // wf P: well formed program
-  def typecheck(P: Program): Boolean = {
+  def typecheck(skipGen: Boolean = true): Boolean = {
     val x = freshvar()
     val y = freshvar()
 
@@ -405,10 +402,10 @@ class DCC(P: Program) {
               b.forall(c => b1.contains(c))
           }
       }
-    } && P.forall(typecheck)
+    } && P.forall(typecheckDecl(_, skipGen))
   }
 
-  def typecheck(D: Declaration): Boolean = D match {
+  def typecheckDecl(D: Declaration, skipGen: Boolean = true): Boolean = D match {
     // WF-CD
     case ConstructorDeclaration(cls, x, a) => FV(a) == List(x) || FV(a).isEmpty
     // WF-RD
@@ -425,7 +422,7 @@ class DCC(P: Program) {
     case MethodImplementation(_, x, a, Type(y, b), e) =>
       val vars = FV(b) // TODO: check if x != y for size check?
       FV(a) == List(x) && vars.nonEmpty && vars.forall(v => v == x || v == y) &&
-      typeassignment(a, e).exists {
+      typeassignment(a, e, skipGen).exists {
         case Type(z, c) =>
           c.size == b.size &&
           substitute(z, y, c).forall(b.contains(_))
