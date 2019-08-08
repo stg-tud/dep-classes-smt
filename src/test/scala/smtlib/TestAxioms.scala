@@ -1239,4 +1239,46 @@ class TestAxioms extends FunSuite with PrivateMethodTester {
     val (exit, out) = z3.execute()
     z3.flush()
   }
+
+  // This is potentially dangerous → filter subst generation for (x, p, p) everytime?
+  // propably better: require that there is acutally a substitution by requiring x in p
+  // done the second one
+  test ("non-solvable (x :: Zero |- y :: Zero)") {
+    val vars = List(Id('x), Id('y))
+    val paths = List(Id('x), Id('y))
+
+    val entailment = SMTLibConverter.convertEntailment(
+      List(
+        InstanceOf(Id('x), Id('Zero))
+      ),
+      InstanceOf(Id('y), Id('Zero))
+    )
+
+    val preprocessed = SMTLibConverter.generateSubstRules(vars, paths) ++
+    Seq(
+      SMTLibConverter.makeProgramEntailmentLookupFunction(naturalNumbers, paths),
+      Axioms.cProg
+    )
+
+    val knowledge: Seq[SMTLibCommand] = Seq(
+      Axioms.assertVariable("x"),
+      Axioms.assertVariable("y"),
+      Axioms.assertClass("Zero"),
+      Axioms.assertClass("Succ"),
+      Axioms.assertClass("Nat")
+    ) ++
+      paths.map(SMTLibConverter.convertPath(_)).map(Axioms.assertPath)
+
+    val assertion = Assert(Not(entailment))
+
+    z3.addCommands(preprocessed)
+    z3.addCommands(knowledge)
+    z3.addCommands(Seq(assertion, CheckSat))
+
+    val (exit, out) = z3.execute()
+    z3.flush()
+
+    assert(out.size == 1)
+    assert(out.head == Unknown.format() || out.head == Sat.format())
+  }
 }

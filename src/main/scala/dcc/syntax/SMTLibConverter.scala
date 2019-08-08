@@ -14,7 +14,7 @@ object SMTLibConverter {
   }
 
   def convertPath(p: Path): Term = p match {
-    case Id(x) => Apply(SimpleSymbol("var"), Seq(SMTLibString(x.name)))
+    case x@Id(_) => Apply(SimpleSymbol("var"), Seq(SMTLibString(x.toString)))
     case FieldPath(q, Id(f)) => Apply(SimpleSymbol("pth"), Seq(convertPath(q), SMTLibString(f.name)))
   }
 
@@ -75,8 +75,11 @@ object SMTLibConverter {
     var rules: Seq[SMTLibCommand] = Seq()
     val pathPairs = makePathPairs(paths)
 
-    vars.foreach(x => pathPairs.foreach{
+    vars.foreach( x => pathPairs.foreach {
       case (p, q) if x == p && p == q => () // skip
+      // skip rule generation if no x is neither the var of p nor q, stangely invalidate tests it shouldnt
+        // new: only apply this for refl paths, since thats what dangerous
+      case (p, q) if p == q && objectName(p) != x.toString => () // skip
       case (p, q) if pruning && p == q => () // skip
       case (p, q) => rules = rules :+ instantiateSubstRule(x, p, q)
     })

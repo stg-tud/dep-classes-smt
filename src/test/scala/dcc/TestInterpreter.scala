@@ -54,6 +54,7 @@ class TestInterpreter extends FunSuite {
       case (_, (Id('Zero), Nil)) => true
       case _ => false
     }
+    assert(e1 == Id('x2))
   }
 
   test("prev(Succ)") {
@@ -65,6 +66,7 @@ class TestInterpreter extends FunSuite {
 
     val (h1, e1) = dcc.interp(h, e)
 
+//    assert(h == h1)
     h1.foreach(println)
     println(e1)
   }

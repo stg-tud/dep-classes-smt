@@ -18,19 +18,36 @@ class DCC(P: Program) {
 
   // constraint entailment
   def entails(context: List[Constraint], c: Constraint, vars: List[Id]): Boolean = {
-    // debug output
-    context match {
-      case Nil => println(s"ϵ |- $c")
-      case _  => println(s"${syntax.Util.commaSeparate(context.distinct)} |- $c")
+    // dirty pre optimization
+    val context1 = context.map{
+      case InstantiatedBy(p, cls) => InstanceOf(p, cls)
+      case d => d
+    }
+    var c1 = c
+    c match {
+      case InstanceOf(p, cls) => context.foreach{
+        case PathEquivalence(`p`, q) => c1 = InstanceOf(q, cls)
+        case PathEquivalence(q, `p`) => c1 = InstanceOf(q, cls)
+        case _ =>
+      }
+      case _ =>
     }
 
-    (context.distinct, c) match {
+    // debug output
+    context1 match {
+      case Nil => println(s"ϵ |- $c")
+      case ctx  => println(s"${syntax.Util.commaSeparate(ctx.distinct)} |- $c1")
+    }
+
+    (context1.distinct, c) match {
       // C-Ident (with weakening)
       case _ if context.contains(c) => true
       // C-Refl (with weakening)
       case (_, PathEquivalence(p, q)) if p == q => true
       case (ctx, _) =>
-        val entailment = SMTLibConverter.convertEntailment(ctx, c)
+
+        val entailment = SMTLibConverter.convertEntailment(ctx, c1)
+
         // TODO: remove variables from this monstrous beast, convert them from added argument vars
         // TODO: alternatively
         // TODO: maybe change List[String] for vars to List[Id], such that it is usable by generateSubstRules
@@ -39,7 +56,7 @@ class DCC(P: Program) {
         val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(strs, pths, clss)
 
         val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(P, pths)
-        val substRulesPruned = SMTLibConverter.generateSubstRules(vars, pths, true)
+        val substRulesPruned = SMTLibConverter.generateSubstRules(vars, pths, pruning = true)
 
         // debug output
 //        substRulesPruned.foreach(c => println(c.format()))
@@ -59,6 +76,7 @@ class DCC(P: Program) {
         solver.addCommands(SMTLibConverter.makeAsserts(variables))
         // TODO: check if not entailment is unsat or entailment is sat?
         solver.addCommand(Assert(Not(entailment)))
+//        solver.addCommand(Assert(entailment))
 
         val sat = solver.checksat(3000)
 
@@ -114,12 +132,16 @@ class DCC(P: Program) {
       if (S.isEmpty) // m not in P
         return (heap, expr)
 
+      println("Applicable:")
+      S.foreach(println)
+
       // Most specific method
       var (a, e) = S.head
 
       S.foreach{
         case (a1, e1) if e != e1 =>
           if (entails(a1, a, vars) && !entails(a, a1, vars)) {
+            println(s"Most specific:$a1, $e1")
             //(a, e) = (a1, e1)
             a = a1
             e = e1
