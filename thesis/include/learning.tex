@@ -111,12 +111,11 @@ how we can enrich the context \ovl a
 of a constraint entailment \mIt{ce := \entails{\ovl a}{a}}
 with new information to reduce
 the time it takes the solver to find a derivation for \mIt{ce}.
-\\
-\\
-To add new information to such a constraint entailment,
+
+To add new information to the context of \mIt{ce},
 we can concatenate \ovl a with new constraints \ovl b
 and solve \entails{\ovl a \conc \ovl b}{a}.
-The SMT solver can with the addition of \ovl b,
+The SMT solver can, after the addition of \ovl b,
 make new rule instantiations that
 can lead to new derivations for \mIt{ce}.\\
 \\
@@ -125,10 +124,10 @@ can be dangerous.
 A misuse is possible, where the added constraints
 result in the SMT solver being able to
 prove an otherwise unsolvable constraint entailment.
-\Cref{ex:enrich-context-misuse} shows a faulty
-context enrichment.
+%\Cref{ex:enrich-context-misuse} shows a faulty
+%context enrichment.
 
-\begin{example}[Misuse of context enrichment]
+\begin{example}[Faulty derivation]
 \label{ex:enrich-context-misuse}\quad\\
 The constraint entailment \entails{\instOf{x}{C}}{\instOf{y}{C}}
 is not solvable,
@@ -139,6 +138,33 @@ We enrich the context with \pathEq{x}{y} and obtain
 The enriched constraint entailment is solvable,
 because we added the information that $x$ and $y$ are equivalent.
 \end{example}
+
+\begin{example}[Contradicting Information]
+\label{ex:enrich-context-contra}\quad\\
+\[ \entails{ \instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}} }{c} \]
+Taking the natural numbers program as a base,
+the context of the constraint entailment specifies $x$ to be
+an instance of class \texttt{Succ}.
+        
+\[ \entails{ \instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}, \instOf{x}{\texttt{Zero}} }{c} \]
+We added the information \instOf{x}{\texttt{Zero}} to the context.
+This contradicts the inheritance relation of the program,
+as a class can not be an instance of \texttt{Zero} and \texttt{Succ} simultaneously.
+\end{example}
+\quad\\
+%
+In \Cref{ex:enrich-context-misuse}
+we created \pathEq{x}{y} out of thin air
+and added it to the context of the constraint entailment.
+This enabled the solver to find a derivation and to solve
+the entailment.
+In \Cref{ex:enrich-context-contra}
+we added contradicting information to the context.
+
+Hence, we need to make sure that the information
+we want to add is true for the constraint entailment
+we want to show.
+
 
 \quad\\\\\\\\\\
 %- in the $DC_C$ calculus it is needed to solve a constraint system during runtime
