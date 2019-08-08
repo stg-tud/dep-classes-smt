@@ -3,6 +3,7 @@ package dcc
 import dcc.syntax._
 import dcc.syntax.Program.Program
 import org.scalatest.FunSuite
+//import syntax.Util._
 
 class TestTypechecker extends FunSuite {
     val naturalNumbers: Program = List(
@@ -22,4 +23,21 @@ class TestTypechecker extends FunSuite {
 
     assert(dcc.typecheck(skipGen = false))
   }
+
+//  test ( "typeass prev(Succ)") {
+//    val dcc = new DCC(naturalNumbers)
+//
+//      val h = Map(
+//        Id('x) -> (Id('Zero), Nil),
+//        Id('y) -> (Id('Succ), List((Id('p), Id('x)))))
+//
+//    val types = dcc.typeassignment(List(
+//      InstanceOf('x, 'Zero),
+//      InstanceOf('y, 'Succ),
+//      InstanceOf(FieldPath('y, 'p), 'Nat),
+//      PathEquivalence(FieldPath('y, 'p), 'x)
+//    ), MethodCall('prev, 'y))
+//
+//    types.foreach(println)
+//  }
 }

@@ -19,6 +19,8 @@ class DCC(P: Program) {
   // constraint entailment
   def entails(context: List[Constraint], c: Constraint, vars: List[Id], skipNoSubst: Boolean = true): Boolean = {
     // pre optimization TODO: kinda dirty here: move to somewhere else?
+    // TODO: add further optimizations for path eqs?
+//    val context1 = context
     var context1 = context.map{
       case InstantiatedBy(p, cls) => InstanceOf(p, cls)
       case d => d
@@ -28,7 +30,7 @@ class DCC(P: Program) {
       case InstanceOf(p, cls) => context1.foreach{
         case eq@PathEquivalence(`p`, q) =>
           c1 = InstanceOf(q, cls)
-          context1 = context1.filter{
+          context1 = context1.filter{ // TODO: first apply the equiv over the context before removing?
             case `eq` => false
             case _ => true
           }
