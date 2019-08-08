@@ -1,9 +1,83 @@
 \chapter{Discussion}
 
+- we did (for constraint system)
+  - a model of the DCC constraint system in first-order logic
+  - the model is createt to be strucurally similar to the sequent calculus
+  - usage of SMT solver to solve the constraint system
+  - we had a bunch of problems with the SMT solver (cant solve shit, times out for everything)
+  - we already implemented/incorporated some improvements to the model
+    - grounding of quantified variables
+    - express declarative rules in an algorithmic way (at least more than previously)
+      - lookup function for prog
+      - generalization for subst
+  - a big problem of the solver is the presence of unnecessary rules
+    - e.g. remove subst if x = p = q, showed that their is no information gain in thos rules
+    - we introduced pruning to remove some of the obivous culprits
+    - removing subst if p = q
+  - besides all/yet the solver does still time out regulary
+  - possible ways of action
+    - further optimize the presented/current model
+      - there are still variables to be grounded
+      - further rules could be expressed in an algorithmic way
+      - find a good heuristic (or other approach) to determine unused rules to remove
+      - explore properties of the SMT solver to yield better results
+    - build a new model
+      - not tying the model to the structure of the sequent calculus might yield better results
+        because the solver might be able to do more logic stuff directly if the model is not structural
+    - explore the usage of other SMT solvers with the current model
+      - other solvers might yield better results as Z3,
+        or worse, or for some problems better for some worse
+    - explore the usage of completely different automatic proof systems
+      - datalog style or such?
+
+- for operational semantics
+  - implemented interpreter
+  - implementation of semantic rules were straightforwards
+  - all rules syntax oriented
+  - all information specified in the rules
+  - could be read in a directed way and implemented from top to bottom (or is it reverse? check pierce book)
+  - performance of interpreter is bound by the performance of the implementation of the constraint system / solver
+
+- for type relation / type checking
+  - implemented type assignment
+    - type relation / rules are quite declarative
+    - rules are also not syntax oriented
+      - T-Sub matched on all expressions
+    - type assignment is also not unique
+  - implementation needed to deal with this
+    - for subsumption we integrated subtyping checks into the other rules
+      - subtyping check via constraint system
+    - for non unique
+      - find a list of types instead only one type
+      - changed return type
+  - implemented well formedness
+    - mostly straightforward
+    - all syntax oriented
+    - most checks easy, since requirements mostly free vars
+    - method implementations require check if annotated return type matches the type of the body
+      - since our type assignment implementation returns list of types
+        we needed to change this check
+      - original: checking for equality
+      - our version: checking if return type is one of the possible types of the body
+  - as interpreter, performance bound by constraint system / solver
+  
+- learning / transferring information from compile to runtime
+  - as performance is bound by the performance of the constraint system/solver
+  - runtime overhead through solver is unwanted
+  - find a way to decrease overhead
+  - we proposed: context enrichment / augmentation
+  - type information is valid for all expressions
+  - add type constraints to the contexts of entailments
+  - leading to new possibilities for the solver to find a solution
+  - need to be careful that added constraints are not contradicting
+
 % TODO: for discussion?  
 - can not remove all vars or rules
 - the quantified variables are used to match the entailment as an input
 - we need the amount of rules, to be able to show entailments
+
+%\section{Conclusion}
+%\section{Future Work}
 
 %%% Local Variables: 
 %%% mode: latex
