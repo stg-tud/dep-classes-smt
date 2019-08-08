@@ -1,4 +1,5 @@
 \section{Type Relation}
+\label{sec:types}
 In this section we implement the type relations presented in \Cref{sec:dcc-types}.
 The $DC_C$ calculus defines type assignments for expressions
 shown in \Cref{fig:dcc-typeass}
@@ -478,7 +479,7 @@ We generate a fresh variable $x_{\mIt{Obj}}$.
 Since \newInstNoArgs{\texttt{Zero}} has no arguments,
 we set $b := [\instBy{x_{\mIt{Obj}}}{\texttt{Zero}}]$.
 The constructor \constr{\texttt{Zero}}{x}{\epsilon} exists in the program.
-Sine the constructor for \texttt{Zero} does not specify any constraints,
+Since the constructor for \texttt{Zero} does not specify any constraints,
 we memorize the type
 \type{x_{\mIt{Obj}}}{\instBy{x_{\mIt{Obj}}}{\texttt{Zero}}}.
 

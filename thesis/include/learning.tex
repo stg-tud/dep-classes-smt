@@ -53,7 +53,7 @@ to remove the need to solve a constraint system.
 The complete elimination of the constraint system
 might be too optimistic. An alternative goal
 is to minimize the time needed for the solver to find a solution.
-The time it takes the solver to find a derivation for a solvable
+The time it takes the solver, to find a derivation for a solvable
 constraint entailment, depends on the size of the search space.
 The size of the search space is affected by
 \begin{itemize}
@@ -106,7 +106,8 @@ It specifies information about the constraint entailment
 that was previously unknown.
 \newpage
 
-\section{Reducing Evaluation Time} % TODO: other title? maybe: Context Enrichment
+\section{Context Enrichment}
+\label{sec:enrichment}
 In this section we want to explore,
 how we can enrich the context \ovl a
 of a constraint entailment \mIt{ce := \entails{\ovl a}{a}}
@@ -163,10 +164,84 @@ In \Cref{ex:enrich-context-contra}
 we added contradicting information to the context.
 
 Hence, we need to make sure that the information
-we want to add is true for the constraint entailment
+we want to add holds for the constraint entailment
 we want to show.
+\newpage
 
+\section{Using Type Information}
+In this section we discuss how to find valid
+information to enrich the context of a constraint entailment.\\
+\\
+Since we are only interested in the optimization of the runtime,
+we take a look at what information we can obtain from compile time.
+Type checking is defined in \Cref{sec:dcc-types} for the $DC_C$ calculus.
+We presented an implementation of the type checking in \Cref{sec:types}.
+We have a type relation that assigns a list of types $ts$ to an expressions $e$.
 
+A type $t$ is of the form \type{x}{\ovl a}.
+If $t$ is a type of $e$, then \ovl a will hold for all
+possible values of $e$ at runtime.
+We propose enriching the context of constraint entailments
+originating from $e$ during runtime with \ovl a.
+Since $t$ introduces a variable binding $x$ that is valid
+in \ovl a, we need to eliminate $x$ in \ovl a.
+If $y$ is the reduction value of $e$,
+we can eliminate $x$ through
+substituting $x$ with $y$ in \ovl a.
+
+\begin{example}[Context enrichment]\quad\\
+\label{ex:enrich-context}
+%\begin{align*}
+%  h &:= [ x \mapsto (\texttt{Zero}, []), (y, \mapsto [\texttt{Succ}, [p \equiv x]]) ]\\
+%  e &:= \texttt{prev}(y)
+%\end{align*}
+%
+%\[ \mIt{ts} :=  [\type{t}{\instOf{t}{Succ}}, \type{t}{\instOf{t}{Nat}}]\]
+%
+%In \Cref{ex:wf-naturalnumbers} we needed to solve 
+%We solve the constraint entailment
+%\[ \entails{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\instOf{x}{\texttt{Nat}}} \]
+%that originated from the expression.
+%
+%
+We want to solve the constraint entailment
+\[ \entails{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}, \instOf{y}{\texttt{Zero}}, \pathEq{x.p}{y}}{\instOf{x}{\texttt{Nat}}} \]
+originating from the evaluation of an expression $e$ with value $x$.
+
+To solve this entailment, we use rule C-Prog
+with \progEnt{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\instOf{x}{\texttt{Nat}}}.
+The entailment is solved, after checking if
+\instOf{x}{\texttt{Succ}} and \instOf{x.p}{\texttt{Nat}}
+are also entailed by the context.\\
+\\
+We enrich the context with types of $e$
+\type{y}{\instOf{y}{\texttt{Succ}}} and
+\type{y}{\instOf{y}{\texttt{Nat}}}.
+We substitute $y$ with $x$ in the types and obtain
+\instOf{x}{\texttt{Succ}} and
+\instOf{x}{\texttt{Nat}}.
+We add the constraints to the context and obtain the constraint entailment
+\[ \entails{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}, \instOf{y}{\texttt{Zero}}, \pathEq{x.p}{y},
+            \instOf{x}{\texttt{Succ}},\instOf{x}{\texttt{Nat}}}
+           {\instOf{x}{\texttt{Nat}}} \]
+We can close the entailment by using C-Ident,
+since \instOf{x}{\texttt{Nat}} is in the enriched context.
+\end{example}
+\quad\\
+%
+We need to solve constraint entailments of the form
+as seen in \Cref{ex:enrich-context} when interpreting
+expressions with the natural numbers program.
+In the example we see that, by augmenting the
+context of the entailment,
+the complex of the derivation decreases.
+Instead of using rule C-Prog and checking its
+sub requirements, we can directly apply
+rule C-Ident.
+This is because a similar entailment
+needed to be solved in the type checking phase
+and we reuse the information instead of computing it again.
+%
 \quad\\\\\\\\\\
 %- in the $DC_C$ calculus it is needed to solve a constraint system during runtime
 %- this produces overhead not wanted during runtime 
@@ -188,18 +263,13 @@ we want to show.
 %- adding additional constraints to the context doesnt alter any rules
 %- need to make sure that the added constraints do not contradict the context
 %  - a contradiction in the context means that we could show anything and invalidating soundness (perhaps?)
-- how to find constraints that do not contradict?
-- types are constraints with a bound variable
-- if t := (x, a) is type of e
-  - then all constraints a hold for each possible instance of e
-- idea: add type constraints into the context when interpreting e
-- need to find substitution, since t has bound variable
-  - substitution must unify x with the variable e reduces to in a
-
-% TODO: for discussion?  
-- can not remove all vars or rules
-- the quantified variables are used to match the entailment as an input
-- we need the amount of rules, to be able to show entailments
+%- how to find constraints that do not contradict?
+%- types are constraints with a bound variable
+%- if t := (x, a) is type of e
+%  - then all constraints a hold for each possible instance of e
+%- idea: add type constraints into the context when interpreting e
+%- need to find substitution, since t has bound variable
+%  - substitution must unify x with the variable e reduces to in a
 
 %%% Local Variables: 
 %%% mode: latex
