@@ -18,16 +18,26 @@ class DCC(P: Program) {
 
   // constraint entailment
   def entails(context: List[Constraint], c: Constraint, vars: List[Id]): Boolean = {
-    // dirty pre optimization
-    val context1 = context.map{
+    // pre optimization TODO: kinda dirty here: move to somewhere else?
+    var context1 = context.map{
       case InstantiatedBy(p, cls) => InstanceOf(p, cls)
       case d => d
     }
     var c1 = c
     c match {
-      case InstanceOf(p, cls) => context.foreach{
-        case PathEquivalence(`p`, q) => c1 = InstanceOf(q, cls)
-        case PathEquivalence(q, `p`) => c1 = InstanceOf(q, cls)
+      case InstanceOf(p, cls) => context1.foreach{
+        case eq@PathEquivalence(`p`, q) =>
+          c1 = InstanceOf(q, cls)
+          context1 = context1.filter{
+            case `eq` => false
+            case _ => true
+          }
+        case eq@PathEquivalence(q, `p`) =>
+          c1 = InstanceOf(q, cls)
+          context1 = context1.filter{
+            case `eq` => false
+            case _ => true
+          }
         case _ =>
       }
       case _ =>
@@ -35,7 +45,7 @@ class DCC(P: Program) {
 
     // debug output
     context1 match {
-      case Nil => println(s"ϵ |- $c")
+      case Nil => println(s"ϵ |- $c1")
       case ctx  => println(s"${syntax.Util.commaSeparate(ctx.distinct)} |- $c1")
     }
 
@@ -52,7 +62,7 @@ class DCC(P: Program) {
         // TODO: alternatively
         // TODO: maybe change List[String] for vars to List[Id], such that it is usable by generateSubstRules
         // TODO:   then remove argument vars from entails function again
-        val (strs, pths, clss) = SMTLibConverter.extractVariablesPathsClasses(c :: ctx)
+        val (strs, pths, clss) = SMTLibConverter.extractVariablesPathsClasses(c1 :: ctx)
         val (variables, paths, classes) = SMTLibConverter.convertVariablesPathsClasses(strs, pths, clss)
 
         val lookup = SMTLibConverter.makeProgramEntailmentLookupFunction(P, pths)
