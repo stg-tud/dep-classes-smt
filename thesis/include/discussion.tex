@@ -69,12 +69,13 @@ We implemented the operational semantics with an interpreter in \Cref{sec:interp
 The implementation of the interpreter is straightforward.
 The rules of the operational semantics are syntax oriented
 and can be "read from bottom to top" to yield
-an algorithm~\cite{tpl}.
+an algorithm~\cite{tpl}.\\
+\\
 The performance of the interpreter is bound
 by the performance of the SMT solver.
 This includes the time needed to evaluate an expression to a value
-as well as the ability to fully evaluate expressions
-that are reducible to a value.
+as well as the question if we can fully evaluate an expression,
+given that the expression is reducible to a value.
 %
 %- for operational semantics
 %  - implemented interpreter
@@ -105,9 +106,28 @@ and we can therefore use the SMT solver to check for subtyping.
 
 Since type assignments are not unique,
 our implementation returns a list of types for
-an expression.
-
-- for type relation / type checking
+an expression.\\
+\\
+The rules for the well-formedness of programs are
+again syntax oriented
+and the rules form a structure for the implementation.
+The rules of well-formedness check mostly the free variables
+of declarations.
+The outlier being the rule WF-Mi for method implementations.
+The rule requires that the return type of a method
+equals the type of the method body.
+For this, the rule uses type assignment on the body
+and compares the result to the annotated return type.
+Since the type assignment implementation
+returns a list of types instead of one type,
+our implementation requires that the annotated return type
+is contained in the types returned by the type assignment.\\
+\\
+The performance of the type checker is,
+as the performance of the interpreter,
+bound by the performance of the SMT solver.
+%
+%- for type relation / type checking
 %  - implemented type assignment
 %    - type relation / rules are quite declarative
 %    - rules are also not syntax oriented
@@ -119,16 +139,16 @@ an expression.
 %    - for non unique
 %      - find a list of types instead only one type
 %      - changed return type
-  - implemented well formedness
-    - mostly straightforward
-    - all syntax oriented
-    - most checks easy, since requirements mostly free vars
-    - method implementations require check if annotated return type matches the type of the body
-      - since our type assignment implementation returns list of types
-        we needed to change this check
-      - original: checking for equality
-      - our version: checking if return type is one of the possible types of the body
-  - as interpreter, performance bound by constraint system / solver
+%  - implemented well formedness
+%    - mostly straightforward
+%    - all syntax oriented
+%    - most checks easy, since requirements mostly free vars
+%    - method implementations require check if annotated return type matches the type of the body
+%      - since our type assignment implementation returns list of types
+%        we needed to change this check
+%      - original: checking for equality
+%      - our version: checking if return type is one of the possible types of the body
+%  - as interpreter, performance bound by constraint system / solver
 
 \section{Information Gain From Type Cheker}
 - learning / transferring information from compile to runtime
