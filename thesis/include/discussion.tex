@@ -185,34 +185,51 @@ if \mIt{ce} originated from the interpretation of $e$.
 %  - need to be careful that added constraints are not contradicting
 
 \section{Future Work}
-  - besides all/yet the solver does still time out regulary
-  - possible ways of action
-    - further optimize the presented/current model
-      - there are still variables to be grounded
-      - further rules could be expressed in an algorithmic way
-      - find a good heuristic (or other approach) to determine unused rules to remove
-      - explore properties of the SMT solver to yield better results
-      - explore if cut-elimination can be applied to DCC
-    - build a new model
-      - not tying the model to the structure of the sequent calculus might yield better results
-        because the solver might be able to do more logic stuff directly if the model is not structural
-    - explore the usage of other SMT solvers with the current model
-      - other solvers might yield better results as Z3,
-        or worse, or for some problems better for some worse
-    - explore the usage of completely different automatic proof systems
-      - datalog style or such?
+The used SMT solver, as already statet, is unable to successfully
+show all solvable constraint entailments.
+There are multible possibilities to increase the performance of the solver.
+\begin{itemize}
+  \item Exploring if Cut-elimination~\cite{cutelim} can be applied to the defined sequent calculus
+        of the $DC_C$ calculus.
+  \item Further optimizations to the presented first-order model.
+  \begin{itemize}
+    \item Applying the enumeration process used for rule C-Subst
+          onto more variables and rules.
+    \item There are still declarative rules in the model.
+          Searching for patterns that can be expressed in an algorithmic
+          way in those rules can help the solver to successfully instantiate those rules.
+    \item The presence of unnecessary rules is a problem for the SMT solver.
+          Developing a heuristic to determine which rules will not be used,
+          would prevent the solver from looping in such a rule and time out less as a result.
+    \item SMT solvers in general and Z3 in particular are highly configurable.
+          The amount of different available options and their possible side-effects on each other
+          make it difficult to find the best configuration for the problem under consideration.
+  \end{itemize}
+  \item Developing a new model of the constraint system.
+        It might yield better result in combination with a SMT solver,
+        if a model does not mimic the structural reasoning of the sequent calculus.
+  \item There is a wide range of SMT solvers available,
+        all with unique strengths and weaknesses.
+        Other SMT solvers than Z3 could be more suitable for our model of the constraint system.
+  \item There is a wide range of theorem provers available apart from SMT.
+\end{itemize}
 
-
-  
-
-
-% TODO: for discussion?  
-- can not remove all vars or rules
-- the quantified variables are used to match the entailment as an input
-- we need the amount of rules, to be able to show entailments
-
-%\section{Conclusion}
-%\section{Future Work}
+%  - besides all/yet the solver does still time out regulary
+%  - possible ways of action
+%    - further optimize the presented/current model
+%      - there are still variables to be grounded
+%      - further rules could be expressed in an algorithmic way
+%      - find a good heuristic (or other approach) to determine unused rules to remove
+%      - explore properties of the SMT solver to yield better results
+%      - explore if cut-elimination can be applied to DCC
+%    - build a new model
+%      - not tying the model to the structure of the sequent calculus might yield better results
+%        because the solver might be able to do more logic stuff directly if the model is not structural
+%    - explore the usage of other SMT solvers with the current model
+%      - other solvers might yield better results as Z3,
+%        or worse, or for some problems better for some worse
+%    - explore the usage of completely different automatic proof systems
+%      - datalog style or such?
 
 %%% Local Variables: 
 %%% mode: latex
