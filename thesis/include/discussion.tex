@@ -151,15 +151,38 @@ bound by the performance of the SMT solver.
 %  - as interpreter, performance bound by constraint system / solver
 
 \section{Information Gain From Type Cheker}
-- learning / transferring information from compile to runtime
-  - as performance is bound by the performance of the constraint system/solver
-  - runtime overhead through solver is unwanted
-  - find a way to decrease overhead
-  - we proposed: context enrichment / augmentation
-  - type information is valid for all expressions
-  - add type constraints to the contexts of entailments
-  - leading to new possibilities for the solver to find a solution
-  - need to be careful that added constraints are not contradicting
+The SMT solver plays a role in the time it takes
+to interpret an expression.
+The time it takes the SMT solver to find a
+solution for a solvable input, depends on the amount
+of rule instantiations needed to close the derivation.
+
+We proposed \textit{context enrichment} in \Cref{chp:learning},
+as a process to reduce the number of rule applications needed
+to solve a constraint entailment.
+It is possible to reduce the amount of steps it takes
+to solve a constraint entailment \mIt{ce}
+by adding constraints $t$ to the context of \mIt{ce}.
+Adding constraints to the context
+can result in the solver being able to find a solution for
+a "invalid" constraint entailment.
+Thus, we need to make sure that the added constraints
+do not contradict the information available in the context.
+
+In the $DC_C$ calculus, a type of an expression $e$ is a list of constraints that
+hold for each possible value of that expression during runtime.
+So it is safe to add $t$ to the context of \mIt{ce},
+if \mIt{ce} originated from the interpretation of $e$.
+%
+%- learning / transferring information from compile to runtime
+%  - as performance is bound by the performance of the constraint system/solver
+%  - runtime overhead through solver is unwanted
+%  - find a way to decrease overhead
+%  - we proposed: context enrichment / augmentation
+%  - type information is valid for all expressions
+%  - add type constraints to the contexts of entailments
+%  - leading to new possibilities for the solver to find a solution
+%  - need to be careful that added constraints are not contradicting
 
 \section{Future Work}
   - besides all/yet the solver does still time out regulary
@@ -169,6 +192,7 @@ bound by the performance of the SMT solver.
       - further rules could be expressed in an algorithmic way
       - find a good heuristic (or other approach) to determine unused rules to remove
       - explore properties of the SMT solver to yield better results
+      - explore if cut-elimination can be applied to DCC
     - build a new model
       - not tying the model to the structure of the sequent calculus might yield better results
         because the solver might be able to do more logic stuff directly if the model is not structural
