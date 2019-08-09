@@ -65,27 +65,60 @@ for some valid inputs.
 %    - removing subst if p = q
 
 \section{Interpreter}
-- for operational semantics
-  - implemented interpreter
-  - implementation of semantic rules were straightforwards
-  - all rules syntax oriented
-  - all information specified in the rules
-  - could be read in a directed way and implemented from top to bottom (or is it reverse? check pierce book)
-  - performance of interpreter is bound by the performance of the implementation of the constraint system / solver
+We implemented the operational semantics with an interpreter in \Cref{sec:interp}.
+The implementation of the interpreter is straightforward.
+The rules of the operational semantics are syntax oriented
+and can be "read from bottom to top" to yield
+an algorithm~\cite{tpl}.
+The performance of the interpreter is bound
+by the performance of the SMT solver.
+This includes the time needed to evaluate an expression to a value
+as well as the ability to fully evaluate expressions
+that are reducible to a value.
+%
+%- for operational semantics
+%  - implemented interpreter
+%  - implementation of semantic rules were straightforwards
+%  - all rules syntax oriented
+%  - all information specified in the rules
+%  - could be read in a directed way and implemented from top to bottom (or is it reverse? check pierce book)
+%  - performance of interpreter is bound by the performance of the implementation of the constraint system / solver
 
 \section{Type Checker}
+We implemented the type relation of the $DC_C$ calculus
+in \Cref{sec:types}.\\
+\\
+The definition of type assignments for expressions
+in the $DC_C$ calculus is declarative.
+The rules are not syntax oriented,
+as rule T-Sub can be applied to any expression.
+Type assignment is also not unique.\\
+\\
+The implementation of the type assignment relation
+is not as straightforward as the implementation
+of the operational semantics.
+
+For the implementation of the subsumption rule T-Sub,
+we integrated subtyping checks into the remaining type rules.
+the inheritance relation is expressed via the constraint system
+and we can therefore use the SMT solver to check for subtyping.
+
+Since type assignments are not unique,
+our implementation returns a list of types for
+an expression.
+
 - for type relation / type checking
-  - implemented type assignment
-    - type relation / rules are quite declarative
-    - rules are also not syntax oriented
-      - T-Sub matched on all expressions
-    - type assignment is also not unique
-  - implementation needed to deal with this
-    - for subsumption we integrated subtyping checks into the other rules
-      - subtyping check via constraint system
-    - for non unique
-      - find a list of types instead only one type
-      - changed return type
+%  - implemented type assignment
+%    - type relation / rules are quite declarative
+%    - rules are also not syntax oriented
+%      - T-Sub matched on all expressions
+%    - type assignment is also not unique
+%  - implementation needed to deal with this
+%    - for subsumption we integrated subtyping checks into the other rules
+%      - subtyping check via constraint system
+%    - for non unique
+%      - find a list of types instead only one type
+%      - changed return type
   - implemented well formedness
     - mostly straightforward
     - all syntax oriented
