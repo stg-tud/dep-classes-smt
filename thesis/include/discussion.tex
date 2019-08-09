@@ -1,19 +1,73 @@
 \chapter{Discussion}
+In this chapter we conclude the thesis.
+We discuss the contributions of the thesis,
+as well as possible future work.
 
-- we did (for constraint system)
-  - a model of the DCC constraint system in first-order logic
-  - the model is createt to be strucurally similar to the sequent calculus
-  - usage of SMT solver to solve the constraint system
-  - we had a bunch of problems with the SMT solver (cant solve shit, times out for everything)
-  - we already implemented/incorporated some improvements to the model
-    - grounding of quantified variables
-    - express declarative rules in an algorithmic way (at least more than previously)
-      - lookup function for prog
-      - generalization for subst
-  - a big problem of the solver is the presence of unnecessary rules
-    - e.g. remove subst if x = p = q, showed that their is no information gain in thos rules
-    - we introduced pruning to remove some of the obivous culprits
-    - removing subst if p = q
+\section{Constraint System}
+We implemented the constraint system of the $DC_C$ calculus
+in \Cref{sec:constraintsystem}.
+The $DC_C$ constraint system is given as a sequent calculus.
+We defined a model of the constraint system in first-order logic.
+Our aim for the model was to be structurally similar to the sequent calculus,
+as we want to use the same structural reasoning
+as in the rules of the sequent calculus.
+Since we employ a SMT solver for resolution of the constraint system,
+we defined a representation of the first-order model in the SMTLib format.\\
+\\
+In \Cref{sec:rule-refinement} we refined the first-order model,
+by improving the usability of some rules with the SMT solver.
+We enumerated over variables and paths in rule C-Subst
+to reduce the amount of quantified variables.
+This reduction in quantified variables through enumeration came
+with the disadvantage of creating additional rules,
+where we need to create one rule for each variable and path combination.\\
+\\
+We expressed declarative elements in rules C-Subst and C-Prog in an algorithmic way.
+
+For rule C-Subst we introduced generalization as the inverse function of substitution.
+This allowed us to express the relation from the input $a_2$ to $a$ via generalization
+and from $a$ to $a_1$ via substitution.
+
+For rule C-Prog we developed a process to convert the existence check for
+entailment declarations in the program to a lookup function.
+This allowed us to call the lookup function in rule C-Prog with the input $a$.\\
+\\
+We observed that the SMT solver can loop and time out,
+if we supply unnecessary rules to find a derivation
+for the given input.
+We introduced pruning in \Cref{sec:pruning} to
+remove rules from the model.
+In the generation process for rules C-Subst with enumeration,
+we multiplied the amount of available rules.
+We plugged the pruning process into this process
+to skip the generation of some rules.
+Since the removal of valid rules can lead to incompleteness
+we used a two-pass call to the SMT solver,
+one with enabled pruning and one with disabled pruning.
+
+\section{Interpreter}
+foo
+
+\section{Type Checker}
+
+\section{Information Gain From Type Cheker}
+
+\section{Future Work}
+
+%- we did (for constraint system)
+%  - a model of the DCC constraint system in first-order logic
+%  - the model is createt to be strucurally similar to the sequent calculus
+%  - usage of SMT solver to solve the constraint system
+%  - we had a bunch of problems with the SMT solver (cant solve shit, times out for everything)
+%  - we already implemented/incorporated some improvements to the model
+%    - grounding of quantified variables
+%    - express declarative rules in an algorithmic way (at least more than previously)
+%      - lookup function for prog
+%      - generalization for subst
+%  - a big problem of the solver is the presence of unnecessary rules
+%    - e.g. remove subst if x = p = q, showed that their is no information gain in thos rules
+%    - we introduced pruning to remove some of the obivous culprits
+%    - removing subst if p = q
   - besides all/yet the solver does still time out regulary
   - possible ways of action
     - further optimize the presented/current model
