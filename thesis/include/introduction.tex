@@ -1,6 +1,21 @@
 \chapter{Introduction}
 \section{Motivation}
 \section{Contributions}
+The main contributions of the thesis are:
+\begin{itemize}
+  \item An implementation of the $DC_C$ calculus
+        using SMT solving to resolve the constraint system.
+  \item A first-order model of the $DC_C$ constraint system,
+        which translates the rules of a sequent calculus
+        to universal quantified formulae.
+  \item Optimizations to the rules of the first-order model,
+        such that a SMT solver can make better use of them.
+  \item An implementation of the $DC_C$ relation for
+        type assignments to expressions.
+  \item A way to use type information of an expression
+        in the interpretation of that expression
+        to reduce the time to solve the constraint system.
+\end{itemize}
 
 \section{Structure}
 \Cref{chp:pre} presents preliminaries.
