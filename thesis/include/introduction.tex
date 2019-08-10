@@ -1,5 +1,43 @@
 \chapter{Introduction}
 \section{Motivation}
+Dynamic dispatch is the process to determine
+the implementation of a polymorphic method
+to call at runtime.
+In contrast to static dispatch,
+which determines this during compile time.
+%
+Safety describes the ability of a language
+to prevent errors.
+%
+In object oriented programming
+related classes can be grouped together,
+but inheritance between those groups can not be expressed.
+
+Dependent Classes combine dynamic dispatch à la Smalltalk~\cite{smalltalk}
+with safety à la Scala~\cite{scala},
+as well as supporting inheritance between groups of related classes.
+The support for abstract methods is yet to be fully explored.
+The $DC_C$ calculus by Vaidas Gasiūnas~\cite{vaidas:thesis}
+captures the semantics of Dependent Classes
+and extends it with the support for abstract classes and methods.
+Subtyping in the $DC_C$ calculus is expressed as constraint entailment.
+
+The goal of this thesis is to implement the $DC_C$ calculus
+and to explore the usage of SMT to solve the constraint system of the calculus.
+
+%- dynamic dispatch
+%  - selecting which implemenetation of a polymorphic method to call at runtime
+%  - in contrast to static dispatch which does this at compile time
+%- (type) safety
+%  - describes the ability to discourage/prevent errors (during compile time? → not really, dynamic typing)
+%- dependent calsses
+%  - combine dynamic dispatch and safety
+%  - not yet/still a problem: abstract methods
+%  - DCC calculus by vaidas: dependent classes with abstract methods
+%  - subtyping can be described/expressed as constraint entailment
+%  - not much explored in an object oriented setting
+%  - use SMT solver to explore it
+
 \section{Contributions}
 The main contributions of the thesis are:
 \begin{itemize}
