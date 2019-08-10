@@ -1,15 +1,31 @@
-- dependent classes
-  - support:
-  - dynamic dispatch (polymorphic methods)
-  - inheritance
-  - on the level of groups of related classes
-- DCC calculus extends the semantics of dependent classes with abstract classes and methods
-  and expresses inheritance through a constraint system
-- we implement the DCC calculus
-- and solve the constraint system by using SMT solving
-- we propose "context enrichment" as a process
-  of transferring compile time information to the runtime of a program
-  to increase the performance of the constraint system solving
+Dependent Classes support typical
+object oriented techniques
+as inheritance and subtype polymorphism
+at the scope of class groups.
+The $DC_C$ calculus extends the semantics
+of Dependent Classes with
+abstract classes and methods
+and expresses inheritance via a constraint system.
+
+We implement the $DC_C$ calculus in Scala
+and utilize SMT solving to solve its constraint system.
+We propose \textit{context enrichment} as a process
+to transfer information from compile time to runtime
+%to the constraint entailment to be solved during runtime.
+to decrease the time to solve constraint entailments emerging during runtime.
+
+%- dependent classes
+%  - support:
+%  - dynamic dispatch (polymorphic methods)
+%  - inheritance
+%  - on the level of groups of related classes
+%- DCC calculus extends the semantics of dependent classes with abstract classes and methods
+%  and expresses inheritance through a constraint system
+%- we implement the DCC calculus
+%- and solve the constraint system by using SMT solving
+%- we propose "context enrichment" as a process
+%  of transferring compile time information to the runtime of a program
+%  to increase the performance of the constraint system solving
 
 %%% Local Variables: 
 %%% mode: latex
