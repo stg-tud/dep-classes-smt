@@ -32,7 +32,7 @@ where \mIt{limit} is the maximum amount of time before the solver returns \smtli
 For (2):
 If the solver finds a contradiction of the constraint entailment to the rules,
 the execution time of the solver is between $0$ and \mIt{limit}.
-If the SMT solver does not a contradiction for the constraint entailment,
+If the SMT solver does not find a contradiction for the constraint entailment,
 the time it takes for the solver to return is \mIt{limit},
 as in those cases the solver needs to evaluate all possible rule instantiations
 to find either a derivation or a contradiction.
@@ -61,9 +61,9 @@ The size of the search space is affected by
   \item the amount of variables in quantifiers.
         Each additional quantified variables leads to an exponential growth in possible instantiations.
   \item the amount of rules supplied to the solver.
-        Each additional rule, leads to new possible rule applications.
+        Each additional rule leads to new possible rule applications.
   \item the amount of constraints in the context of a constraint entailment.
-        Each additional constraint, adds a restriction to the constraint entailment.
+        Each additional constraint adds a restriction to the constraint entailment.
 \end{itemize}
 In \Cref{sec:rule-refinement},
 we explored the reduction of quantified variables.
@@ -174,10 +174,11 @@ In this section we discuss how to find valid
 information to enrich the context of a constraint entailment.\\
 \\
 Since we are only interested in the optimization of the runtime,
+we explore the information to gain % TODO
 we take a look at what information we can obtain from compile time.
 Type checking is defined in \Cref{sec:dcc-types} for the $DC_C$ calculus.
 We presented an implementation of the type checking in \Cref{sec:types}.
-We have a type relation that assigns a list of types $ts$ to an expressions $e$.
+We have a type relation that assigns a list of types $ts$ to an expression $e$.
 
 A type $t$ is of the form \type{x}{\ovl a}.
 If $t$ is a type of $e$, then \ovl a will hold for all
