@@ -150,7 +150,7 @@ bound by the performance of the SMT solver.
 %      - our version: checking if return type is one of the possible types of the body
 %  - as interpreter, performance bound by constraint system / solver
 
-\section{Information Gain From Type Cheker}
+\section{Information Gain From Type Checker}
 The SMT solver plays a role in the time it takes
 to interpret an expression.
 The time it takes the SMT solver to find a
@@ -185,9 +185,9 @@ if \mIt{ce} originated from the interpretation of $e$.
 %  - need to be careful that added constraints are not contradicting
 
 \section{Future Work}
-The used SMT solver, as already statet, is unable to successfully
+The used SMT solver, as already stated, is unable to successfully
 show all solvable constraint entailments.
-There are multible possibilities to increase the performance of the solver.
+There are multiple possibilities to increase the performance of the solver.
 \begin{itemize}
   \item Exploring if Cut-elimination~\cite{cutelim} can be applied to the defined sequent calculus
         of the $DC_C$ calculus.
@@ -211,7 +211,10 @@ There are multible possibilities to increase the performance of the solver.
   \item There is a wide range of SMT solvers available,
         all with unique strengths and weaknesses.
         Other SMT solvers than Z3 could be more suitable for our model of the constraint system.
-  \item There is a wide range of theorem provers available apart from SMT.
+  \item There are automated theorem provers available apart from SMT solvers.
+        As with the previous point about alternative SMT solvers,
+        one could explore the capabilities of different proving systems
+        on the constraint system.
 \end{itemize}
 
 %  - besides all/yet the solver does still time out regulary
