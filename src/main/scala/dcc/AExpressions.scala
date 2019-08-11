@@ -4,7 +4,7 @@ import dcc.syntax.Util._
 import dcc.syntax._
 import dcc.syntax.Program.Program
 
-object Expressions extends App {
+object AExpressions extends App {
   val naturalNumbers: Program = List(
     ConstructorDeclaration(Id('Zero), Id('x), Nil),
     ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
@@ -80,9 +80,24 @@ object Expressions extends App {
       ))
   )
 
+  program.foreach(println)
+
   val dcc = new DCC(program)
 
-  program.foreach(println)
+  val zero = ObjectConstruction('Zero, List())
+  val one = ObjectConstruction('Succ, List(('p, zero)))
+  val two = ObjectConstruction('Succ, List(('p, one)))
+
+  def lit(nat: Expression) = ObjectConstruction('Lit, List(('value, nat)))
+  def plus(l: Expression, r: Expression) = ObjectConstruction('Plus, List(('l, l), ('r, r)))
+
+  val (h0, x0) = dcc.interp(Map.empty, zero)
+  val (h1, x1) = dcc.interp(h0, lit(x0))
+  val (h2, x2) = dcc.interp(h1, MethodCall('eval, plus(x1, x1)))
+
+
+  println(h2)
+  println(x2)
 }
 
 
