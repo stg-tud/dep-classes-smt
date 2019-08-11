@@ -5,7 +5,7 @@
 Liquid Types~\cite{liquid-types} are a system
 combining Hindley-Milner type inference with Predicate Abstraction
 to infer dependent types.
-The infered dependent types are precise enough
+The inferred dependent types are precise enough
 to prove various safety properties.
 Liquid Types adopt the benefits of
 static verification of critical properties and
@@ -19,25 +19,25 @@ without the need for manual annotations.
 Liquid Haskell~\cite{liquid-haskell} is a usable
 program verifier, integrating
 the specification of correctness properties
-as logical refinements of Haskells types.
+as logical refinements of Haskell's types.
 It uses the abstract interpretation framework of Liquid Types,
 to check correctness of specifications via SMT solving,
 requiring no explicit proofs or annotations.
 The specification language for Liquid Haskell
 is arbitrary expressive to allow
 the writing of general correctness properties,
-thus turing Haskell into a theorem prover.
+thus turning Haskell into a theorem prover.
 
 \subsubsection{Dependent Object Types (DOT)}
 DOT~\cite{dot1,dot2} is a calculus
-modeling Scalas path-dependent types and abstract type members.
+modeling Scala's path-dependent types and abstract type members.
 It uses refinement types to model the mixture of
 nominal and structural typing in Scala.
 DOT normalizes the type system of Scala
 through the unification of the constructs for type members.
 It provides intersection and union types
-to simplify the computations for greatest lowerbounds
-and least upperbounds.
+to simplify the computations for greatest lower-bounds
+and least upper-bounds.
 DOT is at the core of \textit{dotty},
 a compiler for Scala under development since 2013
 considered for inclusion in Scala 3.
