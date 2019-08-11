@@ -106,7 +106,7 @@ Functions for generalizing paths and constraints are defined in \Cref{fig:axioms
 Generalization for paths functions reverse of substitution for paths.
 Instead of substituting a variable with a path we generalize a subpath with a variable.
 This generalization of a subpath cannot happen at random places inside a path,
-but only starting on the innermost/leftmost variable of the path (the root of the path AST).
+but only starting on the innermost/leftmost variable of the path (the root of the abstract syntax tree (AST) of that path).
 For example we can generalize $x.f$ with $y$ in $x.f.g$ to obtain $y.g$,
 but we cannot generalize $f.g$ with $h$ in $x.f.g$
 since $f$ is not the innermost occurrence in $x.f.g$.
@@ -282,7 +282,7 @@ existing program entailments into one function,
 as well as the need for a result in the case where no match exists.
 
 Since the well-formedness requires \ovl b to contain at least
-one element \ovl b cannot be empty and we use the
+one element, \ovl b cannot be empty and we use the
 empty list $\nil$ as the return value for the non matching case.\\
 To differentiate between program entailments we use if statements
 to check if the input matches one of the program entailments.\\
@@ -297,7 +297,7 @@ Such a lookup function is shown in \Cref{ex:lookup-fun-ite}.
 &\Else \If a = \instOf{x}{A}\\
 &\quad \Then [\instOf{x}{C}, \instOf{x.f}{D}]\\
 &\quad \Else\If a = \instOf{x}{D}\\
-&\qquad \Then [[\instOf{x}{E}]]\\
+&\qquad \Then [\instOf{x}{E}]\\
 &\qquad \Else \nil\\
 \end{align*}
 \end{example}

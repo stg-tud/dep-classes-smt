@@ -37,7 +37,7 @@ The definitions are similar to the syntax specification in \Cref{fig:dcc-syntax}
 A path is either a variable name or a field path consiting
 of another path followed by a field name, where variable and field names
 are modeled as strings.
-The three types of $DC_C$ constraints are translate as follows in our model:
+The three types of $DC_C$ constraints are translated as follows in our model:
 \begin{itemize}
   \item For two paths $p, q$ the constraint \pathEq{p}{q} requires $p$ and $q$
         to be equivalent.
@@ -84,7 +84,7 @@ Path substitution is the process of substituting the variable name of a path
 with another path.
 Therefore substitution can only occur on the innermost part of a path and
 substitution only happens if the variable name of the path equals the variable name to be substituted.
-Substitution for constraints propagates substitution to each path contained within a constraint.\\
+Substitution for constraints propagates path substitution to each path contained within a constraint.\\
 E.g. for path equivalence constraints \pathEq{p_1}{p_2} a substitution from $x$ to $q$
 substitutes both $p_1$ and $p_2$ with the substitution from $x$ to $q$.
 Substitution for lists of constraints applies the substitution

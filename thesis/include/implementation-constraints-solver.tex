@@ -1,7 +1,7 @@
 \subsection{Scala Integration}
 To integrate the model of the sequent calculus
-into the Scala implementation, we need to translate the
-first-order model into the SMT-Lib format.
+into our Scala implementation of the $DC_C$ calculus,
+we need to translate the first-order model into the SMT-Lib format.
 We also need a procedure for preprocessing,
 since we enumerated over variable names and paths
 in the refined rules C-Subst and C-Prog.
@@ -399,7 +399,7 @@ in \mIt{entailments}
 and returned if no uninstantiated declaration remains.\\
 %
 We match entailment declarations \progEnt{x}{as}{a}
-and substitutes the bound variable $x$ with $path$ in $as$ and $a$.
+and substitute the bound variable $x$ with $path$ in $as$ and $a$.
 We declare $cs := \subst{as}{x}{path}$ and $c := \subst{a}{x}{path}$.
 We check if we previously instantiated a constraint matching $c$.
 If not, we create an entry mapping from $c$ to $cs$.

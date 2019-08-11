@@ -2,10 +2,10 @@
 \label{chp:pre}
 \section{Satisfiability modulo theories}
 \label{sec:smt}
-This section shortly introduces Satisfiability modulo theories and the SMT problem.
+This section shortly introduces Satisfiability modulo theories (SMT) and the SMT problem.
 This section is a write-up of the Handbook of Model Checking~\cite{smt},
 the technical report on The SMT-Lib Standard~\cite{smtlib}
-and Z3: An efficient smt solver~\cite{z3}.
+and Z3: An efficient SMT solver~\cite{z3}.
 \\ \\
 Many problems like formal verification of hard- and software can be reduced
 to checking the satisfiability of a formula in some logic.
@@ -15,7 +15,7 @@ Other problems can be described more naturally in other traditional logics like 
 These logics support more expressive language features including
 non-boolean variables, function and predicate-symbols and quantifiers.
 
-The defining problem of Satisfiability modulo theories (SMT)
+The defining problem of Satisfiability modulo theories
 is checking if a logical formula is satisfiable in the context of some background theory.
 Checking validity can be achieved using SMT for formulas closed under logical negation~\cite{smtlib},
 since such a formula is valid in a theory if its negation is not satisfiable in the theory.
@@ -47,7 +47,7 @@ Z3 is a SMT solver from Microsoft Research~\cite{z3}, which is used in this thes
 %        - allows development of procedures that exploit properties of the fragment for efficiency
 
 \subsection{SMT-Lib}
-SMT-Lib is a international initiative with the goal to easing
+SMT-Lib is an international initiative with the goal to easing
 research and development in SMT.
 SMT-Lib's main motivation is the availability of common standards in SMT
 with the focus on
