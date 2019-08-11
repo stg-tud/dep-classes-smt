@@ -1,6 +1,20 @@
 \chapter{Related Work}
 \label{chp:related}
 
+\subsubsection{Dependent Object Types (DOT)}
+DOT~\cite{dot1,dot2} is a calculus
+modeling Scalas path-dependent types and abstract type members.
+It uses refinement types to model the mixture of
+nominal and structural typing in Scala.
+DOT normalizes the type system of Scala
+through the unification of the constructs for type members.
+It provides intersection and union types
+to simplify the computations for greatest lowerbounds
+and least upperbounds.
+DOT is at the core of \textit{dotty},
+a compiler for Scala under development since 2013
+considered for inclusion in Scala 3.
+
 \subsubsection{Veritas}
 VeriTaS~\cite{veritas1,veritas2} is an ongoing project
 for the specification and verification
