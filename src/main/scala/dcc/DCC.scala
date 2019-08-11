@@ -4,9 +4,7 @@ import dcc.syntax.Program.Program
 import dcc.syntax._
 import dcc.Util._
 import smtlib.solver.{Axioms, Z3Solver}
-import smtlib.syntax.{Assert, Not, Sat, Term, Unknown, Unsat}
-
-import scala.collection.mutable
+import smtlib.syntax.{Assert, Not, Sat, Unknown, Unsat}
 
 class DCC(P: Program) {
   // Class(field = value, ...)

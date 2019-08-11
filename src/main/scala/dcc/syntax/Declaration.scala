@@ -23,7 +23,7 @@ case class AbstractMethodDeclaration(m: Id, x: Id, as: List[Constraint], t: Type
 
 case class ConstraintEntailment(x: Id, as: List[Constraint], a: Constraint) extends Declaration {
   override def toString: String =
-    s"∀${x}. ${commaSeparate(as.map(_.toString))} => ${a}"
+    s"∀$x. ${commaSeparate(as.map(_.toString))} => $a"
 }
 
 object Program {
