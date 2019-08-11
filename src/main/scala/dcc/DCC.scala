@@ -11,11 +11,11 @@ class DCC(P: Program) {
   type Obj = (Id, List[(Id, Id)])
   type Heap = Map[Id, Obj]
 
-  def Entails(ctx: List[Constraint], cs: List[Constraint], vars: List[Id], skipNoSubst: Boolean = true): Boolean =
-    cs.forall(c => entails(ctx, c, vars, skipNoSubst = skipNoSubst))
+  def Entails(ctx: List[Constraint], cs: List[Constraint], vars: List[Id], skipNoSubst: Boolean = true, preprocEquivs: Boolean = false): Boolean =
+    cs.forall(c => entails(ctx, c, vars, skipNoSubst = skipNoSubst, preprocEquivs = preprocEquivs))
 
   // constraint entailment
-  def entails(context: List[Constraint], c: Constraint, vars: List[Id], skipNoSubst: Boolean = true): Boolean = {
+  def entails(context: List[Constraint], c: Constraint, vars: List[Id], skipNoSubst: Boolean = true, preprocEquivs: Boolean = false): Boolean = {
     // pre optimization TODO: kinda dirty here: move to somewhere else?
     // TODO: add further optimizations for path eqs?
 //    val context1 = context
@@ -42,6 +42,9 @@ class DCC(P: Program) {
       }
       case _ =>
     }
+
+    if(preprocEquivs)
+      context1 = preprocEquiv(context1)
 
     // debug output
     context1 match {
@@ -117,7 +120,7 @@ class DCC(P: Program) {
   }
 
   // TODO: change return type to Either or Option?
-  def interp(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
+  def interp(heap: Heap, expr: Expression, preprocEquivs: Boolean = false): (Heap, Expression) = expr match {
     case x@Id(_) => (heap, expr) // variables are values
     // R-Field
     case FieldAccess(x@Id(_), f) =>
@@ -137,7 +140,7 @@ class DCC(P: Program) {
       // Applicable methods
       //val S: List[(List[Constraint], Expression)] = mImplSubst(m, x).filter{case (as, _) => entails(HC(heap), as, vars)}
       val methods = mImplSubst(m, x)
-      val S = methods.filter{case (as, _) => Entails(HC(heap), as, vars)}
+      val S = methods.filter{case (as, _) => Entails(HC(heap), as, vars, preprocEquivs = preprocEquivs)}
 
       if (S.isEmpty) // m not in P
         return (heap, expr)
@@ -150,7 +153,7 @@ class DCC(P: Program) {
 
       S.foreach{
         case (a1, e1) if e != e1 =>
-          if (Entails(a1, a, vars) && !Entails(a, a1, vars)) {
+          if (Entails(a1, a, vars, preprocEquivs = preprocEquivs) && !Entails(a, a1, vars, preprocEquivs = preprocEquivs)) {
             println(s"Most specific:$a1, $e1")
             //(a, e) = (a1, e1)
             a = a1
@@ -176,7 +179,7 @@ class DCC(P: Program) {
       //val b1 = alphaConversion(y, x, b)
       val b1 = substitute(y, x, b)
       // heap constraints entail cls constraints
-      if (Entails(HC(heap) ++ OC(x, o), b1, x :: vars))
+      if (Entails(HC(heap) ++ OC(x, o), b1, x :: vars, preprocEquivs = preprocEquivs))
         (heap + (x -> o), x)
       else
         (heap, expr) // stuck TODO: return type
@@ -549,6 +552,22 @@ class DCC(P: Program) {
     case Nil =>
     case last :: Nil => last.foreach(elem => _combs = (accum ++ List(elem)) :: _combs)
     case hd :: tl => hd.foreach(elem => combine(tl, accum ++ List(elem)))
+  }
+
+  private def preprocEquiv(cs: List[Constraint]): List[Constraint] = {
+    val eqs = cs.filter{ case PathEquivalence(_, _) => true case _ => false }
+
+    var res = cs
+    eqs.foreach {
+    case PathEquivalence(x@Id(_), p) => res = res.map(c => substitute(x, p, c))
+    case PathEquivalence(p, x@Id(_)) => res = res.map(c => substitute(x, p, c))
+    case _ => ()
+  }
+
+    res.filter {
+    case PathEquivalence(p, q) if p == q => false
+    case _ => true
+  }
   }
 }
 
