@@ -1,6 +1,21 @@
 \chapter{Related Work}
 \label{chp:related}
 
+\subsubsection{Logically Qualified Data Types (Liquid Types)}
+Liquid Types~\cite{liquid-types} are a system
+combining Hindley-Milner type inference with Predicate Abstraction
+to infer dependent types.
+The infered dependent types are precise enough
+to prove various safety properties.
+Liquid Types adopt the benefits of
+static verification of critical properties and
+the elimination of runtime checks
+from dependent types,
+without the need for manual annotations.
+%An implementation of the Liquid Type inference
+%is available. TODO: remove this or verwurschteln?
+
+
 \subsubsection{Dependent Object Types (DOT)}
 DOT~\cite{dot1,dot2} is a calculus
 modeling Scalas path-dependent types and abstract type members.
