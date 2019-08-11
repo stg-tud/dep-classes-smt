@@ -1,6 +1,7 @@
 \chapter{Related Work}
 \label{chp:related}
 
+\begin{minipage}{0.9\textwidth}
 \subsubsection{Logically Qualified Data Types (Liquid Types)}
 Liquid Types~\cite{liquid-types} are a system
 combining Hindley-Milner type inference with Predicate Abstraction
@@ -14,7 +15,7 @@ from dependent types,
 without the need for manual annotations.
 %An implementation of the Liquid Type inference
 %is available. TODO: remove this or verwurschteln?
-
+\\
 \subsubsection{Liquid Haskell: Haskell as a Theorem Prover}
 Liquid Haskell~\cite{liquid-haskell} is a usable
 program verifier, integrating
@@ -27,7 +28,7 @@ The specification language for Liquid Haskell
 is arbitrary expressive to allow
 the writing of general correctness properties,
 thus turning Haskell into a theorem prover.
-
+\\
 \subsubsection{Dependent Object Types (DOT)}
 DOT~\cite{dot1,dot2} is a calculus
 modeling Scala's path-dependent types and abstract type members.
@@ -41,7 +42,9 @@ and least upper-bounds.
 DOT is at the core of \textit{dotty},
 a compiler for Scala under development since 2013
 considered for inclusion in Scala 3.
+\end{minipage}
 
+\begin{minipage}{0.9\textwidth}
 \subsubsection{Veritas}
 VeriTaS~\cite{veritas1,veritas2} is an ongoing project
 for the specification and verification
@@ -54,7 +57,7 @@ and proof goals and axioms.
 It includes a compiler to translate
 these language specifications and the proof goals on them
 and proofs can be structured via proof graphs.
-
+\\
 \subsubsection{Multiple Dispatch as Dispatch on Tuples}
 Single dispatch selects a method using
 the dynamic class of the message's receiver.
@@ -64,12 +67,13 @@ of any subset of the message's arguments.
 Multiple Dispatch as Dispatch on Tuples~\cite{multidispatch-tuple}
 proposes a way to add multiple dispatch
 to existing languages with single dispatch,
-wihout affecting existing code.
+without affecting existing code.
 This is achieved through the addition
 of tuples as primitive expressions
 and the ability of messages to be sent to tuples.
 Methods are selected based on the dynamic classes
 of the elements of the tuple.
+\end{minipage}
 
 
 
