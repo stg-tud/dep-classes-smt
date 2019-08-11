@@ -15,6 +15,18 @@ without the need for manual annotations.
 %An implementation of the Liquid Type inference
 %is available. TODO: remove this or verwurschteln?
 
+\subsubsection{Liquid Haskell: Haskell as a Theorem Prover}
+Liquid Haskell~\cite{liquid-haskell} is a usable
+program verifier, integrating
+the specification of correctness properties
+as logical refinements of Haskells types.
+It uses the abstract interpretation framework of Liquid Types,
+to check correctness of specifications via SMT solving,
+requiring no explicit proofs or annotations.
+The specification language for Liquid Haskell
+is arbitrary expressive to allow
+the writing of general correctness properties,
+thus turing Haskell into a theorem prover.
 
 \subsubsection{Dependent Object Types (DOT)}
 DOT~\cite{dot1,dot2} is a calculus
