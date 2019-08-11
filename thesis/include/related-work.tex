@@ -55,6 +55,23 @@ It includes a compiler to translate
 these language specifications and the proof goals on them
 and proofs can be structured via proof graphs.
 
+\subsubsection{Multiple Dispatch as Dispatch on Tuples}
+Single dispatch selects a method using
+the dynamic class of the message's receiver.
+Multiple dispatch is a generalization of single dispatch.
+It selects a method based on the dynamic class
+of any subset of the message's arguments.
+Multiple Dispatch as Dispatch on Tuples~\cite{multidispatch-tuple}
+proposes a way to add multiple dispatch
+to existing languages with single dispatch,
+wihout affecting existing code.
+This is achieved through the addition
+of tuples as primitive expressions
+and the ability of messages to be sent to tuples.
+Methods are selected based on the dynamic classes
+of the elements of the tuple.
+
+
 
 %%% Local Variables: 
 %%% mode: latex
