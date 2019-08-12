@@ -210,6 +210,7 @@ and $x.l$ or $x.r$ are \texttt{Plus} expressions.
 We propagate evaluation to $x.l$ or $x.r$ respectively.
 
 \section{Object Construction}
+\label{sec:time-out}
 We interpret expressions of the defined program.
 We set the time out of the solver to $2$ seconds.
 
@@ -262,6 +263,61 @@ can be shown by the solver.
 These are sub-goals of the timed out derivation.
 
 \section{Optimization}
+We observed in \Cref{sec:time-out}
+that the solver could not show an entailment,
+despite being able to show the subgoals of the entailment
+in isolation.
+We can pre optimize the entailment to be shown,
+to help the solver find a derivation.
+
+\subsection{Apply Path-Equivalence}
+\begin{figure}[h]
+\begin{lstlisting}
+private def preprocEquiv(
+               cs: List[Constraint]): List[Constraint] = {
+  val eqs = cs.filter {
+    case PathEquivalence(_, _) => true case _ => false
+  }
+  var res = cs
+  eqs.foreach {
+    case PathEquivalence(x@Id(_), p) =>
+      res = res.map(c => substitute(x, p, c))
+    case PathEquivalence(p, x@Id(_)) =>
+      res = res.map(c => substitute(x, p, c))
+    case _ => ()
+  }
+  res.filter {
+    case PathEquivalence(p, q) if p == q => false
+    case _ => true
+  }
+}
+\end{lstlisting}
+\end{figure}
+
+\subsection{Explore Inheritance}
+
+\begin{figure}[h]
+\begin{lstlisting}
+private def preprocInheritance(
+         cs: List[Constraint]): List[Constraint] = {
+  val insts = cs.filter {
+    case InstanceOf(_, _) => true case _ => false
+  }
+  var res = cs
+  insts.foreach {
+    case InstanceOf(x, _) =>
+      classes.foreach {
+        case cls1
+        if entails(cs, InstanceOf(x, cls1), List()) =>
+          res = InstanceOf(x, cls1) :: res
+        case _ => ()
+      }
+    case _ => ()
+  }
+  res
+}
+\end{lstlisting}
+\end{figure}
 
 %%% Local Variables: 
 %%% mode: latex
