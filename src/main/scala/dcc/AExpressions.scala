@@ -14,7 +14,7 @@ object AExpressions extends App {
     ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Succ)), InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))), InstanceOf(Id('x), Id('Nat))),
     AbstractMethodDeclaration(Id('prev), Id('x), List(InstanceOf(Id('x), Id('Nat))), Type(Id('y), List(InstanceOf(Id('y), Id('Nat))))),
     MethodImplementation(Id('prev), Id('x), List(InstanceOf(Id('x), Id('Zero))), Type(Id('y), List(InstanceOf(Id('y), Id('Nat)))),
-      ObjectConstruction(Id('Zero), Nil)),
+      'x),
     MethodImplementation(Id('prev), Id('x), List(InstanceOf(Id('x), Id('Succ)), InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))), Type(Id('y), List(InstanceOf(Id('y), Id('Nat)))),
       FieldAccess(Id('x), Id('p)))
   )
@@ -84,7 +84,7 @@ object AExpressions extends App {
 
   val program = naturalNumbers ++ aexp
 
-  program.foreach(println)
+  aexp.foreach(println)
 
   val dcc = new DCC(program)
 
@@ -95,22 +95,28 @@ object AExpressions extends App {
   def lit(nat: Expression) = ObjectConstruction('Lit, List(('value, nat)))
   def plus(l: Expression, r: Expression) = ObjectConstruction('Plus, List(('l, l), ('r, r)))
 
+  val (a, b) = dcc.interp(Map.empty, MethodCall('prev, zeroNat))
+  a.foreach(println)
+  println(b)
+
+  println("-------FOO-------FOO-------FOO-------FOO-------")
+
   // interp: one, two
-  val (h, zero) = dcc.interp(Map.empty, zeroNat)
-  val (h0, one) = dcc.interp(h, ObjectConstruction('Succ, List(('p, zero))))
+//  val (h, zero) = dcc.interp(Map.empty, zeroNat)
+//  val (h0, one) = dcc.interp(h, ObjectConstruction('Succ, List(('p, zero))))
 //  val one = 'x2
 //  val h0 = Map(
 //    'x1 -> (Id('Zero), List()),
 //    'x2 -> (Id('Succ), List((Id('p), Id('x1))))
 //  )
-  val (h1, two) = dcc.interp(h0, ObjectConstruction('Succ, List(('p, one))), preOptimize = true)
+//  val (h1, two) = dcc.interp(h0, ObjectConstruction('Succ, List(('p, one))), preOptimize = true)
 //  val two = 'x3
 //  val h1 = Map(
 //    'x1 -> (Id('Zero), List()),
 //    'x2 -> (Id('Succ), List((Id('p), Id('x1)))),
 //    'x3 -> (Id('Succ), List((Id('p), Id('x2))))
 //  )
-  val (h2, litTwo) = dcc.interp(h1, lit(two), preOptimize = true)
+//  val (h2, litTwo) = dcc.interp(h1, lit(two), preOptimize = true)
 //  val litTwo = 'x4
 //  val h2 = Map(
 //    'x1 -> (Id('Zero), List()),
@@ -119,17 +125,22 @@ object AExpressions extends App {
 //    'x4 -> (Id('Lit), List((Id('value), Id('x3))))
 //  )
 
-  println("-------------------------------------------")
-  println("Heap")
-  h2.foreach(x => println(s"\t$x"))
-  println(litTwo)
+//  println("-------------------------------------------")
+//  println("Heap")
+//  h2.foreach(x => println(s"\t$x"))
+//  println(litTwo)
 
-  val heap = Map(
-    'x1 -> (Id('Zero), List()),
-    'x2 -> (Id('Succ), List((Id('p), Id('x1)))),
-    'x3 -> (Id('Succ), List((Id('p), Id('x2)))),
-    'x4 -> (Id('Lit), List((Id('value), Id('x3))))
+  val heap: AExpressions.dcc.Heap = Map(
+    Id('x1) -> (Id('Zero), List())
+//    Id('x2) -> (Id('Succ), List((Id('p), Id('x1)))),
+//    Id('x3) -> (Id('Succ), List((Id('p), Id('x2)))),
+//    Id('x4) -> (Id('Lit), List((Id('value), Id('x3))))
   )
+  val (hp, x) = dcc.interp(heap, ObjectConstruction('Plus, List(('l, 'x1), ('r, 'x1))), preOptimize = true)
+
+  println("---------------------------------------------")
+  println(x)
+  hp.foreach(println)
 
 //  println("-------------------------------------------")
 //  val entailment = SMTLibConverter.convertEntailment(List(InstanceOf('x2, 'Succ), InstanceOf(FieldPath('x2, 'p), 'Nat)), InstanceOf('x2, 'Nat))

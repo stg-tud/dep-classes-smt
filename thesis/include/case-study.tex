@@ -1,20 +1,51 @@
-\chapter{Case Study: ???}
-
+\chapter{Runtime Evaluation} % TODO: other title pls?
+In this chapter we evaluate the implementation of the $DC_C$ calculus.
+To do this, we extend the natural numbers program with the support of
+abstract syntax of expressions.\\
+\\
+First, we recap the implementation of the natural numbers:
 \begin{align*}
 &\constr{\texttt{Zero}}{x}{\epsilon}\\
 &\progEnt{x}{\instOf{x}{\texttt{Zero}}}{\instOf{x}{\texttt{Nat}}}\\
 &\constr{\texttt{Succ}}{x}{\instOf{x.p}{\texttt{Nat}}}\\
 &\progEnt{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\instOf{x}{\texttt{Nat}}}\\
 &\mDecl{\texttt{prev}}{x}{\instOf{x}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}\\
-&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Zero}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{\newInstNoArgs{\texttt{Zero}}}\\
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Zero}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x}\\
 &\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x.p}
 \end{align*}
-
+%
+A natural number (\texttt{Nat}) is either the number zero (\texttt{Zero})
+or a successor of a natural number (\texttt{Succ}).
+\texttt{Succ} has a field $p$ of class \texttt{Nat}.
+The function \texttt{prev} computes the previous element of a natural number.
+The previous number of zero is defined as zero.
+We changed the implementation for this case.
+The program defined in \Cref{ex:dcc-naturalnumbers} created a new
+instance of class \texttt{Zero}.
+The new implementation returns the parameter instead,
+as it is constrained to be an instance of \texttt{Zero}.\\
+\\
+We define a program for the abstract syntax of numeric expressions:
+%
 \begin{align*}
 &\constr{\texttt{Lit}}{x}{\instOf{x.value}{\texttt{Nat}}}\\
 &\progEnt{x}{\instOf{x}{\texttt{Lit}}, \instOf{x.value}{\texttt{Nat}}}{\instOf{x}{\texttt{Exp}}}\\
 &\constr{\texttt{Plus}}{x}{\instOf{x.l}{\texttt{Exp}}, \instOf{x.r}{\texttt{Exp}}}\\
-&\progEnt{x}{\instOf{x}{\texttt{Plus}}, \instOf{x.l}{\texttt{Exp}}, \instOf{x.r}{\texttt{Exp}}}{\instOf{x}{\texttt{Exp}}}\\
+&\progEnt{x}{\instOf{x}{\texttt{Plus}}, \instOf{x.l}{\texttt{Exp}}, \instOf{x.r}{\texttt{Exp}}}{\instOf{x}{\texttt{Exp}}}
+\end{align*}
+%
+The constructor \texttt{Lit} defines a field \mIt{value},
+representing numeric literals with the value \mIt{value}.
+The constructor \texttt{Plus} defines fields $l$ and $r$,
+representing the addition of $r$ and $l$.
+The two constraint entailment declarations express
+the inheritance relation of
+\texttt{Lit} and \texttt{Plus} to \texttt{Exp}.\\
+\\
+We extend the abstract syntax of numeric expressions
+with a method to evaluate expressions:
+%
+\begin{align*}
 &\mDecl{\texttt{eval}}{x}{\instOf{x}{\texttt{Exp}}}{\type{y}{\instOf{y}{\texttt{Exp}}}}\\
 &\mImpl{\texttt{eval}}
        {x}
@@ -106,10 +137,16 @@
                    }
        )
 \end{align*}
+We abstractly declare method \texttt{eval}
+to evaluate an expression to an expression,
+where literals are the values of the expression language.
+We use the constraints on the parameter to
+model a behavior similar to pattern matching.
+We overload the method for each case
+we want to match and set the requirements
+on the parameter accordingly.
 
-- extends natural numbers prog with AST for arith exprs
-- constructors for Lit and Plus
-- method eval
+\paragraph{Literals}
 
 %%% Local Variables: 
 %%% mode: latex
