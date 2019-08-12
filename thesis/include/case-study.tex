@@ -263,6 +263,7 @@ can be shown by the solver.
 These are sub-goals of the timed out derivation.
 
 \section{Optimization}
+\label{sec:runtime-optimization}
 We observed in \Cref{sec:time-out}
 that the solver could not show an entailment,
 despite being able to show the subgoals of the entailment
@@ -367,7 +368,26 @@ The exploration of the inheritance relations
 in the context requires multiple calls to the solver,
 thus adding a significant overhead to the execution time.
 
-
+\section{Reapply Interpreter} %TODO: find a good title
+With the optimizations from \Cref{sec:runtime-optimization}
+we can now reapply the interpretations from \Cref{sec:time-out}.
+The interpreter can, with the optimizations to the context,
+reduce the expressions to values.
+We obtain now
+\begin{align*}
+h_{l1} = &x_1 \mapsto (\texttt{Zero}, \epsilon)\\
+         &x_2 \mapsto (\texttt{Lit}, [\pathEq{\mIt{value}}{x_1}])\\
+         &x_3 \mapsto (\texttt{Succ}, [\pathEq{\mIt{p}}{x_1}])\\
+         &x_4 \mapsto (\texttt{Lit}, [\pathEq{\mIt{value}}{x_3}])
+\end{align*}
+and $litOne = x_4$.\\
+\\
+The optimizations increased the amount of expressions
+reducible to values by the interpreter.
+This increase simultaneously comes with an increase
+in execution time of the interpreter,
+since we make additional calls to the solver.
+The optimizations are applied during runtime.
 
 %%% Local Variables: 
 %%% mode: latex
