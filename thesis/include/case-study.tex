@@ -1,5 +1,88 @@
 \chapter{Case Study: ???}
 
+\begin{align*}
+&\constr{\texttt{Zero}}{x}{\epsilon}\\
+&\progEnt{x}{\instOf{x}{\texttt{Zero}}}{\instOf{x}{\texttt{Nat}}}\\
+&\constr{\texttt{Succ}}{x}{\instOf{x.p}{\texttt{Nat}}}\\
+&\progEnt{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\instOf{x}{\texttt{Nat}}}\\
+&\mDecl{\texttt{prev}}{x}{\instOf{x}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}\\
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Zero}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{\newInstNoArgs{\texttt{Zero}}}\\
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x.p}
+\end{align*}
+
+\begin{align*}
+&\constr{\texttt{Lit}}{x}{\instOf{x.value}{\texttt{Nat}}}\\
+&\progEnt{x}{\instOf{x}{\texttt{Lit}}, \instOf{x.value}{\texttt{Nat}}}{\instOf{x}{\texttt{Exp}}}\\
+&\constr{\texttt{Plus}}{x}{\instOf{x.l}{\texttt{Exp}}, \instOf{x.r}{\texttt{Exp}}}\\
+&\progEnt{x}{\instOf{x}{\texttt{Plus}}, \instOf{x.l}{\texttt{Exp}}, \instOf{x.r}{\texttt{Exp}}}{\instOf{x}{\texttt{Exp}}}\\
+&\mDecl{\texttt{eval}}{x}{\instOf{x}{\texttt{Exp}}}{\type{y}{\instOf{y}{\texttt{Exp}}}}\\
+&\mImpl{\texttt{eval}}
+       {x}
+       {\instOf{x}{\texttt{Lit}}, \instOf{x.value}{\texttt{Nat}}}
+       {\type{y}{\instOf{y}{\texttt{Exp}}}}
+       {x}\\
+&\mImpl{\texttt{eval}}
+       {x}
+       {\instOf{x}{\texttt{Plus}},
+        \instOf{x.l}{\texttt{Lit}},
+        \instOf{x.r}{\texttt{Lit}},
+        \instOf{x.l.value}{\texttt{Nat}},
+        \instOf{x.r.value}{\texttt{Zero}}}
+       {\type{y}{\instOf{y}{\texttt{Exp}}}}
+       {x.l}\\
+&\mImpl{\texttt{eval}}
+       {x}
+       {\instOf{x}{\texttt{Plus}},
+        \instOf{x.l}{\texttt{Lit}},
+        \instOf{x.r}{\texttt{Lit}},
+        \instOf{x.l.value}{\texttt{Nat}},
+        \instOf{x.r.value}{\texttt{Succ}},
+        \instOf{x.r.value.p}{\texttt{Nat}}}
+       {\type{y}{\instOf{y}{\texttt{Exp}}}}
+         \quad\texttt{eval}(
+           \objConstr{\texttt{Plus}}{
+             \pathEq{l}{
+               \objConstr{\texttt{Lit}}
+                         {\pathEq{value}{ \objConstr{\texttt{Succ}}{\pathEq{p}{x.l.value}}}}},
+             \pathEq{r}{
+               \objConstr{\texttt{Lit}}
+                         {\pathEq{value}{\texttt{prev}(x.r.\mIt{value})}}}})\\
+&\mImpl{\texttt{eval}}
+       {x}
+       {\instOf{x}{\texttt{Plus}},
+        \instOf{x.l}{\texttt{Exp}},
+        \instOf{x.r}{\texttt{Plus}},
+        \instOf{x.r.l}{\texttt{Exp}},
+        \instOf{x.r.r}{\texttt{Exp}}}
+       {\type{y}{\instOf{y}{\texttt{Exp}}}}
+       {\texttt{eval}(
+         \objConstr{\texttt{Plus}}
+                   {
+                     \pathEq{l}{x.l},
+                     \pathEq{r}{\texttt{eval(x.r)}}
+                   }
+       )}\\
+&\mImpl{\texttt{eval}}
+       {x}
+       {\instOf{x}{\texttt{Plus}},
+        \instOf{x.l}{\texttt{Plus}},
+        \instOf{x.r}{\texttt{Exp}},
+        \instOf{x.l.l}{\texttt{Exp}},
+        \instOf{x.l.r}{\texttt{Exp}}}
+       {\type{y}{\instOf{y}{\texttt{Exp}}}}
+       {\texttt{eval}(
+         \objConstr{\texttt{Plus}}
+                   {
+                     \pathEq{l}{\texttt{eval(x.l)}},
+                     \pathEq{r}{x.r}
+                   }
+       )}
+\end{align*}
+
+- extends natural numbers prog with AST for arith exprs
+- constructors for Lit and Plus
+- method eval
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "../thesis"
