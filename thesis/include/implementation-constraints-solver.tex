@@ -102,7 +102,7 @@ We directly applied the selectors for those occurences.
       (instantiated-by (generalize-path (object c) p x)
                        (clsname c)))))
 \end{lstlisting}
-\caption{SMTLib Representation of Generalization}
+\caption{SMTLib Representation Of Generalization}
 \label{fig:smtlib-funs-gen}
 \end{figure}\\
 %
@@ -132,7 +132,7 @@ We directly applied the selectors for those occurences.
                  (subst-constraints (rest cs) x p))
      empty))
 \end{lstlisting}
-\caption{SMTLib Representation of Substitution}
+\caption{SMTLib Representation Of Substitution}
 \label{fig:smtlib-funs-subst}
 \end{figure}
 A SMTLib translation for substitution defined in \Cref{subfig:axioms-naive-general-funs}
@@ -251,7 +251,7 @@ by returning the names of the violated rules.
           (entails cs c))))
   :named C-Prog))
 \end{lstlisting}
-\caption{SMTLib C-Prog and Helper Function}
+\caption{SMTLib C-Prog And Helper Function}
 \label{fig:smtlib-cprog}
 \end{figure}
 %
@@ -297,7 +297,7 @@ object SMTLibFormatter {
 }
 \end{lstlisting}
 \end{subfigure}
-\caption{SMTLib Formatting in Scala}
+\caption{SMTLib Formatting In Scala}
 \label{fig:scala-format}
 \end{figure}\\
 %
@@ -445,7 +445,7 @@ is given in \Cref{lst:subst-template}.
 The process of generating instances of this template
 is implemented in \Cref{lst:subst}.
 %
-\begin{lstlisting}[caption={Rule Generation for C-Subst},label=lst:subst,captionpos=b,frame={lines}]
+\begin{lstlisting}[caption={Rule Generation For C-Subst},label=lst:subst,captionpos=b,frame={lines}]
 def generateSubstRules(
     vars: List[Id], paths: List[Path]): Seq[SMTLibCommand] = {
   var rules: Seq[SMTLibCommand] = Seq()
