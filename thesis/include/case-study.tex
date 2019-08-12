@@ -373,7 +373,7 @@ With the optimizations from \Cref{sec:runtime-optimization}
 we can now reapply the interpretations from \Cref{sec:time-out}.
 The interpreter can, with the optimizations to the context,
 reduce the expressions to values.
-We obtain now
+Now we obtain
 \begin{align*}
 h_{l1} = &x_1 \mapsto (\texttt{Zero}, \epsilon)\\
          &x_2 \mapsto (\texttt{Lit}, [\pathEq{\mIt{value}}{x_1}])\\
@@ -382,6 +382,38 @@ h_{l1} = &x_1 \mapsto (\texttt{Zero}, \epsilon)\\
 \end{align*}
 and $litOne = x_4$.\\
 \\
+We further interpret $\texttt{eval}(\mIt{litOne})$ via
+\[
+(h_{e1}, \mIt{evl_1}) := \mIt{interp}(h_{l1}, \texttt{eval}(\mIt{litOne}))
+\]
+and obtain $h_{e1} = h_{l1}$ and $\mIt{evl_1} = x_4$.\\
+\\
+We create a $\texttt{Plus}(0, 1)$ and call \texttt{eval}
+on the new instance.
+\begin{align*}
+(h_{p01}, \mIt{plus_{01}}) &:= \mIt{interp}(h_{l1}, \objConstr{\texttt{Plus}}{\pathEq{l}{x_2}, \pathEq{r}{x_4}})\\
+(h_{ep}, \mIt{evl_p}) & := \mIt{interp}(h_{p01}, \texttt{eval}(\mIt{plus_{01}}))
+\end{align*}
+We obtain $\mIt{evl_p} = \texttt{eval}(x_5)$
+\begin{align*}
+h_{ep} = h_{p01} = &x_1 \mapsto (\texttt{Zero}, \epsilon)\\
+                   &x_2 \mapsto (\texttt{Lit}, [\pathEq{\mIt{value}}{x_1}])\\
+                   &x_3 \mapsto (\texttt{Succ}, [\pathEq{\mIt{p}}{x_1}])\\
+                   &x_4 \mapsto (\texttt{Lit}, [\pathEq{\mIt{value}}{x_3}])\\
+                   &x_5 \mapsto (\texttt{Plus}, [\pathEq{l}{x_2}, \pathEq{r}{x_4}]).
+\end{align*}
+
+This shows that the optimizations have a limit.
+The path equivalence constraints only get applied
+once and only for constraints of the form \pathEq{x}{p}.
+The evaluation of \mIt{evl_p} would require
+to find the most applicable method implementation.
+This requires to solve constraint entailments
+such as
+\[
+  
+\]
+
 The optimizations increased the amount of expressions
 reducible to values by the interpreter.
 This increase simultaneously comes with an increase
