@@ -1,8 +1,10 @@
 \chapter{Runtime Evaluation} % TODO: other title pls?
 In this chapter we evaluate the implementation of the $DC_C$ calculus.
 To do this, we extend the natural numbers program with the support of
-abstract syntax of expressions.\\
-\\
+abstract syntax of expressions.
+
+\section{Program Definition}
+\subsection{Natural Numbers}
 First, we recap the implementation of the natural numbers:
 \begin{align*}
 &\constr{\texttt{Zero}}{x}{\epsilon}\\
@@ -23,8 +25,9 @@ We changed the implementation for this case.
 The program defined in \Cref{ex:dcc-naturalnumbers} created a new
 instance of class \texttt{Zero}.
 The new implementation returns the parameter instead,
-as it is constrained to be an instance of \texttt{Zero}.\\
-\\
+as it is constrained to be an instance of \texttt{Zero}.
+
+\subsection{Numeric Expressions}
 We define a program for the abstract syntax of numeric expressions:
 %
 \begin{align*}
@@ -40,8 +43,9 @@ The constructor \texttt{Plus} defines fields $l$ and $r$,
 representing the addition of $r$ and $l$.
 The two constraint entailment declarations express
 the inheritance relation of
-\texttt{Lit} and \texttt{Plus} to \texttt{Exp}.\\
-\\
+\texttt{Lit} and \texttt{Plus} to \texttt{Exp}.
+
+\subsection{Numeric Expression Evaluation}
 We extend the abstract syntax of numeric expressions
 with a method to evaluate expressions:
 %
@@ -146,7 +150,17 @@ We overload the method for each case
 we want to match and set the requirements
 on the parameter accordingly.
 
-\paragraph{Literals}
+\subsubsection{Literals}
+Since literals are considered to be values,
+we evaluate an input $x$ conforming to the requirements
+\instOf{x}{\texttt{Lit}} and \instOf{x.value}{\texttt{Nat}} to itself.
+The requirements make sure that the input is a proper literal.
+
+\subsubsection{Addition}
+We implement the evaluation of \texttt{Plus} expressions
+through evaluation on the right-hand side.
+
+
 
 %%% Local Variables: 
 %%% mode: latex
