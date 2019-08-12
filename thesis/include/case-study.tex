@@ -45,6 +45,30 @@ The two constraint entailment declarations express
 the inheritance relation of
 \texttt{Lit} and \texttt{Plus} to \texttt{Exp}.
 
+\begin{figure}[h]
+\begin{center}
+\begin{tikzpicture}
+  \node (Nat) at (-1,0) {Nat};
+  \node (Zero) at (-2,-1.5) {Zero};
+  \node (Succ) at (0,-1.5) {Succ};
+  \path (Nat) edge (Zero);
+  \path (Nat) edge (Succ);
+  
+  \node (Exp) at (3,0) {Exp};
+  \node (Lit) at (2,-1.5) {Lit};
+  \node (Plus) at (4,-1.5) {Plus};
+  \path (Exp) edge (Lit);
+  \path (Exp) edge (Plus);
+% \node (comment) at (-0.5, -0.5) {asdf};
+\end{tikzpicture}
+\end{center}
+\caption{Inheritance Relation}
+\label{fig:aexp-inheritance}
+\end{figure}\quad\\
+\Cref{fig:aexp-inheritance} shows the
+inheritance relation of the natural numbers
+and the numeric expressions.
+
 \subsection{Numeric Expression Evaluation}
 We extend the abstract syntax of numeric expressions
 with a method to evaluate expressions:
@@ -159,7 +183,31 @@ The requirements make sure that the input is a proper literal.
 \subsubsection{Addition}
 We implement the evaluation of \texttt{Plus} expressions
 through evaluation on the right-hand side.
+We consider four cases:
+\begin{enumerate}
+  \item Fields $l$ and $r$ are literals and $r$ contains the \mIt{value} \texttt{Zero}.
+  \item Fields $l$ and $r$ are literals and $r$ contains a \mIt{value} \texttt{Succ}.
+  \item Field $r$ is a \texttt{Plus} expression.
+  \item Field $l$ is a \texttt{Plus} expression.
+\end{enumerate}
+%
+The implementation of these cases is as follows:
+\paragraph{1.}
+The parameter is a \texttt{Plus} expression,
+both fields are literals and $r.\mIt{value}$ is \texttt{Zero}.
+The result of the evaluation is $l$.
 
+\paragraph{2.}
+The parameter $x$ is a \texttt{Plus} expression,
+both fields are literals and $x.r.\mIt{value}$ contains a \texttt{Succ}.
+We create a new \texttt{Plus}.
+We set $l$ to be the successor of $x.l$
+and $r$ to be the previous number of $x.r$.
+
+\paragraph{3. and 4.}
+The parameter $x$ is a \texttt{Plus} expression
+and $x.l$ or $x.r$ are \texttt{Plus} expressions.
+We propagate evaluation to $x.l$ or $x.r$ respectively.
 
 
 %%% Local Variables: 

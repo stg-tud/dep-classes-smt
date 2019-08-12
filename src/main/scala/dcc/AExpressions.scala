@@ -47,7 +47,8 @@ object AExpressions extends App {
           ('l, ObjectConstruction('Lit, List(
             ('value, ObjectConstruction('Succ, List(('p, FieldAccess(FieldAccess('x, 'l), 'value)))) )))),
           ('r, ObjectConstruction('Lit, List(
-            ('value, MethodCall('prev, FieldAccess(FieldAccess('x, 'r), 'value)))
+//            ('value, MethodCall('prev, FieldAccess(FieldAccess('x, 'r), 'value)))
+            ('value, FieldAccess(FieldAccess(FieldAccess('x, 'r), 'value), 'p))
           )))))
       )),
     MethodImplementation('eval, 'x,
