@@ -24,7 +24,7 @@ The previous number of zero is defined as zero.
 We changed the implementation for this case.
 The program defined in \Cref{ex:dcc-naturalnumbers} created a new
 instance of class \texttt{Zero}.
-The new implementation returns the parameter instead,
+The new implementation returns the parameter,
 as it is constrained to be an instance of \texttt{Zero}.
 
 \subsection{Numeric Expressions}
@@ -209,6 +209,59 @@ The parameter $x$ is a \texttt{Plus} expression
 and $x.l$ or $x.r$ are \texttt{Plus} expressions.
 We propagate evaluation to $x.l$ or $x.r$ respectively.
 
+\section{Object Construction}
+We interpret expressions of the defined program.
+We set the time out of the solver to $2$ seconds.
+
+We construct literals capturing $0$ and $1$.
+\begin{align*}
+  (h_0, \mIt{zero}) &:= \mIt{interp}(\epsilon, \newInstNoArgs{\texttt{Zero}})\\
+  (h_{l0}, \mIt{litZero}) &:= \mIt{interp}(h_0, \newInst{\texttt{Lit}}{\mIt{value}}{\mIt{zero}})\\
+  (h_1, \mIt{one}) &:= \mIt{interp}(h_{l0}, \newInst{\texttt{Succ}}{p}{\mIt{zero}})\\
+  (h_{l1}, \mIt{litOne}) &:= \mIt{interp}(h_1, \newInst{\texttt{Lit}}{\mIt{value}}{\mIt{one}})
+\end{align*}
+We obtain
+\begin{align*}
+h_{l1} = &x_1 \mapsto (\texttt{Zero}, \epsilon)\\
+         &x_2 \mapsto (\texttt{Lit}, [\pathEq{\mIt{value}}{x_1}])\\
+         &x_3 \mapsto (\texttt{Succ}, [\pathEq{\mIt{p}}{x_1}])
+\end{align*}
+and $litOne = \newInst{\texttt{Lit}}{\mIt{value}}{\mIt{x_3}}$.
+We observe that the last call to the interpreter
+returned prematurely.
+By inspecting the steps taken by the interpreter, we find that
+the entailment
+\[
+  \entails{
+            \instBy{x_1}{\texttt{Zero}},
+            \instBy{x_3}{\texttt{Succ}},
+            \pathEq{x_3.p}{x_1},
+            \instBy{x_4}{\texttt{Lit}},
+            \pathEq{x_4.value}{x_3}
+          }
+          {\instOf{x_4.value}{\texttt{Nat}}}
+\]
+could not be shown by the solver.
+We know that
+\begin{align*}
+\entails
+  {
+    \instOf{x_3}{\texttt{Succ}},
+    \instOf{x_3.p}{\texttt{Nat}}
+  }
+  {&\instOf{x_3}{\texttt{Nat}}}\\
+\entails
+  {\instOf{x_1}{\texttt{Zero}}}
+  {&\instOf{x_1}{\texttt{Nat}}}\\
+\entails
+  {\pathEq{x_4.value}{x_3},
+   \instOf{x_3}{\texttt{Nat}}}
+  {&\instOf{x_4.value}{\texttt{Nat}}}
+\end{align*}
+can be shown by the solver.
+These are sub-goals of the timed out derivation.
+
+\section{Optimization}
 
 %%% Local Variables: 
 %%% mode: latex
