@@ -291,7 +291,8 @@ we remove reflexive path equivalence constraints from the context.
 private def preprocEquiv(
                cs: List[Constraint]): List[Constraint] = {
   val eqs = cs.filter {
-    case PathEquivalence(_, _) => true case _ => false
+    case PathEquivalence(_, _) => true
+    case _ => false
   }
   var res = cs
   eqs.foreach {
@@ -320,16 +321,27 @@ does not involve a call to the solver.
 The overhead produced by this process
 is small, with the complexity
 of the function being linear to the size of the context.
+\newpage
 
 \subsection{Explore Inheritance}
-
-
+We explore the inheritance relations
+of constraits in the context.
+Inheritance is expressed through constraint entailment declarations
+and these declarations are restricted to be of the form
+\progEnt{x}{\ovl a}{\instOf{p}{C}}.\\
+\\
+For each constraint of the form \instOf{p}{C} in \mIt{context}:
+We check if \entails{\mIt{context}}{\instOf{p}{C'}}
+holds for each class $C'$ declared in the program.
+If so, we add \instOf{p}{C'} to \mIt{context}.
+%
 \begin{figure}[h]
 \begin{lstlisting}
 private def preprocInheritance(
          cs: List[Constraint]): List[Constraint] = {
   val insts = cs.filter {
-    case InstanceOf(_, _) => true case _ => false
+    case InstanceOf(_, _) => true
+    case _ => false
   }
   var res = cs
   insts.foreach {
@@ -345,7 +357,17 @@ private def preprocInheritance(
   res
 }
 \end{lstlisting}
-\end{figure}
+\caption{Preprocessing Of Inheritance}
+\label{fig:scala-preproc-inheritance}
+\end{figure}\\
+%
+\Cref{fig:scala-preproc-inheritance} shows the
+Scala implementation of this process.
+The exploration of the inheritance relations
+in the context requires multiple calls to the solver,
+thus adding a significant overhead to the execution time.
+
+
 
 %%% Local Variables: 
 %%% mode: latex
