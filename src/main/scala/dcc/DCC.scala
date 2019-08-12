@@ -16,6 +16,12 @@ class DCC(P: Program) {
 
   // constraint entailment
   def entails(context: List[Constraint], c: Constraint, vars: List[Id], skipNoSubst: Boolean = true, preOptimize: Boolean = false): Boolean = {
+    // debug output
+    context match {
+      case Nil => println(s"ϵ |- $c")
+      case ctx  => println(s"${syntax.Util.commaSeparate(ctx.distinct)} |- $c")
+    }
+
     // pre optimization TODO: kinda dirty here: move to somewhere else?
     // TODO: add further optimizations for path eqs?
 //    val context1 = context
@@ -561,14 +567,14 @@ class DCC(P: Program) {
 
     var res = cs
     eqs.foreach {
-    case PathEquivalence(x@Id(_), p) => res = res.map(c => substitute(x, p, c))
-    case PathEquivalence(p, x@Id(_)) => res = res.map(c => substitute(x, p, c))
-    case _ => ()
-  }
+      case PathEquivalence(x@Id(_), p) => res = res.map(c => substitute(x, p, c))
+      case PathEquivalence(p, x@Id(_)) => res = res.map(c => substitute(x, p, c))
+      case _ => ()
+    }
 
     res.filter {
-    case PathEquivalence(p, q) if p == q => false
-    case _ => true
+      case PathEquivalence(p, q) if p == q => false
+      case _ => true
     }
   }
 
@@ -578,7 +584,7 @@ class DCC(P: Program) {
     var res = cs
 
     insts.foreach {
-      case inst@InstanceOf(x, _) =>
+      case InstanceOf(x, _) =>
         classes.foreach {
           case cls1 if entails(cs, InstanceOf(x, cls1), List()) =>
             res = InstanceOf(x, cls1) :: res
