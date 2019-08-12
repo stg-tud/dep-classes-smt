@@ -4,7 +4,7 @@ import dcc.syntax.Util._
 import dcc.syntax._
 import dcc.syntax.Program.Program
 import smtlib.solver.{Axioms, Z3Solver}
-import smtlib.syntax.{Assert, CheckSat, Not}
+import smtlib.syntax.{Assert, CheckSat, Not, Term}
 
 object AExpressions extends App {
   val naturalNumbers: Program = List(
@@ -88,22 +88,48 @@ object AExpressions extends App {
 
   val dcc = new DCC(program)
 
-  val zero = ObjectConstruction('Zero, List())
-  val one = ObjectConstruction('Succ, List(('p, zero)))
-  val two = ObjectConstruction('Succ, List(('p, one)))
+  val zeroNat = ObjectConstruction('Zero, List())
+  val oneNat = ObjectConstruction('Succ, List(('p, zeroNat)))
+  val twoNat = ObjectConstruction('Succ, List(('p, oneNat)))
 
   def lit(nat: Expression) = ObjectConstruction('Lit, List(('value, nat)))
   def plus(l: Expression, r: Expression) = ObjectConstruction('Plus, List(('l, l), ('r, r)))
 
-  val (h0, x0) = dcc.interp(Map.empty, one)
-  println("-------------------------------------------")
-  val (h1, x1) = dcc.interp(h0, ObjectConstruction('Succ, List(('p, x0))), preOptimize = true)
-
+  // interp: one, two
+  val (h, zero) = dcc.interp(Map.empty, zeroNat)
+  val (h0, one) = dcc.interp(h, ObjectConstruction('Succ, List(('p, zero))))
+//  val one = 'x2
+//  val h0 = Map(
+//    'x1 -> (Id('Zero), List()),
+//    'x2 -> (Id('Succ), List((Id('p), Id('x1))))
+//  )
+  val (h1, two) = dcc.interp(h0, ObjectConstruction('Succ, List(('p, one))), preOptimize = true)
+//  val two = 'x3
+//  val h1 = Map(
+//    'x1 -> (Id('Zero), List()),
+//    'x2 -> (Id('Succ), List((Id('p), Id('x1)))),
+//    'x3 -> (Id('Succ), List((Id('p), Id('x2))))
+//  )
+  val (h2, litTwo) = dcc.interp(h1, lit(two), preOptimize = true)
+//  val litTwo = 'x4
+//  val h2 = Map(
+//    'x1 -> (Id('Zero), List()),
+//    'x2 -> (Id('Succ), List((Id('p), Id('x1)))),
+//    'x3 -> (Id('Succ), List((Id('p), Id('x2)))),
+//    'x4 -> (Id('Lit), List((Id('value), Id('x3))))
+//  )
 
   println("-------------------------------------------")
   println("Heap")
-  h1.foreach(x => println(s"\t$x"))
-  println(x1)
+  h2.foreach(x => println(s"\t$x"))
+  println(litTwo)
+
+  val heap = Map(
+    'x1 -> (Id('Zero), List()),
+    'x2 -> (Id('Succ), List((Id('p), Id('x1)))),
+    'x3 -> (Id('Succ), List((Id('p), Id('x2)))),
+    'x4 -> (Id('Lit), List((Id('value), Id('x3))))
+  )
 
 //  println("-------------------------------------------")
 //  val entailment = SMTLibConverter.convertEntailment(List(InstanceOf('x2, 'Succ), InstanceOf(FieldPath('x2, 'p), 'Nat)), InstanceOf('x2, 'Nat))
