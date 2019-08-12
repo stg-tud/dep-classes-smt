@@ -44,7 +44,7 @@ representing the addition of $r$ and $l$.
 The two constraint entailment declarations express
 the inheritance relation of
 \texttt{Lit} and \texttt{Plus} to \texttt{Exp}.
-
+%
 \begin{figure}[h]
 \begin{center}
 \begin{tikzpicture}
@@ -64,7 +64,7 @@ the inheritance relation of
 \end{center}
 \caption{Inheritance Relation}
 \label{fig:aexp-inheritance}
-\end{figure}\quad\\
+\end{figure}\\
 \Cref{fig:aexp-inheritance} shows the
 inheritance relation of the natural numbers
 and the numeric expressions.
@@ -269,8 +269,23 @@ despite being able to show the subgoals of the entailment
 in isolation.
 We can pre optimize the entailment to be shown,
 to help the solver find a derivation.
+We can
+\begin{enumerate}
+  \item pre apply path equivalence.
+  \item explore inheritance.
+\end{enumerate}
 
 \subsection{Apply Path-Equivalence}
+We apply path equivalence constraints contained in the context
+over the context.
+This can be done prior to the call to the solver.
+For path equivalence of the form \pathEq{x}{p},
+where $x$ is a variable and $p$ is a path.
+We substitute $x$ with $p$ in each constraint
+contained in the context.
+After all substitutions are applied,
+we remove reflexive path equivalence constraints from the context.
+%
 \begin{figure}[h]
 \begin{lstlisting}
 private def preprocEquiv(
@@ -292,9 +307,22 @@ private def preprocEquiv(
   }
 }
 \end{lstlisting}
-\end{figure}
+\caption{Preprocessing Of Path Equivalence}
+\label{fig:scala-preproc-equiv}
+\end{figure}\\
+%
+\Cref{fig:scala-preproc-equiv} shows the Scala
+implementation of this process.
+The implementation matches for \pathEq{x}{p}
+as well as for the symmetric case \pathEq{p}{x}.
+This preprocessing of the path equivalence constraints
+does not involve a call to the solver.
+The overhead produced by this process
+is small, with the complexity
+of the function being linear to the size of the context.
 
 \subsection{Explore Inheritance}
+
 
 \begin{figure}[h]
 \begin{lstlisting}
