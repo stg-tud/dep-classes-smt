@@ -35,10 +35,11 @@
 \newcommand{\mImpl}[5]{\methodImplementation{#1}{#2}{#3}{#4}{#5}}
 
 % DCC expressions
-\newcommand{\newInstance}[3]{\ensuremath{\textbf{new } \mathit{#1}(\mathit{#2} \equiv \mathit{#3})}}
-\newcommand{\newInstNoArgs}[1]{\ensuremath{\textbf{new } \mathit{#1}()}}
+\newcommand*{\new}{\ensuremath{\textbf{new }}}
+\newcommand{\newInstance}[3]{\ensuremath{\new \mathit{#1}(\mathit{#2} \equiv \mathit{#3})}}
+\newcommand{\newInstNoArgs}[1]{\ensuremath{\new \mathit{#1}()}}
 \newcommand{\newInst}[3]{\newInstance{#1}{#2}{#3}}
-\newcommand{\objConstr}[2]{\ensuremath{\textbf{new } \mathit{#1}(\mathit{#2})}}
+\newcommand{\objConstr}[2]{\ensuremath{\new \mathit{#1}(\mathit{#2})}}
 
 % DCC type
 \newcommand{\type}[2]{\ensuremath{[#1.\ \mathit{#2}]}}

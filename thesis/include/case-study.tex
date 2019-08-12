@@ -21,32 +21,60 @@
        {\instOf{x}{\texttt{Lit}}, \instOf{x.value}{\texttt{Nat}}}
        {\type{y}{\instOf{y}{\texttt{Exp}}}}
        {x}\\
-&\mImpl{\texttt{eval}}
-       {x}
-       {\instOf{x}{\texttt{Plus}},
-        \instOf{x.l}{\texttt{Lit}},
-        \instOf{x.r}{\texttt{Lit}},
-        \instOf{x.l.value}{\texttt{Nat}},
-        \instOf{x.r.value}{\texttt{Zero}}}
-       {\type{y}{\instOf{y}{\texttt{Exp}}}}
-       {x.l}\\
-&\mImpl{\texttt{eval}}
-       {x}
-       {\instOf{x}{\texttt{Plus}},
-        \instOf{x.l}{\texttt{Lit}},
-        \instOf{x.r}{\texttt{Lit}},
-        \instOf{x.l.value}{\texttt{Nat}},
-        \instOf{x.r.value}{\texttt{Succ}},
-        \instOf{x.r.value.p}{\texttt{Nat}}}
-       {\type{y}{\instOf{y}{\texttt{Exp}}}}
-         \quad\texttt{eval}(
-           \objConstr{\texttt{Plus}}{
-             \pathEq{l}{
+%&\mImpl{\texttt{eval}}
+%       {x}
+%       {\instOf{x}{\texttt{Plus}},
+%        \instOf{x.l}{\texttt{Lit}},
+%        \instOf{x.r}{\texttt{Lit}},
+%        \instOf{x.l.value}{\texttt{Nat}},
+%        \instOf{x.r.value}{\texttt{Zero}}}
+%       {\type{y}{\instOf{y}{\texttt{Exp}}}}
+%       {x.l}\\
+&\texttt{eval}(x. \instOf{x}{\texttt{Plus}},
+                  \instOf{x.l}{\texttt{Lit}},
+                  \instOf{x.r}{\texttt{Lit}},
+                  \instOf{x.l.value}{\texttt{Nat}},\\
+&\qquad\qquad\qquad\qquad\qquad
+                  \instOf{x.r.value}{\texttt{Zero}} )
+    : \type{y}{\instOf{y}{\texttt{Exp}}} := \\
+&\quad x.l\\
+%&\mImpl{\texttt{eval}}
+%       {x}
+%       {\instOf{x}{\texttt{Plus}},
+%        \instOf{x.l}{\texttt{Lit}},
+%        \instOf{x.r}{\texttt{Lit}},
+%        \instOf{x.l.value}{\texttt{Nat}},
+%        \instOf{x.r.value}{\texttt{Succ}},
+%        \instOf{x.r.value.p}{\texttt{Nat}}}
+%       {\type{y}{\instOf{y}{\texttt{Exp}}}}{}\\
+%         &\quad\texttt{eval}(
+%           \new \texttt{Plus}(\\
+%             &\qquad\pathEq{l}{
+%               \objConstr{\texttt{Lit}}
+%                         {\pathEq{value}{ \objConstr{\texttt{Succ}}{\pathEq{p}{x.l.value}}}}},\\
+%             &\qquad\pathEq{r}{
+%               \objConstr{\texttt{Lit}}
+%                         {\pathEq{value}{\texttt{prev}(x.r.\mIt{value})}}}
+%           )
+%         )\\
+&\texttt{eval}(x. \instOf{x}{\texttt{Plus}},
+                  \instOf{x.l}{\texttt{Lit}},
+                  \instOf{x.r}{\texttt{Lit}},
+                  \instOf{x.l.value}{\texttt{Nat}},\\
+&\qquad\qquad
+                  \instOf{x.r.value}{\texttt{Succ}},
+                  \instOf{x.r.value.p}{\texttt{Nat}}
+              ): \type{y}{\instOf{y}{\texttt{Exp}}} :=\\
+&\quad\texttt{eval}(
+           \new \texttt{Plus}(\\
+             &\qquad\pathEq{l}{
                \objConstr{\texttt{Lit}}
-                         {\pathEq{value}{ \objConstr{\texttt{Succ}}{\pathEq{p}{x.l.value}}}}},
-             \pathEq{r}{
+                         {\pathEq{value}{ \objConstr{\texttt{Succ}}{\pathEq{p}{x.l.value}}}}},\\
+             &\qquad\pathEq{r}{
                \objConstr{\texttt{Lit}}
-                         {\pathEq{value}{\texttt{prev}(x.r.\mIt{value})}}}})\\
+                         {\pathEq{value}{\texttt{prev}(x.r.\mIt{value})}}}
+           )
+         )\\
 &\mImpl{\texttt{eval}}
        {x}
        {\instOf{x}{\texttt{Plus}},
@@ -54,14 +82,14 @@
         \instOf{x.r}{\texttt{Plus}},
         \instOf{x.r.l}{\texttt{Exp}},
         \instOf{x.r.r}{\texttt{Exp}}}
-       {\type{y}{\instOf{y}{\texttt{Exp}}}}
-       {\texttt{eval}(
+       {\type{y}{\instOf{y}{\texttt{Exp}}}}{}\\
+       &\quad\texttt{eval}(
          \objConstr{\texttt{Plus}}
                    {
                      \pathEq{l}{x.l},
                      \pathEq{r}{\texttt{eval(x.r)}}
                    }
-       )}\\
+       )\\
 &\mImpl{\texttt{eval}}
        {x}
        {\instOf{x}{\texttt{Plus}},
@@ -69,14 +97,14 @@
         \instOf{x.r}{\texttt{Exp}},
         \instOf{x.l.l}{\texttt{Exp}},
         \instOf{x.l.r}{\texttt{Exp}}}
-       {\type{y}{\instOf{y}{\texttt{Exp}}}}
-       {\texttt{eval}(
+       {\type{y}{\instOf{y}{\texttt{Exp}}}}{}\\
+       &\quad\texttt{eval}(
          \objConstr{\texttt{Plus}}
                    {
                      \pathEq{l}{\texttt{eval(x.l)}},
                      \pathEq{r}{x.r}
                    }
-       )}
+       )
 \end{align*}
 
 - extends natural numbers prog with AST for arith exprs
