@@ -120,7 +120,7 @@ class DCC(P: Program) {
   }
 
   // TODO: change return type to Either or Option?
-  def interp(heap: Heap, expr: Expression, preprocEquivs: Boolean = false): (Heap, Expression) = expr match {
+  def interp(heap: Heap, expr: Expression, skipgen: Boolean = true, preprocEquivs: Boolean = false): (Heap, Expression) = expr match {
     case x@Id(_) => (heap, expr) // variables are values
     // R-Field
     case FieldAccess(x@Id(_), f) =>
@@ -140,7 +140,7 @@ class DCC(P: Program) {
       // Applicable methods
       //val S: List[(List[Constraint], Expression)] = mImplSubst(m, x).filter{case (as, _) => entails(HC(heap), as, vars)}
       val methods = mImplSubst(m, x)
-      val S = methods.filter{case (as, _) => Entails(HC(heap), as, vars, preprocEquivs = preprocEquivs)}
+      val S = methods.filter{case (as, _) => Entails(HC(heap), as, vars, skipNoSubst = skipgen, preprocEquivs = preprocEquivs)}
 
       if (S.isEmpty) // m not in P
         return (heap, expr)
@@ -153,7 +153,7 @@ class DCC(P: Program) {
 
       S.foreach{
         case (a1, e1) if e != e1 =>
-          if (Entails(a1, a, vars, preprocEquivs = preprocEquivs) && !Entails(a, a1, vars, preprocEquivs = preprocEquivs)) {
+          if (Entails(a1, a, vars, skipNoSubst = skipgen, preprocEquivs = preprocEquivs) && !Entails(a, a1, vars, skipNoSubst = skipgen, preprocEquivs = preprocEquivs)) {
             println(s"Most specific:$a1, $e1")
             //(a, e) = (a1, e1)
             a = a1
@@ -179,7 +179,7 @@ class DCC(P: Program) {
       //val b1 = alphaConversion(y, x, b)
       val b1 = substitute(y, x, b)
       // heap constraints entail cls constraints
-      if (Entails(HC(heap) ++ OC(x, o), b1, x :: vars, preprocEquivs = preprocEquivs))
+      if (Entails(HC(heap) ++ OC(x, o), b1, x :: vars, skipNoSubst = skipgen, preprocEquivs = preprocEquivs))
         (heap + (x -> o), x)
       else
         (heap, expr) // stuck TODO: return type

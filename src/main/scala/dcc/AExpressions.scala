@@ -17,7 +17,7 @@ object AExpressions extends App {
       FieldAccess(Id('x), Id('p)))
   )
 
-  val program: Program = naturalNumbers ++ List(
+  val aexp: Program = List(
     ConstructorDeclaration('Lit, 'x, List(InstanceOf(FieldPath('x, 'value), 'Nat))),
     ConstructorDeclaration('Plus, 'x, List(InstanceOf(FieldPath('x, 'l), 'Exp), InstanceOf(FieldPath('x, 'r), 'Exp))),
     ConstraintEntailment('x, List(InstanceOf('x, 'Lit), InstanceOf(FieldPath('x, 'value), 'Nat)), InstanceOf('x, 'Exp)),
@@ -79,6 +79,8 @@ object AExpressions extends App {
         ))
       ))
   )
+
+  val program = naturalNumbers ++ aexp
 
   program.foreach(println)
 
