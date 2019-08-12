@@ -3,6 +3,8 @@ package dcc
 import dcc.syntax.Util._
 import dcc.syntax._
 import dcc.syntax.Program.Program
+import smtlib.solver.{Axioms, Z3Solver}
+import smtlib.syntax.{Assert, CheckSat, Not}
 
 object AExpressions extends App {
   val naturalNumbers: Program = List(
@@ -93,13 +95,32 @@ object AExpressions extends App {
   def lit(nat: Expression) = ObjectConstruction('Lit, List(('value, nat)))
   def plus(l: Expression, r: Expression) = ObjectConstruction('Plus, List(('l, l), ('r, r)))
 
-  val (h0, x0) = dcc.interp(Map.empty, zero)
-  val (h1, x1) = dcc.interp(h0, lit(x0))
-  val (h2, x2) = dcc.interp(h1, MethodCall('eval, plus(x1, x1)))
+  val (h0, x0) = dcc.interp(Map.empty, one)
+  println("-------------------------------------------")
+  val (h1, x1) = dcc.interp(h0, ObjectConstruction('Succ, List(('p, x0))), preOptimize = true)
 
 
-  println(h2)
-  println(x2)
+  println("-------------------------------------------")
+  println("Heap")
+  h1.foreach(x => println(s"\t$x"))
+  println(x1)
+
+//  println("-------------------------------------------")
+//  val entailment = SMTLibConverter.convertEntailment(List(InstanceOf('x2, 'Succ), InstanceOf(FieldPath('x2, 'p), 'Nat)), InstanceOf('x2, 'Nat))
+//  val solver = new Z3Solver(Axioms.allDirectClosure)
+//  solver.addCommands(SMTLibConverter.generateSubstRules(List('x2), List('x2, FieldPath('x2, 'p))))
+//  solver.addCommand(SMTLibConverter.makeProgramEntailmentLookupFunction(program, List('x2, FieldPath('x2, 'p))))
+//  solver.addCommand(Axioms.cProg)
+//  solver.addCommand(Axioms.assertVariable("x2"))
+//  solver.addCommand(Axioms.assertPath(SMTLibConverter.convertPath('x2)))
+//  solver.addCommand(Axioms.assertPath(SMTLibConverter.convertPath(FieldPath('x2, 'p))))
+//  solver.addCommand(Axioms.assertClass("Nat"))
+//  solver.addCommand(Axioms.assertClass("Succ"))
+//  solver.addCommand(Axioms.assertClass("Zero"))
+//  solver.addCommand(Assert(Not(entailment)))
+//  solver.addCommand(CheckSat)
+//  val (_, out) = solver.execute()
+//  out.foreach(println)
 }
 
 

@@ -11,11 +11,11 @@ class DCC(P: Program) {
   type Obj = (Id, List[(Id, Id)])
   type Heap = Map[Id, Obj]
 
-  def Entails(ctx: List[Constraint], cs: List[Constraint], vars: List[Id], skipNoSubst: Boolean = true, preprocEquivs: Boolean = false): Boolean =
-    cs.forall(c => entails(ctx, c, vars, skipNoSubst = skipNoSubst, preprocEquivs = preprocEquivs))
+  def Entails(ctx: List[Constraint], cs: List[Constraint], vars: List[Id], skipNoSubst: Boolean = true, preOptimize: Boolean = false): Boolean =
+    cs.forall(c => entails(ctx, c, vars, skipNoSubst = skipNoSubst, preOptimize = preOptimize))
 
   // constraint entailment
-  def entails(context: List[Constraint], c: Constraint, vars: List[Id], skipNoSubst: Boolean = true, preprocEquivs: Boolean = false): Boolean = {
+  def entails(context: List[Constraint], c: Constraint, vars: List[Id], skipNoSubst: Boolean = true, preOptimize: Boolean = false): Boolean = {
     // pre optimization TODO: kinda dirty here: move to somewhere else?
     // TODO: add further optimizations for path eqs?
 //    val context1 = context
@@ -43,8 +43,10 @@ class DCC(P: Program) {
       case _ =>
     }
 
-    if(preprocEquivs)
+    if(preOptimize) {
       context1 = preprocEquiv(context1)
+      context1 = preprocInheritance(context1)
+    }
 
     // debug output
     context1 match {
@@ -120,7 +122,7 @@ class DCC(P: Program) {
   }
 
   // TODO: change return type to Either or Option?
-  def interp(heap: Heap, expr: Expression, skipgen: Boolean = true, preprocEquivs: Boolean = false): (Heap, Expression) = expr match {
+  def interp(heap: Heap, expr: Expression, skipgen: Boolean = true, preOptimize: Boolean = false): (Heap, Expression) = expr match {
     case x@Id(_) => (heap, expr) // variables are values
     // R-Field
     case FieldAccess(x@Id(_), f) =>
@@ -140,7 +142,7 @@ class DCC(P: Program) {
       // Applicable methods
       //val S: List[(List[Constraint], Expression)] = mImplSubst(m, x).filter{case (as, _) => entails(HC(heap), as, vars)}
       val methods = mImplSubst(m, x)
-      val S = methods.filter{case (as, _) => Entails(HC(heap), as, vars, skipNoSubst = skipgen, preprocEquivs = preprocEquivs)}
+      val S = methods.filter{case (as, _) => Entails(HC(heap), as, vars, skipNoSubst = skipgen, preOptimize = preOptimize)}
 
       if (S.isEmpty) // m not in P
         return (heap, expr)
@@ -153,7 +155,7 @@ class DCC(P: Program) {
 
       S.foreach{
         case (a1, e1) if e != e1 =>
-          if (Entails(a1, a, vars, skipNoSubst = skipgen, preprocEquivs = preprocEquivs) && !Entails(a, a1, vars, skipNoSubst = skipgen, preprocEquivs = preprocEquivs)) {
+          if (Entails(a1, a, vars, skipNoSubst = skipgen, preOptimize = preOptimize) && !Entails(a, a1, vars, skipNoSubst = skipgen, preOptimize = preOptimize)) {
             println(s"Most specific:$a1, $e1")
             //(a, e) = (a1, e1)
             a = a1
@@ -179,7 +181,7 @@ class DCC(P: Program) {
       //val b1 = alphaConversion(y, x, b)
       val b1 = substitute(y, x, b)
       // heap constraints entail cls constraints
-      if (Entails(HC(heap) ++ OC(x, o), b1, x :: vars, skipNoSubst = skipgen, preprocEquivs = preprocEquivs))
+      if (Entails(HC(heap) ++ OC(x, o), b1, x :: vars, skipNoSubst = skipgen, preOptimize = preOptimize))
         (heap + (x -> o), x)
       else
         (heap, expr) // stuck TODO: return type
@@ -567,7 +569,25 @@ class DCC(P: Program) {
     res.filter {
     case PathEquivalence(p, q) if p == q => false
     case _ => true
+    }
   }
+
+  private def preprocInheritance(cs: List[Constraint]): List[Constraint] = {
+    val insts = cs.filter{ case InstanceOf(_, _) => true case _ => false }
+
+    var res = cs
+
+    insts.foreach {
+      case inst@InstanceOf(x, _) =>
+        classes.foreach {
+          case cls1 if entails(cs, InstanceOf(x, cls1), List()) =>
+            res = InstanceOf(x, cls1) :: res
+          case _ => ()
+        }
+      case _ => ()
+    }
+
+    res
   }
 }
 
