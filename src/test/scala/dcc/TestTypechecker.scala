@@ -24,6 +24,20 @@ class TestTypechecker extends FunSuite {
     assert(dcc.typecheck(skipGen = false))
   }
 
+  test ("typeassignment new Zero()") {
+    val dcc = new DCC(naturalNumbers)
+
+    val types = dcc.typeassignment(Nil, ObjectConstruction(Id('Zero), List()))
+
+    assert(types.nonEmpty)
+    assert(types.forall {
+      case Type(x, List(InstanceOf(y, Id('Nat)))) if x == y => true
+      case Type(x, List(InstanceOf(y, Id('Zero)))) if x == y => true
+      case Type(x, List(InstantiatedBy(y, Id('Zero)))) if x == y => true
+      case _ => false
+    })
+  }
+
 //  test ( "typeass prev(Succ)") {
 //    val dcc = new DCC(naturalNumbers)
 //
