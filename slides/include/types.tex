@@ -1,0 +1,122 @@
+\begin{frame}
+\frametitle{Type Assignment}
+% T-New
+\begin{prooftree}
+\AxiomC{$\forall i.\ \typeass{\ovl{c}}{e_i}{\type{x_i}{\ovl{a_i}}}$} % 1
+\noLine
+\UnaryInfC{$\ovl{b} = (\instBy{x}{C}), \bigcup_i \ovl{a_i}_{\sub{x_i}{x.f_i}}$} % 3
+\AxiomC{$\constr{C}{x}{\ovl{b'}} \in P$} % 2
+\noLine
+\UnaryInfC{\entails{\ovl{c},\ovl{b}}{\ovl{b'}}} % 4
+\RightLabel{T-New}
+\BinaryInfC{\typeass{\ovl{c}}{\newInst{C}{\ovl{f}}{\ovl{e}}}{\type{x}{\ovl{b}}}}
+\end{prooftree}
+% T-Sub
+\begin{prooftree}
+\AxiomC{\typeass{\ovl{c}}{e}{\type{x}{\ovl{a'}}}}
+\AxiomC{\entails{\ovl{c},\ovl{a'}}{\ovl{a}}}
+\RightLabel{T-Sub}
+\BinaryInfC{\typeass{\ovl{c}}{e}{\type{x}{\ovl{a}}}}
+\end{prooftree}
+\pause
+\onslide<+->
+Implementation:\\
+\lstinline[basicstyle=\footnotesize]{typeassignment(context: List[Constraint], exp: Expression): List[Type]}
+\end{frame}
+
+%\begin{frame}[fragile]
+%\frametitle{Type Assignment}
+%\begin{lstlisting}[basicstyle=\footnotesize]
+%// T-New
+%case ObjectConstruction(cls, args) =>
+%  val x = freshvar()
+%  ...
+%  val b: List[Constraint] =
+%    InstantiatedBy(x, cls) :: argsConstraints
+%
+%  val (x1, b1) = classInProgram(cls, P)
+%                   .getOrElse(return Nil)
+%
+%  if (entails(context ++ b, substitute(x1, x, b1)))
+%    types = Type(x, b) :: types
+%
+%  // Subtyping
+%  classes.foreach { c =>
+%    if (entails(context ++ b, InstanceOf(x, c)))
+%      types = Type(x, List(InstanceOf(x, c))) :: types
+%  }
+%types
+%\end{lstlisting}
+%\end{frame}
+
+\begin{frame}
+\frametitle{Type Assignment: Example}
+% T-New
+\begin{prooftree}
+\AxiomC{$\forall i.\ \typeass{\ovl{c}}{e_i}{\type{x_i}{\ovl{a_i}}}$} % 1
+\noLine
+\UnaryInfC{$\ovl{b} = (\instBy{x}{C}), \bigcup_i \ovl{a_i}_{\sub{x_i}{x.f_i}}$} % 3
+\AxiomC{$\constr{C}{x}{\ovl{b'}} \in P$} % 2
+\noLine
+\UnaryInfC{\entails{\ovl{c},\ovl{b}}{\ovl{b'}}} % 4
+\RightLabel{T-New}
+\BinaryInfC{\typeass{\ovl{c}}{\newInst{C}{\ovl{f}}{\ovl{e}}}{\type{x}{\ovl{b}}}}
+\end{prooftree}
+\vfill
+Types of \newInstNoArgs{\texttt{Zero}}
+\pause
+\begin{align*}
+\onslide<+->{&\type{x}{\instBy{x}{\texttt{Zero}}}\\}
+\onslide<+>{&\type{x}{\instOf{x}{\texttt{Zero}}}\\
+&\type{x}{\instOf{x}{\texttt{Nat}}}}
+\end{align*}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Well-formedness}
+% WF-MI
+\begin{prooftree}
+\AxiomC{\FVeq{\ovl{a}}{x}}
+\AxiomC{\FVeq{\ovl{b}}{x,y}}
+\AxiomC{\typeass{\ovl{a}}{e}{\type{y}{\ovl{b}}}}
+\RightLabel{WF-MI}
+\TrinaryInfC{\wf{(\mImpl{m}{x}{\ovl{a}}{\type{y}{\ovl{b}}}{e})}}
+\end{prooftree}
+\pause
+\onslide<+->
+\vfill
+\begin{lstlisting}[basicstyle=\footnotesize]
+def wf(D: Declaration): Boolean = D match {
+  case ...
+  case MethodImplementation(_, x, a, Type(y, b), e) =>
+    FV(a) == List(x) && FV(b).nonEmpty &&
+      FV(b).forall(v => v == x || v == y) &&
+    typeassignment(a, e).exists {
+      case Type(z, c) =>
+        c.size == b.size &&
+        substitute(z, y, c).forall(b.contains(_))
+    }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+\frametitle{Well-formedness: Example}
+% WF-MI
+\begin{prooftree}
+\AxiomC{\FVeq{\ovl{a}}{x}}
+\AxiomC{\FVeq{\ovl{b}}{x,y}}
+\AxiomC{\typeass{\ovl{a}}{e}{\type{y}{\ovl{b}}}}
+\RightLabel{WF-MI}
+\TrinaryInfC{\wf{(\mImpl{m}{x}{\ovl{a}}{\type{y}{\ovl{b}}}{e})}}
+\end{prooftree}
+\[
+\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Zero}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{\newInstNoArgs{\texttt{Zero}}}
+\]
+\vfill
+\begin{align*}
+\mIt{type}(\newInstNoArgs{\texttt{Zero}}) := [&\type{x}{\instBy{x}{\texttt{Zero}}},\\
+&\type{x}{\instOf{x}{\texttt{Zero}}},\\
+&\type{x}{\instOf{x}{\texttt{Nat}}}]
+\end{align*}
+\end{frame}

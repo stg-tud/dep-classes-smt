@@ -1,0 +1,371 @@
+\begin{frame}
+\frametitle{Constraint System}
+
+\begin{columns}[t]
+\begin{column}{0.5\linewidth}
+% C-Ident
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Ident)}
+\UnaryInfC{\entails{a}{a}}
+\end{prooftree}
+% C-Class
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{\instantiatedBy{p}{C}}}
+\RightLabel{(C-Class)}
+\UnaryInfC{\entails{\overline{a}}{\instanceOf{p}{C}}}
+\end{prooftree}
+\end{column}
+\begin{column}{0.5\linewidth}
+% C-Refl
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Refl)}
+\UnaryInfC{\entails{\epsilon}{\pathEq{p}{p}}}
+\end{prooftree}
+% C-Cut
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{c}}
+\AxiomC{\entails{\overline{a'}, c}{b}}
+\RightLabel{(C-Cut)}
+\BinaryInfC{\entails{\overline{a},\overline{a'}}{b}}
+\end{prooftree}
+\end{column}
+\end{columns}
+% C-Subst
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{a_{\sub{x}{p}}}}
+\AxiomC{\entails{\overline{a}}{\pathEq{p'}{p}}}
+\RightLabel{(C-Subst)}
+\BinaryInfC{\entails{\overline{a}}{a_{\sub{x}{p'}}}}
+\end{prooftree}
+% C-Prog
+\begin{prooftree}
+\AxiomC{$(\progEnt{x}{\overline{a}}{a}) \in P$}
+\AxiomC{\entails{\overline{b}}{\overline{a}_{\sub{x}{p}}}}
+\RightLabel{(C-Prog)}
+\BinaryInfC{\entails{\overline{b}}{a_{\sub{x}{p}}}}
+\end{prooftree}
+\centering
+$\entails{\ovl a}{\ovl b} := \bigwedge_{b \in \ovl b} \entails{\ovl a}{b}$
+\end{frame}
+
+\begin{frame}[b]
+\frametitle{Constraint System: Application}
+To show: \entails{(\ovl{\mIt{ctx}} := \instOf{x}{\texttt{Zero}}, \pathEq{y}{x})}{\instOf{y}{\texttt{Zero}}}
+\vfill
+\begin{prooftree}
+\AxiomC{...}
+\UnaryInfC{$\entails{\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}}{ \instOf{y}{\texttt{Zero}}}$ }
+\end{prooftree}
+\mbox{}\\\mbox{}\\\mbox{}\\\mbox{}
+\end{frame}
+
+\begin{frame}[b]
+\frametitle{Constraint System: Application}
+% C-Subst
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{a_{\sub{x}{p}}}}
+\AxiomC{\entails{\overline{a}}{\pathEq{p'}{p}}}
+\RightLabel{(C-Subst)}
+\BinaryInfC{\entails{\overline{a}}{a_{\sub{x}{p'}}}}
+\end{prooftree}
+\vfill
+\begin{prooftree}
+\AxiomC{...}
+\UnaryInfC{$\entails{\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}}{ \instOf{y}{\texttt{Zero}}}$ }
+\end{prooftree}
+\mbox{}\\\mbox{}\\\mbox{}\\\mbox{}
+\end{frame}
+
+\begin{frame}[b]
+\frametitle{Constraint System: Application}
+% C-Subst
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{a_{\sub{x}{p}}}}
+\AxiomC{\entails{\overline{a}}{\pathEq{p'}{p}}}
+\RightLabel{(C-Subst)}
+\BinaryInfC{\entails{\overline{a}}{a_{\sub{x}{p'}}}}
+\end{prooftree}
+\vfill
+\begin{prooftree}
+\AxiomC{\entails{\ovl{\mIt{ctx}}}{\instOf{x}{\texttt{Zero}}}}
+\UnaryInfC{$\entails{\ovl{\mIt{ctx}}}{\instOf{y}{\texttt{Zero}}_{\sub{y}{x}}}$}
+\AxiomC{\entails{\ovl{\mIt{ctx}}}{\pathEq{y}{x}}}
+\RightLabel{C-Subst}
+\BinaryInfC{$\entails{\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}}{ \instOf{y}{\texttt{Zero}}}_{\sub{y}{y}}$ }
+\end{prooftree}
+\mbox{}\\\mbox{}\\\mbox{}\\\mbox{}
+\end{frame}
+
+%\begin{frame}[b]
+%\frametitle{Constraint System: Application}
+%\begin{prooftree}
+%\AxiomC{}
+%\RightLabel{C-Ident}
+%\UnaryInfC{[...]}
+%\UnaryInfC{\entails{\ovl{\mIt{ctx}}}{\instOf{x}{\texttt{Zero}}}}
+%\UnaryInfC{$\entails{\ovl{\mIt{ctx}}}{\instOf{y}{\texttt{Zero}}_{\sub{y}{x}}}$}
+%\AxiomC{}
+%\RightLabel{C-Ident}
+%\UnaryInfC{[...]}
+%\UnaryInfC{\entails{\ovl{\mIt{ctx}}}{\pathEq{y}{x}}}
+%\RightLabel{C-Subst}
+%\BinaryInfC{$\entails{\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}}{ \instOf{y}{\texttt{Zero}}}_{\sub{y}{y}}$ }
+%\end{prooftree}
+%\mbox{}\\\mbox{}\\\mbox{}\\\mbox{}
+%\end{frame}
+
+%\begin{frame}[b]
+%\frametitle{Constraint System: Application}
+%\begin{prooftree}
+%\AxiomC{...}
+%\UnaryInfC{\entails{\pathEq{x}{y}}{\pathEq{y}{x}}}
+%\end{prooftree}
+%\mbox{}\\\mbox{}\\\mbox{}\mbox{}\\\mbox{}
+%\end{frame}
+%
+%\begin{frame}[b]
+%\frametitle{Constraint System: Application}
+%% C-Subst
+%\begin{prooftree}
+%\AxiomC{\entails{\overline{a}}{a_{\sub{x}{p}}}}
+%\AxiomC{\entails{\overline{a}}{\pathEq{p'}{p}}}
+%\RightLabel{(C-Subst)}
+%\BinaryInfC{\entails{\overline{a}}{a_{\sub{x}{p'}}}}
+%\end{prooftree}
+%\vfill
+%\begin{prooftree}
+%\AxiomC{...}
+%\UnaryInfC{\entails{\pathEq{x}{y}}{\pathEq{y}{x}}}
+%\end{prooftree}
+%\mbox{}\\\mbox{}\\\mbox{}\mbox{}\\\mbox{}
+%\end{frame}
+%
+%\begin{frame}[b]
+%\frametitle{Constraint System: Application}
+%% C-Subst
+%\begin{prooftree}
+%\AxiomC{\entails{\overline{a}}{a_{\sub{x}{p}}}}
+%\AxiomC{\entails{\overline{a}}{\pathEq{p'}{p}}}
+%\RightLabel{(C-Subst)}
+%\BinaryInfC{\entails{\overline{a}}{a_{\sub{x}{p'}}}}
+%\end{prooftree}
+%\vfill
+%\begin{prooftree}
+%\AxiomC{\entails{\pathEq{x}{y}}{\pathEq{y}{y}}}
+%\UnaryInfC{\entails{\pathEq{x}{y}}{\subst{\pathEq{y}{x}}{x}{y}}}
+%\AxiomC{\entails{\pathEq{x}{y}}{\pathEq{x}{y}}}
+%\RightLabel{C-Subst}
+%\BinaryInfC{\entails{\pathEq{x}{y}}{\subst{\pathEq{y}{x}}{x}{x}}}
+%\end{prooftree}
+%\mbox{}\\\mbox{}\\\mbox{}\mbox{}\\\mbox{}\\\mbox{}
+%\end{frame}
+%
+%\begin{frame}[b]
+%\frametitle{Constraint System: Application}
+%\begin{prooftree}
+%\AxiomC{}
+%\RightLabel{C-Refl}
+%\UnaryInfC{\entails{\epsilon}{\pathEq{y}{y}}}
+%\RightLabel{C-Weak}
+%\UnaryInfC{\entails{\pathEq{x}{y}}{\pathEq{y}{y}}}
+%\UnaryInfC{\entails{\pathEq{x}{y}}{\subst{\pathEq{y}{x}}{x}{y}}}
+%\AxiomC{}
+%\RightLabel{C-Ident}
+%\UnaryInfC{\entails{\pathEq{x}{y}}{\pathEq{x}{y}}}
+%\RightLabel{C-Subst}
+%\BinaryInfC{\entails{\pathEq{x}{y}}{\subst{\pathEq{y}{x}}{x}{x}}}
+%\end{prooftree}
+%\mbox{}\\\mbox{}\\\mbox{}\mbox{}\\\mbox{}\\\mbox{}
+%\end{frame}
+
+\begin{frame}
+\frametitle{First-order Model}
+
+\begin{align*}
+x, f, m, C &\Rightarrow \mIt{String}\\
+\entails{\ovl a}{b} &\Rightarrow \entails{\Constrs}{\Constr}\\
+%\epsilon &\Rightarrow \nil\\
+a, \ovl a &\Rightarrow a :: \ovl a\\
+a, b &\Rightarrow [a, b]
+\end{align*}
+\end{frame}
+
+\begin{frame}
+\frametitle{First-order Model}
+
+\begin{columns}[t]
+\begin{column}{0.4\textwidth}
+% C-Ident
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Ident)}
+\UnaryInfC{\entails{a}{a}}
+\end{prooftree}
+\quad\\
+% C-Refl
+%\begin{prooftree}
+%\AxiomC{}
+%\RightLabel{(C-Refl)}
+%\UnaryInfC{\entails{\epsilon}{\pathEq{p}{p}}}
+%\end{prooftree}
+%\quad\\
+% C-Class
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{\instantiatedBy{p}{C}}}
+\RightLabel{(C-Class)}
+\UnaryInfC{\entails{\overline{a}}{\instanceOf{p}{C}}}
+\end{prooftree}
+\end{column}
+\begin{column}{0.6\textwidth}
+\begin{align*}
+&\forall c: \Constr.\ \entails{[c]}{c} \\
+\quad\\
+%&\forall p: \Path.\ \entails{\nil}{\pathEq{p}{p}}\\
+%\quad\\\quad\\
+&\forall \ovl{a}: \Constrs, p: \Path, C: \String.\\
+&\quad \entails{\ovl{a}}{\instBy{p}{C}}
+       \rightarrow \entails{\ovl{a}}{\instOf{p}{C}}
+\end{align*}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{First-order Model: C-Subst}
+% C-Subst
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{a_{\sub{x}{p}}}}
+\AxiomC{\entails{\overline{a}}{\pathEq{p'}{p}}}
+\RightLabel{(C-Subst)}
+\BinaryInfC{\entails{\overline{a}}{a_{\sub{x}{p'}}}}
+\end{prooftree}
+\vfill
+\begin{align*}
+&\forall \ovl a: \Constrs, x: \String, p_1, p_2: \Path, a, a_1, a_2: \Constr. \\
+&\quad \entails{\ovl a}{a_1}
+         \land \entails{\ovl a}{\pathEq{p_2}{p_1}}\\
+%&\qquad  \land \mIt{subst}(a, x, p_1, a_1) \land \mIt{subst}(a, x, p_2, a_2)\\
+&\qquad  \land a_{\sub{x}{p_1}} = a_1 \land a_{\sub{x}{p_2}} = a_2\\
+&\quad   \rightarrow \entails{\ovl a}{a_2}
+\end{align*}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{First-order Model: Application}
+To show: \entails{(\ovl{\mIt{ctx}} := [\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}])}{\instOf{y}{\texttt{Zero}}}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{First-order Model: Application}
+To show: \entails{(\ovl{\mIt{ctx}} := [\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}])}{\instOf{y}{\texttt{Zero}}}
+\quad\\\quad\\
+\begin{align*}
+&\forall \ovl a: \Constrs, x: \String, p_1, p_2: \Path, a, a_1, a_2: \Constr. \\
+&\quad \entails{\ovl a}{a_1}
+         \land \entails{\ovl a}{\pathEq{p_2}{p_1}}\\
+&\qquad  \land a_{\sub{x}{p_1}} = a_1 \land a_{\sub{x}{p_2}} = a_2\\
+&\quad   \rightarrow \entails{\ovl a}{a_2}
+\end{align*}
+\pause
+\onslide<+->
+$\ovl a := \ovl{\mIt{ctx}}, a_2 := \instOf{y}{\texttt{Zero}}$
+\end{frame}
+
+%\begin{frame}[t]
+%\frametitle{First-order Model: Application}
+%To show: \entails{(\ovl{\mIt{ctx}} := [\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}])}{\instOf{y}{\texttt{Zero}}}
+%\quad\\\quad\\
+%\begin{align*}
+%&\forall x: \String, p_1, p_2: \Path, a, a_1: \Constr. \\
+%&\quad \entails{\ovl{\mIt{ctx}}}{a_1}
+%         \land \entails{\ovl{\mIt{ctx}}}{\pathEq{p_2}{p_1}}\\
+%&\qquad  \land a_{\sub{x}{p_1}} = a_1 \land a_{\sub{x}{p_2}} = \instOf{y}{\texttt{Zero}}\\
+%&\quad   \rightarrow \entails{\ovl{\mIt{ctx}}}{\instOf{y}{\texttt{Zero}}}
+%\end{align*}
+%$\ovl a := \ovl{\mIt{ctx}}, a_2 := \instOf{y}{\texttt{Zero}}$
+%\end{frame}
+
+\begin{frame}[t]
+\frametitle{First-order Model: Application}
+To show: \entails{(\ovl{\mIt{ctx}} := [\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}])}{\instOf{y}{\texttt{Zero}}}
+\quad\\\quad\\
+\begin{align*}
+&\forall x: \String, p_1, p_2: \Path, a, a_1: \Constr. \\
+&\quad \entails{\ovl{\mIt{ctx}}}{a_1}
+         \land \entails{\ovl{\mIt{ctx}}}{\pathEq{p_2}{p_1}}\\
+&\qquad  \land a_{\sub{x}{p_1}} = a_1 \land a_{\sub{x}{p_2}} = \instOf{y}{\texttt{Zero}}\\
+&\quad   \rightarrow \entails{\ovl{\mIt{ctx}}}{\instOf{y}{\texttt{Zero}}}
+\end{align*}
+$\ovl a := \ovl{\mIt{ctx}}, a_2 := \instOf{y}{\texttt{Zero}}$\\
+\pause
+\onslide<+->{$x := \str y, p_2 = y, p_1 = x$}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{First-order Model: Application}
+To show: \entails{(\ovl{\mIt{ctx}} := [\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}])}{\instOf{y}{\texttt{Zero}}}
+\quad\\\quad\\
+\begin{align*}
+&\forall a, a_1: \Constr. \\
+&\quad \entails{\ovl{\mIt{ctx}}}{a_1}
+         \land \entails{\ovl{\mIt{ctx}}}{\pathEq{y}{x}}\\
+&\qquad  \land a_{\sub{\str y}{x}} = a_1 \land a_{\sub{\str y}{y}} = \instOf{y}{\texttt{Zero}}\\
+&\quad   \rightarrow \entails{\ovl{\mIt{ctx}}}{\instOf{y}{\texttt{Zero}}}
+\end{align*}
+$\ovl a := \ovl{\mIt{ctx}}, a_2 := \instOf{y}{\texttt{Zero}}$\\
+$x := \str y, p_2 = y, p_1 = x$\\
+\pause
+\onslide<+->{$a := \instOf{y}{\texttt{Zero}}$}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{First-order Model: Application}
+To show: \entails{(\ovl{\mIt{ctx}} := [\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}])}{\instOf{y}{\texttt{Zero}}}
+\quad\\\quad\\
+\begin{align*}
+&\forall a_1: \Constr. \\
+&\quad \entails{\ovl{\mIt{ctx}}}{a_1}
+         \land \entails{\ovl{\mIt{ctx}}}{\pathEq{y}{x}}\\
+&\qquad  \land \instOf{y}{\texttt{Zero}}_{\sub{\str y}{x}} = a_1\\
+&\quad   \rightarrow \entails{\ovl{\mIt{ctx}}}{\instOf{y}{\texttt{Zero}}}
+\end{align*}
+$\ovl a := \ovl{\mIt{ctx}}, a_2 := \instOf{y}{\texttt{Zero}}$\\
+$x := \str y, p_2 = y, p_1 = x$\\
+$a := \instOf{y}{\texttt{Zero}}$\\
+\pause
+\onslide<+->{$a_1 := \instOf{x}{\texttt{Zero}}$}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{First-order Model: Application}
+To show: \entails{(\ovl{\mIt{ctx}} := [\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}])}{\instOf{y}{\texttt{Zero}}}
+\quad\\\quad\\
+\begin{align*}
+&\entails{\ovl{\mIt{ctx}}}{\instOf{x}{\texttt{Zero}}}
+         \land \entails{\ovl{\mIt{ctx}}}{\pathEq{y}{x}}\\
+&\rightarrow \entails{\ovl{\mIt{ctx}}}{\instOf{y}{\texttt{Zero}}}
+\end{align*}
+$\ovl a := \ovl{\mIt{ctx}}, a_2 := \instOf{y}{\texttt{Zero}}$\\
+$x := \str y, p_2 = y, p_1 = x$\\
+$a := \instOf{y}{\texttt{Zero}}$\\
+$a_1 := \instOf{x}{\texttt{Zero}}$
+\end{frame}
+
+\begin{frame}
+\frametitle{Application Comparison}
+\begin{prooftree}
+\AxiomC{\entails{\ovl{\mIt{ctx}}}{\instOf{x}{\texttt{Zero}}}}
+\UnaryInfC{$\entails{\ovl{\mIt{ctx}}}{\instOf{y}{\texttt{Zero}}_{\sub{y}{x}}}$}
+\AxiomC{\entails{\ovl{\mIt{ctx}}}{\pathEq{y}{x}}}
+\RightLabel{C-Subst}
+\BinaryInfC{$\entails{\instOf{x}{\texttt{Zero}}, \pathEq{y}{x}}{ \instOf{y}{\texttt{Zero}}}_{\sub{y}{y}}$ }
+\end{prooftree}
+\vfill
+\begin{align*}
+&\entails{\ovl{\mIt{ctx}}}{\instOf{x}{\texttt{Zero}}}
+         \land \entails{\ovl{\mIt{ctx}}}{\pathEq{y}{x}} && \text{(C-Subst)}\\
+&\rightarrow \entails{\ovl{\mIt{ctx}}}{\instOf{y}{\texttt{Zero}}}
+\end{align*}
+\end{frame}

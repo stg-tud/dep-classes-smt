@@ -1,0 +1,137 @@
+\begin{frame}
+\frametitle{Analyze C-Subst}
+\begin{align*}
+&\forall \ovl a: \Constrs, x: \String, p_1, p_2: \Path, a, a_1, a_2: \Constr. \\
+&\quad \entails{\ovl a}{a_1}
+         \land \entails{\ovl a}{\pathEq{p_2}{p_1}}\\
+&\qquad  \land a_{\sub{x}{p_1}} = a_1 \land a_{\sub{x}{p_2}} = a_2\\
+&\quad   \rightarrow \entails{\ovl a}{a_2}
+\end{align*}
+\pause
+\onslide<+->{$a_2 := \mIt{<\!input\!>}$
+, $a_{\sub{x}{p_2}} := a_2$
+, $a_1 := a_{\sub{x}{p_1}}$}\\
+\onslide<+>{Instantiation Pattern: $a_2 \rightarrow a \rightarrow a_1$}
+\end{frame}
+
+\begin{frame}
+\frametitle{Generalization}
+Substitution: $a_{\sub{x}{p}}$\\
+Generalization: $a_{\sub{p}{x}}$
+
+\begin{align*}
+  (a_{\sub{x}{p}})_{\sub{p}{x}} = a
+\end{align*}
+\pause
+\begin{align*}
+\onslide<+>{\instOf{x.g}{C}_{\sub{x}{y.f}} &= \instOf{y.f.g}{C}\\
+\instOf{y.f.g}{C}_{\sub{y.f}{x}} &= \instOf{x.g}{C}\\
+\instOf{y.f.g}{C}_{\sub{f.g}{x}} &= \instOf{y.x}{C} && \text{(not possible)}}
+\end{align*}
+\end{frame}
+
+%\begin{frame}
+%\frametitle{C-Subst: Enumerate Variables \& Paths}
+%\begin{align*}
+%&\forall \ovl a: \Constrs, x: \String, p_1, p_2: \Path, a, a_1, a_2: \Constr. \\
+%&\quad \entails{\ovl a}{a_1}
+%         \land \entails{\ovl a}{\pathEq{p_2}{p_1}}\\
+%&\qquad  \land a_{\sub{x}{p_1}} = a_1 \land a_{\sub{x}{p_2}} = a_2\\
+%&\quad   \rightarrow \entails{\ovl a}{a_2}
+%\end{align*}
+%\end{frame}
+%
+%\begin{frame}
+%\frametitle{C-Subst: Enumerate Variables \& Paths}
+%\begin{align*}
+%&\forall \ovl a: \Constrs, a, a_1, a_2: \Constr. \\
+%&\quad \entails{\ovl a}{a_1}
+%         \land \entails{\ovl a}{\pathEq{\mathbf{p_2}}{\mathbf{p_1}}}\\
+%&\qquad  \land a_{\sub{\mathbf{x}}{\mathbf{p_1}}} = a_1 \land a_{\sub{\mathbf{x}}{\mathbf{p_2}}} = a_2\\
+%&\quad   \rightarrow \entails{\ovl a}{a_2}
+%\end{align*}
+%\end{frame}
+
+\begin{frame}[t]
+\frametitle{C-Subst: Algorithmic Instantiations}
+Instantiation Pattern: $a_2 \rightarrow a \rightarrow a_1$
+
+\begin{align*}
+&\forall \ovl a: \Constrs, x: \String, p_1, p_2: \Path, a, a_1, a_2: \Constr. \\
+&\quad \entails{\ovl a}{a_1}
+         \land \entails{\ovl a}{\pathEq{p_2}{p_1}}\\
+&\qquad  \land a_{\sub{x}{p_1}} = a_1 \land a_{\sub{x}{p_2}} = a_2\\
+&\quad   \rightarrow \entails{\ovl a}{a_2}
+\end{align*}
+%\begin{align*}
+%&\forall \ovl a: \Constrs, a, a_1, a_2: \Constr. \\
+%&\quad \entails{\ovl a}{a_1}
+%         \land \entails{\ovl a}{\pathEq{\mathbf{p_2}}{\mathbf{p_1}}}\\
+%&\qquad  \land a_{\sub{\mathbf{x}}{\mathbf{p_1}}} = a_1 \land a_{\sub{\mathbf{x}}{\mathbf{p_2}}} = a_2\\
+%&\quad   \rightarrow \entails{\ovl a}{a_2}
+%\end{align*}
+\pause
+\begin{align*}
+\onslide<+>{a_2 &:= \mIt{<\!input\!>}\\
+a &:= {a_2}_{\sub{p_2}{x}}\\
+a_1 &:= a_{\sub{x}{p_1}}}
+\end{align*}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{C-Subst: Algorithmic Instantiations}
+Instantiation Pattern: $a_2 \rightarrow a \rightarrow a_1$
+
+\begin{align*}
+&\forall \ovl a: \Constrs, x: \String, p_1, p_2: \Path, a, a_1, a_2: \Constr. \\
+&\quad \entails{\ovl a}{a_1}
+         \land \entails{\ovl a}{\pathEq{p_2}{p_1}}\\
+&\qquad  \land a_{\sub{x}{p_1}} = a_1 \land a = {a_2}_{\sub{p_2}{x}}\\
+&\quad   \rightarrow \entails{\ovl a}{a_2}
+\end{align*}
+%\begin{align*}
+%&\forall \ovl a: \Constrs, a, a_1, a_2: \Constr. \\
+%&\quad \entails{\ovl a}{a_1}
+%         \land \entails{\ovl a}{\pathEq{\mathbf{p_2}}{\mathbf{p_1}}}\\
+%&\qquad  \land a_{\sub{\mathbf{x}}{\mathbf{p_1}}} = a_1 \land a = {a_2}_{\sub{\mathbf{p_2}}{\mathbf{x}}}\\
+%&\quad   \rightarrow \entails{\ovl a}{a_2}
+%\end{align*}
+
+\begin{align*}
+a_2 &:= \mIt{<\!input\!>}\\
+a &:= {a_2}_{\sub{p_2}{x}}\\
+a_1 &:= a_{\sub{x}{p_1}}
+\end{align*}
+\end{frame}
+
+\begin{frame}[t]
+\frametitle{C-Subst: Algorithmic Instantiations}
+Instantiation Pattern: $a_2 \rightarrow a \rightarrow a_1$
+
+\begin{align*}
+&\forall \ovl a: \Constrs, a_2: \Constr, x: \String, p_1, p_2: \Path.\\
+&\quad \Let a := \gen{a_2}{p_2}{x}\ \In\\
+&\qquad \Let a_1 := \subst{a}{x}{p_1}\\
+&\qquad \In
+        \entails{\ovl a}{\pathEq{p_2}{p_1}}
+        \land
+        \entails{\ovl a}{a_1}\\
+&\rightarrow \entails{\ovl a}{a_2}
+\end{align*}
+%\begin{align*}
+%&\forall \ovl a: \Constrs, a_2: \Constr.\\
+%&\quad \Let a := \gen{a_2}{\mathbf{p_2}}{\mathbf{x}}\ \In\\
+%&\qquad \Let a_1 := \subst{a}{\mathbf{x}}{\mathbf{p_1}}\\
+%&\qquad \In
+%        \entails{\ovl a}{\pathEq{\mathbf{p_2}}{\mathbf{p_1}}}
+%        \land
+%        \entails{\ovl a}{a_1}\\
+%&\rightarrow \entails{\ovl a}{a_2}
+%\end{align*}
+%
+\begin{align*}
+a_2 &:= \mIt{<\!input\!>}\\
+a &:= {a_2}_{\sub{p_2}{x}}\\
+a_1 &:= a_{\sub{x}{p_1}}
+\end{align*}
+\end{frame}

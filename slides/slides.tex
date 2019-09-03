@@ -1,0 +1,48 @@
+\documentclass[leqno]{beamer}
+
+
+\usepackage[utf8x]{inputenc}
+\usepackage{amsbsy,amsfonts,amssymb,amstext,amsmath,amsthm,latexsym}
+% Package mathpartir is currently not available in nixpkgs
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{syntax} % for bnf grammar
+\usepackage{bussproofs} % for type rules
+\usepackage{color}
+\usepackage{listings}
+%\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning,chains,shapes.arrows,shapes.geometric,fit,calc,decorations.pathmorphing}
+
+\setbeamertemplate{footline}[frame number]
+\beamertemplatenavigationsymbolsempty
+
+\title{Implementing Abstract Dependent Classes}
+\author{Matthias Krebs}
+\date{Sep 04, 2019}
+
+\input{include/macros}
+\input{include/tikz}
+
+\begin{document}
+\maketitle
+
+\begin{frame}
+\frametitle{Overview}
+
+\begin{enumerate}
+  \item Dependent Classes
+  \item $DC_C$ Calculus
+  \item Implementation
+  \item Runtime Optimization %Information Gain from Compile Time
+\end{enumerate}
+\end{frame}
+
+\input{include/dep-classes}
+\input{include/dcc}
+\input{include/constraints}
+\input{include/constraints-refine}
+\input{include/semantics}
+\input{include/types}
+\input{include/learning}
+\end{document}

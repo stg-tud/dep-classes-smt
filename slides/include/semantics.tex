@@ -1,0 +1,134 @@
+\begin{frame}
+\frametitle{Operational Semantics}
+% R-Call
+\begin{prooftree}
+\AxiomC{$S = \{ \pair{\overline{a}}{e}\ |\ \pair{\overline{a}}{e} \in MImpl(m, x) \land \entails{HC(h)}{\overline{a}} \}$}
+\AxiomC{$\pair{\overline{a}}{e} \in S$}
+\noLine
+\BinaryInfC{$\forall \pair{\overline{a'}}{e'} \in S.\ (e' \neq e) \longrightarrow (\entails{\overline{a'}}{\overline{a}}) \land \neg(\entails{\overline{a}}{\overline{a'}})$}
+\RightLabel{R-Call}
+\UnaryInfC{\eval{h}{m(x)}{h}{e}}
+\end{prooftree}
+
+\begin{align*}
+o &::= \stdobj && \text{(objects)} \\ % \langle C; \overline{f} \equiv \overline{x} \rangle \\
+h &::= \stdheap\ \ (x_i \text{ distinct}) && \text{(heaps)}
+\end{align*}
+\begin{align*}
+OC(x, o) &= (\instBy{x}{C}, \pathEq{x.\overline{f}}{\overline{x}})\\
+HC(h) &= \bigcup_i OC(x_i, o_i)
+\end{align*}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Operational Semantics: Implementation}
+\begin{lstlisting}[basicstyle=\footnotesize]
+def interp(heap: Heap, expr: Expression)
+          : (Heap, Expression) = expr match {
+  case ...
+  case MethodCall(m, x@Id(_)) =>   // R-Call
+    // Applicable methods
+    val S = mImplSubst(m, x).filter {
+      case (as, _) => entails(HC(heap), as) }
+    
+    if (S.isEmpty) // m not in program
+      return (heap, expr)
+
+    var (a, e) = S.head // Most specific method
+    S.foreach {
+      ...
+    }
+    interp(heap, e)
+  case ...
+}
+\end{lstlisting}
+%case (a1, e1) if e != e1 =>
+%        if (entails(a1, a) && !entails(a, a1)) { ... }
+\end{frame}
+
+%\begin{frame}[t,fragile]
+%\frametitle{Operational Semantics: Application}
+%\begin{columns}
+%\begin{column}{0.5\textwidth}
+%\begin{align*}
+%  h := [ &x \rightarrow (\texttt{Zero}, \nil), \\
+%         &y \rightarrow (\texttt{Succ}, [(p, x)])]
+%\end{align*}
+%\end{column}
+%\begin{column}{0.5\textwidth}
+%\[
+%  e := \texttt{prev}(y)
+%\]
+%\end{column}
+%\end{columns}
+%\quad\\
+%\begin{lstlisting}[basicstyle=\footnotesize]
+%  case MethodCall(m, x@Id(_)) =>   // R-Call
+%    val S = mImplSubst(m, x).filter {
+%      case (as, _) => entails(HC(heap), as) }
+%\end{lstlisting}
+%\pause
+%\begin{align*}
+%\onslide<+->{}
+%OC(x, o) &= (\instBy{x}{C}, \pathEq{x.\overline{f}}{\overline{x}})\\
+%HC(h) &= \bigcup_i OC(x_i, o_i)\\
+%\onslide<+>{&= [\instBy{x}{\texttt{Zero}}, \instBy{y}{\texttt{Succ}}, \pathEq{y.p}{x}]}
+%\end{align*}
+%\end{frame}
+
+\begin{frame}[t,fragile]
+\frametitle{Operational Semantics: Application}
+\begin{columns}
+\begin{column}{0.4\textwidth}
+\begin{align*}
+  h := [ &x \rightarrow (\texttt{Zero}, \nil), \\
+         &y \rightarrow (\texttt{Succ}, [(p, x)])]
+\end{align*}
+\end{column}
+\begin{column}{0.6\textwidth}
+\begin{align*}
+  e &:= \texttt{prev}(y)\\
+  HC(h) & := [\instBy{x}{\texttt{Zero}}, \instBy{y}{\texttt{Succ}}, \pathEq{y.p}{x}]
+\end{align*}
+\end{column}
+\end{columns}
+\quad\\
+\begin{lstlisting}[basicstyle=\footnotesize]
+  case MethodCall(m, x@Id(_)) =>   // R-Call
+    val S = mImplSubst(m, x).filter {
+      case (as, _) => entails(HC(heap), as) }
+\end{lstlisting}
+\pause
+\onslide<+->
+\begin{align*}
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Zero}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{\newInstNoArgs{\texttt{Zero}}}\\
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x.p}
+\end{align*}
+\begin{align*}
+\onslide<+->{\entails{HC(h)&}{\instOf{y}{\texttt{Zero}}}}\\
+\onslide<+>{\entails{HC(h)&}{\instOf{y}{\texttt{Succ}}}\\
+\entails{HC(h)&}{\instOf{y.p}{\texttt{Nat}}}}
+\end{align*}
+\end{frame}
+
+\begin{frame}[t,fragile]
+\frametitle{Operational Semantics: Application}
+\begin{columns}
+\begin{column}{0.4\textwidth}
+\begin{align*}
+  h := [ &x \rightarrow (\texttt{Zero}, \nil), \\
+         &y \rightarrow (\texttt{Succ}, [(p, x)])]
+\end{align*}
+\end{column}
+\begin{column}{0.6\textwidth}
+\begin{align*}
+  e &:= \texttt{prev}(y)\\
+  HC(h) & := [\instBy{x}{\texttt{Zero}}, \instBy{y}{\texttt{Succ}}, \pathEq{y.p}{x}]\\
+  e_1 &:= y.p
+\end{align*}
+\end{column}
+\end{columns}
+\begin{align*}
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x.p}
+\end{align*}
+\end{frame}

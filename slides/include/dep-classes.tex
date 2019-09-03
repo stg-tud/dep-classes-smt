@@ -1,0 +1,41 @@
+\lstset{ language=scala,basicstyle=\small }
+
+\begin{frame}[fragile]
+\frametitle{Object Oriented Programming}
+\begin{lstlisting}[language=java]
+abstract class Space {
+    abstract Point getOrigin();
+}
+class Space2D extends Space {
+    Point2D getOrigin() { return new Point2D(); }
+}
+class Space3D extends Space {
+    Point3D getOrigin() { return new Point3D(); }
+}
+
+abstract class Point {}
+class Point2D extends Point { ... }
+class Point3D extends Point { ... }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Dependent Classes}
+\begin{lstlisting}
+abstract class Space {
+  abstract Point(s: this) getOrigin();
+}
+class 2DSpace extends Space {
+  Point(s: this) getOrigin() { ... }
+}
+class 3DSpace extends Space { ... }
+
+abstract class Point(Space s) {
+  abstract Point(s: s) add(Vector(s: s) v);
+}
+abstract class Vector(Space s) { ... }
+
+abstract class Point(2DSpace s) { ... }
+abstract class Point(3DSpace s) { ... }
+\end{lstlisting}
+\end{frame}

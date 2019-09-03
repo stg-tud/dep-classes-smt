@@ -1,0 +1,321 @@
+\documentclass[leqno]{beamer}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{amsbsy,amsfonts,amssymb,amstext,amsmath,amsthm,latexsym}
+% Package mathpartir is currently not available in nixpkgs
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{syntax} % for bnf grammar
+\usepackage{bussproofs} % for type rules
+\usepackage{color}
+\usepackage{listings}
+%\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning,chains,shapes.arrows,shapes.geometric,fit,calc,decorations.pathmorphing}
+
+\setbeamertemplate{footline}[frame number]
+\beamertemplatenavigationsymbolsempty
+
+\title{Dependent Classes SMT}
+\author{Matthias Krebs}
+\date{May 13, 2019}
+
+\begin{document}
+\maketitle
+
+%\begin{frame}
+%    \frametitle{todo/outline}
+%    \begin{itemize}
+%    \item quick motivation
+%    \item short overview of dcc (interpreter, type checker, constraint system [sequent calculus])
+%    \item smt?
+%    \item implementing interpreter
+%    \item implementing constraint system (sequent calculus → first order logic)
+%    \item todo: type checker (challenges: declarative → backtracking)
+%    \item todo: "learn" from type checking phase to fasten up the interpreter
+%    \end{itemize}
+%\end{frame}
+
+\begin{frame}
+    \frametitle{Problem description}
+    Dependent Classes
+    \begin{itemize}
+        \item Parametrized
+        \item Dynamic dispatch
+        \item Type safety
+        \item Left to do: Abstract methods
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Recent Research}
+    Dependent Classes calculus ($DC_C$)
+    \begin{itemize}
+        \item Defined by Vaidas Gasiunas
+        \item Subtyping as constraint entailment
+        \item Constraint system: Sequent calculus
+        \item Operational semantics
+        \item Type assignments and well-formedness of Programs
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Research Problem}
+    \begin{itemize}
+        \item Implementing $DC_C$
+        \item Using a SMT prover for constraint entailments
+        \item Use information from compile time to improve run time.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{$DC_C$ Syntax}
+\begin{columns}
+\begin{column}{0.1\textwidth}
+
+\end{column}
+\begin{column}{0.9\textwidth}
+    \begin{itemize}
+        \item[Constraints]
+        \begin{itemize}
+            \item Path equivalence
+            \item Instance of
+            \item Instantiated by
+        \end{itemize}
+        \item[Declarations]
+        \begin{itemize}
+            \item Constructor
+            \item Method definition
+            \item Abstract Method declaration
+            \item Program Entailment
+        \end{itemize}
+        \item[Expressions]
+        \begin{itemize}
+            \item Variable access
+            \item Field access
+            \item Method call
+            \item Object construction
+        \end{itemize}
+    \end{itemize}
+\end{column}
+%\begin{column}{0.4\textwidth}
+%    \begin{itemize}
+%    \item[Constraints]
+%        \begin{itemize}
+%            \item Path equivalence
+%            \item Instance of
+%            \item Instantiated by
+%        \end{itemize}
+%    \end{itemize}
+%\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Syntax Example: Natural Numbers}
+\begin{flalign}
+&Zero(x\text{. } \epsilon) &&\\
+&\forall x\text{. } x :: Zero \Rightarrow x :: Nat &&\\
+&Succ(x\text{. } x.p :: Nat) &&\\
+&\forall x\text{. } x :: Succ, x.p :: Nat \Rightarrow x :: Nat &&
+\end{flalign}
+\vfill
+\begin{center}
+\begin{tikzpicture}
+  \node (Nat) at (0,0) {Nat};
+  \node (Zero) at (-2,-1.5) {Zero};
+  \node (Succ) at (2,-1.5) {Succ};
+
+ \path (Nat) edge (Zero);
+ \path (Nat) edge (Succ);
+
+ \node (comment) at (-0.5, -0.5) {};
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Operational Semantics Example: Object Construction}
+    \begin{prooftree}
+    $x \not \in dom(h)$ \text{        }
+    $o = \langle C; \overline{f} \equiv \overline{x} \rangle$ \\
+    \AxiomC{$C(x. \overline{b}) \in P$}
+    \AxiomC{$HC(h), OC(x, o) \vdash \overline{b}$}
+    \RightLabel{R-New}
+    \BinaryInfC{$\langle h; \textbf{new }C(\overline{f} \equiv \overline{x})\rangle \rightarrow \langle h, x \mapsto o; x\rangle$}
+    \end{prooftree}
+    \vfill
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Operational Semantics Example: Object Construction}
+    \begin{prooftree}
+    $x \not \in dom(h)$ \text{        }
+    $o = \langle C; \overline{f} \equiv \overline{x} \rangle$ \\
+    \AxiomC{$C(x. \overline{b}) \in P$}
+    \AxiomC{$HC(h), OC(x, o) \vdash \overline{b}$}
+    \RightLabel{R-New}
+    \BinaryInfC{$\langle h; \textbf{new }C(\overline{f} \equiv \overline{x})\rangle \rightarrow \langle h, x \mapsto o; x\rangle$}
+    \end{prooftree}
+    
+    \lstset{frameround=fttt,language=Java,numbers=left,breaklines=true}
+\begin{lstlisting}
+case ObjectConstruction(C, args)
+  if args are values =>
+  val x  = freshvar()
+  val o = (C, args)
+  val (y, b) = classInProgram(C, P)
+  val b1 = alphaConversion(y, x, b)
+  // heap constraints entail class constraints
+  if (entails(HC(heap) ++ OC(x, o), b1))
+    (heap + (x -> o), x)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Constraint System to FO: Example}
+\begin{columns}
+\begin{column}{0.3\textwidth}
+    \begin{prooftree}
+    \AxiomC{}
+    \RightLabel{C-Refl}
+    \UnaryInfC{$\epsilon \vdash p \equiv p$}
+    \end{prooftree}
+\end{column}
+\begin{column}{0.35\textwidth}
+    \begin{prooftree}
+    \AxiomC{}
+    \RightLabel{C-Ident}
+    \UnaryInfC{$c \vdash c$}
+    \end{prooftree}
+\end{column}
+%\begin{column}{0.35\textwidth}
+%    \begin{prooftree}
+%    \AxiomC{$\overline{a} \vdash p.cls \equiv C$}
+%    \RightLabel{C-Class}
+%    \UnaryInfC{$\overline{a} \vdash p :: C$}
+%    \end{prooftree}
+%    $\forall \overline{a}: List[Constraint], p: Path, C: Classname.
+%    \overline{a} \vdash p.cls \equiv C \rightarrow \overline{a} \vdash p :: C$
+%\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Constraint System to FO: Example}
+\begin{columns}
+\begin{column}{0.3\textwidth}
+    \begin{prooftree}
+    \AxiomC{}
+    \RightLabel{C-Refl}
+    \UnaryInfC{$\epsilon \vdash p \equiv p$}
+    \end{prooftree}
+    \begin{align*}
+    \forall p : Path. \epsilon \vdash p \equiv p
+    \end{align*}
+\end{column}
+\begin{column}{0.35\textwidth}
+    \begin{prooftree}
+    \AxiomC{}
+    \RightLabel{C-Ident}
+    \UnaryInfC{$c \vdash c$}
+    \end{prooftree}
+    \begin{align*}
+    \forall c : Constraint. [c] \vdash c
+    \end{align*}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Constraint System to FO: Problem 1}
+    \begin{prooftree}
+    \AxiomC{$\overline{a} \vdash a_{\{x \mapsto p\}}$}
+    \AxiomC{$\overline{a} \vdash p' \equiv p$}
+    \RightLabel{C-Subst}
+    \BinaryInfC{$\overline{a} \vdash a_{\{x \mapsto p'\}}$}
+    \end{prooftree}
+    \begin{align*}
+    \forall &\overline{a}: List[Constraint], x: Varname, p: Path, p': Path, \\
+    &\textbf{a}: Constraint, a_1: Constraint, a_2: Constraint. \\
+    & \overline{a} \vdash \textbf{a}_1 \land \overline{a} \vdash p' \equiv p \\
+    & \land \underline{subst(\textbf{a}, x, p', a_2) \land subst(\textbf{a}, x, p, a_1)}\\
+    & \rightarrow \overline{a} \vdash \textbf{a}_2
+    \end{align*}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Constraint System to FO: Problem 1}
+    \begin{prooftree}
+    \AxiomC{$\overline{a} \vdash a_{\{x \mapsto p\}}$}
+    \AxiomC{$\overline{a} \vdash p' \equiv p$}
+    \RightLabel{C-Subst}
+    \BinaryInfC{$\overline{a} \vdash a_{\{x \mapsto p'\}}$}
+    \end{prooftree}
+    \begin{align*}
+    \forall &\overline{a}: List[Constraint], x: Varname, p: Path, p': Path, \\
+    & a: Constraint, a_1: Constraint, a_2: Constraint. \\
+    & \overline{a} \vdash a_1 \land \overline{a} \vdash p' \equiv p \\
+    & \land gen(a_2, p', x, a) \land subst(a, x, p, a_1)\\
+    & \rightarrow \overline{a} \vdash a_2
+    \end{align*}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Constraint System to FO: Problem 2}
+    \begin{prooftree}
+    \AxiomC{$\overline{a} \vdash a_{\{x \mapsto p\}}$}
+    \AxiomC{$\overline{a} \vdash p' \equiv p$}
+    \RightLabel{C-Subst}
+    \BinaryInfC{$\overline{a} \vdash a_{\{x \mapsto p'\}}$}
+    \end{prooftree}
+    \begin{align*}
+    \forall &\underline{\overline{a}: List[Constraint], x: Varname, p: Path, p': Path,} \\
+    &\underline{a: Constraint, a_1: Constraint, a_2: Constraint.} \\
+    & \overline{a} \vdash a_1 \land \overline{a} \vdash p' \equiv p \\
+    & \land gen(a_2, p', x, a) \land subst(a, x, p, a_1)\\
+    & \rightarrow \overline{a} \vdash a_2
+    \end{align*}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Constraint System to FO: Problem 2}
+    \begin{prooftree}
+    \AxiomC{$\overline{a} \vdash a_{\{x \mapsto p\}}$}
+    \AxiomC{$\overline{a} \vdash p' \equiv p$}
+    \RightLabel{C-Subst}
+    \BinaryInfC{$\overline{a} \vdash a_{\{x \mapsto p'\}}$}
+    \end{prooftree}
+    \begin{align*}
+    \forall &\overline{a}: List[Constraint], a_2: Constraint. \\
+    \text{let } a &:= gen(a_2, p', x),
+    a_1 := subst(a, x, p). \\
+    & \overline{a} \vdash a_1 \land \overline{a} \vdash p' \equiv p \\
+    & \rightarrow \overline{a} \vdash a_2
+    \end{align*}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Typechecking and Learning}
+    Typechecking
+    \begin{itemize}
+        \item Well-formedness of Programs
+        \item Type assignments for expressions
+        \begin{itemize}
+            \item Declarative rules %(e.g. Backtracking)
+            \item Non-Structural rules (Subsumption)
+        \end{itemize}
+    \end{itemize}
+    \vfill
+    Learning
+    \begin{itemize}
+        \item Learn entailments from type checking
+        \item Use learned information for interpreting
+        \item Goal: minimize SMT usage
+    \end{itemize}
+\end{frame}
+
+%\begin{frame}
+%    \frametitle{Learning?}
+%\end{frame}
+\end{document}

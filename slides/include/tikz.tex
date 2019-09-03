@@ -1,0 +1,673 @@
+
+\usetikzlibrary{positioning,chains,fit,calc,arrows,decorations.pathmorphing}
+\usetikzlibrary{shapes.arrows,shapes.geometric,shapes.symbols}
+
+
+%%%%%%%
+%% tikz stuff
+%%%%%%%
+
+
+\tikzstyle{invisible} = []
+
+\tikzstyle{model}
+  = [ shape=rectangle
+    , draw
+    ]
+\tikzstyle{transformation}
+  = [ model
+    , shape=single arrow
+    , draw
+    ]
+
+\tikzstyle{meta} = [ double ]
+\tikzstyle{generated} = [ dashed ]
+
+\tikzstyle{mopdependency}
+  = [ -stealth'
+    , semithick
+    ]
+\tikzstyle{instance}
+  = [ mopdependency
+    , -open triangle 60
+    ]
+
+% Draws the outline of a bend arrow around a rectangle.
+% 1. Parameter: name of the rectangle that contains the text
+% 2. Parameter: head extend (use 0.25cm to fit with default tikz style)
+% 3. Parameter: arc radius (again, 0.25cm seems to work well)
+%
+% This produces a path, so use it as follows:
+%
+% \draw[options here] \bendArrow{name of rectangle}{.25cm}{.25cm};
+\newcommand{\bendArrow}[3]{
+  let \p{content size} = ($(#1.north east) - (#1.south west)$) in
+  let \n{tip length 1} = {veclen(0.5 * \y{content size}, 0.5 * \y{content size})} in
+  let \n{tip length 2} = {veclen(#2,#2)} in
+
+  (#1.north east)
+  -- ++ (315 : \n{tip length 1})
+  -- ++ (225 : \n{tip length 1} + \n{tip length 2})
+  -- ++ (0, #2)
+  -- (#1.south west)
+  arc (270 : 180 : \y{content size} + #3)
+  -- ++ (\y{content size}, 0)
+  arc (180 : 270 : #3)
+  (#1.north east)
+  -- ++ (135 : \n{tip length 2})
+  -- ++ (0, -#2)
+  -- (#1.north west)}
+
+
+%%%%%%%%%%%%%%%%%
+%% diagram styles
+%%%%%%%%%%%%%%%%%
+
+\tikzstyle{document}
+  = [ shape=rectangle
+    , draw
+    , minimum height=1.5em
+    , text width=5em
+    , text centered
+    ]
+
+\tikzstyle{component}
+  = [ font=\scriptsize\it
+    ]
+
+\tikzstyle{code}
+  = [ shape=rectangle
+    , draw
+    ]
+
+\tikzstyle{process}
+  = [ shape=single arrow
+    , single arrow head extend=.75em
+    , single arrow head indent=.25em
+    , minimum width=3em
+    , draw
+    ]
+
+\tikzstyle{point}
+  = [ coordinate
+    , minimum width=1em
+    ]
+
+\tikzstyle{flow diagram}
+  = [ start chain
+    , node distance=1em
+    , every node/.style={on chain}
+    ]
+
+\tikzstyle{ast}
+  = [ node distance=1em and 0.38em
+    , every node/.style=ast node
+    ]
+
+\tikzstyle{ast node}
+  = [ shape=circle
+    , minimum size=0.5em
+    , inner sep=0
+    , fill
+    ]
+
+\tikzstyle{dependency}
+  = [ dashed
+    , -stealth'
+    ]
+
+\tikzstyle{red}
+  = [ shape=rectangle
+    , color=red
+    ]
+
+\tikzstyle{blue}
+  = [ shape=circle
+    , color=blue
+    ]
+
+\tikzstyle{green}
+  = [ shape=diamond
+    , color=green!80!black
+    , minimum size=0.7em
+    ]
+
+\tikzstyle{note}
+  = [ font=\scriptsize\it
+    ]
+    
+\tikzstyle{zoomed arrow}
+  = [ solid
+    , decorate
+    , decoration=snake
+    , -stealth'
+    ]
+
+\tikzstyle{zoom}
+  = [ dashed
+    ]
+
+\tikzstyle{uml class}
+  = [ shape=rectangle
+    , draw
+    , font=\sf
+    ]
+
+\tikzstyle{uml package}
+  = [ uml class
+    , inner sep=1em
+    ]
+
+\tikzstyle{uml dependency}
+  = [ dependency, 
+    , dashed
+%    , thick
+    ]
+
+
+\newcommand{\bluenode}{\tikz \node [ast node, blue, color=blue, text width=] {};}
+\newcommand{\rednode}{\tikz \node [ast node, red, color=red, text width=] {};}
+\newcommand{\greennode}{\tikz \node [ast node, green, color=green!80!black, text width=] {};}
+
+
+\tikzstyle{double arrow}
+  = [ shape=double arrow
+    , double arrow head extend=.75em
+    , double arrow head indent=.25em
+    , minimum width=3em
+    , draw
+    , font=\sf
+    ]
+
+%% name graphs
+
+\newdimen\nodedistance
+\nodedistance=4em
+
+\tikzstyle{name graph}
+  = [ node distance=\nodedistance
+    , every node/.style={namenode}
+    , every path/.style={ref}
+    ]
+
+
+\tikzstyle{namenode}
+  = [ circle
+    , thick
+    , anchor=center
+    , draw
+    , minimum size=2em
+    , inner sep=2pt
+    ]
+
+\tikzstyle{synthesized}
+  = [ namenode
+    , fill=gray!45
+    ]
+
+\tikzstyle{ref}
+  = [ -stealth'
+    , semithick
+    , draw
+    ]
+
+\tikzstyle{badref}
+  = [ ref
+    , dashed
+    ]
+
+%% expression trees
+
+\newdimen\nodedistance
+\nodedistance=4em
+
+\tikzstyle{exp tree}
+  = [ node distance=\nodedistance
+    , every node/.style={exp node}
+    , every path/.style={link}
+    , execute at begin node={\strut}
+    ]
+
+\tikzstyle{exp node}
+  = [ anchor=center
+    ]
+\tikzstyle{link}
+  = [ semithick
+    , draw
+    ]
+
+\tikzstyle{ctx node}
+  = [ node distance = -.3em,
+    ]
+\tikzstyle{ctx edge}
+  = [ color = red
+    , -stealth'
+    ]
+
+\tikzstyle{type node}
+  = [ node distance = -.5em,
+    ]
+\tikzstyle{type edge}
+  = [ color = blue
+    , -stealth'
+    ]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Pretty printing with tikz
+%
+% configuration
+
+%%%%%%
+%% TikZ and lstlistings
+%%%%%%
+
+
+% remembers a position on the page as a tikz coordinate
+\newcommand{\coord}[1]{\tikz[remember picture] \coordinate (#1);}
+
+% translation from baseline to upper border of box
+\newcommand{\distanceTop}{7.15pt}
+
+% translation from baseline to lower border of box
+\newcommand{\distanceBottom}{-2.55pt}
+
+% translation from baseline to left border of box
+\newcommand{\distanceLeft}{-0.5pt}
+
+% translation from baseline to right border of box
+\newcommand{\distanceRight}{0.5pt}
+
+
+% draws a rectangle around 2 points on the page
+%
+% optional parameter: TikZ style for the line
+% 1. mandatory parameter: upper left corner, at text baseline height
+% 2. mandatory parameter: lower right corner, at text baseline height
+% 3. mandatory parameter: extra margin in all directions
+\newcommand{\drawrect}[4][]{\begin{tikzpicture}[remember picture, overlay]
+\draw[layout box, #1]
+  ($(#2) +(\distanceLeft, \distanceTop) + (-#4, #4)$) rectangle
+  ($(#3) + (\distanceRight, \distanceBottom) + (#4, -#4)$);
+\end{tikzpicture}}
+
+% draws a rectangle around 2 points on the page
+%
+% optional parameter: TikZ style for the line
+% 1. mandatory parameter: left-hand-side of the first line, at text baseline height
+% 2. mandatory parameter: a point on the left side of the rectangle
+% 3. mandatory parameter: lower right corner, at text baseline height
+% 4. mandatory parameter: extra margin in all directions
+\newcommand{\drawbox}[5][]{\begin{tikzpicture}[remember picture, overlay]
+\draw[layout box, #1]
+  ($(#2) + (\distanceLeft, \distanceTop) + (-#5, #5)$) --
+  ($(#4 |- #2) + (\distanceRight, \distanceTop) + (#5, #5)$) --
+  ($(#4) + (\distanceRight, \distanceBottom) + (#5, -#5)$) --
+  ($(#3 |- #4) + (\distanceLeft, \distanceBottom) + (-#5, -#5)$) --
+  ($(#3 |- #2) + (\distanceLeft, \distanceBottom) + (-#5, -#5)$) --
+  ($(#2) + (\distanceLeft, \distanceBottom) + (-#5, -#5)$) --
+  cycle;
+\end{tikzpicture}}
+
+% draws a small \ppBox with three rows around the current point
+% #1 = first.col
+% #2 = left.col
+% #3 = right.col
+% #4 = last.col
+\newcommand{\drawMiniBox}[4]{
+  +(#2 * .2em, 0) --
+  +(#2 * .2em, 1ex) --
+  +(#1 * .2em, 1ex) --
+  +(#1 * .2em, 1.5ex) --
+  +(#3 * .2em, 1.5ex) --
+  +(#3 * .2em, .5ex) --
+  +(#4 * .2em, .5ex) --
+  +(#4 * .2em, 0) --
+  cycle
+}
+
+% A small box (for use inside text)
+% optional argument = path options
+% #1 = first.col
+% #2 = left.col
+% #3 = right.col
+% #4 = last.col
+\newcommand{\minibox}[5][]{%
+  \begin{tikzpicture}[baseline=0pt]
+  \path [mini layout box, #1]
+    (0, 0) \drawMiniBox{#2}{#3}{#4}{#5};
+  \end{tikzpicture}}
+
+\newcommand{\miniboxA}{\minibox{-1}{0}{3}{3}}
+\newcommand{\miniboxB}{\minibox{0}{0}{3}{3}}
+\newcommand{\miniboxC}{\minibox{1}{0}{3}{3}}
+
+% A small rectangle (for use inside text)
+\newcommand{\minirect}{\hbox to 9pt{\drawrect[thin,scale=0.3,black]{0pt, 15pt}{26pt, -5pt}{0pt}}}
+
+
+\tikzstyle{layout box}
+  = [ blue
+    % , semitransparent
+    , semithick
+    , draw
+    ]
+
+\tikzstyle{mini layout box}
+  = [ black
+    , very thin
+    , draw
+    ]
+
+\tikzstyle{annotation}
+  = [ font=\small\it
+    ]
+
+\tikzstyle{code annotation}
+  = [ font=\small\it
+    ]
+
+
+% the font used for pretty printing
+\newcommand{\selectCodeFont}{\sf\small}
+
+% the font used for highlighting keywords
+\newcommand{\selectKeywordFont}{\bfseries}
+
+% the font used for highlighting string literals
+\newcommand{\selectStringLitFont}{\tt}
+
+% the font used for highlighting identifiers
+\newcommand{\selectIdentifierFont}{\relax}
+
+% the font used for highlighting operators
+\newcommand{\selectOperatorFont}{\tt}
+
+% the text height of token nodes
+\newcommand{\tokenHeight}{2ex}
+
+% the text depth of token nodes
+\newcommand{\tokenDepth}{.5ex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Pretty printing with tikz
+%
+% tikz layer
+
+% style for paths or scopes that do pretty printing
+\tikzstyle{pretty print}
+  = [ start chain=going base right
+    , text height=\tokenHeight
+    , text depth=\tokenDepth
+    , inner sep=0
+    , node distance=0em
+    ]
+
+% helper style for nodes that start a new line
+% (automatically applied by style 'new line' below)
+\tikzstyle{new line/helper}
+  = [ on chain
+    , anchor=north west,
+      at={($(#1.west |- \tikzchainprevious.base) + (0, -1.1\baselineskip)$)}
+    ]
+
+\tikzstyle{new line tight/helper}
+  = [ on chain
+    , anchor=north west,
+      at={($(#1.west |- \tikzchainprevious.base) + (0, -0.9\baselineskip)$)}
+    ]
+
+
+% style for nodes that start a new line
+\tikzstyle{new line}[\tikzchainprevious]
+  = [ on chain=placed {new line/helper=#1}
+    ]
+
+% style for nodes that start a new line
+\tikzstyle{new line tight}[\tikzchainprevious]
+  = [ on chain=placed {new line tight/helper=#1}
+    ]
+
+% helper style for nodes that tab forward to a labeled position
+% (automatically applied by style 'tab forward' below)
+\tikzstyle{tab forward/helper}
+  = [ on chain
+    , anchor=north west,
+      at={(#1 |- \tikzchainprevious.base)}
+    ]
+
+% style for nodes that tab forward to a labeled position
+\tikzstyle{tab forward}
+  = [ on chain=placed {tab forward/helper=#1}
+    ]
+
+% style for nodes that indent
+\tikzstyle{indent}[1em]
+  = [ on chain=placed {base right=#1 of \tikzchainprevious}
+    ]
+
+% style for nodes that contain an identifier token
+\tikzstyle{identifier}
+  = [ on chain
+    , font=\selectIdentifierFont
+    ]
+
+% style for nodes that contain an operator token
+\tikzstyle{operator}
+  = [ on chain
+    , font=\selectOperatorFont
+    ]
+
+% style for nodes that contain a keyword token
+\tikzstyle{keyword}
+  = [ on chain
+    , font=\selectKeywordFont
+    , text=keyword
+    ]
+
+% style for nodes that contain a string literal
+\tikzstyle{stringlit}
+  = [ on chain
+    , font=\selectStringLitFont
+    , text=blue
+    ]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Pretty printing with tikz
+%
+% \ppBox layer
+
+\newcommand{\Empty}{}
+\newcommand{\ignore}[1]{\relax}
+
+\makeatletter
+\newcommand{\ppBox}[2][]{{
+  % insert keyword token
+  \newcommand{\KW}[1]{
+    \node[keyword] {##1};
+    \HandleToken{\tikzchaincurrent}}
+
+  % insert identifier token
+  \newcommand{\ID}[1]{
+    \node[identifier] {##1};
+    \HandleToken{\tikzchaincurrent}}
+
+  % insert operator token
+  \newcommand{\OP}[1]{
+    \node[operator] {##1};
+    \HandleToken{\tikzchaincurrent}}
+
+  % insert whitespace token
+  \newcommand{\SP}{
+    \node[on chain] { };
+    \HandleInsensitiveToken{\tikzchaincurrent}}
+
+  % label a position (with a tikz node name)
+  \newcommand{\LB}[1]{
+    \coordinate[on chain] (##1);}
+
+  % tab forward to a labeled position
+  \newcommand{\TB}[1]{
+    \coordinate[tab forward=##1];
+  }
+
+  % insert a string literal
+  \newcommand{\STR}[1]{
+    \node[stringlit] {##1};
+    \HandleToken{\tikzchaincurrent}}
+
+  % insert a line break
+  \renewcommand{\\}{
+    \coordinate[new line=\NewlineNode];
+    \let\HandleToken=\HandleTokenSubsequentLine}
+
+  \newcommand{\newlineTight}{
+    \coordinate[new line tight=\NewlineNode];
+    \let\HandleToken=\HandleTokenSubsequentLine}
+
+  % the name of the first token
+  \let\FirstToken=\Empty
+  \newcommand{\AdjustFirst}[1]{
+    \ifx\FirstToken\Empty
+    \edef\FirstToken{##1}
+    \fi
+  }
+
+  % the name of the last token
+  \let\LastToken=\Empty
+  \newcommand{\AdjustLast}[1]{
+    \edef\LastToken{##1}
+  }
+
+  % the name of the left-most token
+  % (except for tokens in the first line)
+  \let\LeftToken=\Empty
+  \newcommand{\AdjustLeft}[1]{
+    \ifx\LeftToken\Empty
+      \edef\LeftToken{##1}
+    \else
+      \pgf@process{\pgfpointanchor{##1}{west}}
+      \setlength{\pgf@xa}{\pgf@x}
+      \pgf@process{\pgfpointanchor{\LeftToken}{west}}
+      \setlength{\pgf@xb}{\pgf@x}
+      \ifdim\pgf@xa<\pgf@xb
+        \edef\LeftToken{##1}
+      \fi
+    \fi
+  }
+
+  % the name of the rightmost token
+  \let\RightToken=\Empty
+  \newcommand{\AdjustRight}[1]{
+    \ifx\RightToken\Empty
+      \edef\RightToken{##1}
+    \else
+      \pgf@process{\pgfpointanchor{##1}{east}}
+      \setlength{\pgf@xa}{\pgf@x}
+      \pgf@process{\pgfpointanchor{\RightToken}{east}}
+      \setlength{\pgf@xb}{\pgf@x}
+      \ifdim\pgf@xa>\pgf@xb
+        \edef\RightToken{##1}
+      \fi
+    \fi
+  }
+
+  % this is called for all layout-sensitive tokens in the first
+  % line of a pretty printing group
+  \newcommand{\HandleTokenFirstLine}[1]{
+    \AdjustFirst{##1}
+    \AdjustRight{##1}
+    \AdjustLast{##1}
+  }
+
+  % this is called for all layout-sensitive tokens in subsequent
+  % lines of a pretty printing group
+  \newcommand{\HandleTokenSubsequentLine}[1]{
+    \AdjustLeft{##1}
+    \AdjustRight{##1}
+    \AdjustLast{##1}}
+
+  % this is called for layout-insensitive tokens in a pretty
+  % printing group (such as whitespace, comments, and code that
+  % uses explicit layout)
+  \newcommand{\HandleInsensitiveToken}[1]{
+  }
+
+  % current token handler. will be set to one of:
+  %  \HandleTokenFirstLine
+  %  \HandleTokenSubsequentLine
+  %  \HandleInsensitiveToken
+  \newcommand{\HandleToken}[1]{}
+
+  \newcommand{\ppSubBox}[2][]{
+    \coordinate[on chain];
+    {
+      \let\NewlineNode\tikzchaincurrent
+
+      % reset the token registers
+      \let\FirstToken=\Empty
+      \let\LastToken=\Empty
+      \let\LeftToken=\Empty
+      \let\RightToken=\Empty
+
+      % start in first line
+      \let\HandleToken=\HandleTokenFirstLine
+
+      % typeset content
+      ##2
+
+      % draw boundary
+      \ifx\LeftToken\Empty
+        \path [##1]
+          (\FirstToken.north west) rectangle
+          (\LastToken.south east);
+      \else
+        \path [##1]
+          (\RightToken.east |- \FirstToken.north) --
+          (\FirstToken.north west) --
+          (\FirstToken.south west) --
+          (\LeftToken.west |- \FirstToken.south) --
+          (\LeftToken.west |- \LastToken.south) --
+          (\LastToken.south east) --
+          (\LastToken.north east) --
+          (\RightToken.east |- \LastToken.north) --
+          cycle;
+      \fi
+
+      % remember the token registers outside the group
+      \global\let\InnerFirstToken=\FirstToken
+      \global\let\InnerLastToken=\LastToken
+      \global\let\InnerLeftToken=\LeftToken
+      \global\let\InnerRightToken=\RightToken
+
+      % remember the state outside the group
+      \global\let\InnerHandleToken=\HandleToken
+    }
+    % handle the significant inner tokens
+    % and significant inner linebreaks
+    \HandleToken{\InnerFirstToken}
+    \ifx\HandleToken\HandleTokenFirstLine
+    \let\HandleToken=\InnerHandleToken
+    \fi
+    \ifx\InnerLeftToken\Empty
+    \else
+    \HandleToken{\InnerLeftToken}
+    \fi
+    \HandleToken{\InnerRightToken}
+    \HandleToken{\InnerLastToken}
+  }
+
+  % indent a ppBox
+  \newcommand{\IN}[1]{\coordinate[indent]; ##1}
+  \newcommand{\DE}[1]{\coordinate[indent=-1em]; ##1}
+
+  \let\ppBox=\ppSubBox
+  \ppBox[#1]{#2}}}
+\makeatother
+
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "../thesis"
+%%% End: 

@@ -1,0 +1,36 @@
+\begin{frame}[t]
+\frametitle{Context Enrichment}
+\begin{align*}
+\entails{\ovl a&}{a}\\
+\pause
+\onslide<+->{
+  \entails{\ovl b \conc \ovl a&}{a}\\\quad\\
+}
+\onslide<+->{
+  \entails{[\instOf{x}{C}]&}{\instOf{y}{C}}\\
+  \entails{[\pathEq{y}{x}, \instOf{x}{C}]&}{\instOf{y}{C} && \text{(thin air)}\\\quad\\}
+}
+\onslide<+>{
+  \entails{[\instOf{x}{\texttt{Succ}, \instOf{x.p}{\texttt{Nat}}}]&}{c}\\
+  \entails{[\instOf{x}{\texttt{Zero}}, \instOf{x}{\texttt{Succ}, \instOf{x.p}{\texttt{Nat}}}]&}{c}  && \text{(contradiction)}
+}
+\end{align*}
+\end{frame}
+
+\begin{frame}
+\frametitle{Information Transfer: Compile Time to Runtime}
+\begin{align*}
+  e &: \type{x}{\ovl a}\\
+\pause
+\onslide<+->{
+  \entails{\ovl b&}{b} && \text{(origin: \mIt{interp(e)})}\\
+  \entails{\ovl a \conc \ovl b &}{b}\\\quad\\
+}
+\onslide<+>{
+  e &: \type{y}{\instOf{y}{\texttt{Nat}}}\\
+  e &\rightarrow x\\
+  \entails{[\instOf{x}{\texttt{Zero}}]&}{\instOf{x}{\texttt{Nat}}}\\
+  \entails{[\instOf{x}{\texttt{Nat}}, \instOf{x}{\texttt{Zero}}]&}{\instOf{x}{\texttt{Nat}}}
+}
+\end{align*}
+\end{frame}
