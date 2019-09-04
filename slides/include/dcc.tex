@@ -31,30 +31,30 @@ t \in \mathit{Type} &::= \type{x}{\ovl{a}}
 %$m$ - method names
 \end{frame}
 
-\begin{frame}
-\frametitle{$DC_C$ Calculus: Expressions \& Programs}
-
-\begin{columns}[t]
-\begin{column}{0.4\linewidth}
-\begin{align*}
-\quad\\
-e \in \mathit{Expr} &::= x\\
-              &\ \ |\ \mathit{e.f}\\
-              &\ \ |\ \newInst{C}{\overline{f}}{\overline{e}}\\
-              &\ \ |\ m(\mathit{e})
-\end{align*}
-\end{column}
-\begin{column}{0.58\linewidth}
-\begin{align*}
-P \in \mathit{Program} &::= \ovl{D} \\
-D \in \mathit{Decl} &::= \constr{C}{x}{\overline{a}}\\
-              &\ \ |\ \progEnt{x}{\overline{a}}{a}\\
-              &\ \ |\ \mDecl{m}{x}{\overline{a}}{t}\\
-              &\ \ |\ \mImpl{m}{x}{\overline{a}}{t}{e}
-\end{align*}
-\end{column}
-\end{columns}
-\end{frame}
+%\begin{frame}
+%\frametitle{$DC_C$ Calculus: Expressions \& Programs}
+%
+%\begin{columns}[t]
+%\begin{column}{0.4\linewidth}
+%\begin{align*}
+%\quad\\
+%e \in \mathit{Expr} &::= x\\
+%              &\ \ |\ \mathit{e.f}\\
+%              &\ \ |\ \newInst{C}{\overline{f}}{\overline{e}}\\
+%              &\ \ |\ m(\mathit{e})
+%\end{align*}
+%\end{column}
+%\begin{column}{0.58\linewidth}
+%\begin{align*}
+%P \in \mathit{Program} &::= \ovl{D} \\
+%D \in \mathit{Decl} &::= \constr{C}{x}{\overline{a}}\\
+%              &\ \ |\ \progEnt{x}{\overline{a}}{a}\\
+%              &\ \ |\ \mDecl{m}{x}{\overline{a}}{t}\\
+%              &\ \ |\ \mImpl{m}{x}{\overline{a}}{t}{e}
+%\end{align*}
+%\end{column}
+%\end{columns}
+%\end{frame}
 
 \begin{frame}
 \frametitle{$DC_C$ Calculus: Natural Numbers Program}
