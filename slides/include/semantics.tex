@@ -111,24 +111,24 @@ def interp(heap: Heap, expr: Expression)
 \end{align*}
 \end{frame}
 
-\begin{frame}[t,fragile]
-\frametitle{Operational Semantics: Application}
-\begin{columns}
-\begin{column}{0.4\textwidth}
-\begin{align*}
-  h := [ &x \rightarrow (\texttt{Zero}, \nil), \\
-         &y \rightarrow (\texttt{Succ}, [(p, x)])]
-\end{align*}
-\end{column}
-\begin{column}{0.6\textwidth}
-\begin{align*}
-  e &:= \texttt{prev}(y)\\
-  HC(h) & := [\instBy{x}{\texttt{Zero}}, \instBy{y}{\texttt{Succ}}, \pathEq{y.p}{x}]\\
-  e_1 &:= y.p
-\end{align*}
-\end{column}
-\end{columns}
-\begin{align*}
-&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x.p}
-\end{align*}
-\end{frame}
+%\begin{frame}[t,fragile]
+%\frametitle{Operational Semantics: Application}
+%\begin{columns}
+%\begin{column}{0.4\textwidth}
+%\begin{align*}
+%  h := [ &x \rightarrow (\texttt{Zero}, \nil), \\
+%         &y \rightarrow (\texttt{Succ}, [(p, x)])]
+%\end{align*}
+%\end{column}
+%\begin{column}{0.6\textwidth}
+%\begin{align*}
+%  e &:= \texttt{prev}(y)\\
+%  HC(h) & := [\instBy{x}{\texttt{Zero}}, \instBy{y}{\texttt{Succ}}, \pathEq{y.p}{x}]\\
+%  e_1 &:= y.p
+%\end{align*}
+%\end{column}
+%\end{columns}
+%\begin{align*}
+%&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x.p}
+%\end{align*}
+%\end{frame}

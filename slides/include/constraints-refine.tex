@@ -70,13 +70,38 @@ Instantiation Pattern: $a_2 \rightarrow a \rightarrow a_1$
 %&\qquad  \land a_{\sub{\mathbf{x}}{\mathbf{p_1}}} = a_1 \land a_{\sub{\mathbf{x}}{\mathbf{p_2}}} = a_2\\
 %&\quad   \rightarrow \entails{\ovl a}{a_2}
 %\end{align*}
-\pause
+
 \begin{align*}
-\onslide<+>{a_2 &:= \mIt{<\!input\!>}\\
-a &:= {a_2}_{\sub{p_2}{x}}\\
-a_1 &:= a_{\sub{x}{p_1}}}
+a_2 &:= \mIt{<\!input\!>}\\
+a_{\sub{x}{p_2}} &:= a_2\\
+a_1 &:= a_{\sub{x}{p_1}}
 \end{align*}
 \end{frame}
+
+%\begin{frame}[t]
+%\frametitle{C-Subst: Algorithmic Instantiations}
+%Instantiation Pattern: $a_2 \rightarrow a \rightarrow a_1$
+%
+%\begin{align*}
+%&\forall \ovl a: \Constrs, x: \String, p_1, p_2: \Path, a, a_1, a_2: \Constr. \\
+%&\quad \entails{\ovl a}{a_1}
+%         \land \entails{\ovl a}{\pathEq{p_2}{p_1}}\\
+%&\qquad  \land a_{\sub{x}{p_1}} = a_1 \land a_{\sub{x}{p_2}} = a_2\\
+%&\quad   \rightarrow \entails{\ovl a}{a_2}
+%\end{align*}
+%%\begin{align*}
+%%&\forall \ovl a: \Constrs, a, a_1, a_2: \Constr. \\
+%%&\quad \entails{\ovl a}{a_1}
+%%         \land \entails{\ovl a}{\pathEq{\mathbf{p_2}}{\mathbf{p_1}}}\\
+%%&\qquad  \land a_{\sub{\mathbf{x}}{\mathbf{p_1}}} = a_1 \land a_{\sub{\mathbf{x}}{\mathbf{p_2}}} = a_2\\
+%%&\quad   \rightarrow \entails{\ovl a}{a_2}
+%%\end{align*}
+%\begin{align*}
+%a_2 &:= \mIt{<\!input\!>}\\
+%a &:= {a_2}_{\sub{p_2}{x}}\\
+%a_1 &:= a_{\sub{x}{p_1}}
+%\end{align*}
+%\end{frame}
 
 \begin{frame}[t]
 \frametitle{C-Subst: Algorithmic Instantiations}
