@@ -82,19 +82,15 @@ Types of \newInstNoArgs{\texttt{Zero}}
 \RightLabel{WF-MI}
 \TrinaryInfC{\wf{(\mImpl{m}{x}{\ovl{a}}{\type{y}{\ovl{b}}}{e})}}
 \end{prooftree}
-\pause
-\onslide<+->
 \vfill
 \begin{lstlisting}[basicstyle=\footnotesize]
 def wf(D: Declaration): Boolean = D match {
   case ...
   case MethodImplementation(_, x, a, Type(y, b), e) =>
-    FV(a) == List(x) && FV(b).nonEmpty &&
-      FV(b).forall(v => v == x || v == y) &&
+    FV(a) == ... && FV(b) == ... &&
     typeassignment(a, e).exists {
-      case Type(z, c) =>
-        c.size == b.size &&
-        substitute(z, y, c).forall(b.contains(_))
+      // y, b exists
+      ...
     }
 }
 \end{lstlisting}
