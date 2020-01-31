@@ -16,3 +16,5 @@ bin
 .metadata
 # exclude compiled pdf
 thesis/*.pdf
+# exclude leftovers from calling processes
+.attach_pid*
