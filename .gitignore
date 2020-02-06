@@ -18,3 +18,5 @@ bin
 thesis/*.pdf
 # exclude leftovers from calling processes
 .attach_pid*
+# exlcude z3 log
+z3.log
