@@ -8,20 +8,20 @@ import smtlib.syntax.Implicit._
 class TestCVC4Solver extends FunSuite {
   val cvc4 = new CVC4Solver(SMTLibScript(Seq()), debug = true) // TODO: remove debug option
 
-  val const1 = DeclareConst("a", "Int")
-  val const2 = DeclareConst("b", "Int")
-  val const3 = DeclareConst("c", "Int")
-  val ab = Apply("+", Seq("a", "b"))
-  val aa = Apply("+", Seq("a", "a"))
-  val bb = Apply("+", Seq("b", "b"))
-  val abIsC = Eq(ab, "c")
-  val aaIsC = Eq(aa, "c")
-  val bbIsC = Eq(bb, "c")
-  val assert1 = Assert(abIsC)
-  val assert2 = Assert(aaIsC)
-  val assert3 = Assert(bbIsC)
-  val distinct = Assert(Distinct("a", "b"))
-  val script = SMTLibScript(Seq(const1, const2, const3, distinct, assert1, assert2, assert3))
+  val const1: SMTLibCommand = DeclareConst("a", "Int")
+  val const2: SMTLibCommand = DeclareConst("b", "Int")
+  val const3: SMTLibCommand = DeclareConst("c", "Int")
+  val ab: Term = Apply("+", Seq("a", "b"))
+  val aa: Term = Apply("+", Seq("a", "a"))
+  val bb: Term = Apply("+", Seq("b", "b"))
+  val abIsC: Term = Eq(ab, "c")
+  val aaIsC: Term = Eq(aa, "c")
+  val bbIsC: Term = Eq(bb, "c")
+  val assert1: SMTLibCommand = Assert(abIsC)
+  val assert2: SMTLibCommand = Assert(aaIsC)
+  val assert3: SMTLibCommand = Assert(bbIsC)
+  val distinct: SMTLibCommand = Assert(Distinct("a", "b"))
+  val script: SMTLibScript = SMTLibScript(Seq(const1, const2, const3, distinct, assert1, assert2, assert3))
 
   test("AddCommand") {
     val preSize = cvc4.commands.size
@@ -99,34 +99,48 @@ class TestCVC4Solver extends FunSuite {
   }
 
   // not unknow in cvc4
-//  test("Unknown") {
-//    val T = DeclareDatatype("T", ConstructorDatatype(Seq(ConstructorDec("NUM", Seq(SelectorDec("n", "Real"))))))
-//    val a = DeclareConst("a", "T")
-//    val b = DeclareConst("b", "T")
-//    val c = DeclareConst("c", "T")
-//
-//    val isNUMa = Assert(Apply("is-NUM", Seq("a")))
-//    val isNUMb = Assert(Apply("is-NUM", Seq("b")))
-//    val isNUMc = Assert(Apply("is-NUM", Seq("c")))
-//
-//    val eq = Assert(Eq("c", Apply("NUM", Seq(Apply("*", Seq(Apply("n", Seq("a")), Apply("n", Seq("b"))))))))
-//
-//    cvc4.flush()
-//    cvc4.addCommands(Seq(T, a, b, c, isNUMa, isNUMb, isNUMc, eq, CheckSat))
-//
-//    val (status, output) = cvc4.execute()
-//
-//    assert(status == 0)
-//    assert(output.size == 1)
-//    assert(output.head == "unknown")
-//  }
+  test("Sat Boxed Real") {
+    val T = DeclareDatatype("T", ConstructorDatatype(Seq(ConstructorDec("NUM", Seq(SelectorDec("n", "Real"))))))
+    val a = DeclareConst("a", "T")
+    val b = DeclareConst("b", "T")
+    val c = DeclareConst("c", "T")
 
-//  test("checksat Unknown") {
-//    val sat = cvc4.checksat()
-//    assert(sat == Unknown)
-//  }
+    val isNUMa = Assert(Apply("is-NUM", Seq("a")))
+    val isNUMb = Assert(Apply("is-NUM", Seq("b")))
+    val isNUMc = Assert(Apply("is-NUM", Seq("c")))
 
-  val pathDatatype = DeclareDatatype("Path", ConstructorDatatype(Seq(
+    val eq = Assert(Eq("c", Apply("NUM", Seq(Apply("*", Seq(Apply("n", Seq("a")), Apply("n", Seq("b"))))))))
+
+    cvc4.flush()
+    cvc4.addCommands(Seq(T, a, b, c, isNUMa, isNUMb, isNUMc, eq, CheckSat))
+
+    val (status, output) = cvc4.execute()
+
+    assert(status == 0)
+    assert(output.size == 1)
+    assert(output.head == "sat")
+  }
+
+  test("checksat Sat Boxed Real") {
+    val T = DeclareDatatype("T", ConstructorDatatype(Seq(ConstructorDec("NUM", Seq(SelectorDec("n", "Real"))))))
+    val a = DeclareConst("a", "T")
+    val b = DeclareConst("b", "T")
+    val c = DeclareConst("c", "T")
+
+    val isNUMa = Assert(Apply("is-NUM", Seq("a")))
+    val isNUMb = Assert(Apply("is-NUM", Seq("b")))
+    val isNUMc = Assert(Apply("is-NUM", Seq("c")))
+
+    val eq = Assert(Eq("c", Apply("NUM", Seq(Apply("*", Seq(Apply("n", Seq("a")), Apply("n", Seq("b"))))))))
+
+    cvc4.flush()
+    cvc4.addCommands(Seq(T, a, b, c, isNUMa, isNUMb, isNUMc, eq))
+
+    val sat = cvc4.checksat()
+    assert(sat == Sat)
+  }
+
+  val pathDatatype: SMTLibCommand = DeclareDatatype("Path", ConstructorDatatype(Seq(
     ConstructorDec("var", Seq(SelectorDec("id", "String"))),
     ConstructorDec("pth", Seq(
       SelectorDec("obj", "Path"),
@@ -147,8 +161,8 @@ class TestCVC4Solver extends FunSuite {
     assert(output.head == "sat")
   }
 
-  val pathConst = DeclareConst("p", "Path")
-  val pathContent1 = Assert(Eq("p", Apply("var", Seq(SMTLibString("x")))))
+  val pathConst: SMTLibCommand = DeclareConst("p", "Path")
+  val pathContent1: SMTLibCommand = Assert(Eq("p", Apply("var", Seq(SMTLibString("x")))))
 
   test("Constructor invocation") {
     cvc4.flush()
@@ -165,7 +179,7 @@ class TestCVC4Solver extends FunSuite {
     assert(output.head == "sat")
   }
 
-  val pathContent2 = Assert(Eq("p", Apply("pth", Seq(Apply("var", Seq(SMTLibString("x"))), SMTLibString("f")))))
+  val pathContent2: SMTLibCommand = Assert(Eq("p", Apply("pth", Seq(Apply("var", Seq(SMTLibString("x"))), SMTLibString("f")))))
 
   test("Constructor equality") {
     cvc4.flush()
@@ -183,7 +197,7 @@ class TestCVC4Solver extends FunSuite {
     assert(output.head == "unsat")
   }
 
-  val listDatatype = DeclareDatatype("List", ParDatatype(
+  val listDatatype: SMTLibCommand = DeclareDatatype("List", ParDatatype(
     Seq( // symbols
       SimpleSymbol("T")
     ),
@@ -209,8 +223,8 @@ class TestCVC4Solver extends FunSuite {
     assert(output.head == "sat")
   }
 
-  val l1 = DeclareConst("l1", Sorts("List", Seq("Int")))
-  val l1Empty = Assert(Eq("l1", IdentifierAs("nil", Sorts("List", Seq("Int")))))
+  val l1: SMTLibCommand = DeclareConst("l1", Sorts("List", Seq("Int")))
+  val l1Empty: SMTLibCommand = Assert(Eq("l1", IdentifierAs("nil", Sorts("List", Seq("Int")))))
 
   test("Empty List") {
     cvc4.flush()
@@ -227,7 +241,7 @@ class TestCVC4Solver extends FunSuite {
     assert(output.head == "sat")
   }
 
-  val l1NonEmpty = Assert(Eq("l1", Apply("cons", Seq(Numeral(1), IdentifierAs("nil", Sorts("List", Seq("Int")))))))
+  val l1NonEmpty: SMTLibCommand = Assert(Eq("l1", Apply("cons", Seq(Numeral(1), IdentifierAs("nil", Sorts("List", Seq("Int")))))))
 
   test("Nonempty List") {
     cvc4.flush()
@@ -244,8 +258,8 @@ class TestCVC4Solver extends FunSuite {
     assert(output.head == "sat")
   }
 
-  val s1 = DeclareConst("s1", Sorts("Set", Seq("Int")))
-  val s1Empty = Assert(Eq("s1", IdentifierAs("emptyset", Sorts("Set", Seq("Int")))))
+  val s1: SMTLibCommand = DeclareConst("s1", Sorts("Set", Seq("Int")))
+  val s1Empty: SMTLibCommand = Assert(Eq("s1", IdentifierAs("emptyset", Sorts("Set", Seq("Int")))))
 
   test("Empty Set") {
     cvc4.flush()
@@ -261,7 +275,7 @@ class TestCVC4Solver extends FunSuite {
     assert(output.head == "sat")
   }
 
-  val s1Singleton = Assert(Eq("s1", Apply("singleton", Seq(Numeral(1)))))
+  val s1Singleton: SMTLibCommand = Assert(Eq("s1", Apply("singleton", Seq(Numeral(1)))))
 
   test("Singleton Set") {
     cvc4.flush()
@@ -292,7 +306,7 @@ class TestCVC4Solver extends FunSuite {
     assert(output.head == "unsat")
   }
 
-  val s1Insert1 = Assert(Eq("s1", Apply("insert", Seq(Numeral(1), Apply("singleton", Seq(Numeral(2)))))))
+  val s1Insert1: SMTLibCommand = Assert(Eq("s1", Apply("insert", Seq(Numeral(1), Apply("singleton", Seq(Numeral(2)))))))
 
   test("Set-Insert singleton") {
     cvc4.flush()
@@ -308,7 +322,7 @@ class TestCVC4Solver extends FunSuite {
     assert(output.head == "sat")
   }
 
-  val s1Insert2 = Assert(Eq("s1", Apply("insert", Seq(Numeral(2), Apply("insert", Seq(Numeral(1), IdentifierAs("emptyset", Sorts("Set", Seq("Int")))))))))
+  val s1Insert2: SMTLibCommand = Assert(Eq("s1", Apply("insert", Seq(Numeral(2), Apply("insert", Seq(Numeral(1), IdentifierAs("emptyset", Sorts("Set", Seq("Int")))))))))
 
   test("Set-Insert empty") {
     cvc4.flush()

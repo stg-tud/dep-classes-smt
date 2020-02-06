@@ -7,21 +7,21 @@ import smtlib.syntax.Implicit._
 
 // TODO: update tests to function independent
 class TestZ3Solver extends FunSuite {
-  val const1 = DeclareConst("a", "Int")
-  val const2 = DeclareConst("b", "Int")
-  val const3 = DeclareConst("c", "Int")
-  val ab = Apply("+", Seq("a", "b"))
-  val aa = Apply("+", Seq("a", "a"))
-  val bb = Apply("+", Seq("b", "b"))
-  val abIsC = Eq(ab, "c")
-  val aaIsC = Eq(aa, "c")
-  val bbIsC = Eq(bb, "c")
-  val assert1 = Assert(abIsC)
-  val assert2 = Assert(aaIsC)
-  val assert3 = Assert(bbIsC)
-  val distinct = Assert(Distinct("a", "b"))
-  val commands = SMTLibScript(Seq(const1, const2, const3, distinct, assert1, assert2, assert3))
-  val script = SMTLibScript(commands.commands :+ CheckSat)
+  val const1: SMTLibCommand = DeclareConst("a", "Int")
+  val const2: SMTLibCommand = DeclareConst("b", "Int")
+  val const3: SMTLibCommand = DeclareConst("c", "Int")
+  val ab: Term = Apply("+", Seq("a", "b"))
+  val aa: Term = Apply("+", Seq("a", "a"))
+  val bb: Term = Apply("+", Seq("b", "b"))
+  val abIsC: Term = Eq(ab, "c")
+  val aaIsC: Term = Eq(aa, "c")
+  val bbIsC: Term = Eq(bb, "c")
+  val assert1: SMTLibCommand = Assert(abIsC)
+  val assert2: SMTLibCommand = Assert(aaIsC)
+  val assert3: SMTLibCommand = Assert(bbIsC)
+  val distinct: SMTLibCommand = Assert(Distinct("a", "b"))
+  val commands: SMTLibScript = SMTLibScript(Seq(const1, const2, const3, distinct, assert1, assert2, assert3))
+  val script: SMTLibScript = SMTLibScript(commands.commands :+ CheckSat)
 
   val z3: Z3Solver = new Z3Solver(SMTLibScript(Seq()), debug = true)
 
@@ -99,7 +99,7 @@ class TestZ3Solver extends FunSuite {
     assert(output.head == "unsat")
   }
 
-  test("Unknown") {
+  test("Unknown or Sat") {
     val T = DeclareDatatype("T", ConstructorDatatype(Seq(ConstructorDec("NUM", Seq(SelectorDec("n", "Real"))))))
     val a = DeclareConst("a", "T")
     val b = DeclareConst("b", "T")
@@ -118,12 +118,13 @@ class TestZ3Solver extends FunSuite {
 
     assert(status == 0)
     assert(output.size == 1)
-    assert(output.head == "unknown")
+    assert(output.head == "unknown" || output.head == "sat") // z3 4.8.7 can solve this
   }
 
-  test("checksat Unknown") {
+  // TODO: update test to be able to run independently from the above one
+  test("checksat Unknown or Sat") {
     val sat = z3.checksat()
-    assert(sat == Unknown)
+    assert(sat == Unknown || sat == Sat) // z3 4.8.7 can solve this
   }
 
   test("(List Int)") {
@@ -201,7 +202,7 @@ class TestZ3Solver extends FunSuite {
     assert(sat == Sat)
   }
 
-  test("nonempty int list function") {
+  test("nonempty int list let-function") {
     val datatype = DeclareDatatype(
       "lst",
       ConstructorDatatype(Seq(
@@ -211,25 +212,6 @@ class TestZ3Solver extends FunSuite {
           SelectorDec("rest", "lst"),
         )),
       ))
-    )
-
-    // (error "line 2 column 43: constructor symbol expected")
-    val fun = DefineFun(
-      FunctionDef(
-        "first",
-        Seq(
-          SortedVar("k", "lst")
-        ),
-        "Int",
-        Match("k",
-          Seq(
-            MatchCase(Pattern("single", Seq("content")),
-              "content"),
-            MatchCase(Pattern("multi", Seq("hd", "tl")),
-              "hd")
-          )
-        )
-      )
     )
 
     val funLet = DefineFun(FunctionDef(
@@ -280,6 +262,68 @@ class TestZ3Solver extends FunSuite {
     z3.addCommand(assertion)
 
     val sat = z3.checksat()
+    assert(sat == Unsat)
+  }
+
+  test("nonempty int list pattern-match-function") {
+    val datatype = DeclareDatatype(
+      "lst",
+      ConstructorDatatype(Seq(
+        ConstructorDec("single", Seq(SelectorDec("content", "Int"))),
+        ConstructorDec("multi", Seq(
+          SelectorDec("elem", "Int"),
+          SelectorDec("rest", "lst"),
+        )),
+      ))
+    )
+
+    // (error "line 2 column 43: constructor symbol expected")
+    // does work again with z3 4.8.7
+    val fun = DefineFun(
+      FunctionDef(
+        "first",
+        Seq(
+          SortedVar("k", "lst")
+        ),
+        "Int",
+        Match("k",
+          Seq(
+            MatchCase(Pattern("single", Seq("content")),
+              "content"),
+            MatchCase(Pattern("multi", Seq("hd", "tl")),
+              "hd")
+          )
+        )
+      )
+    )
+
+    val l1 = DeclareConst("l1", "lst")
+    val l2 = DeclareConst("l2", "lst")
+    val content1 = Assert(Eq("l1", Apply("single", Seq(2))))
+    val content2 = Assert(Eq("l2", Apply("multi", Seq(1, "l1"))))
+
+    val assertion = Assert(Not(And(
+      Eq(
+        Apply("first", Seq("l1")),
+        2
+      ),
+      Eq(
+        Apply("first", Seq("l2")),
+        1
+      )
+    )))
+
+    z3.flush()
+    z3.addCommand(datatype)
+    z3.addCommand(fun)
+    z3.addCommand(l1)
+    z3.addCommand(content1)
+    z3.addCommand(l2)
+    z3.addCommand(content2)
+    z3.addCommand(assertion)
+
+    val sat = z3.checksat()
+    // TODO: check for error in case of z3 version > 4.7 & < 4.8.7
     assert(sat == Unsat)
   }
 
