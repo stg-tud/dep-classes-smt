@@ -16,14 +16,14 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
   val q: Path = FieldPath(Id('x), Id('f))
   val r: Path = FieldPath(FieldPath(Id('x), Id('f)), Id('f1))
 
-  val pSMTLib = Apply(SimpleSymbol("var"), Seq(SMTLibString("x")))
-  val qSMTLib = Apply(
+  val pSMTLib: Term = Apply(SimpleSymbol("var"), Seq(SMTLibString("x")))
+  val qSMTLib: Term = Apply(
                   SimpleSymbol("pth"),
                   Seq(
                     Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))),
                     SMTLibString("f")
                   ))
-  val rSMTLib = Apply(
+  val rSMTLib: Term = Apply(
                   SimpleSymbol("pth"),
                   Seq(
                     Apply(SimpleSymbol("pth"), Seq(
@@ -39,13 +39,13 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     assert(SMTLibConverter.convertPath(r) == rSMTLib)
   }
 
-  val eq = PathEquivalence(p, q)
-  val of = InstanceOf(p, Id('Cls))
-  val by = InstantiatedBy(q, Id('Cls))
+  val eq: Constraint = PathEquivalence(p, q)
+  val of: Constraint = InstanceOf(p, Id('Cls))
+  val by: Constraint = InstantiatedBy(q, Id('Cls))
 
-  val eqSMTLib = Apply(SimpleSymbol("path-eq"), Seq(pSMTLib, qSMTLib))
-  val ofSMTLib = Apply(SimpleSymbol("instance-of"), Seq(pSMTLib, SMTLibString("Cls")))
-  val bySMTLib = Apply(SimpleSymbol("instantiated-by"), Seq(qSMTLib, SMTLibString("Cls")))
+  val eqSMTLib: Term = Apply(SimpleSymbol("path-eq"), Seq(pSMTLib, qSMTLib))
+  val ofSMTLib: Term = Apply(SimpleSymbol("instance-of"), Seq(pSMTLib, SMTLibString("Cls")))
+  val bySMTLib: Term = Apply(SimpleSymbol("instantiated-by"), Seq(qSMTLib, SMTLibString("Cls")))
 
   test("Convert Constraints") {
     assert(SMTLibConverter.convertConstraint(eq) == eqSMTLib)
@@ -65,31 +65,31 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
       FieldAccess(Id('x), Id('p)))
   )
 
-  val zeroEntailment = Apply(
+  val zeroEntailment: Term = Apply(
                         SimpleSymbol("in-program"),
                         Seq(
                           SMTLibString("x"),
-                          Apply(SimpleSymbol("insert"), Seq(
+                          Apply(SimpleSymbol("construct"), Seq(
                             Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))), SMTLibString("Zero"))),
-                            SimpleSymbol("nil")
+                            SimpleSymbol("empty")
                           )),
                           Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))), SMTLibString("Nat")))
                         ))
 
-  val succEntailment = Apply(
+  val succEntailment: Term = Apply(
                         SimpleSymbol("in-program"),
                         Seq(
                           SMTLibString("x"),
-                          Apply(SimpleSymbol("insert"), Seq(
+                          Apply(SimpleSymbol("construct"), Seq(
                             Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))), SMTLibString("Succ"))),
-                            Apply(SimpleSymbol("insert"), Seq(
+                            Apply(SimpleSymbol("construct"), Seq(
                               Apply(SimpleSymbol("instance-of"), Seq(
                                 Apply(SimpleSymbol("pth"), Seq(
                                   Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))),
                                   SMTLibString("p")
                                 )),
                                 SMTLibString("Nat"))),
-                              SimpleSymbol("nil")
+                              SimpleSymbol("empty")
                             ))
                           )),
                           Apply(SimpleSymbol("instance-of"), Seq(Apply(SimpleSymbol("var"), Seq(SMTLibString("x"))), SMTLibString("Nat")))
@@ -98,11 +98,11 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
   test("Convert Entailment") {
     val ctx = List(by, eq)
     val entailment = Apply(SimpleSymbol("entails"), Seq(
-      Apply(SimpleSymbol("insert"), Seq(
+      Apply(SimpleSymbol("construct"), Seq(
         bySMTLib,
-        Apply(SimpleSymbol("insert"), Seq(
+        Apply(SimpleSymbol("construct"), Seq(
           eqSMTLib,
-          SimpleSymbol("nil")
+          SimpleSymbol("empty")
         ))
       )),
       ofSMTLib
@@ -286,7 +286,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     val expectedBody = Forall(
       Seq(
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
-        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+        SortedVar(SimpleSymbol("cs"), SimpleSymbol("CList"))
       ),
       Implies(
         Let(
@@ -321,7 +321,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     val expectedBody = Forall(
       Seq(
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
-        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+        SortedVar(SimpleSymbol("cs"), SimpleSymbol("CList"))
       ),
       Implies(
         Let(
@@ -353,7 +353,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     val expectedBody = Forall(
       Seq(
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
-        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+        SortedVar(SimpleSymbol("cs"), SimpleSymbol("CList"))
       ),
       Implies(
         Let(
@@ -374,18 +374,14 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     assert(actualRule == expectedRule)
   }
 
-  // obsolete since x, x, x entries are skipped in generation
+  // kinda obsolete since x, x, x entries are skipped by default in generation, but still somewhat usefull
   test("instantiateSubstRule(x, x, x)") {
     val x = Id('x)
-
-    val xTerm = SMTLibString("x")
-    val pTerm = Apply(SimpleSymbol("var"), Seq(SMTLibString("x")))
-    val qTerm = Apply(SimpleSymbol("var"), Seq(SMTLibString("x")))
 
     val expectedBody = Forall(
       Seq(
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
-        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+        SortedVar(SimpleSymbol("cs"), SimpleSymbol("CList"))
       ),
       Implies(
         Apply(SimpleSymbol("entails"), Seq(SimpleSymbol("cs"), SimpleSymbol("a2"))),
@@ -411,7 +407,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     val expectedBody = Forall(
       Seq(
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
-        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+        SortedVar(SimpleSymbol("cs"), SimpleSymbol("CList"))
       ),
       Implies(
         Let(
@@ -455,7 +451,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     assert(actual.forall(pair => expected.contains(pair)))
   }
 
-  test("generateSubstRules") {
+  test("generateSubstRules: all") {
     val x = Id('x)
     val y = Id('y)
 
@@ -464,7 +460,7 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     def expectedRule(body: Term) = Forall(
       Seq(
         SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
-        SortedVar(SimpleSymbol("cs"), Sorts(SimpleSymbol("List"), Seq(SimpleSymbol("Constraint"))))
+        SortedVar(SimpleSymbol("cs"), SimpleSymbol("CList"))
       ),
       Implies(
         body,
@@ -552,7 +548,86 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
       ))
     )
 
-    val actual = SMTLibConverter.generateSubstRules(List(x, y), List(x, y))
+    val actual = SMTLibConverter.generateSubstRules(List(x, y), List(x, y), skipNoSubst = false)
+
+    assert(actual.size == expected.size)
+    assert(actual.forall(rule => expected.contains(rule)))
+  }
+
+  test("generateSubstRules: skipnosubst") {
+    val x = Id('x)
+    val y = Id('y)
+
+    import smtlib.syntax.Implicit.stringToSimpleSymbol
+
+    def expectedRule(body: Term) = Forall(
+      Seq(
+        SortedVar(SimpleSymbol("a2"), SimpleSymbol("Constraint")),
+        SortedVar(SimpleSymbol("cs"), SimpleSymbol("CList"))
+      ),
+      Implies(
+        body,
+        Apply("entails", Seq("cs", "a2"))
+      )
+    )
+
+    val xVar = SMTLibString("x")
+    val yVar = SMTLibString("y")
+    val xPath = Apply("var", Seq(xVar))
+    val yPath = Apply("var", Seq(yVar))
+
+    val expected = Seq(
+      Assert(Annotate(
+        expectedRule(
+          Let(
+            Seq(VarBinding("a1", Apply("subst-constraint", Seq("a2", xVar, yPath)))),
+            And(
+              Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, yPath)))),
+              Apply("entails", Seq("cs", "a1"))
+            )
+          )
+        ),
+        Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol("C-Subst-x-x-y")))
+      )),
+      Assert(Annotate(
+        expectedRule(
+          Let(
+            Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", yPath, xVar)))),
+            And(
+              Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, xPath)))),
+              Apply("entails", Seq("cs", "a"))
+            )
+          )
+        ),
+        Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol("C-Subst-x-y-x")))
+      )),
+      Assert(Annotate(
+        expectedRule(
+          Let(
+            Seq(VarBinding("a", Apply("generalize-constraint", Seq("a2", xPath, yVar)))),
+            And(
+              Apply("entails", Seq("cs", Apply("path-eq", Seq(xPath, yPath)))),
+              Apply("entails", Seq("cs", "a"))
+            )
+          )
+        ),
+        Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol("C-Subst-y-x-y")))
+      )),
+      Assert(Annotate(
+        expectedRule(
+          Let(
+            Seq(VarBinding("a1", Apply("subst-constraint", Seq("a2", yVar, xPath)))),
+            And(
+              Apply("entails", Seq("cs", Apply("path-eq", Seq(yPath, xPath)))),
+              Apply("entails", Seq("cs", "a1"))
+            )
+          )
+        ),
+        Seq(KeyValueAttribute(Keyword("named"), SimpleSymbol("C-Subst-y-y-x")))
+      ))
+    )
+
+    val actual = SMTLibConverter.generateSubstRules(List(x, y), List(x, y), skipNoSubst = true)
 
     assert(actual.size == expected.size)
     assert(actual.forall(rule => expected.contains(rule)))

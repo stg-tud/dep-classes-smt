@@ -5,14 +5,14 @@ import org.scalatest.FunSuite
 class TestUtil extends FunSuite {
   import dcc.Util._
 
-  val x = Id('x)
-  val y = Id('y)
-  val z = Id('z)
+  val x: Id = Id('x)
+  val y: Id = Id('y)
+  val z: Id = Id('z)
 
-  val xf = FieldPath(x, Id('f))
-  val yf = FieldPath(y, Id('f))
-  val zf = FieldPath(z, Id('f))
-  val yff = FieldPath(yf, Id('f))
+  val xf: Path = FieldPath(x, Id('f))
+  val yf: Path = FieldPath(y, Id('f))
+  val zf: Path = FieldPath(z, Id('f))
+  val yff: Path = FieldPath(yf, Id('f))
 
   test("renameIdInPath") {
     assert(x == renameIdInPath(x, x, x))
