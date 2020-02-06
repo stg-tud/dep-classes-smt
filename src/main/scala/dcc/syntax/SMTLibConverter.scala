@@ -6,6 +6,8 @@ import smtlib.SMTLibCommand
 import smtlib.solver.Axioms
 import smtlib.syntax._
 
+import scala.annotation.tailrec
+
 object SMTLibConverter {
   def convertConstraint(c: Constraint): Term = c match {
     case PathEquivalence(p, q) => Axioms.pathEq(convertPath(p), convertPath(q))
@@ -33,6 +35,7 @@ object SMTLibConverter {
     ))
   }
 
+  @tailrec
   private def instantiateProgramEntailments(p: Program, path: Path, entailments: Map[Constraint, List[List[Constraint]]] = Map()): Map[Constraint, List[List[Constraint]]] = p match {
     case Nil => entailments
     case ConstraintEntailment(x, as, a) :: rst =>
@@ -217,6 +220,7 @@ object SMTLibConverter {
     )
   }
 
+  @tailrec
   def extractVariablesPathsClasses
     (constraints: List[Constraint],
      vars: List[String] = List(),
@@ -274,6 +278,7 @@ object SMTLibConverter {
   def convertVariables(constraints: List[Constraint]): List[Term] =
     extractVariables(constraints).map(x => Apply(SimpleSymbol("variable"), Seq(SMTLibString(x))))
 
+  @tailrec
   private def extractVariables(constraints: List[Constraint], vars: List[String] = List()): List[String] = constraints match {
     case Nil => vars
     case PathEquivalence(p, q) :: rst if !vars.contains(objectName(p)) && !vars.contains(objectName(q)) =>
@@ -289,6 +294,7 @@ object SMTLibConverter {
     case _ :: rst => extractVariables(rst, vars)
   }
 
+  @tailrec
   private def objectName(p: Path): String = p match {
     case Id(x) => x.name
     case FieldPath(q, _) => objectName(q)
