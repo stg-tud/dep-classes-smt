@@ -220,6 +220,37 @@ object SMTLibConverter {
     )
   }
 
+  def _extractVariablesPathsClasses(constraints: List[Constraint]): (List[Id], List[Path], List[Id]) = {
+    val (vars, paths, classes) = _extractVariablesPathsClassesHelper(constraints)
+    (vars.distinct, paths.distinct, classes.distinct)
+  }
+
+  def _extractVariablesPathsClassesHelper(constraints: List[Constraint]): (List[Id], List[Path], List[Id]) = constraints match {
+    case Nil => (Nil, Nil, Nil)
+    case PathEquivalence(p, q) :: rst =>
+      val (vars, paths, classes) = _extractVariablesPathsClassesHelper(rst)
+      (
+        getId(p) :: getId(q) :: vars,
+        p :: q :: paths,
+        classes
+      )
+    case InstanceOf(p, cls) :: rst =>
+      val (vars, paths, classes) = _extractVariablesPathsClassesHelper(rst)
+      (
+        getId(p) :: vars,
+        p :: paths,
+        cls :: classes
+      )
+    case InstantiatedBy(p, cls) :: rst =>
+      val (vars, paths, classes) = _extractVariablesPathsClassesHelper(rst)
+      (
+        getId(p) :: vars,
+        p :: paths,
+        cls :: classes
+      )
+  }
+
+  // TODO: measure timme, tailrec slower?!? Do we expect huge inputs that would let the callstack explode?
   @tailrec
   def extractVariablesPathsClasses
     (constraints: List[Constraint],
@@ -298,6 +329,12 @@ object SMTLibConverter {
   private def objectName(p: Path): String = p match {
     case Id(x) => x.name
     case FieldPath(q, _) => objectName(q)
+  }
+
+  @tailrec
+  private def getId(p: Path): Id = p match {
+    case x@Id(_) => x
+    case FieldPath(q, _) => getId(q)
   }
 
   // TODO: remove. use Axioms.makeList (moved from here)

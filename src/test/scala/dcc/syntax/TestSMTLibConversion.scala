@@ -6,6 +6,11 @@ import smtlib.SMTLibCommand
 import smtlib.syntax._
 
 class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
+  def assertListEqualityBarOrdering[X](actual: List[X], expected: List[X]): Unit = {
+    assert(actual.size == expected.size)
+    assert(actual.forall(expected.contains(_)))
+  }
+
   test("Convert Id") {
     assert(SMTLibConverter.convertId(Id('x)) == SMTLibString("x"))
     assert(SMTLibConverter.convertId(Id('x0)) == SMTLibString("x0"))
@@ -121,6 +126,56 @@ class TestSMTLibConversion extends FunSuite with PrivateMethodTester {
     )
 
     assert(SMTLibConverter.convertVariables(cs) == vars)
+  }
+
+  test("extractVariablesPathsClasses non tailrec") {
+    val x: Path = Id('x)
+    val y: Path = Id('y)
+    val z: Path = Id('z)
+    val pth: Path = FieldPath(Id('x), Id('f))
+
+    val cs = List(
+      PathEquivalence(z, pth),
+      PathEquivalence(x, y),
+      InstanceOf(x, Id('Cls1)),
+      InstantiatedBy(y, Id('Cls1)),
+      InstantiatedBy(z, Id('Cls2))
+    )
+
+    val (vars, paths, classes) = SMTLibConverter._extractVariablesPathsClasses(cs)
+
+    val expectedVars = List(Id('x), Id('y), Id('z))
+    val expectedPaths = List(Id('x), Id('y), Id('z), FieldPath(Id('x), Id('f)))
+    val expectedClasses = List(Id('Cls1), Id('Cls2))
+
+    assertListEqualityBarOrdering(vars, expectedVars)
+    assertListEqualityBarOrdering(paths, expectedPaths)
+    assertListEqualityBarOrdering(classes, expectedClasses)
+  }
+
+  test("extractVariablesPathsClasses tailrec") {
+    val x: Path = Id('x)
+    val y: Path = Id('y)
+    val z: Path = Id('z)
+    val pth: Path = FieldPath(Id('x), Id('f))
+
+    val cs = List(
+      PathEquivalence(z, pth),
+      PathEquivalence(x, y),
+      InstanceOf(x, Id('Cls1)),
+      InstantiatedBy(y, Id('Cls1)),
+      InstantiatedBy(z, Id('Cls2))
+    )
+
+    val (vars, paths, classes) = SMTLibConverter.extractVariablesPathsClasses(cs)
+
+    val expectedVars = List("x", "y", "z")
+    val expectedPaths = List(x, y, z, pth)
+    val expectedClasses = List("Cls1", "Cls2")
+
+    assertListEqualityBarOrdering(vars, expectedVars)
+    assertListEqualityBarOrdering(paths, expectedPaths)
+    assertListEqualityBarOrdering(classes, expectedClasses)
   }
 
   test("Convert Variables Paths Classes") {
