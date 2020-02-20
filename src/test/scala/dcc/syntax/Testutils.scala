@@ -3,8 +3,14 @@ package dcc.syntax
 import scala.util.Random
 
 object Testutils extends App {
-  def generateRandomId(prefix: String = "var_"): Id = Id(Symbol(s"$prefix${Random.nextInt(1000)}"))
-  def generateRandomPath(maxDepth: Int = 2, x: Option[Id] = None): Path = _generateRandomPath(Random.nextInt(maxDepth), x.getOrElse(generateRandomId()))
+//  def generateRandomId(prefix: String = "var_"): Id = Id(Symbol(s"$prefix${f"${Random.nextInt(1000)}%03d"}"))
+  def generateRandomId(prefix: String = "var_"): Id = Id(Symbol(f"$prefix${Random.nextInt(1000)}%03d"))
+
+  def generateRandomPath(maxDepth: Int = 2, x: Option[Id] = None): Path = maxDepth match {
+    case n if n <= 0 => x.getOrElse(generateRandomId())
+    case n if n > 0 => _generateRandomPath(Random.nextInt(n), x.getOrElse(generateRandomId()))
+  }
+
   def _generateRandomPath(depth: Int, x: Id): Path = depth match {
     case 0 => x
     case n if n < 0 => x
