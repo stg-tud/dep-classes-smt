@@ -16,6 +16,36 @@ class TestTestutils extends FunSuite {
     case FieldPath(q, _) => pathVar(q)
   }
 
+  private def assertConstraint(c: Constraint, metadata: (List[Id], List[Path], List[Id])): org.scalatest.Assertion = {
+    val (vars, paths, classes) = metadata
+
+    c match {
+      case PathEquivalence(p, q) if p == q =>
+        assert(vars == List(pathVar(p)))
+        assert(paths == List(p))
+        assert(classes == Nil)
+      case PathEquivalence(p, q) =>
+        assert(vars.size == 2)
+        assert(vars.contains(pathVar(p)))
+        assert(vars.contains(pathVar(q)))
+
+        assert(paths.size == 2)
+        assert(paths.contains(p))
+        assert(paths.contains(q))
+
+        assert(classes == Nil)
+      case InstanceOf(p, cls) =>
+        assert(vars == List(pathVar(p)))
+        assert(paths == List(p))
+        assert(classes == List(cls))
+      case InstantiatedBy(p, cls) =>
+        assert(vars == List(pathVar(p)))
+        assert(paths == List(p))
+        assert(classes == List(cls))
+      case _ => fail("unsupported constraint")
+    }
+  }
+
   test("generateRandomId: static prefix") {
     val prefix = "foobar"
     val id = Testutils.generateRandomId(prefix)
@@ -102,31 +132,18 @@ class TestTestutils extends FunSuite {
   }
 
   test("generateRandomConstraintWithMetadata") {
-    for (_ <- 1 to 10) {
-      val (c, (vars, paths, clss)) = Testutils.generateRandomConstraintWithMetadata()
-      c match {
-        case PathEquivalence(p, q) if p == q =>
-          assert(vars == List(pathVar(p)))
-          assert(paths == List(p))
-          assert(clss == Nil)
-        case PathEquivalence(p, q) =>
-          assert(vars.size == 2)
-          assert(vars.contains(pathVar(p)))
-          assert(vars.contains(pathVar(q)))
+    for (_ <- 1 to 100) {
+      val (c, metadata) = Testutils.generateRandomConstraintWithMetadata()
+      assertConstraint(c, metadata)
+    }
 
-          assert(paths.size == 2)
-          assert(paths.contains(p))
-          assert(paths.contains(q))
+    test("generateRandomConstraintsWithMetadata: default amount") {
+      val (cs, metadata) = Testutils.generateRandomConstraintsWithMetadata()
+    }
 
-          assert(clss == Nil)
-        case InstanceOf(p, cls) =>
-          assert(vars == List(pathVar(p)))
-          assert(paths == List(p))
-          assert(clss == List(cls))
-        case InstantiatedBy(p, cls) =>
-          assert(vars == List(pathVar(p)))
-          assert(paths == List(p))
-          assert(clss == List(cls))
+    test("generateRandomConstraintsWithMetadata: specific amount") {
+      for(i <- 0 to 100) {
+        val (cs, metadata) = Testutils.generateRandomConstraintsWithMetadata(i)
       }
     }
   }
