@@ -69,7 +69,7 @@ class TestTestutils extends FunSuite {
   }
 
   test("generateRandomPath: dynamic depth") {
-    for (i <- 1 until 100) {
+    for (i <- 1 to 100) {
       for (p <- (0 to 100).toList.map(_ => Testutils.generateRandomPath(i))) {
         assert(pathDepth(p) <= i)
       }
@@ -81,6 +81,52 @@ class TestTestutils extends FunSuite {
       val x: Id = Testutils.generateRandomId()
       for (p <- (0 to 100).toList.map(_ => Testutils.generateRandomPath(x = Option(x)))) {
         assert(pathVar(p) == x)
+      }
+    }
+  }
+
+  test("generateRandomConstraints: default amount") {
+    assert(Testutils.generateRandomConstraints().size == 10)
+  }
+
+  test("generateRandomConstraints: negative amount") {
+    for (i <- -100 to 0) {
+      assert(Testutils.generateRandomConstraints(i) == Nil)
+    }
+  }
+
+  test("generateRandomConstraints: specific amount") {
+    for(i <- 0 to 100) {
+      assert(Testutils.generateRandomConstraints(i).size == i)
+    }
+  }
+
+  test("generateRandomConstraintWithMetadata") {
+    for (_ <- 1 to 10) {
+      val (c, (vars, paths, clss)) = Testutils.generateRandomConstraintWithMetadata()
+      c match {
+        case PathEquivalence(p, q) if p == q =>
+          assert(vars == List(pathVar(p)))
+          assert(paths == List(p))
+          assert(clss == Nil)
+        case PathEquivalence(p, q) =>
+          assert(vars.size == 2)
+          assert(vars.contains(pathVar(p)))
+          assert(vars.contains(pathVar(q)))
+
+          assert(paths.size == 2)
+          assert(paths.contains(p))
+          assert(paths.contains(q))
+
+          assert(clss == Nil)
+        case InstanceOf(p, cls) =>
+          assert(vars == List(pathVar(p)))
+          assert(paths == List(p))
+          assert(clss == List(cls))
+        case InstantiatedBy(p, cls) =>
+          assert(vars == List(pathVar(p)))
+          assert(paths == List(p))
+          assert(clss == List(cls))
       }
     }
   }
