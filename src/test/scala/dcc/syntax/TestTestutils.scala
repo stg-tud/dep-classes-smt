@@ -16,7 +16,7 @@ class TestTestutils extends FunSuite {
     case FieldPath(q, _) => pathVar(q)
   }
 
-  private def assertConstraint(c: Constraint, metadata: (List[Id], List[Path], List[Id])): org.scalatest.Assertion = {
+  private def assertConstraintExact(c: Constraint, metadata: (List[Id], List[Path], List[Id])): org.scalatest.Assertion = {
     val (vars, paths, classes) = metadata
 
     c match {
@@ -42,6 +42,28 @@ class TestTestutils extends FunSuite {
         assert(vars == List(pathVar(p)))
         assert(paths == List(p))
         assert(classes == List(cls))
+      case _ => fail("unsupported constraint")
+    }
+  }
+
+  private def assertConstraintLowerBound(c: Constraint, metadata: (List[Id], List[Path], List[Id])): org.scalatest.Assertion = {
+    val (vars, paths, classes) = metadata
+
+    c match {
+      case PathEquivalence(p, q) =>
+        assert(vars.contains(pathVar(p)))
+        assert(vars.contains(pathVar(q)))
+
+        assert(paths.contains(p))
+        assert(paths.contains(q))
+      case InstanceOf(p, cls) =>
+        assert(vars.contains(pathVar(p)))
+        assert(paths.contains(p))
+        assert(classes.contains(cls))
+      case InstantiatedBy(p, cls) =>
+        assert(vars.contains(pathVar(p)))
+        assert(paths.contains(p))
+        assert(classes.contains(cls))
       case _ => fail("unsupported constraint")
     }
   }
@@ -134,16 +156,24 @@ class TestTestutils extends FunSuite {
   test("generateRandomConstraintWithMetadata") {
     for (_ <- 1 to 100) {
       val (c, metadata) = Testutils.generateRandomConstraintWithMetadata()
-      assertConstraint(c, metadata)
+      assertConstraintExact(c, metadata)
     }
+  }
 
-    test("generateRandomConstraintsWithMetadata: default amount") {
-      val (cs, metadata) = Testutils.generateRandomConstraintsWithMetadata()
+  test("generateRandomConstraintsWithMetadata: default amount") {
+    val (cs, metadata) = Testutils.generateRandomConstraintsWithMetadata()
+    assert(cs.size == 10)
+    for (c <- cs) {
+      assertConstraintLowerBound(c, metadata)
     }
+  }
 
-    test("generateRandomConstraintsWithMetadata: specific amount") {
-      for(i <- 0 to 100) {
-        val (cs, metadata) = Testutils.generateRandomConstraintsWithMetadata(i)
+  test("generateRandomConstraintsWithMetadata: specific amount") {
+    for(i <- 0 to 100) {
+      val (cs, metadata) = Testutils.generateRandomConstraintsWithMetadata(i)
+      assert(cs.size == i)
+      for (c <- cs) {
+        assertConstraintLowerBound(c, metadata)
       }
     }
   }

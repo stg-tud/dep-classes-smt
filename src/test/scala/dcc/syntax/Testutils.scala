@@ -63,7 +63,7 @@ object Testutils extends App {
       val (c, (cVars, cPaths, cls)) = generateRandomConstraintWithMetadata()
       val (cs, (vars, paths, clss)) = generateRandomConstraintsWithMetadata(n-1)
       (
-        c :: cs,
+        c :: cs, // TODO: have duplicate constraints or not?
         (
           (cVars ++ vars).distinct,
           (cPaths ++ paths).distinct,
