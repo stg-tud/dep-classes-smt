@@ -1,0 +1,80 @@
+\documentclass{article}          % German article document class
+\usepackage[utf8]{inputenc}       % Input is utf8
+\usepackage[T1]{fontenc}          % T1 font
+\usepackage{amsmath}              % package for formulars and other math stuff
+\usepackage{amssymb}              % package for math symbols
+\usepackage{amsthm}               % library for theorems etc.
+\usepackage{xcolor}
+\usepackage{mathpartir, proof}
+\usepackage{nicefrac}             % nice inline fractions in this style: a/b
+\usepackage{ulem}                 % package for underlining
+\usepackage{polynom}              % package for polynom-division etc.
+\usepackage{paralist}             % you can format enumerations easy
+                                  % e.g. \begin{enumerate}[1.]
+\begin{document}
+
+\section{Declarations}
+Enumeration Types: \texttt{Class}, \texttt{Variable}, \texttt{Field}\\
+ADT: \texttt{Path}\\
+Propositions: \textsf{instOf}, \textsf{instBy}, \textsf{pathEq}\\
+Recursive Function: \textsf{subst-path}
+
+\section{Basic Rules}
+\begin{align*}
+&\forall p:\mathtt{Path}.~\mathsf{pathEq}(p,p)\\
+(&\forall a:\mathtt{Bool}.~a \rightarrow a) \equiv \mathtt{true}\\
+&\forall a:\mathtt{Bool}, p:\mathtt{Path}, c:\mathtt{Class}.~(a \rightarrow \mathsf{instBy}(p, c)) \rightarrow (a \rightarrow \mathsf{instOf}(p, c))
+\end{align*}
+
+\section{Substitution Rule}
+\begin{align*}
+&\forall as:\mathtt{Bool}, a:\mathtt{Bool}, p_1:\mathtt{Path}, p_2:\mathtt{Path}, x:\mathtt{Variable}.\\
+&\hspace{2em} (as \rightarrow {\color{red} a_{\{x \mapsto p_1\}}} \land as \rightarrow \mathsf{pathEq}(p_2, p_1))\\
+&\hspace{2em} \rightarrow (as \rightarrow {\color{red} a_{\{x \mapsto p_2\}}})
+\end{align*}
+Problem: Since constraints are modeled as booleans, substitution cannot be applied.\\
+%
+Instantiate $a$ with every possible constraint type proposition, to allow for path substitution.
+\begin{align*}
+&\forall as:\mathtt{Bool}, q_1:\mathtt{Path}, q_2:\mathtt{Path}, p_1:\mathtt{Path}, p_2:\mathtt{Path}, x:\mathtt{Variable}.\\
+&\hspace{2em} ((as \rightarrow \mathsf{pathEq}({q_1}_{\{x \mapsto p_1\}},{q_2}_{\{x \mapsto p_1\}})) \land (as \rightarrow \mathsf{pathEq}(p_2, p_1)))\\
+&\hspace{2em} \rightarrow (as \rightarrow \mathsf{pathEq}({q_1}_{\{x \mapsto p_2\}},{q_2}_{\{x \mapsto p_2\}}))\\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+&\forall as:\mathtt{Bool}, q:\mathtt{Path}, c:\mathtt{Class}, p_1:\mathtt{Path}, p_2:\mathtt{Path}, x:\mathtt{Variable}.\\
+&\hspace{2em} ((as \rightarrow \mathsf{instOf}({q}_{\{x \mapsto p_1\}},c)) \land (as \rightarrow \mathsf{pathEq}(p_2, p_1)))\\
+&\hspace{2em} \rightarrow (as \rightarrow \mathsf{instOf}({q}_{\{x \mapsto p_2\}},c))\\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+&\forall as:\mathtt{Bool}, q:\mathtt{Path}, c:\mathtt{Class}, p_1:\mathtt{Path}, p_2:\mathtt{Path}, x:\mathtt{Variable}.\\
+&\hspace{2em} ((as \rightarrow \mathsf{instBy}({q}_{\{x \mapsto p_1\}},c)) \land (as \rightarrow \mathsf{pathEq}(p_2, p_1)))\\
+&\hspace{2em} \rightarrow (as \rightarrow \mathsf{instBy}({q}_{\{x \mapsto p_2\}},c))\\
+\end{align*}
+
+\newpage
+\section{Program Entailment Rule}
+\begin{mathpar}
+\inferrule[C-Prog]{
+  (\forall x.~\overline{a} \Rightarrow a) \in P \\
+  \overline{b} \vdash \overline{a}_{\{x \mapsto p\}}
+}{
+  \overline{b} \vdash a_{\{x \mapsto p\}}
+}
+\end{mathpar}
+Naive version
+\begin{align*}
+&\forall bs:\mathtt{Bool}, a:\mathtt{Bool}, as:\mathtt{Bool}, x:\mathtt{Variable}, p:\mathtt{Path}.\\
+&\hspace{2em} ((as \rightarrow a) \land (bs \rightarrow {\color{red} as_{\{x \mapsto p\}}}))\\
+&\hspace{2em} \rightarrow (bs \rightarrow {\color{orange} a_{\{x \mapsto p\}}})
+\end{align*}
+%
+From well-formedness we know that $a$ must be a constraint of the form $\mathsf{instOf}(x,c)$.
+%and gives us the guarantee that a constraint of the form $\mathsf{instOf}(x,c')$ is contained in $as$ ($as$ is a conjunction of at least $\mathsf{instOf}(x,c')$ for some class $c'$).
+We also statically know all program entailments, and that there is only a finite amount of these declarations per program.
+\begin{align*}
+&\forall bs:\mathtt{Bool}, c:\mathtt{Class}, as:\mathtt{Bool}, x:\mathtt{Variable}, p:\mathtt{Path}.\\
+&\hspace{2em} ((as \rightarrow \mathsf{instOf}(x,c)) \land (bs \rightarrow {\color{red} as_{\{x \mapsto p\}}}))\\
+&\hspace{2em} \rightarrow (bs \rightarrow \mathsf{instOf}(p,c))
+\end{align*}
+%
+We can enumerate over all program entailment declarations and create a custom C-Prog rule for each declaration.
+As the conjunction $as$ is known, we can explicitly apply the path substitution for each constraint in the conjunction.
+\end{document}
