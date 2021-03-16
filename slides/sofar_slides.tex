@@ -1,0 +1,239 @@
+\documentclass[leqno]{beamer}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{amsbsy,amsfonts,amssymb,amstext,amsmath,amsthm,latexsym}
+% Package mathpartir is currently not available in nixpkgs
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{syntax} % for bnf grammar
+\usepackage{bussproofs} % for type rules
+\usepackage{color}
+\usepackage{listings}
+%\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning,chains,shapes.arrows,shapes.geometric,fit,calc,decorations.pathmorphing}
+
+\setbeamertemplate{footline}[frame number]
+\beamertemplatenavigationsymbolsempty
+
+\input{include/macros}
+\input{include/tikz}
+
+\begin{document}
+\begin{frame}
+\frametitle{Syntax}
+
+\begin{align*}
+p, q \in \mathit{Path} &::= x \ |\ \mathit{p.f}\\
+a, b, c \in \mathit{Constr} &::= \pathEq{p}{q} ~|~ \instOf{p}{C} ~|~ \instBy{p}{C}\\
+t \in \mathit{Type} &::= \type{x}{\ovl{a}}
+\end{align*}
+\begin{align*}
+&\constr{\texttt{Zero}}{x}{\epsilon}\\
+&\progEnt{x}{\instOf{x}{\texttt{Zero}}}{\instOf{x}{\texttt{Nat}}}\\
+&\constr{\texttt{Succ}}{x}{\instOf{x.p}{\texttt{Nat}}}\\
+&\progEnt{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\instOf{x}{\texttt{Nat}}}\\
+&\mDecl{\texttt{prev}}{x}{\instOf{x}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}\\
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Zero}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{\newInstNoArgs{\texttt{Zero}}}\\
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x.p}
+\end{align*}
+\end{frame}
+
+\begin{frame}
+\frametitle{Constraint System}
+
+\begin{columns}[t]
+\begin{column}{0.5\linewidth}
+% C-Ident
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Ident)}
+\UnaryInfC{\entails{a}{a}}
+\end{prooftree}
+% C-Class
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{\instantiatedBy{p}{C}}}
+\RightLabel{(C-Class)}
+\UnaryInfC{\entails{\overline{a}}{\instanceOf{p}{C}}}
+\end{prooftree}
+\end{column}
+\begin{column}{0.5\linewidth}
+% C-Refl
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Refl)}
+\UnaryInfC{\entails{\epsilon}{\pathEq{p}{p}}}
+\end{prooftree}
+% C-Cut
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{c}}
+\AxiomC{\entails{\overline{a'}, c}{b}}
+\RightLabel{(C-Cut)}
+\BinaryInfC{\entails{\overline{a},\overline{a'}}{b}}
+\end{prooftree}
+\end{column}
+\end{columns}
+% C-Subst
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{a_{\sub{x}{p}}}}
+\AxiomC{\entails{\overline{a}}{\pathEq{p'}{p}}}
+\RightLabel{(C-Subst)}
+\BinaryInfC{\entails{\overline{a}}{a_{\sub{x}{p'}}}}
+\end{prooftree}
+% C-Prog
+\begin{prooftree}
+\AxiomC{$(\progEnt{x}{\overline{a}}{a}) \in P$}
+\AxiomC{\entails{\overline{b}}{\overline{a}_{\sub{x}{p}}}}
+\RightLabel{(C-Prog)}
+\BinaryInfC{\entails{\overline{b}}{a_{\sub{x}{p}}}}
+\end{prooftree}
+\centering
+$\entails{\ovl a}{\ovl b} := \bigwedge_{b \in \ovl b} \entails{\ovl a}{b}$
+\end{frame}
+
+%\begin{frame}
+%\frametitle{First-Order Model}
+%- "on paper" translation of the constraint system
+%to be applied by hand.
+%- we choosed to model this as faithful to the sequent calculus as possible
+%- mimics syntactic transformations of the sequents
+%\end{frame}
+%
+%\begin{frame}
+%\frametitle{SMTLib translation of the first-order Model}
+%- as FO model is already in sorted FO, can be translatet as is
+%  and therefore tries to mimic the syntactic transformations of the sequent calculus
+%- need to create datatypes and sorts for paths, constraints, ...
+%- main (logical) problems were: substitution, permutation
+%- possible factors amplifying the problems: extensive use of lists
+%  - uninterpreted functions in z3
+%\end{frame}
+
+\begin{frame}
+\frametitle{Substitution and Generalization}
+Substitution: $a_{\sub{x}{p}}$\\
+Generalization: $a_{\sub{p}{x}}$
+\[(a_{\sub{x}{p}})_{\sub{p}{x}} = a\]
+
+\begin{align*}
+\instOf{{\color{brown}x}.g}{C}_{\sub{{\color{brown}x}}{{\color{blue}y.f}}} &= \instOf{{\color{blue}y.f}.g}{C}\\
+\instOf{{\color{brown}y.f}.g}{C}_{\sub{{\color{brown}y.f}}{{\color{blue}x}}} &= \instOf{{\color{blue}x}.g}{C}\\
+\instOf{y.{\color{red}f.g}}{C}_{\sub{{\color{red}f.g}}{{\color{blue}x}}} &\neq \instOf{y.{\color{blue}x}}{C}
+\end{align*}
+\end{frame}
+
+\begin{frame}
+\frametitle{First-order Model}
+
+\begin{columns}[t]
+\begin{column}{0.44\textwidth}
+% C-Ident
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Ident)}
+\UnaryInfC{\entails{a}{a}}
+\end{prooftree}
+\quad\\
+% C-Class
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{\instantiatedBy{p}{C}}}
+\RightLabel{(C-Class)}
+\UnaryInfC{\entails{\overline{a}}{\instanceOf{p}{C}}}
+\end{prooftree}
+~\\~\\
+% C-Subst
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{a_{\sub{x}{p}}}}
+\AxiomC{\entails{\overline{a}}{\pathEq{p'}{p}}}
+%\RightLabel{(C-Subst)}
+\BinaryInfC{\entails{\overline{a}}{a_{\sub{x}{p'}}}}
+\end{prooftree}
+\end{column}
+\begin{column}{0.56\textwidth}
+\begin{align*}
+&\forall c: \Constr.\ \entails{[c]}{c} \\
+\quad\\
+%\quad\\\quad\\
+&\forall \ovl{a}: \Constrs, p: \Path, C: \String.\\
+&\quad \entails{\ovl{a}}{\instBy{p}{C}}
+       \rightarrow \entails{\ovl{a}}{\instOf{p}{C}} \\
+\quad\\
+&\forall \ovl a: \Constrs, a_2: \Constr,\\&\qquad x: \String, p_1, p_2: \Path.\\
+&\quad \Let a := \gen{a_2}{p_2}{x}\ \In\\
+&\qquad \Let a_1 := \subst{a}{x}{p_1}\\
+&\qquad \In
+        \entails{\ovl a}{\pathEq{p_2}{p_1}}
+        \land
+        \entails{\ovl a}{a_1}\\
+&\rightarrow \entails{\ovl a}{a_2}
+\end{align*}
+\end{column}
+\end{columns}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{frame}
+%\frametitle{Possible directions}
+%1. Stick with the syntax based approach.
+%  - replace list usage with arrays, as they (allegedly/may) work better
+%2. Go to a more "semantics" based approach
+%  - eliminate the need for "permutation" by representing constraint entailments as conjunctions
+%  - maybe model substitution as an relation and prepopulate it from the program context
+%     - paths in the relation are representet as constants
+%     - names of these constants could be arbitrary, in the example named for clarity
+%     - otherwise keep the syntactic substitution?
+%  - inference rules can still be modeled as logical implication: premise → conclusion
+%  - it may also be possible to model constraint entailments as an implication?
+%    - cs → c
+%\end{frame}
+
+\begin{frame}
+\frametitle{Inference Rules and Entailment}
+
+\begin{columns}[t]
+\begin{column}{0.5\linewidth}
+\begin{prooftree}
+\AxiomC{premise}
+\UnaryInfC{conclusion}
+\end{prooftree}
+
+\[ premise \rightarrow conclusion \]
+\end{column}
+\begin{column}{0.5\linewidth}
+\begin{align*}
+  \entails{\ovl{a}}{a}\\~\\
+  \ovl{a} \rightarrow a
+\end{align*}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Permutation and weakening}
+%Find permutation such that we can apply weakening.
+\begin{align*}
+\entails{[a,b,c,d]}{a}\\
+\entails{[b,c,d,a]}{a}\\
+\entails{[a]}{a}
+\end{align*}
+
+\begin{align*}
+a \land b \land c \land d \rightarrow a
+\end{align*}
+\end{frame}
+
+\begin{frame}
+\frametitle{Substitution?}
+\begin{itemize}
+  \item Model substitution as an relation between paths?
+  \item Populate this relation from the programs context
+  \item Paths are representet as constants
+\end{itemize}
+
+\begin{align*}
+&subst : \Path \times X \times \Path \times Path \mapsto \mathbb{B}\\
+&subst({\color{brown}x.g.h}, {\color{orange}x}, {\color{magenta}y.f}, {\color{blue}y.f.g.h})
+\end{align*}
+${\color{orange}x}$ substituted with ${\color{magenta}y.f}$ in ${\color{brown}x.g.h}$ is ${\color{blue}y.f.g.h}$
+\end{frame}
+\end{document}
