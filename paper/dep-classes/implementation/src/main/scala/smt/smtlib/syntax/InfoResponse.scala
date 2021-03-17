@@ -35,7 +35,7 @@ case object ImmediateExit extends ErrorBehavior {
   override def format(): String = "immediate-exit"
 }
 
-case object ContiniuedExecution extends ErrorBehavior {
+case object ContinuedExecution extends ErrorBehavior {
   override def format(): String = "continued-execution"
 }
 

@@ -54,7 +54,7 @@ trait GetOptionResponse extends SpecificSuccessResponse
 
 trait GetProofResponse extends SpecificSuccessResponse
 
-case class GetUnsatAssumpResponse(symbols: Seq[SMTLibSymbol]) extends SpecificSuccessResponse {
+case class GetUnsatAssumptionsResponse(symbols: Seq[SMTLibSymbol]) extends SpecificSuccessResponse {
   override def format(): String = s"(${SMTLibFormatter.format(symbols)})"
 }
 
