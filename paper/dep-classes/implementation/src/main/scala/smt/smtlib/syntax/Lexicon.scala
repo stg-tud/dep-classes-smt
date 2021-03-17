@@ -41,6 +41,8 @@ object Binary {
   def apply(bin: Int): Binary = Binary(bin.toBinaryString)
 }
 
+// TODO: requires that s is of the form |[chars]|? (test this)
+//  instead assume s without the delimiters and add them in the formatting? (test this )
 case class SMTLibString(s: String) extends SMTLibFormatter with SpecConstant with EchoResponse {
   // "\"" ++ s ++ "\""
   override def format(): String = s""""$s"""" // TODO: raw instead of s?
