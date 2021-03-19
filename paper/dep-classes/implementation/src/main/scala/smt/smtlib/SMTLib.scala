@@ -20,3 +20,9 @@ case class SMTLibScript(commands: Seq[SMTLibCommand]) extends SMTLibFormatter {
 }
 
 trait SMTLibResponse extends SMTLibFormatter
+
+// new formalization independent SMTLib formatter
+object SMTLib {
+//  example:
+//  def fromConstraint: SMTLibCommand = ???
+}
