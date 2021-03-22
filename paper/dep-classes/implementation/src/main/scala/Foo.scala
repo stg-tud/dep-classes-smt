@@ -10,12 +10,9 @@ object Foo extends App {
 
   println("------------------------------------------------")
 
-  val scriptMiddle: SMTLibScript = SMTLibScript(Seq(Assert(s)))
-  val scriptRight = Seq(Assert(SimpleSymbol("bar")), Assert(SimpleSymbol("foobar")))
-  val scriptLeft = Seq(Assert(SimpleSymbol("coo")), Assert(SimpleSymbol("shoo")))
+  println(sem.axioms.format())
 
-  val scriptJoin: SMTLibScript = scriptMiddle ++ scriptRight
-  val scriptFinal: SMTLibScript = scriptLeft ++: scriptJoin
+  println("------------------------------------------------")
 
-  println(scriptFinal.format())
+
 }
