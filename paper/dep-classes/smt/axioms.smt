@@ -74,8 +74,8 @@
 ;                 (pathEq (var V) (var Z)))))
 ;(assert (not (forall ((p Path) (q Path))
 ;                      (=> (pathEq p q) (pathEq q p)))))
-(assert (exists ((p Path) (q Path))
-                      (not (=> (pathEq p q) (pathEq q p)))))
+;(assert (exists ((p Path) (q Path))
+;                      (not (=> (pathEq p q) (pathEq q p)))))
 
 ;(assert (not (=> (and (instBy (var X) Succ) (instBy (pth (var X) F) Zero))    ; unsat
 ;                 (instOf (var X) Succ))))
@@ -91,11 +91,11 @@
 ;(assert (not (=> (and (instBy (var X) Succ)                                   ; unsat
 ;                      (pathEq (var X) (var Y)) (pathEq (var Z) (var Y)))
 ;                 (instOf (var Z) Succ))))
-;(assert (not (=> (and (instBy (var V) Succ)                                   ; unsat
-;                      (pathEq (var X) (var Y))
-;                      (pathEq (var Y) (var Z))
-;                      (pathEq (var W) (var X))
-;                      (pathEq (var V) (var W)))
-;                 (instOf (var Z) Succ))))
+(assert (not (=> (and (instBy (var V) Succ)                                   ; unsat
+                      (pathEq (var X) (var Y))
+                      (pathEq (var Y) (var Z))
+                      (pathEq (var W) (var X))
+                      (pathEq (var V) (var W)))
+                 (instOf (var Z) Succ))))
 
 (check-sat)

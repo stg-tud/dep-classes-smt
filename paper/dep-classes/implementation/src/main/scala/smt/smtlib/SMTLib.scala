@@ -1,5 +1,7 @@
 package smt.smtlib
 
+import smt.smtlib.syntax.{ConstructorDatatype, ConstructorDec, DeclareDatatype, SMTLibSymbol, SimpleSymbol}
+
 /**
   * Base class for SMT Lib commands
   */
@@ -21,8 +23,13 @@ case class SMTLibScript(commands: Seq[SMTLibCommand]) extends SMTLibFormatter {
 
 trait SMTLibResponse extends SMTLibFormatter
 
-// new formalization independent SMTLib formatter
 object SMTLib {
 //  example:
 //  def fromConstraint: SMTLibCommand = ???
+
+  def buildEnumerationType(typename: SMTLibSymbol, constructors: Seq[ConstructorDec]): SMTLibCommand =
+    DeclareDatatype(typename, ConstructorDatatype(constructors))
+
+  def buildEnumerationType(typename: String, constructors: Seq[String]): SMTLibCommand =
+    DeclareDatatype(SimpleSymbol(typename), ConstructorDatatype(constructors.map(constructor => ConstructorDec(SimpleSymbol(constructor), Seq()))))
 }
