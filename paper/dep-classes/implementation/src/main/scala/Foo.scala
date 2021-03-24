@@ -10,7 +10,7 @@ object Foo extends App {
 
   println("------------------------------------------------")
 
-  println(sem.axioms.format())
+  println(sem.axioms(Nil).format())
 
   println("------------------------------------------------")
 

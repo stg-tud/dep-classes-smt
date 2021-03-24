@@ -1,6 +1,6 @@
 package smt.smtlib
 
-import smt.smtlib.syntax.{ConstructorDatatype, ConstructorDec, DeclareDatatype, SMTLibSymbol, SimpleSymbol}
+import smt.smtlib.syntax.{Apply, ConstructorDatatype, ConstructorDec, DeclareDatatype, QualifiedIdentifier, SMTLibSymbol, SimpleSymbol, Term}
 
 /**
   * Base class for SMT Lib commands
@@ -35,4 +35,7 @@ object SMTLib {
 
   def buildEnumerationType(typename: String, constructors: Seq[String]): SMTLibCommand =
     DeclareDatatype(SimpleSymbol(typename), ConstructorDatatype(constructors.map(constructor => ConstructorDec(SimpleSymbol(constructor), Seq()))))
+
+  def is(constructor: SimpleSymbol, arg: Term): Term = Apply(SimpleSymbol("is-") + constructor, Seq(arg))
+  def selector(selector: QualifiedIdentifier, arg: Term): Term = Apply(selector, Seq(arg))
 }

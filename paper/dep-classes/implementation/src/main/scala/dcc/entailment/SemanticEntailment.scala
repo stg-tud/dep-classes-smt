@@ -3,31 +3,139 @@ package dcc.entailment
 import dcc.entailment.SemanticEntailment.{Class, Field, Path, Variable}
 import dcc.syntax.Constraint
 import dcc.syntax.Program.Program
-import smt.smtlib.SMTLib.buildEnumerationType
-import smt.smtlib.SMTLibScript
-import smt.smtlib.syntax.{Bool, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, SelectorDec, SimpleSymbol, Sort}
+import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
+import smt.smtlib.{SMTLibCommand, SMTLibScript}
+import smt.smtlib.syntax.{And, Apply, Assert, Bool, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
 
 class SemanticEntailment(val p: Program) {
+  private val functionPathEquivalence: SMTLibSymbol = SimpleSymbol("path-equivalence")
+  private val functionInstanceOf: SMTLibSymbol = SimpleSymbol("instance-of")
+  private val functionInstantiatedBy: SMTLibSymbol = SimpleSymbol("instantiated-by")
+  private val functionSubstitution: SMTLibSymbol = SimpleSymbol("substitute")
+
+  private val constructorVar: SimpleSymbol = SimpleSymbol("var")
+  private val constructorPth: SimpleSymbol = SimpleSymbol("pth")
+
+  private val selectorId: SMTLibSymbol = SimpleSymbol("id")
+  private val selectorObj: SMTLibSymbol = SimpleSymbol("obj")
+  private val selectorField: SMTLibSymbol = SimpleSymbol("field")
+  
   private val staticDatatypeDeclarations: SMTLibScript = SMTLibScript(Seq(
     DeclareDatatype(SimpleSymbol("Path"), ConstructorDatatype(Seq(
-      ConstructorDec(SimpleSymbol("var"), Seq(SelectorDec(SimpleSymbol("id"), Variable))),
-      ConstructorDec(SimpleSymbol("pth"), Seq(SelectorDec(SimpleSymbol("obj"), Path), SelectorDec(SimpleSymbol("field"), Field)))
+      ConstructorDec(constructorVar, Seq(SelectorDec(selectorId, Variable))),
+      ConstructorDec(constructorPth, Seq(SelectorDec(selectorObj, Path), SelectorDec(selectorField, Field)))
     )))
   ))
 
   private val staticFunctionDeclarations: SMTLibScript = SMTLibScript(Seq(
-    DeclareFun(SimpleSymbol("instance-of"), Seq(Path, Class), Bool),
-    DeclareFun(SimpleSymbol("instantiated-by"), Seq(Path, Class), Bool),
-    DeclareFun(SimpleSymbol("path-equivalence"), Seq(Path, Path), Bool)
+    DeclareFun(functionInstanceOf, Seq(Path, Class), Bool),
+    DeclareFun(functionInstantiatedBy, Seq(Path, Class), Bool),
+    DeclareFun(functionPathEquivalence, Seq(Path, Path), Bool)
   ))
 
-  def entails(context: List[Constraint], c: Constraint): Boolean = true
+  private val staticFunctionDefinitions: SMTLibScript = {
+    val p: SMTLibSymbol = SimpleSymbol("p")
+    val q: SMTLibSymbol = SimpleSymbol("q")
+    val x: SMTLibSymbol = SimpleSymbol("x")
+
+    SMTLibScript(Seq(
+      DefineFunRec(FunctionDef(
+        functionSubstitution,
+        Seq(
+          SortedVar(p, Path),
+          SortedVar(x, Variable),
+          SortedVar(q, Path)
+        ),
+        Path,
+        Ite(
+          is(constructorVar, p),
+          Ite(Eq(x, selector(selectorId, p)), q, p),
+          Apply(
+            constructorPth,
+            Seq(
+              Apply(
+                functionSubstitution,
+                Seq(selector(selectorObj, p), x, q)),
+              selector(selectorField, p)))
+        )
+      ))
+    ))
+  }
+
+  private val staticCalculusRules: SMTLibScript = {
+    val p: SMTLibSymbol = SimpleSymbol("p")
+    val q: SMTLibSymbol = SimpleSymbol("q")
+    val r: SMTLibSymbol = SimpleSymbol("r")
+    val s: SMTLibSymbol = SimpleSymbol("s")
+    val a: SMTLibSymbol = SimpleSymbol("a")
+    val c: SMTLibSymbol = SimpleSymbol("c")
+    val x: SMTLibSymbol = SimpleSymbol("x")
+
+
+    val cRefl:SMTLibCommand = Assert(Forall(Seq(SortedVar(p, Path)), Apply(functionPathEquivalence, Seq(p, p))))
+
+    val cClass: SMTLibCommand = Assert(Forall(
+      Seq(
+        SortedVar(a, Bool),
+        SortedVar(p, Path),
+        SortedVar(c, Class)
+      ),
+      Implies(
+        Implies(a, Apply(functionInstantiatedBy, Seq(p, c))),
+        Implies(a, Apply(functionInstanceOf, Seq(p, c)))
+      )
+    ))
+
+    // q1 === p
+    // q2 === q
+    // p1 === r
+    // p2 === s
+//    (assert (forall
+//          ((cs Bool) (q1 Path) (q2 Path) (p1 Path) (p2 Path) (x Variable))
+//          (=> (and
+//                (=> cs (pathEq (subst-path q1 x p1) (subst-path q2 x p1)))
+//                (=> cs (pathEq p2 p1)))
+//              (=> cs (pathEq (subst-path q1 x p2) (subst-path q2 x p2))))))
+    val cSubstPathEquivalence: SMTLibCommand = Assert(Forall(
+      Seq(
+        SortedVar(a, Bool),
+        SortedVar(p, Path),
+        SortedVar(q, Path),
+        SortedVar(r, Path),
+        SortedVar(s, Path),
+        SortedVar(x, Variable)
+      ),
+      Implies(
+        And(
+          Implies(a, Apply(functionPathEquivalence, Seq(
+            Apply(functionSubstitution, Seq(p, x, r)),
+            Apply(functionSubstitution, Seq(q, x, r))))),
+          Implies(a, Apply(functionPathEquivalence, Seq(s, r)))
+        ),
+        Implies(a, Apply(functionPathEquivalence, Seq(
+          Apply(functionSubstitution, Seq(p, x, s)),
+          Apply(functionSubstitution, Seq(q, x, s))
+        )))
+      )
+    ))
+
+    SMTLibScript(Seq(
+      cRefl,
+      cClass,
+      cSubstPathEquivalence
+    ))
+  }
+
+  def entails(context: List[Constraint], c: Constraint): Boolean = {
+    axioms(c::context)
+    true
+  }
 
   /**
     * SMTLib commands capturing the semantic translation of the constraint system
     * @return SMTLib script representing the semantic translation
     */
-  def axioms: SMTLibScript = {
+  def axioms(constraints: List[Constraint]): SMTLibScript = {
     // TODO: traverse program for classes, constraints for vars and fields
     val classes: List[String] = List("Nat", "Succ", "Zero")
     val variables: List[String] = List("x", "y", "z")
@@ -35,7 +143,9 @@ class SemanticEntailment(val p: Program) {
 
     generateEnumerationTypes(classes, variables, fields) ++
       staticDatatypeDeclarations ++
-      staticFunctionDeclarations
+      staticFunctionDeclarations ++
+      staticFunctionDefinitions ++
+      staticCalculusRules
   }
 
   private def generateEnumerationTypes(classes: List[String], variables: List[String], fields: List[String]): SMTLibScript =

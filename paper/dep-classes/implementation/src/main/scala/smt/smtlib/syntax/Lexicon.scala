@@ -57,6 +57,7 @@ case class SimpleSymbol(symbol: String) extends SMTLibSymbol {
   s"SimpleSymbol $symbol: nonempty, doesnt start with digit and only contains letters, digits and ~ ! @ $$ % ^ & * _ - + = < > . ?")
 
   override def format(): String = symbol
+  def +(right: SimpleSymbol): SimpleSymbol = SimpleSymbol(symbol+right.symbol)
 
   private def isAllowedChar(c: Char): Boolean = c match {
     case '~' => true
