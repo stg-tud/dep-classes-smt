@@ -1,7 +1,7 @@
 package dcc.entailment
 
 import dcc.entailment.SemanticEntailment.{Class, Field, Path, Variable}
-import dcc.syntax.{Constraint, ConstraintEntailment}
+import dcc.syntax.{Constraint, ConstraintEntailment, InstanceOf}
 import dcc.syntax.Program.Program
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.syntax.Primitives.True
@@ -188,8 +188,19 @@ class SemanticEntailment(val program: Program) {
     ))
 
   private def generateProgRules(constraintEntailments: List[ConstraintEntailment]): SMTLibScript = {
-    SMTLibScript(
-      constraintEntailments.map(_ => Assert(True))
+    val b: SMTLibSymbol = SimpleSymbol("b")
+    val p: SMTLibSymbol = SimpleSymbol("p")
+
+    SMTLibScript(constraintEntailments map {case ConstraintEntailment(x, a, InstanceOf(q, c)) =>
+      Assert(Forall(Seq(
+        SortedVar(b, Bool),
+        SortedVar(p, Path)
+      ),
+        Implies(
+          Implies(b, True), // TODO: convert a into conjunction and apply substitution to each element
+          Implies(b, Apply(functionInstanceOf, Seq(p, SimpleSymbol(c.toString))))
+        )
+      ))}
     )
   }
 }

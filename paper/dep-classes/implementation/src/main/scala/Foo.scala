@@ -1,11 +1,15 @@
 import dcc.entailment.SemanticEntailment
-import dcc.syntax.{AbstractMethodDeclaration, ConstraintEntailment, Id, PathEquivalence, Type}
+import dcc.syntax.{AbstractMethodDeclaration, ConstraintEntailment, FieldPath, Id, InstanceOf, PathEquivalence, Type}
 import smt.smtlib.SMTLibScript
 import smt.smtlib.syntax.{Assert, SimpleSymbol}
 
 object Foo extends App {
   val s = SimpleSymbol("foo")
-  val sem = new SemanticEntailment(List())
+  val sem = new SemanticEntailment(List(
+    ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Zero))), InstanceOf(Id('x), Id('Nat))),
+    AbstractMethodDeclaration(Id('prev), Id('x), List(InstanceOf(Id('x), Id('Nat))), Type(Id('y), List(InstanceOf(Id('y), Id('Nat))))),
+    ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Succ)), InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))), InstanceOf(Id('x), Id('Nat))),
+  ))
   sem.entails(List(), PathEquivalence(Id(Symbol("x")), Id(Symbol("x"))))
 
   println("------------------------------------------------")
