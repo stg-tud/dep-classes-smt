@@ -1,9 +1,10 @@
 package dcc.entailment
 
 import dcc.entailment.SemanticEntailment.{Class, Field, Path, Variable}
-import dcc.syntax.Constraint
+import dcc.syntax.{Constraint, ConstraintEntailment}
 import dcc.syntax.Program.Program
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
+import smt.smtlib.syntax.Primitives.True
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
 import smt.smtlib.syntax.{And, Apply, Assert, Bool, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar}
 
@@ -169,11 +170,14 @@ class SemanticEntailment(val program: Program) {
     val variables: List[String] = List("x", "y", "z")
     val fields: List[String] = List("f", "g", "h")
 
+    val constraintEntailments: List[ConstraintEntailment] = program.filter(_.isInstanceOf[ConstraintEntailment]).map(_.asInstanceOf[ConstraintEntailment])
+
     generateEnumerationTypes(classes, variables, fields) ++
       staticDatatypeDeclarations ++
       staticFunctionDeclarations ++
       staticFunctionDefinitions ++
-      staticCalculusRules
+      staticCalculusRules ++
+      generateProgRules(constraintEntailments)
   }
 
   private def generateEnumerationTypes(classes: List[String], variables: List[String], fields: List[String]): SMTLibScript =
@@ -182,6 +186,12 @@ class SemanticEntailment(val program: Program) {
       buildEnumerationType("Variable", variables),
       buildEnumerationType("Field", fields)
     ))
+
+  private def generateProgRules(constraintEntailments: List[ConstraintEntailment]): SMTLibScript = {
+    SMTLibScript(
+      constraintEntailments.map(_ => Assert(True))
+    )
+  }
 }
 
 object SemanticEntailment {

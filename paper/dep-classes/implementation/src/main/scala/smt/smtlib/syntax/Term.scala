@@ -55,13 +55,18 @@ case class Annotate(term: Term, attributes: Seq[Attribute]) extends Term {
 }
 
 // Sugar for core
-object True {
-  def apply(): Term = SimpleSymbol("true")
+object Primitives {
+  val True: Term = SimpleSymbol("true")
+  val False: Term = SimpleSymbol("false")
 }
 
-object False {
-  def apply(): Term = SimpleSymbol("false")
-}
+//object True {
+//  def apply(): Term = SimpleSymbol("true")
+//}
+//
+//object False {
+//  def apply(): Term = SimpleSymbol("false")
+//}
 
 object Not {
   def apply(term: Term): Term = Apply(SimpleSymbol("not"), Seq(term))
