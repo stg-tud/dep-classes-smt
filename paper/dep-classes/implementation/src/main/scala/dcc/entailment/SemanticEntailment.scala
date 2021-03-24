@@ -86,16 +86,6 @@ class SemanticEntailment(val p: Program) {
       )
     ))
 
-    // q1 === p
-    // q2 === q
-    // p1 === r
-    // p2 === s
-//    (assert (forall
-//          ((cs Bool) (q1 Path) (q2 Path) (p1 Path) (p2 Path) (x Variable))
-//          (=> (and
-//                (=> cs (pathEq (subst-path q1 x p1) (subst-path q2 x p1)))
-//                (=> cs (pathEq p2 p1)))
-//              (=> cs (pathEq (subst-path q1 x p2) (subst-path q2 x p2))))))
     val cSubstPathEquivalence: SMTLibCommand = Assert(Forall(
       Seq(
         SortedVar(a, Bool),
@@ -119,10 +109,48 @@ class SemanticEntailment(val p: Program) {
       )
     ))
 
+    val cSubstInstanceOf: SMTLibCommand = Assert(Forall(
+      Seq(
+        SortedVar(a, Bool),
+        SortedVar(p, Path),
+        SortedVar(c, Class),
+        SortedVar(r, Path),
+        SortedVar(s, Path),
+        SortedVar(x, Variable)
+      ),
+      Implies(
+        And(
+          Implies(a, Apply(functionInstanceOf, Seq(Apply(functionSubstitution, Seq(p, x, r)), c))),
+          Implies(a, Apply(functionPathEquivalence, Seq(s, r)))
+        ),
+        Implies(a, Apply(functionInstanceOf, Seq(Apply(functionSubstitution, Seq(p, x, s)), c)))
+      )
+    ))
+
+    val cSubstInstantiatedBy: SMTLibCommand = Assert(Forall(
+      Seq(
+        SortedVar(a, Bool),
+        SortedVar(p, Path),
+        SortedVar(c, Class),
+        SortedVar(r, Path),
+        SortedVar(s, Path),
+        SortedVar(x, Variable)
+      ),
+      Implies(
+        And(
+          Implies(a, Apply(functionInstantiatedBy, Seq(Apply(functionSubstitution, Seq(p, x, r)), c))),
+          Implies(a, Apply(functionPathEquivalence, Seq(s, r)))
+        ),
+        Implies(a, Apply(functionInstantiatedBy, Seq(Apply(functionSubstitution, Seq(p, x, s)), c)))
+      )
+    ))
+
     SMTLibScript(Seq(
       cRefl,
       cClass,
-      cSubstPathEquivalence
+      cSubstPathEquivalence,
+      cSubstInstanceOf,
+      cSubstInstantiatedBy
     ))
   }
 
