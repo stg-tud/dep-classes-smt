@@ -12,7 +12,8 @@ case class Decimal(dec: Double) extends SMTLibFormatter with SpecConstant {
 }
 
 case class Hexadecimal(hex: String) extends SMTLibFormatter with SpecConstant {
-  require(hex.filter(c => !c.isDigit && !aToF(c)).isEmpty, "Hexadecimals: only digits or letters from a/A to f/F")
+  require(hex.forall(c => c.isDigit || aToF(c)), "Hexadecimals: only digits or letters from a/A to f/F")
+//  require(hex.filter(c => !c.isDigit && !aToF(c)).isEmpty, "Hexadecimals: only digits or letters from a/A to f/F")
 
 //  def this(hex: Int) = this(hex.toHexString)
 
@@ -33,7 +34,8 @@ object Hexadecimal {
 }
 
 case class Binary(bin: String) extends SMTLibFormatter with SpecConstant {
-  require(bin.filter(c => c != '0' && c != '1').isEmpty, "Binary: only digits 0 or 1")
+  require(bin.forall(c => c == '0' || c == '1'), "Binary: only digits 0 or 1")
+//  require(bin.filter(c => c != '0' && c != '1').isEmpty, "Binary: only digits 0 or 1")
   override def format(): String = s"#b$bin"
 }
 
@@ -53,7 +55,7 @@ trait SMTLibSymbol extends SMTLibFormatter with SExpr with Index with Identifier
 case class SimpleSymbol(symbol: String) extends SMTLibSymbol {
   require(symbol.nonEmpty &&
     !symbol.charAt(0).isDigit &&
-    symbol.filter(c => !c.isLetterOrDigit && !isAllowedChar(c)).isEmpty,
+    symbol.forall(c => c.isLetterOrDigit || isAllowedChar(c)),
   s"SimpleSymbol $symbol: nonempty, doesnt start with digit and only contains letters, digits and ~ ! @ $$ % ^ & * _ - + = < > . ?")
 
   override def format(): String = symbol
@@ -82,7 +84,7 @@ case class SimpleSymbol(symbol: String) extends SMTLibSymbol {
 }
 
 case class QuotedSymbol(symbol: String) extends SMTLibSymbol {
-  require(symbol.filter(c => c == '|' && c == '\\').isEmpty,
+  require(symbol.forall(c => c != '|' || c != '\\'),
   s"QuotedSymbol $symbol: must not contain | or \\")
 
   override def format(): String = s"|$symbol|"

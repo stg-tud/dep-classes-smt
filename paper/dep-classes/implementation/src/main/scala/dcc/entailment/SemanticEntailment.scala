@@ -5,9 +5,9 @@ import dcc.syntax.Constraint
 import dcc.syntax.Program.Program
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{And, Apply, Assert, Bool, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
+import smt.smtlib.syntax.{And, Apply, Assert, Bool, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar}
 
-class SemanticEntailment(val p: Program) {
+class SemanticEntailment(val program: Program) {
   private val functionPathEquivalence: SMTLibSymbol = SimpleSymbol("path-equivalence")
   private val functionInstanceOf: SMTLibSymbol = SimpleSymbol("instance-of")
   private val functionInstantiatedBy: SMTLibSymbol = SimpleSymbol("instantiated-by")
