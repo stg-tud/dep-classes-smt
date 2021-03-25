@@ -7,7 +7,7 @@ import dcc.syntax.Program.Program
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.syntax.Primitives.True
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{And, Apply, Assert, Bool, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Op1, Op2, Op3, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
+import smt.smtlib.syntax.{And, Apply, Assert, Bool, CheckSat, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Op1, Op2, Op3, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
 import smt.solver.Z3Solver
 
 import scala.language.postfixOps
@@ -27,9 +27,9 @@ class SemanticEntailment(val program: Program) {
   ))
 
   private val staticFunctionDefinitions: SMTLibScript = {
-    val p: SMTLibSymbol = SimpleSymbol("p")
-    val q: SMTLibSymbol = SimpleSymbol("q")
-    val x: SMTLibSymbol = SimpleSymbol("x")
+    val p: SMTLibSymbol = SimpleSymbol("path-p")
+    val q: SMTLibSymbol = SimpleSymbol("path-q")
+    val x: SMTLibSymbol = SimpleSymbol("var-x")
 
     SMTLibScript(Seq(
       DefineFunRec(FunctionDef(
@@ -56,13 +56,13 @@ class SemanticEntailment(val program: Program) {
   }
 
   private val staticCalculusRules: SMTLibScript = {
-    val p: SMTLibSymbol = SimpleSymbol("p")
-    val q: SMTLibSymbol = SimpleSymbol("q")
-    val r: SMTLibSymbol = SimpleSymbol("r")
-    val s: SMTLibSymbol = SimpleSymbol("s")
-    val a: SMTLibSymbol = SimpleSymbol("a")
-    val c: SMTLibSymbol = SimpleSymbol("c")
-    val x: SMTLibSymbol = SimpleSymbol("x")
+    val p: SMTLibSymbol = SimpleSymbol("path-p")
+    val q: SMTLibSymbol = SimpleSymbol("path-q")
+    val r: SMTLibSymbol = SimpleSymbol("path-r")
+    val s: SMTLibSymbol = SimpleSymbol("path-s")
+    val a: SMTLibSymbol = SimpleSymbol("cs-a")
+    val c: SMTLibSymbol = SimpleSymbol("class-c")
+    val x: SMTLibSymbol = SimpleSymbol("var-x")
 
 
     val cRefl:SMTLibCommand = Assert(Forall(Seq(SortedVar(p, Path)), Apply(functionPathEquivalence, Seq(p, p))))
@@ -154,6 +154,7 @@ class SemanticEntailment(val program: Program) {
     println("--------------------------------------")
 
     val solver = new Z3Solver(smt, debug=true)
+    solver.addCommand(CheckSat)
 
     val (exit, messages) = solver.execute()
 
@@ -225,8 +226,8 @@ class SemanticEntailment(val program: Program) {
     ))
 
   private def generateProgRules(constraintEntailments: List[ConstraintEntailment]): SMTLibScript = {
-    val path: MetaPath = MetaPath("qqq")
-    val b: SMTLibSymbol = SimpleSymbol("b")
+    val path: MetaPath = MetaPath("path-p")
+    val b: SMTLibSymbol = SimpleSymbol("cs-a")
     val p: SMTLibSymbol = SimpleSymbol(path.baseName)
 
     def substituteConstraintToTerm(constraint: Constraint, x: Id): Term = constraint match {
@@ -234,9 +235,9 @@ class SemanticEntailment(val program: Program) {
       case PathEquivalence(p@Id(_), q) => Op2(functionPathEquivalence, PathToTerm(substitute(x, path, p)), PathToTerm(q))
       case PathEquivalence(p, q@Id(_)) => Op2(functionPathEquivalence, PathToTerm(p), PathToTerm(substitute(x, path, q)))
       case PathEquivalence(p, q) => Op2(functionPathEquivalence, substitutePath(PathToTerm(p), IdToSymbol(x), PathToTerm(path)), substitutePath(PathToTerm(q), IdToSymbol(x), PathToTerm(path)))
-      case InstanceOf(p@Id(_), _) => ConstraintToTerm(substitute(x, path, constraint))
+      case InstanceOf(Id(_), _) => ConstraintToTerm(substitute(x, path, constraint))
       case InstanceOf(p, cls) => Op2(functionInstanceOf, substitutePath(PathToTerm(p), IdToSymbol(x), PathToTerm(path)), IdToSymbol(cls))
-      case InstantiatedBy(p@Id(_), _) => ConstraintToTerm(substitute(x, path, constraint))
+      case InstantiatedBy(Id(_), _) => ConstraintToTerm(substitute(x, path, constraint))
       case InstantiatedBy(p, cls) => Op2(functionInstantiatedBy, substitutePath(PathToTerm(p), IdToSymbol(x), PathToTerm(path)), IdToSymbol(cls))
     }
 
