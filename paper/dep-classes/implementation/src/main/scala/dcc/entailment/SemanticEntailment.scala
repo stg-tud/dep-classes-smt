@@ -151,9 +151,13 @@ class SemanticEntailment(val program: Program) {
     val smt = axioms(c::context)
     val solver = new Z3Solver(smt, debug=true)
 
-    solver.addCommand(Assert(Not(Implies(
-      Apply(SimpleSymbol("and"), context map ConstraintToTerm),
-      ConstraintToTerm(c)
+    solver.addCommand(Assert(Not(
+      Implies(
+        if (context.isEmpty)
+          True
+        else
+          Apply(SimpleSymbol("and"), context map ConstraintToTerm),
+        ConstraintToTerm(c)
     ))))
     solver.addCommand(CheckSat)
 
@@ -176,8 +180,8 @@ class SemanticEntailment(val program: Program) {
     // TODO: what to do if there are no classes, variables or fields?
     //  will result in an z3 error: invalid datatype declaration, datatype does not have any constructors
     val classes: List[String] = getClasses
-    val variables: List[String] = extractVariableNames(constraints) // TODO: add variables/fields from program declaration
-    val fields: List[String] = extractFieldNames(constraints)
+    val variables: List[String] = getVariableNames ++ extractVariableNames(constraints) distinct
+    val fields: List[String] = getFieldNames ++ extractFieldNames(constraints) distinct
 
     val constraintEntailments: List[ConstraintEntailment] = program.filter(_.isInstanceOf[ConstraintEntailment]).map(_.asInstanceOf[ConstraintEntailment])
 
@@ -202,10 +206,20 @@ class SemanticEntailment(val program: Program) {
     case PathEquivalence(_, _) => ""
   } distinct
 
+  private def getVariableNames: List[String] = program flatMap {
+    case ConstraintEntailment(x, as, a) => x.toString :: extractVariableNames(a :: as)
+    case _ => Nil
+  } distinct
+
   private def extractVariableNames(constraints: List[Constraint]): List[String] = constraints flatMap {
     case InstanceOf(p, _) => List(p.baseName)
     case InstantiatedBy(p, _) => List(p.baseName)
-    case PathEquivalence(p, q) => p.baseName :: q.baseName :: Nil
+    case PathEquivalence(p, q) => List(p.baseName, q.baseName)
+  } distinct
+
+  private def getFieldNames: List[String] = program flatMap {
+    case ConstraintEntailment(_, as, a) => extractFieldNames(a :: as)
+    case _ => Nil
   } distinct
 
   private def extractFieldNames(constraints: List[Constraint]): List[String] = constraints flatMap {

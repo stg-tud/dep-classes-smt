@@ -9,8 +9,7 @@ object Foo extends App {
     AbstractMethodDeclaration(Id('prev), Id('x), List(InstanceOf(Id('x), Id('Nat))), Type(Id('y), List(InstanceOf(Id('y), Id('Nat))))),
     ConstraintEntailment(Id('x), List(InstanceOf(Id('x), Id('Succ)), InstanceOf(FieldPath(Id('x), Id('p)), Id('Nat))), InstanceOf(Id('x), Id('Nat))),
   ))
-  sem.entails(List(PathEquivalence(Id(Symbol("x")), FieldPath(Id(Symbol("y")), Id(Symbol("p"))) )),
-    PathEquivalence(Id(Symbol("x")), Id(Symbol("x"))))
+  sem.entails(Nil, PathEquivalence(Id(Symbol("y")), Id(Symbol("y"))))
 
   println("------------------------------------------------")
 }

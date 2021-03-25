@@ -11,7 +11,7 @@ case class IdentifierAs(identifier: Identifier, sort: Sort) extends QualifiedIde
 }
 
 case class Apply(id: QualifiedIdentifier, terms: Seq[Term]) extends Term {
-  require(terms.nonEmpty)
+  require(terms.nonEmpty, "argument terms must not be empty")
 
   override def format(): String = s"(${id.format()} ${SMTLibFormatter.format(terms)})"
 }
