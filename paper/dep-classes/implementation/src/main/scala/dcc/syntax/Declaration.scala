@@ -4,10 +4,10 @@ import Util._
 
 trait Declaration
 
-case class ConstructorDeclaration(C: Id, x: Id, as: List[Constraint]) extends Declaration {
+case class ConstructorDeclaration(cls: Id, x: Id, as: List[Constraint]) extends Declaration {
   override def toString: String = as match {
-    case Nil => s"$C($x. ϵ)"
-    case _ => s"$C($x. ${commaSeparate(as.map(_.toString))})"
+    case Nil => s"$cls($x. ϵ)"
+    case _ => s"$cls($x. ${commaSeparate(as.map(_.toString))})"
   }
 }
 

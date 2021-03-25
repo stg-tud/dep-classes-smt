@@ -2,12 +2,14 @@ package dcc.entailment
 
 import dcc.Util.substitute
 import dcc.entailment.SemanticEntailment.{Class, ConstraintToTerm, Field, IdToSymbol, Path, Variable, constructorPth, constructorVar, functionInstanceOf, functionInstantiatedBy, functionPathEquivalence, functionSubstitution, selectorField, selectorId, selectorObj}
-import dcc.syntax.{Constraint, ConstraintEntailment, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence}
+import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence, Type}
 import dcc.syntax.Program.Program
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.syntax.Primitives.True
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
 import smt.smtlib.syntax.{And, Apply, Assert, Bool, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Op2, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
+
+import scala.language.postfixOps
 
 class SemanticEntailment(val program: Program) {
   private val staticDatatypeDeclarations: SMTLibScript = SMTLibScript(Seq(
@@ -154,10 +156,9 @@ class SemanticEntailment(val program: Program) {
     * @return SMTLib script representing the semantic translation
     */
   def axioms(constraints: List[Constraint]): SMTLibScript = {
-    // TODO: traverse program for classes, constraints for vars and fields
-    val classes: List[String] = List("Nat", "Succ", "Zero")
-    val variables: List[String] = List("x", "y", "z")
-    val fields: List[String] = List("f", "g", "h")
+    val classes: List[String] = getClasses
+    val variables: List[String] = extractVariableNames(constraints)
+    val fields: List[String] = extractFieldNames(constraints)
 
     val constraintEntailments: List[ConstraintEntailment] = program.filter(_.isInstanceOf[ConstraintEntailment]).map(_.asInstanceOf[ConstraintEntailment])
 
@@ -168,6 +169,37 @@ class SemanticEntailment(val program: Program) {
       staticCalculusRules ++
       generateProgRules(constraintEntailments)
   }
+
+  private def getClasses: List[String] = program flatMap {
+    case ConstructorDeclaration(cls, _, as) => cls.toString :: extractClasses(as)
+    case ConstraintEntailment(_, as, a) => extractClasses(a::as)
+    case MethodImplementation(_, _, as, Type(_, bs), _) => extractClasses(as) ++ extractClasses(bs)
+    case AbstractMethodDeclaration(_, _, as, Type(_, bs)) => extractClasses(as) ++ extractClasses(bs)
+  } distinct
+
+  private def extractClasses(constraints: List[Constraint]): List[String] = constraints map {
+    case InstanceOf(_, cls) => cls.toString
+    case InstantiatedBy(_, cls) =>cls.toString
+    case PathEquivalence(_, _) => ""
+  } distinct
+
+  private def extractVariableNames(constraints: List[Constraint]): List[String] = constraints flatMap {
+    case InstanceOf(p, _) => List(p.baseName)
+    case InstantiatedBy(p, _) => List(p.baseName)
+    case PathEquivalence(p, q) => p.baseName :: q.baseName :: Nil
+  } distinct
+
+  private def extractFieldNames(constraints: List[Constraint]): List[String] = constraints flatMap {
+    case InstanceOf(p, _) => p.fieldNames
+    case InstantiatedBy(p, _) => p.fieldNames
+    case PathEquivalence(p, q) => p.fieldNames ++ q.fieldNames
+  } distinct
+
+//  private def extractPathNames(constraints: List[Constraint]): List[String] = constraints flatMap {
+//    case InstanceOf(p, _) => List(p.toString)
+//    case InstantiatedBy(p, _) => List(p.toString)
+//    case PathEquivalence(p, q) => p.toString :: q.toString :: Nil
+//  } distinct
 
   private def generateEnumerationTypes(classes: List[String], variables: List[String], fields: List[String]): SMTLibScript =
     SMTLibScript(Seq(

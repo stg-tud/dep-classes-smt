@@ -13,7 +13,11 @@ object Foo extends App {
 
   println("------------------------------------------------")
 
-  println(sem.axioms(Nil).format())
+  println(sem.axioms(List(
+    PathEquivalence(Id(Symbol("x")), Id(Symbol("y"))),
+    PathEquivalence(FieldPath(Id(Symbol("z")), Id(Symbol("f"))), Id(Symbol("x"))),
+    PathEquivalence(FieldPath(FieldPath(Id(Symbol("z")), Id(Symbol("g"))), Id(Symbol("f"))), Id(Symbol("y"))),
+  )).format())
 
   println("------------------------------------------------")
 }
