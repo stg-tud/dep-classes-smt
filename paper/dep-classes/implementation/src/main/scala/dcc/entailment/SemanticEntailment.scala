@@ -1,13 +1,14 @@
 package dcc.entailment
 
 import dcc.Util.substitute
-import dcc.entailment.SemanticEntailment.{Class, ConstraintToTerm, Field, IdToSymbol, Path, Variable, constructorPth, constructorVar, functionInstanceOf, functionInstantiatedBy, functionPathEquivalence, functionSubstitution, selectorField, selectorId, selectorObj}
+import dcc.entailment.SemanticEntailment.{Class, ConstraintToTerm, Field, IdToSymbol, MetaPath, Path, PathToTerm, Variable, constructorPth, constructorVar, functionInstanceOf, functionInstantiatedBy, functionPathEquivalence, functionSubstitution, selectorField, selectorId, selectorObj, substitutePath}
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence, Type}
 import dcc.syntax.Program.Program
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.syntax.Primitives.True
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{And, Apply, Assert, Bool, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Op2, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
+import smt.smtlib.syntax.{And, Apply, Assert, Bool, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Op1, Op2, Op3, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
+import smt.solver.Z3Solver
 
 import scala.language.postfixOps
 
@@ -147,7 +148,20 @@ class SemanticEntailment(val program: Program) {
   }
 
   def entails(context: List[Constraint], c: Constraint): Boolean = {
-    axioms(c::context)
+    val smt = axioms(c::context)
+
+    println(smt.format())
+    println("--------------------------------------")
+
+    val solver = new Z3Solver(smt, debug=true)
+
+    val (exit, messages) = solver.execute()
+
+    if (exit != 0)
+      messages foreach System.err.println
+    else
+      messages foreach println
+
     true
   }
 
@@ -156,8 +170,10 @@ class SemanticEntailment(val program: Program) {
     * @return SMTLib script representing the semantic translation
     */
   def axioms(constraints: List[Constraint]): SMTLibScript = {
+    // TODO: what to do if there are no classes, variables or fields?
+    //  will result in an z3 error: invalid datatype declaration, datatype does not have any constructors
     val classes: List[String] = getClasses
-    val variables: List[String] = extractVariableNames(constraints)
+    val variables: List[String] = extractVariableNames(constraints) // TODO: add variables/fields from program declaration
     val fields: List[String] = extractFieldNames(constraints)
 
     val constraintEntailments: List[ConstraintEntailment] = program.filter(_.isInstanceOf[ConstraintEntailment]).map(_.asInstanceOf[ConstraintEntailment])
@@ -209,9 +225,20 @@ class SemanticEntailment(val program: Program) {
     ))
 
   private def generateProgRules(constraintEntailments: List[ConstraintEntailment]): SMTLibScript = {
-    val path: String = "p"
+    val path: MetaPath = MetaPath("qqq")
     val b: SMTLibSymbol = SimpleSymbol("b")
-    val p: SMTLibSymbol = SimpleSymbol(path)
+    val p: SMTLibSymbol = SimpleSymbol(path.baseName)
+
+    def substituteConstraintToTerm(constraint: Constraint, x: Id): Term = constraint match {
+      case PathEquivalence(Id(_), Id(_)) => ConstraintToTerm(substitute(x, path, constraint))
+      case PathEquivalence(p@Id(_), q) => Op2(functionPathEquivalence, PathToTerm(substitute(x, path, p)), PathToTerm(q))
+      case PathEquivalence(p, q@Id(_)) => Op2(functionPathEquivalence, PathToTerm(p), PathToTerm(substitute(x, path, q)))
+      case PathEquivalence(p, q) => Op2(functionPathEquivalence, substitutePath(PathToTerm(p), IdToSymbol(x), PathToTerm(path)), substitutePath(PathToTerm(q), IdToSymbol(x), PathToTerm(path)))
+      case InstanceOf(p@Id(_), _) => ConstraintToTerm(substitute(x, path, constraint))
+      case InstanceOf(p, cls) => Op2(functionInstanceOf, substitutePath(PathToTerm(p), IdToSymbol(x), PathToTerm(path)), IdToSymbol(cls))
+      case InstantiatedBy(p@Id(_), _) => ConstraintToTerm(substitute(x, path, constraint))
+      case InstantiatedBy(p, cls) => Op2(functionInstantiatedBy, substitutePath(PathToTerm(p), IdToSymbol(x), PathToTerm(path)), IdToSymbol(cls))
+    }
 
     SMTLibScript(constraintEntailments map {
       case ConstraintEntailment(x, as, InstanceOf(y, c)) if x==y =>
@@ -222,9 +249,13 @@ class SemanticEntailment(val program: Program) {
           Implies(
             Implies(b,
               if (as.size==1)
-                ConstraintToTerm(substitute(x, Id(Symbol(path)), as.head))
+                //ConstraintToTerm(substitute(x, path, as.head))
+                //Op3(functionSubstitution, IdToSymbol(x), PathToTerm(path), ConstraintToTerm(as.head))
+                substituteConstraintToTerm(as.head, x)
               else
-                Apply(SimpleSymbol("and"), as map { constraint => ConstraintToTerm(substitute(x, Id(Symbol(path)), constraint)) })), // TODO: check if conjunction on rhs is correct: /\ (bs => a_i) === bs => /\ a_i ?
+                //Apply(SimpleSymbol("and"), as map { constraint => ConstraintToTerm(substitute(x, path, constraint)) })), // TODO: check if conjunction on rhs is correct: /\ (bs => a_i) === bs => /\ a_i ?
+                //Apply(SimpleSymbol("and"), as map { constraint => Op3(functionSubstitution, IdToSymbol(x), PathToTerm(path), ConstraintToTerm(constraint)) })),
+                Apply(SimpleSymbol("and"), as map { constraint => substituteConstraintToTerm(constraint, x)})),
             Implies(b, Apply(functionInstanceOf, Seq(p, IdToSymbol(c))))
           )
         ))
@@ -249,6 +280,12 @@ object SemanticEntailment {
   private val selectorObj: SMTLibSymbol = SimpleSymbol("obj")
   private val selectorField: SMTLibSymbol = SimpleSymbol("field")
 
+  private case class MetaPath(s: String) extends Path {
+    override def toString: String = s
+    override def baseName: String = s
+    override def fieldNames: List[String] = Nil
+  }
+
   // Sorts explicitly added in this translation.
   object Variable extends Sort {
     override def format(): String = "Variable"
@@ -269,8 +306,9 @@ object SemanticEntailment {
   def IdToSymbol(x: Id): SMTLibSymbol = SimpleSymbol(x.toString)
 
   def PathToTerm(path: Path): Term = path match {
-    case x@Id(_) => IdToSymbol(x)
+    case x@Id(_) => Op1(constructorVar, IdToSymbol(x))
     case FieldPath(p, f) => Op2(constructorPth, PathToTerm(p), IdToSymbol(f))
+    case MetaPath(p) => SimpleSymbol(p)
   }
 
   def ConstraintToTerm(constraint: Constraint): Term = constraint match {
@@ -278,4 +316,6 @@ object SemanticEntailment {
     case InstanceOf(p, c) => Op2(functionInstanceOf, PathToTerm(p), IdToSymbol(c))
     case InstantiatedBy(p, c) => Op2(functionInstantiatedBy, PathToTerm(p), IdToSymbol(c))
   }
+
+  private def substitutePath(p: Term, x: Term, q: Term): Term = Op3(functionSubstitution, p, x, q)
 }

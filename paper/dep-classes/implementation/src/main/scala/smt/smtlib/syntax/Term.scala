@@ -72,8 +72,16 @@ object Not {
   def apply(term: Term): Term = Apply(SimpleSymbol("not"), Seq(term))
 }
 
+object Op1 {
+  def apply(operation: QualifiedIdentifier, argument: Term): Term = Apply(operation, Seq(argument))
+}
+
 object Op2 {
   def apply(identifier: QualifiedIdentifier, left: Term, right: Term): Term = Apply(identifier, Seq(left, right))
+}
+
+object Op3 {
+  def apply(identifier: QualifiedIdentifier, left: Term, middle: Term, right: Term): Term = Apply(identifier, Seq(left, middle, right))
 }
 
 object Implies {
