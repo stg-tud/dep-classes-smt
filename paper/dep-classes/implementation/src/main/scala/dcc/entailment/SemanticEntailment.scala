@@ -7,7 +7,7 @@ import dcc.syntax.Program.Program
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.syntax.Primitives.True
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{And, Apply, Assert, Bool, CheckSat, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Op1, Op2, Op3, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
+import smt.smtlib.syntax.{And, Apply, Assert, Bool, CheckSat, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Not, Op1, Op2, Op3, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
 import smt.solver.Z3Solver
 
 import scala.language.postfixOps
@@ -149,21 +149,23 @@ class SemanticEntailment(val program: Program) {
 
   def entails(context: List[Constraint], c: Constraint): Boolean = {
     val smt = axioms(c::context)
-
-    println(smt.format())
-    println("--------------------------------------")
-
     val solver = new Z3Solver(smt, debug=true)
+
+    solver.addCommand(Assert(Not(Implies(
+      Apply(SimpleSymbol("and"), context map ConstraintToTerm),
+      ConstraintToTerm(c)
+    ))))
     solver.addCommand(CheckSat)
 
     val (exit, messages) = solver.execute()
 
-    if (exit != 0)
+    if (exit != 0) {
       messages foreach System.err.println
+      false
+    } else if (messages.nonEmpty && messages.head == "unsat")
+      true
     else
-      messages foreach println
-
-    true
+      false
   }
 
   /**
