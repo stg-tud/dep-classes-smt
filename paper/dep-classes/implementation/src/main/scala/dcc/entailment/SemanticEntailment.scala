@@ -12,6 +12,7 @@ import smt.solver.Z3Solver
 
 import scala.language.postfixOps
 
+// TODO: add debug flag similar to SMTSolver
 class SemanticEntailment(val program: Program) {
   private val staticDatatypeDeclarations: SMTLibScript = SMTLibScript(Seq(
     DeclareDatatype(SimpleSymbol("Path"), ConstructorDatatype(Seq(
@@ -179,6 +180,12 @@ class SemanticEntailment(val program: Program) {
   def axioms(constraints: List[Constraint]): SMTLibScript = {
     // TODO: what to do if there are no classes, variables or fields?
     //  will result in an z3 error: invalid datatype declaration, datatype does not have any constructors
+    // TODO: there will always be at least one var
+    //  no classes → dont add class datatype, no C-Prog rules will be created
+    //               as there cannot be any constraint entailment declarations in the program
+    //  no fields → dont add field datatype
+    //              alter path datatype to not include fields, can be enumeration type
+    //              alter substitution function to reflect the path change
     val classes: List[String] = getClasses
     val variables: List[String] = getVariableNames ++ extractVariableNames(constraints) distinct
     val fields: List[String] = getFieldNames ++ extractFieldNames(constraints) distinct
@@ -228,12 +235,6 @@ class SemanticEntailment(val program: Program) {
     case PathEquivalence(p, q) => p.fieldNames ++ q.fieldNames
   } distinct
 
-//  private def extractPathNames(constraints: List[Constraint]): List[String] = constraints flatMap {
-//    case InstanceOf(p, _) => List(p.toString)
-//    case InstantiatedBy(p, _) => List(p.toString)
-//    case PathEquivalence(p, q) => p.toString :: q.toString :: Nil
-//  } distinct
-
   private def generateEnumerationTypes(classes: List[String], variables: List[String], fields: List[String]): SMTLibScript =
     SMTLibScript(Seq(
       buildEnumerationType("Class", classes),
@@ -266,12 +267,9 @@ class SemanticEntailment(val program: Program) {
           Implies(
             Implies(b,
               if (as.size==1)
-                //ConstraintToTerm(substitute(x, path, as.head))
-                //Op3(functionSubstitution, IdToSymbol(x), PathToTerm(path), ConstraintToTerm(as.head))
                 substituteConstraintToTerm(as.head, x)
               else
-                //Apply(SimpleSymbol("and"), as map { constraint => ConstraintToTerm(substitute(x, path, constraint)) })), // TODO: check if conjunction on rhs is correct: /\ (bs => a_i) === bs => /\ a_i ?
-                //Apply(SimpleSymbol("and"), as map { constraint => Op3(functionSubstitution, IdToSymbol(x), PathToTerm(path), ConstraintToTerm(constraint)) })),
+                // TODO: check if conjunction on rhs is correct: /\ (bs => a_i) === bs => /\ a_i ?
                 Apply(SimpleSymbol("and"), as map { constraint => substituteConstraintToTerm(constraint, x)})),
             Implies(b, Apply(functionInstanceOf, Seq(p, IdToSymbol(c))))
           )
