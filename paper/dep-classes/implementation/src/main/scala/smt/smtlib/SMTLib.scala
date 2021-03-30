@@ -20,8 +20,10 @@ trait SMTLibCommand extends SMTLibFormatter
 case class SMTLibScript(commands: Seq[SMTLibCommand]) extends SMTLibFormatter {
   override def format(): String = SMTLibFormatter.format(commands, "\n")
   def ++(right: SMTLibScript): SMTLibScript = SMTLibScript(commands ++ right.commands)
-  def ++(right: Seq[SMTLibCommand]): SMTLibScript = SMTLibScript(commands ++ right)
+  def :++(right: Seq[SMTLibCommand]): SMTLibScript = SMTLibScript(commands ++ right)
   def ++:(left: Seq[SMTLibCommand]): SMTLibScript = SMTLibScript(left ++ commands)
+  def +:(left: SMTLibCommand): SMTLibScript = SMTLibScript(left +: commands)
+  def :+(right: SMTLibCommand): SMTLibScript = SMTLibScript(commands :+ right)
 }
 
 trait SMTLibResponse extends SMTLibFormatter

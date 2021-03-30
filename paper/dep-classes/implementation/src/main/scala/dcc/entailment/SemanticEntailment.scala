@@ -1,153 +1,19 @@
 package dcc.entailment
 
 import dcc.Util.substitute
-import dcc.entailment.SemanticEntailment.{Class, ConstraintToTerm, Field, IdToSymbol, MetaPath, Path, PathToTerm, Variable, constructorPth, constructorVar, functionInstanceOf, functionInstantiatedBy, functionPathEquivalence, functionSubstitution, selectorField, selectorId, selectorObj, substitutePath}
+import dcc.entailment.SemanticEntailment.{Class, ConstraintToTerm, Field, IdToSymbol, MetaPath, Path, PathToTerm, Variable, constructorPth, constructorVar, functionInstanceOf, functionInstantiatedBy, functionPathEquivalence, functionSubstitution, selectorField, selectorId, selectorObj, sortClass, sortField, sortPath, sortVariable, substitutePath}
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence, Type}
 import dcc.syntax.Program.Program
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.syntax.Primitives.True
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{And, Apply, Assert, Bool, CheckSat, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Not, Op1, Op2, Op3, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
+import smt.smtlib.syntax.{And, Apply, Assert, Bool, CheckSat, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Not, Op1, Op2, Op3, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
 import smt.solver.Z3Solver
 
 import scala.language.postfixOps
 
 // TODO: add debug flag similar to SMTSolver
 class SemanticEntailment(val program: Program) {
-  private val staticDatatypeDeclarations: SMTLibScript = SMTLibScript(Seq(
-    DeclareDatatype(SimpleSymbol("Path"), ConstructorDatatype(Seq(
-      ConstructorDec(constructorVar, Seq(SelectorDec(selectorId, Variable))),
-      ConstructorDec(constructorPth, Seq(SelectorDec(selectorObj, Path), SelectorDec(selectorField, Field)))
-    )))
-  ))
-
-  private val staticFunctionDeclarations: SMTLibScript = SMTLibScript(Seq(
-    DeclareFun(functionInstanceOf, Seq(Path, Class), Bool),
-    DeclareFun(functionInstantiatedBy, Seq(Path, Class), Bool),
-    DeclareFun(functionPathEquivalence, Seq(Path, Path), Bool)
-  ))
-
-  private val staticFunctionDefinitions: SMTLibScript = {
-    val p: SMTLibSymbol = SimpleSymbol("path-p")
-    val q: SMTLibSymbol = SimpleSymbol("path-q")
-    val x: SMTLibSymbol = SimpleSymbol("var-x")
-
-    SMTLibScript(Seq(
-      DefineFunRec(FunctionDef(
-        functionSubstitution,
-        Seq(
-          SortedVar(p, Path),
-          SortedVar(x, Variable),
-          SortedVar(q, Path)
-        ),
-        Path,
-        Ite(
-          is(constructorVar, p),
-          Ite(Eq(x, selector(selectorId, p)), q, p),
-          Apply(
-            constructorPth,
-            Seq(
-              Apply(
-                functionSubstitution,
-                Seq(selector(selectorObj, p), x, q)),
-              selector(selectorField, p)))
-        )
-      ))
-    ))
-  }
-
-  private val staticCalculusRules: SMTLibScript = {
-    val p: SMTLibSymbol = SimpleSymbol("path-p")
-    val q: SMTLibSymbol = SimpleSymbol("path-q")
-    val r: SMTLibSymbol = SimpleSymbol("path-r")
-    val s: SMTLibSymbol = SimpleSymbol("path-s")
-    val a: SMTLibSymbol = SimpleSymbol("cs-a")
-    val c: SMTLibSymbol = SimpleSymbol("class-c")
-    val x: SMTLibSymbol = SimpleSymbol("var-x")
-
-
-    val cRefl:SMTLibCommand = Assert(Forall(Seq(SortedVar(p, Path)), Apply(functionPathEquivalence, Seq(p, p))))
-
-    val cClass: SMTLibCommand = Assert(Forall(
-      Seq(
-        SortedVar(a, Bool),
-        SortedVar(p, Path),
-        SortedVar(c, Class)
-      ),
-      Implies(
-        Implies(a, Apply(functionInstantiatedBy, Seq(p, c))),
-        Implies(a, Apply(functionInstanceOf, Seq(p, c)))
-      )
-    ))
-
-    val cSubstPathEquivalence: SMTLibCommand = Assert(Forall(
-      Seq(
-        SortedVar(a, Bool),
-        SortedVar(p, Path),
-        SortedVar(q, Path),
-        SortedVar(r, Path),
-        SortedVar(s, Path),
-        SortedVar(x, Variable)
-      ),
-      Implies(
-        And(
-          Implies(a, Apply(functionPathEquivalence, Seq(
-            Apply(functionSubstitution, Seq(p, x, r)),
-            Apply(functionSubstitution, Seq(q, x, r))))),
-          Implies(a, Apply(functionPathEquivalence, Seq(s, r)))
-        ),
-        Implies(a, Apply(functionPathEquivalence, Seq(
-          Apply(functionSubstitution, Seq(p, x, s)),
-          Apply(functionSubstitution, Seq(q, x, s))
-        )))
-      )
-    ))
-
-    val cSubstInstanceOf: SMTLibCommand = Assert(Forall(
-      Seq(
-        SortedVar(a, Bool),
-        SortedVar(p, Path),
-        SortedVar(c, Class),
-        SortedVar(r, Path),
-        SortedVar(s, Path),
-        SortedVar(x, Variable)
-      ),
-      Implies(
-        And(
-          Implies(a, Apply(functionInstanceOf, Seq(Apply(functionSubstitution, Seq(p, x, r)), c))),
-          Implies(a, Apply(functionPathEquivalence, Seq(s, r)))
-        ),
-        Implies(a, Apply(functionInstanceOf, Seq(Apply(functionSubstitution, Seq(p, x, s)), c)))
-      )
-    ))
-
-    val cSubstInstantiatedBy: SMTLibCommand = Assert(Forall(
-      Seq(
-        SortedVar(a, Bool),
-        SortedVar(p, Path),
-        SortedVar(c, Class),
-        SortedVar(r, Path),
-        SortedVar(s, Path),
-        SortedVar(x, Variable)
-      ),
-      Implies(
-        And(
-          Implies(a, Apply(functionInstantiatedBy, Seq(Apply(functionSubstitution, Seq(p, x, r)), c))),
-          Implies(a, Apply(functionPathEquivalence, Seq(s, r)))
-        ),
-        Implies(a, Apply(functionInstantiatedBy, Seq(Apply(functionSubstitution, Seq(p, x, s)), c)))
-      )
-    ))
-
-    SMTLibScript(Seq(
-      cRefl,
-      cClass,
-      cSubstPathEquivalence,
-      cSubstInstanceOf,
-      cSubstInstantiatedBy
-    ))
-  }
-
   def entails(context: List[Constraint], c: Constraint): Boolean = {
     val smt = axioms(c::context)
     val solver = new Z3Solver(smt, debug=true)
@@ -178,26 +44,27 @@ class SemanticEntailment(val program: Program) {
     * @return SMTLib script representing the semantic translation
     */
   def axioms(constraints: List[Constraint]): SMTLibScript = {
-    // TODO: what to do if there are no classes, variables or fields?
-    //  will result in an z3 error: invalid datatype declaration, datatype does not have any constructors
-    // TODO: there will always be at least one var
-    //  no classes → dont add class datatype, no C-Prog rules will be created
-    //               as there cannot be any constraint entailment declarations in the program
-    //  no fields → dont add field datatype
-    //              alter path datatype to not include fields, can be enumeration type
-    //              alter substitution function to reflect the path change
     val classes: List[String] = getClasses
     val variables: List[String] = getVariableNames ++ extractVariableNames(constraints) distinct
     val fields: List[String] = getFieldNames ++ extractFieldNames(constraints) distinct
 
     val constraintEntailments: List[ConstraintEntailment] = program.filter(_.isInstanceOf[ConstraintEntailment]).map(_.asInstanceOf[ConstraintEntailment])
 
-    generateEnumerationTypes(classes, variables, fields) ++
-      staticDatatypeDeclarations ++
-      staticFunctionDeclarations ++
-      staticFunctionDefinitions ++
-      staticCalculusRules ++
-      generateProgRules(constraintEntailments)
+    val pathDatatype = generatePathDatatype(fields.nonEmpty)
+
+    val sorts =
+      if (pathDatatype.isDefined)
+        generateEnumerationTypes(classes, variables, fields) :+ pathDatatype.get
+      else
+        generateEnumerationTypes(classes, variables, fields)
+
+    val functions: SMTLibScript = generateFunctionDeclarations(pathDatatype.isDefined) :+
+      generateSubstitutionFunction(pathDatatype.isDefined)
+
+    sorts ++
+      functions ++
+      generateCalculusRules(pathDatatype.isDefined) ++
+      generateProgRules(constraintEntailments, pathDatatype.isDefined)
   }
 
   private def getClasses: List[String] = program flatMap {
@@ -235,14 +102,192 @@ class SemanticEntailment(val program: Program) {
     case PathEquivalence(p, q) => p.fieldNames ++ q.fieldNames
   } distinct
 
-  private def generateEnumerationTypes(classes: List[String], variables: List[String], fields: List[String]): SMTLibScript =
+  private def generateEnumerationTypes(classes: List[String], variables: List[String], fields: List[String]): SMTLibScript = {
+    if (classes.isEmpty && fields.isEmpty) {
+      //  no classes → don't add class datatype
+      //  no fields → don't add field datatype
+      SMTLibScript(Seq(buildEnumerationType(sortVariable, variables)))
+    }
+    else if ( classes.isEmpty ) {
+      //  no classes → don't add class datatype
+      SMTLibScript(Seq(
+        buildEnumerationType(sortVariable, variables),
+        buildEnumerationType(sortField, fields)
+      ))
+    }
+    else if (fields.isEmpty) {
+      //  no fields → don't add field datatype
+      SMTLibScript(Seq(
+        buildEnumerationType(sortClass, classes),
+        buildEnumerationType(sortVariable, variables)
+      ))
+    }
+    else {
+      SMTLibScript(Seq(
+        buildEnumerationType(sortClass, classes),
+        buildEnumerationType(sortVariable, variables),
+        buildEnumerationType(sortField, fields)
+      ))
+    }
+  }
+
+  private def generatePathDatatype(fields: Boolean): Option[SMTLibCommand] = if (fields) {
+    Some(DeclareDatatype(SimpleSymbol(sortPath), ConstructorDatatype(Seq(
+      ConstructorDec(constructorVar, Seq(SelectorDec(selectorId, Variable))),
+      ConstructorDec(constructorPth, Seq(SelectorDec(selectorObj, Path), SelectorDec(selectorField, Field)))
+    ))))
+  } else {
+    None
+  }
+
+  private def generateFunctionDeclarations(isPathDefined: Boolean): SMTLibScript = {
+    val sort: Sort = if (isPathDefined) Path else Variable
+
     SMTLibScript(Seq(
-      buildEnumerationType("Class", classes),
-      buildEnumerationType("Variable", variables),
-      buildEnumerationType("Field", fields)
+      DeclareFun(functionInstanceOf, Seq(sort, Class), Bool),
+      DeclareFun(functionInstantiatedBy, Seq(sort, Class), Bool),
+      DeclareFun(functionPathEquivalence, Seq(sort, sort), Bool)
+    ))
+  }
+
+  private def generateSubstitutionFunction(isPathDefined: Boolean): SMTLibCommand = {
+    val p: SMTLibSymbol = SimpleSymbol("path-p")
+    val q: SMTLibSymbol = SimpleSymbol("path-q")
+    val x: SMTLibSymbol = SimpleSymbol("var-x")
+
+    if (isPathDefined) {
+      DefineFunRec(FunctionDef(
+        functionSubstitution,
+        Seq(
+          SortedVar(p, Path),
+          SortedVar(x, Variable),
+          SortedVar(q, Path)
+        ),
+        Path,
+        Ite(
+          is(constructorVar, p),
+          Ite(Eq(x, selector(selectorId, p)), q, p),
+          Apply(
+            constructorPth,
+            Seq(
+              Apply(
+                functionSubstitution,
+                Seq(selector(selectorObj, p), x, q)),
+              selector(selectorField, p)))
+        )
+      ))
+    } else {
+      DefineFun(FunctionDef(
+        functionSubstitution,
+        Seq(
+          SortedVar(p, Variable),
+          SortedVar(x, Variable),
+          SortedVar(q, Variable)
+        ),
+        Variable,
+        Ite(Eq(x, p), q, p)
+      ))
+    }
+  }
+
+  private def generateCalculusRules(isPathDefined: Boolean): SMTLibScript = {
+    val sort: Sort = if (isPathDefined) Path else Variable
+
+    val p: SMTLibSymbol = SimpleSymbol("path-p")
+    val q: SMTLibSymbol = SimpleSymbol("path-q")
+    val r: SMTLibSymbol = SimpleSymbol("path-r")
+    val s: SMTLibSymbol = SimpleSymbol("path-s")
+    val a: SMTLibSymbol = SimpleSymbol("cs-a")
+    val c: SMTLibSymbol = SimpleSymbol("class-c")
+    val x: SMTLibSymbol = SimpleSymbol("var-x")
+
+
+    val cRefl:SMTLibCommand = Assert(Forall(Seq(SortedVar(p, sort)), Apply(functionPathEquivalence, Seq(p, p))))
+
+    val cClass: SMTLibCommand = Assert(Forall(
+      Seq(
+        SortedVar(a, Bool),
+        SortedVar(p, sort),
+        SortedVar(c, Class)
+      ),
+      Implies(
+        Implies(a, Apply(functionInstantiatedBy, Seq(p, c))),
+        Implies(a, Apply(functionInstanceOf, Seq(p, c)))
+      )
     ))
 
-  private def generateProgRules(constraintEntailments: List[ConstraintEntailment]): SMTLibScript = {
+    val cSubstPathEquivalence: SMTLibCommand = Assert(Forall(
+      Seq(
+        SortedVar(a, Bool),
+        SortedVar(p, sort),
+        SortedVar(q, sort),
+        SortedVar(r, sort),
+        SortedVar(s, sort),
+        SortedVar(x, Variable)
+      ),
+      Implies(
+        And(
+          Implies(a, Apply(functionPathEquivalence, Seq(
+            Apply(functionSubstitution, Seq(p, x, r)),
+            Apply(functionSubstitution, Seq(q, x, r))))),
+          Implies(a, Apply(functionPathEquivalence, Seq(s, r)))
+        ),
+        Implies(a, Apply(functionPathEquivalence, Seq(
+          Apply(functionSubstitution, Seq(p, x, s)),
+          Apply(functionSubstitution, Seq(q, x, s))
+        )))
+      )
+    ))
+
+    val cSubstInstanceOf: SMTLibCommand = Assert(Forall(
+      Seq(
+        SortedVar(a, Bool),
+        SortedVar(p, sort),
+        SortedVar(c, Class),
+        SortedVar(r, sort),
+        SortedVar(s, sort),
+        SortedVar(x, Variable)
+      ),
+      Implies(
+        And(
+          Implies(a, Apply(functionInstanceOf, Seq(Apply(functionSubstitution, Seq(p, x, r)), c))),
+          Implies(a, Apply(functionPathEquivalence, Seq(s, r)))
+        ),
+        Implies(a, Apply(functionInstanceOf, Seq(Apply(functionSubstitution, Seq(p, x, s)), c)))
+      )
+    ))
+
+    val cSubstInstantiatedBy: SMTLibCommand = Assert(Forall(
+      Seq(
+        SortedVar(a, Bool),
+        SortedVar(p, sort),
+        SortedVar(c, Class),
+        SortedVar(r, sort),
+        SortedVar(s, sort),
+        SortedVar(x, Variable)
+      ),
+      Implies(
+        And(
+          Implies(a, Apply(functionInstantiatedBy, Seq(Apply(functionSubstitution, Seq(p, x, r)), c))),
+          Implies(a, Apply(functionPathEquivalence, Seq(s, r)))
+        ),
+        Implies(a, Apply(functionInstantiatedBy, Seq(Apply(functionSubstitution, Seq(p, x, s)), c)))
+      )
+    ))
+
+    SMTLibScript(Seq(
+      cRefl,
+      cClass,
+      cSubstPathEquivalence,
+      cSubstInstanceOf,
+      cSubstInstantiatedBy
+    ))
+  }
+
+
+
+  private def generateProgRules(constraintEntailments: List[ConstraintEntailment], isPathDefined: Boolean): SMTLibScript = {
+    val sort: Sort = if (isPathDefined) Path else Variable
     val path: MetaPath = MetaPath("path-p")
     val b: SMTLibSymbol = SimpleSymbol("cs-a")
     val p: SMTLibSymbol = SimpleSymbol(path.baseName)
@@ -262,7 +307,7 @@ class SemanticEntailment(val program: Program) {
       case ConstraintEntailment(x, as, InstanceOf(y, c)) if x==y =>
         Assert(Forall(Seq(
           SortedVar(b, Bool),
-          SortedVar(p, Path)
+          SortedVar(p, sort)
         ),
           Implies(
             Implies(b,
@@ -280,6 +325,12 @@ class SemanticEntailment(val program: Program) {
 }
 
 object SemanticEntailment {
+  // Sort names
+  private val sortClass: String = "Class"
+  private val sortVariable: String = "Variable"
+  private val sortField: String = "Field"
+  private val sortPath: String = "Path"
+
   // Function names
   private val functionPathEquivalence: SMTLibSymbol = SimpleSymbol("path-equivalence")
   private val functionInstanceOf: SMTLibSymbol = SimpleSymbol("instance-of")
