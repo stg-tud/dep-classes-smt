@@ -15,7 +15,7 @@ import scala.language.postfixOps
 // TODO: add debug flag similar to SMTSolver
 class SemanticEntailment(val program: Program) {
   def entails(context: List[Constraint], c: Constraint): Boolean = {
-    val smt = axioms(c::context)
+    val (smt, isPathDefined) = axioms(c::context)
     val solver = new Z3Solver(smt, debug=true)
 
     solver.addCommand(Assert(Not(
@@ -23,8 +23,8 @@ class SemanticEntailment(val program: Program) {
         if (context.isEmpty)
           True
         else
-          Apply(SimpleSymbol("and"), context map ConstraintToTerm),
-        ConstraintToTerm(c)
+          Apply(SimpleSymbol("and"), context map {c => ConstraintToTerm(c, isPathDefined)}),
+        ConstraintToTerm(c, isPathDefined)
     ))))
     solver.addCommand(CheckSat)
 
@@ -43,7 +43,8 @@ class SemanticEntailment(val program: Program) {
     * SMTLib commands capturing the semantic translation of the constraint system
     * @return SMTLib script representing the semantic translation
     */
-  def axioms(constraints: List[Constraint]): SMTLibScript = {
+  def axioms(constraints: List[Constraint]): (SMTLibScript, Boolean) = {
+    // TODO: Change this to be able to determine if the path datatype is defined without the pair return type
     val classes: List[String] = getClasses
     val variables: List[String] = getVariableNames ++ extractVariableNames(constraints) distinct
     val fields: List[String] = getFieldNames ++ extractFieldNames(constraints) distinct
@@ -58,13 +59,13 @@ class SemanticEntailment(val program: Program) {
       else
         generateEnumerationTypes(classes, variables, fields)
 
-    val functions: SMTLibScript = generateFunctionDeclarations(pathDatatype.isDefined) :+
+    val functions: SMTLibScript = generateFunctionDeclarations(pathDatatype.isDefined, classes.nonEmpty) :+
       generateSubstitutionFunction(pathDatatype.isDefined)
 
-    sorts ++
+    (sorts ++
       functions ++
-      generateCalculusRules(pathDatatype.isDefined) ++
-      generateProgRules(constraintEntailments, pathDatatype.isDefined)
+      generateCalculusRules(pathDatatype.isDefined, classes.nonEmpty) ++
+      generateProgRules(constraintEntailments, pathDatatype.isDefined), pathDatatype.isDefined)
   }
 
   private def getClasses: List[String] = program flatMap {
@@ -140,14 +141,17 @@ class SemanticEntailment(val program: Program) {
     None
   }
 
-  private def generateFunctionDeclarations(isPathDefined: Boolean): SMTLibScript = {
+  private def generateFunctionDeclarations(isPathDefined: Boolean, isClassDefined: Boolean): SMTLibScript = {
     val sort: Sort = if (isPathDefined) Path else Variable
 
-    SMTLibScript(Seq(
-      DeclareFun(functionInstanceOf, Seq(sort, Class), Bool),
-      DeclareFun(functionInstantiatedBy, Seq(sort, Class), Bool),
-      DeclareFun(functionPathEquivalence, Seq(sort, sort), Bool)
-    ))
+    if (isClassDefined)
+      SMTLibScript(Seq(
+        DeclareFun(functionInstanceOf, Seq(sort, Class), Bool),
+        DeclareFun(functionInstantiatedBy, Seq(sort, Class), Bool),
+        DeclareFun(functionPathEquivalence, Seq(sort, sort), Bool)
+      ))
+    else
+      SMTLibScript(Seq(DeclareFun(functionPathEquivalence, Seq(sort, sort), Bool)))
   }
 
   private def generateSubstitutionFunction(isPathDefined: Boolean): SMTLibCommand = {
@@ -190,7 +194,7 @@ class SemanticEntailment(val program: Program) {
     }
   }
 
-  private def generateCalculusRules(isPathDefined: Boolean): SMTLibScript = {
+  private def generateCalculusRules(isPathDefined: Boolean, isClassDefined: Boolean): SMTLibScript = {
     val sort: Sort = if (isPathDefined) Path else Variable
 
     val p: SMTLibSymbol = SimpleSymbol("path-p")
@@ -275,13 +279,19 @@ class SemanticEntailment(val program: Program) {
       )
     ))
 
-    SMTLibScript(Seq(
-      cRefl,
-      cClass,
-      cSubstPathEquivalence,
-      cSubstInstanceOf,
-      cSubstInstantiatedBy
-    ))
+    if (isClassDefined)
+      SMTLibScript(Seq(
+        cRefl,
+        cClass,
+        cSubstPathEquivalence,
+        cSubstInstanceOf,
+        cSubstInstantiatedBy
+      ))
+    else
+      SMTLibScript(Seq(
+        cRefl,
+        cSubstPathEquivalence
+      ))
   }
 
 
@@ -293,14 +303,14 @@ class SemanticEntailment(val program: Program) {
     val p: SMTLibSymbol = SimpleSymbol(path.baseName)
 
     def substituteConstraintToTerm(constraint: Constraint, x: Id): Term = constraint match {
-      case PathEquivalence(Id(_), Id(_)) => ConstraintToTerm(substitute(x, path, constraint))
-      case PathEquivalence(p@Id(_), q) => Op2(functionPathEquivalence, PathToTerm(substitute(x, path, p)), PathToTerm(q))
-      case PathEquivalence(p, q@Id(_)) => Op2(functionPathEquivalence, PathToTerm(p), PathToTerm(substitute(x, path, q)))
-      case PathEquivalence(p, q) => Op2(functionPathEquivalence, substitutePath(PathToTerm(p), IdToSymbol(x), PathToTerm(path)), substitutePath(PathToTerm(q), IdToSymbol(x), PathToTerm(path)))
-      case InstanceOf(Id(_), _) => ConstraintToTerm(substitute(x, path, constraint))
-      case InstanceOf(p, cls) => Op2(functionInstanceOf, substitutePath(PathToTerm(p), IdToSymbol(x), PathToTerm(path)), IdToSymbol(cls))
-      case InstantiatedBy(Id(_), _) => ConstraintToTerm(substitute(x, path, constraint))
-      case InstantiatedBy(p, cls) => Op2(functionInstantiatedBy, substitutePath(PathToTerm(p), IdToSymbol(x), PathToTerm(path)), IdToSymbol(cls))
+      case PathEquivalence(Id(_), Id(_)) => ConstraintToTerm(substitute(x, path, constraint), isPathDefined)
+      case PathEquivalence(p@Id(_), q) => Op2(functionPathEquivalence, PathToTerm(substitute(x, path, p), isPathDefined), PathToTerm(q, isPathDefined))
+      case PathEquivalence(p, q@Id(_)) => Op2(functionPathEquivalence, PathToTerm(p, isPathDefined), PathToTerm(substitute(x, path, q), isPathDefined))
+      case PathEquivalence(p, q) => Op2(functionPathEquivalence, substitutePath(PathToTerm(p, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)), substitutePath(PathToTerm(q, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)))
+      case InstanceOf(Id(_), _) => ConstraintToTerm(substitute(x, path, constraint), isPathDefined)
+      case InstanceOf(p, cls) => Op2(functionInstanceOf, substitutePath(PathToTerm(p, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)), IdToSymbol(cls))
+      case InstantiatedBy(Id(_), _) => ConstraintToTerm(substitute(x, path, constraint), isPathDefined)
+      case InstantiatedBy(p, cls) => Op2(functionInstantiatedBy, substitutePath(PathToTerm(p, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)), IdToSymbol(cls))
     }
 
     SMTLibScript(constraintEntailments map {
@@ -371,16 +381,16 @@ object SemanticEntailment {
 
   def IdToSymbol(x: Id): SMTLibSymbol = SimpleSymbol(x.toString)
 
-  def PathToTerm(path: Path): Term = path match {
-    case x@Id(_) => Op1(constructorVar, IdToSymbol(x))
-    case FieldPath(p, f) => Op2(constructorPth, PathToTerm(p), IdToSymbol(f))
+  def PathToTerm(path: Path, isPathDefined: Boolean): Term = path match {
+    case x@Id(_) => if (isPathDefined) Op1(constructorVar, IdToSymbol(x)) else IdToSymbol(x)
+    case FieldPath(p, f) => Op2(constructorPth, PathToTerm(p, isPathDefined), IdToSymbol(f))
     case MetaPath(p) => SimpleSymbol(p)
   }
 
-  def ConstraintToTerm(constraint: Constraint): Term = constraint match {
-    case PathEquivalence(p, q) => Op2(functionPathEquivalence, PathToTerm(p), PathToTerm(q))
-    case InstanceOf(p, c) => Op2(functionInstanceOf, PathToTerm(p), IdToSymbol(c))
-    case InstantiatedBy(p, c) => Op2(functionInstantiatedBy, PathToTerm(p), IdToSymbol(c))
+  def ConstraintToTerm(constraint: Constraint, isPathDefined: Boolean): Term = constraint match {
+    case PathEquivalence(p, q) => Op2(functionPathEquivalence, PathToTerm(p, isPathDefined), PathToTerm(q, isPathDefined))
+    case InstanceOf(p, c) => Op2(functionInstanceOf, PathToTerm(p, isPathDefined), IdToSymbol(c))
+    case InstantiatedBy(p, c) => Op2(functionInstantiatedBy, PathToTerm(p, isPathDefined), IdToSymbol(c))
   }
 
   private def substitutePath(p: Term, x: Term, q: Term): Term = Op3(functionSubstitution, p, x, q)

@@ -12,4 +12,7 @@ object Foo extends App {
   sem.entails(Nil, PathEquivalence(Id(Symbol("y")), Id(Symbol("y"))))
 
   println("------------------------------------------------")
+
+  val sem2 = new SemanticEntailment(Nil)
+  sem2.entails(Nil, PathEquivalence(Id(Symbol("y")), Id(Symbol("y"))))
 }
