@@ -39,6 +39,8 @@ class SemanticEntailment(val program: Program) {
       false
   }
 
+  def entails(context: List[Constraint], constraints: List[Constraint]): Boolean = constraints.forall(entails(context, _))
+
   /**
     * SMTLib commands capturing the semantic translation of the constraint system
     * @return SMTLib script representing the semantic translation
