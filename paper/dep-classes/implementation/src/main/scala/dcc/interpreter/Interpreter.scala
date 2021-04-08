@@ -2,12 +2,12 @@ package dcc.interpreter
 
 import dcc.DCC.{HC, Heap, OC, Obj, classInProgram}
 import dcc.Util.{alphaRename, substitute}
-import dcc.entailment.SemanticEntailment
+import dcc.entailment.Entailment
 import dcc.syntax.Program.Program
-import dcc.syntax._
+import dcc.syntax.{Constraint, Expression, FieldAccess, FieldPath, Id, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
 
 // TODO: define general entailment trait
-class Interpreter(program: Program, entailment: SemanticEntailment) {
+class Interpreter(program: Program, entailment: Entailment) {
   // TODO: change return type to Either or Option?
   def execute(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
     case Id(_) => (heap, expr) // variables are values

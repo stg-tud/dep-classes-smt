@@ -13,9 +13,9 @@ import smt.solver.Z3Solver
 import scala.language.postfixOps
 
 // TODO: add debug flag similar to SMTSolver
-class SemanticEntailment(val program: Program) {
-  def entails(context: List[Constraint], c: Constraint): Boolean = {
-    val (smt, isPathDefined) = axioms(c::context)
+class SemanticEntailment(val program: Program) extends Entailment {
+  override def entails(context: List[Constraint], constraint: Constraint): Boolean = {
+    val (smt, isPathDefined) = axioms(constraint::context)
     val solver = new Z3Solver(smt, debug=true)
 
     solver.addCommand(Assert(Not(
@@ -24,7 +24,7 @@ class SemanticEntailment(val program: Program) {
           True
         else
           Apply(SimpleSymbol("and"), context map {c => ConstraintToTerm(c, isPathDefined)}),
-        ConstraintToTerm(c, isPathDefined)
+        ConstraintToTerm(constraint, isPathDefined)
     ))))
     solver.addCommand(CheckSat)
 
@@ -39,7 +39,7 @@ class SemanticEntailment(val program: Program) {
       false
   }
 
-  def entails(context: List[Constraint], constraints: List[Constraint]): Boolean = constraints.forall(entails(context, _))
+  override def entails(context: List[Constraint], constraints: List[Constraint]): Boolean = constraints.forall(entails(context, _))
 
   /**
     * SMTLib commands capturing the semantic translation of the constraint system
