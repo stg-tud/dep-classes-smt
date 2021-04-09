@@ -1,8 +1,10 @@
 package dcc.types
 
 import dcc.Util.substitute
-import dcc.syntax.{AbstractMethodDeclaration, Constraint, Declaration, Expression, Id, MethodImplementation}
+import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, Id, InstanceOf, MethodImplementation}
 import dcc.syntax.Program.Program
+
+import scala.language.postfixOps
 
 trait Checker {
   val program: Program
@@ -30,7 +32,17 @@ trait Checker {
         (substitute(xImpl, x, a), substitute(yImpl, y, b)) :: rst
       case (_, rst) => rst}
 
-  def methods: List[Id] = program.flatMap(methodName).distinct
+  def classes: List[Id] = (program flatMap className) distinct
+
+  // TODO: add search for instance of for constraint entailment second param?
+  // TODO: search for class names in all constraints?
+  private def className(d: Declaration): Option[Id] = d match {
+    case ConstructorDeclaration(cls, _, _) => Some(cls)
+    case ConstraintEntailment(_, _, InstanceOf(_, cls)) => Some(cls)
+    case _ => None
+  }
+
+  def methods: List[Id] = program flatMap methodName distinct
 
   private def methodName(d: Declaration): Option[Id] = d match {
     case AbstractMethodDeclaration(m, _, _, _) => Some(m)
