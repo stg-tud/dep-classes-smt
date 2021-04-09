@@ -1,7 +1,7 @@
 package dcc
 
 import dcc.syntax.Program.Program
-import dcc.syntax.{Constraint, ConstructorDeclaration, FieldPath, Id, InstantiatedBy, PathEquivalence}
+import dcc.syntax.{Constraint, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence}
 
 import scala.annotation.tailrec
 
@@ -29,20 +29,17 @@ object DCC {
     case _ :: rst => classInProgram(Cls, rst)
   }
 
-//  // Method Type
-//  private def mType(m: Id, x: Id, y: Id): List[(List[Constraint], List[Constraint])] =
-//    P.foldRight(Nil: List[(List[Constraint], List[Constraint])]){
-//      case (AbstractMethodDeclaration(`m`, `x`, a, Type(`y`, b)), rst) => (a, b) :: rst
-//      case (MethodImplementation(`m`, `x`, a, Type(`y`, b), _), rst) => (a, b) :: rst
-//      case (_, rst) => rst}
-//
-//  // MType where the bound variables of declared argument and return type constraints are
-//  // substituted with given variables
-//  private def mTypeSubst(m: Id, x: Id, y: Id): List[(List[Constraint], List[Constraint])] =
-//    P.foldRight(Nil: List[(List[Constraint], List[Constraint])]){
-//      case (AbstractMethodDeclaration(`m`, xDecl, a, Type(yDecl, b)), rst) =>
-//        (substitute(xDecl, x, a), substitute(yDecl, y, b)) :: rst
-//      case (MethodImplementation(`m`, xImpl, a, Type(yImpl, b), _), rst) =>
-//        (substitute(xImpl, x, a), substitute(yImpl, y, b)) :: rst
-//      case (_, rst) => rst}
+  def FV(constraints: List[Constraint]): List[Id] = constraints.flatMap(FV).distinct
+
+  def FV(constraint: Constraint): List[Id] = constraint match {
+    case PathEquivalence(p, q) => variableName(p) :: variableName(q) :: Nil
+    case InstanceOf(p, _) => variableName(p) :: Nil
+    case InstantiatedBy(p, _) => variableName(p) :: Nil
+  }
+
+  @tailrec
+  private def variableName(p: Path): Id = p match {
+    case x@Id(_) => x
+    case FieldPath(q, _) => variableName(q)
+  }
 }
