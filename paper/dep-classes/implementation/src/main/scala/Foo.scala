@@ -1,5 +1,6 @@
 import dcc.entailment.SemanticEntailment
 import dcc.syntax._
+import dcc.types.Type
 import smt.smtlib.syntax._
 
 object Foo extends App {

@@ -1,5 +1,8 @@
 package dcc.syntax
 
+import dcc.types.Type
+import scala.language.implicitConversions
+
 object Util {
   def commaSeparate(l: List[Any]): String = l.foldRight(""){(x, xs) => s"$x, $xs"}.dropRight(2)
 

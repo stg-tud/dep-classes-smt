@@ -1,6 +1,7 @@
 package dcc.syntax
 
 import Util._
+import dcc.types.Type
 
 trait Declaration
 

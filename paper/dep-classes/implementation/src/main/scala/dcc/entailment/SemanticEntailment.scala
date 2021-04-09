@@ -2,8 +2,9 @@ package dcc.entailment
 
 import dcc.Util.substitute
 import dcc.entailment.SemanticEntailment.{Class, ConstraintToTerm, Field, IdToSymbol, MetaPath, Path, PathToTerm, Variable, constructorPth, constructorVar, functionInstanceOf, functionInstantiatedBy, functionPathEquivalence, functionSubstitution, selectorField, selectorId, selectorObj, sortClass, sortField, sortPath, sortVariable, substitutePath}
-import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence, Type}
+import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence}
 import dcc.syntax.Program.Program
+import dcc.types.Type
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.syntax.Primitives.True
 import smt.smtlib.{SMTLibCommand, SMTLibScript}

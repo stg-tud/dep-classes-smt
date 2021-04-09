@@ -1,6 +1,7 @@
-package dcc.syntax
+package dcc.types
 
-import Util.commaSeparate
+import dcc.syntax.Util.commaSeparate
+import dcc.syntax.{Constraint, Id}
 
 case class Type(x: Id, constraints: List[Constraint]) {
   override def toString: String = s"[$x. ${commaSeparate(constraints)}]"
