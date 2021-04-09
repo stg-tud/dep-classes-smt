@@ -209,7 +209,7 @@ class SemanticEntailment(val program: Program) extends Entailment {
     val x: SMTLibSymbol = SimpleSymbol("var-x")
 
 
-    val cRefl:SMTLibCommand = Assert(Forall(Seq(SortedVar(p, sort)), Apply(functionPathEquivalence, Seq(p, p))))
+    val cReflexivity:SMTLibCommand = Assert(Forall(Seq(SortedVar(p, sort)), Apply(functionPathEquivalence, Seq(p, p))))
 
     val cClass: SMTLibCommand = Assert(Forall(
       Seq(
@@ -284,7 +284,7 @@ class SemanticEntailment(val program: Program) extends Entailment {
 
     if (isClassDefined)
       SMTLibScript(Seq(
-        cRefl,
+        cReflexivity,
         cClass,
         cSubstPathEquivalence,
         cSubstInstanceOf,
@@ -292,7 +292,7 @@ class SemanticEntailment(val program: Program) extends Entailment {
       ))
     else
       SMTLibScript(Seq(
-        cRefl,
+        cReflexivity,
         cSubstPathEquivalence
       ))
   }

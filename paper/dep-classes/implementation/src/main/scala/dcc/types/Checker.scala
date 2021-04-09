@@ -26,8 +26,8 @@ trait Checker {
   // substituted with given variables
   def mTypeSubst(m: Id, x: Id, y: Id): List[(List[Constraint], List[Constraint])] =
     program.foldRight(Nil: List[(List[Constraint], List[Constraint])]){
-      case (AbstractMethodDeclaration(`m`, xDecl, a, Type(yDecl, b)), rst) =>
-        (substitute(xDecl, x, a), substitute(yDecl, y, b)) :: rst
+      case (AbstractMethodDeclaration(`m`, xDeclaration, a, Type(yDeclaration, b)), rst) =>
+        (substitute(xDeclaration, x, a), substitute(yDeclaration, y, b)) :: rst
       case (MethodImplementation(`m`, xImpl, a, Type(yImpl, b), _), rst) =>
         (substitute(xImpl, x, a), substitute(yImpl, y, b)) :: rst
       case (_, rst) => rst}
