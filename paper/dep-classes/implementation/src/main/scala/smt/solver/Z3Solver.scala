@@ -103,7 +103,7 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
     }
   }
 
-  override def checksat(timeout: Int): CheckSatResponse = {
+  override def checksat(timeout: Int): Either[CheckSatResponse, ErrorResponse] = {
     val pre = commands
 
     addCommand(CheckSat)
@@ -116,28 +116,29 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
       parseSatResponse(output.last)
     } else {
       // In case of timeout
-      Unknown
+      Right(ErrorResponse(SMTLibString("(error \"timeout\")")))
     }
   }
 
-  override def getModel(timeout: Int): (CheckSatResponse, scala.Option[GetModelResponse]) = {
+  override def getModel(timeout: Int): Either[(CheckSatResponse, scala.Option[GetModelResponse]), ErrorResponse] = {
     val pre = commands
 
-    addCommand(CheckSat)
-    addCommand(GetModel)
+    addCommands(CheckSat, GetModel)
 
     val (status, output) = execute(timeout)
 
     commands = pre
 
     if (status == 0 && output.nonEmpty) {
-      val sat = parseSatResponse(output.head)
-      val model = None // TODO: Some(modelparsing)
-
-      (sat, model)
+      parseSatResponse(output.head) match {
+        case Left(sat) =>
+          val model = None // TODO: Some(modelparsing)
+          Left((sat, model))
+        case Right(error) => Right(error)
+      }
     } else {
       // In case of timeout
-      (Unknown, None)
+      Right(ErrorResponse(SMTLibString("(error \"timeout\")")))
     }
   }
 
@@ -146,13 +147,17 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
     true
   }
 
-  override def addCommands(commands: Seq[SMTLibCommand]): Boolean = {
-    commands.foreach(command => this.commands = this.commands :+ command)
+  override def addCommands(commands: SMTLibCommand*): Boolean = {
+//    commands.foreach(command => this.commands = this.commands :+ command)
+//    commands foreach addCommand
+    this.commands = this.commands ++ commands
     true
   }
 
   override def addScript(script: SMTLibScript): Boolean = {
-    script.commands.foreach(command => commands = commands :+ command)
+//    script.commands.foreach(command => commands = commands :+ command)
+//    script.commands foreach addCommand
+    commands = commands ++ script.commands
     true
   }
 

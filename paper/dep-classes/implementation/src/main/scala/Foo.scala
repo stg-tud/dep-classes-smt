@@ -24,5 +24,12 @@ object Foo extends App {
   val sem3 = new SemanticEntailment(NaturalNumbers.program)
   val checker = new IntegratedSubsumptionChecker(NaturalNumbers.program, sem3)
 
-  println(checker.typecheck) // TODO returns false, one check is sat. investigate
+  println(checker.typecheck) // TODO returns false, one check is sat. investigate (x::Zero |- x::Succ is not valid, sat result makes sense, further investigate the problem)
+
+  def foo(is: Int*): Int = is.sum
+
+  println(foo(1,2,3,4,5,6,7,8,9))
+  println(foo(1,2,3,4,5,6,7,8))
+  println(foo(1))
+  println(foo())
 }

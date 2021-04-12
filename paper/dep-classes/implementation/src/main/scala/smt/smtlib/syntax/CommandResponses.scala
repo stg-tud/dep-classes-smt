@@ -2,9 +2,9 @@ package smt.smtlib.syntax
 
 import smt.smtlib.{SMTLibFormatter, SMTLibResponse}
 
-trait SpecificSuccessResponse extends GeneralResponse
+sealed trait SpecificSuccessResponse extends GeneralResponse
 
-trait GeneralResponse extends SMTLibResponse
+sealed trait GeneralResponse extends SMTLibResponse
 
 case object Success extends GeneralResponse {
   override def format(): String = "success"
@@ -18,7 +18,7 @@ case class ErrorResponse(string: SMTLibString) extends GeneralResponse {
   override def format(): String = s"(error ${string.format()})"
 }
 
-trait CheckSatResponse extends SpecificSuccessResponse
+sealed trait CheckSatResponse extends SpecificSuccessResponse
 
 case object Sat extends CheckSatResponse {
   override def format(): String = "sat"

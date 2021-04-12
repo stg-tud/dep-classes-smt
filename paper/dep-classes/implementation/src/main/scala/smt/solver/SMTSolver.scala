@@ -1,6 +1,6 @@
 package smt.solver
 
-import smt.smtlib.syntax.{CheckSatResponse, GetModelResponse, Sat, Unknown, Unsat}
+import smt.smtlib.syntax.{CheckSatResponse, ErrorResponse, GeneralResponse, GetModelResponse, SMTLibString, Sat, Unknown, Unsat}
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
 
 trait SMTSolver {
@@ -21,7 +21,7 @@ trait SMTSolver {
     * @param commands A sequence of `SMTLibCommand`s to be added.
     * @return True if the commands have been added successfully.
     */
-  def addCommands(commands: Seq[SMTLibCommand]): Boolean
+  def addCommands(commands: SMTLibCommand*): Boolean
 
   /**
     * Add a `SMTLibScript` to be solved.
@@ -60,7 +60,7 @@ trait SMTSolver {
     *        `Unsat` if the input is unsatisfiable
     *        `Unknown` if the solver can't decide.
     */
-  def checksat(timeout: Int = 2000): CheckSatResponse
+  def checksat(timeout: Int = 2000): Either[CheckSatResponse, ErrorResponse]
 
   /**
     * Executes the SMTSolver with the currently held commands
@@ -72,14 +72,15 @@ trait SMTSolver {
     *        `Unknown` if the solver can't decide.
     *        as well as a model in case of `Sat`
     */
-  def getModel(timeout: Int = 1000): (CheckSatResponse, Option[GetModelResponse])
+  def getModel(timeout: Int = 1000): Either[(CheckSatResponse, Option[GetModelResponse]), ErrorResponse]
 
-  protected def parseSatResponse(s: String): CheckSatResponse = {
+  protected def parseSatResponse(s: String): Either[CheckSatResponse, ErrorResponse] = {
     s match {
-      case "sat"     => Sat
-      case "unsat"   => Unsat
-      case "unknown" => Unknown
-      case _         => Unknown // if error
+      case "sat"                       => Left(Sat)
+      case "unsat"                     => Left(Unsat)
+      case "unknown"                   => Left(Unknown)
+      case _ if s.startsWith("(error") => Right(ErrorResponse(SMTLibString(s)))
+      case _                           => Right(ErrorResponse(SMTLibString("Undetected Error"))) // some other response?
     }
   }
 }
