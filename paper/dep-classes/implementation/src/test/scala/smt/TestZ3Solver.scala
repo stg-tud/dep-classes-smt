@@ -61,7 +61,7 @@ class TestZ3Solver extends AnyFunSuite {
   test("checkSat SatFormula") {
     val z3: Z3Solver = new Z3Solver(SMTLibScript(Seq(
       const1, const2, const3, assert1, assert2, assert3, assert4)), debug = false)
-    val sat = z3.checksat()
+    val sat = z3.checkSat()
 
     assert(sat == Left(Sat))
   }
@@ -89,7 +89,7 @@ class TestZ3Solver extends AnyFunSuite {
 
   test("checkSat UnsatFormula") {
     val z3: Z3Solver = new Z3Solver(commands, debug = false)
-    val sat = z3.checksat()
+    val sat = z3.checkSat()
 
     assert(sat == Left(Unsat))
   }
@@ -142,7 +142,7 @@ class TestZ3Solver extends AnyFunSuite {
 
     z3.addCommands(T, a, b, c, isNUMa, isNUMb, isNUMc, eq, CheckSat)
 
-    val sat = z3.checksat()
+    val sat = z3.checkSat()
     assert(sat == Left(Sat)) // z3 4.8.7 can solve this
   }
 
@@ -161,7 +161,7 @@ class TestZ3Solver extends AnyFunSuite {
 
     z3.addCommands(i, j, l, content)
 
-    val sat = z3.checksat()
+    val sat = z3.checkSat()
     assert(sat == Left(Sat))
   }
 
@@ -195,7 +195,7 @@ class TestZ3Solver extends AnyFunSuite {
     z3.addCommand(jIs3)
     z3.addCommand(assertion)
 
-    val sat = z3.checksat()
+    val sat = z3.checkSat()
     assert(sat == Left(Unsat))
   }
 
@@ -220,7 +220,7 @@ class TestZ3Solver extends AnyFunSuite {
     z3.addCommand(l)
     z3.addCommand(content)
 
-    val sat = z3.checksat()
+    val sat = z3.checkSat()
     assert(sat == Left(Sat))
   }
 
@@ -284,7 +284,7 @@ class TestZ3Solver extends AnyFunSuite {
     z3.addCommand(content2)
     z3.addCommand(assertion)
 
-    val sat = z3.checksat()
+    val sat = z3.checkSat()
     assert(sat == Left(Unsat))
   }
 
@@ -346,7 +346,7 @@ class TestZ3Solver extends AnyFunSuite {
     z3.addCommand(content2)
     z3.addCommand(assertion)
 
-    val sat = z3.checksat()
+    val sat = z3.checkSat()
     // TODO: check for error in case of z3 version > 4.7 & < 4.8.7
     assert(sat == Left(Unsat))
   }
@@ -404,7 +404,7 @@ class TestZ3Solver extends AnyFunSuite {
     z3.addCommand(content)
     z3.addCommand(assertion)
 
-    assert(z3.checksat() == Left(Unsat))
+    assert(z3.checkSat() == Left(Unsat))
   }
 
   test("test z3 error") {
@@ -412,7 +412,7 @@ class TestZ3Solver extends AnyFunSuite {
 
     z3.addCommands(assert1)
 
-    assert(z3.checksat() == Right(ErrorResponse(SMTLibString("(error \"line 1 column 15: unknown constant a\")")) :: Nil))
+    assert(z3.checkSat() == Right(ErrorResponse(SMTLibString("(error \"line 1 column 15: unknown constant a\")")) :: Nil))
 
 //    println(z3.parseSatResponse("(error \"line 1 column 15: unknown constant a\")"))
   }

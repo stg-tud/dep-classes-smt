@@ -102,7 +102,7 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
     }
   }
 
-  override def checksat(timeout: Int): Either[CheckSatResponse, Seq[ErrorResponse]] = {
+  override def checkSat(timeout: Int): Either[CheckSatResponse, Seq[ErrorResponse]] = {
     val pre = commands
     addCommand(CheckSat)
     val (status, output) = execute(timeout)
@@ -124,7 +124,7 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
     }
   }
 
-  // TODO: overhaul ouput error handling (like in checksat)
+  // TODO: overhaul output error handling (like in checkSat)
   override def getModel(timeout: Int): Either[(CheckSatResponse, scala.Option[GetModelResponse]), Seq[ErrorResponse]] = {
     val pre = commands
 

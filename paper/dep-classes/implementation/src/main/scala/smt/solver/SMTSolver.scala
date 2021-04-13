@@ -1,6 +1,6 @@
 package smt.solver
 
-import smt.smtlib.syntax.{CheckSatResponse, ErrorResponse, GeneralResponse, GetModelResponse, SMTLibString, Sat, Unknown, Unsat}
+import smt.smtlib.syntax.{CheckSatResponse, ErrorResponse, GetModelResponse, SMTLibString, Sat, Unknown, Unsat}
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
 
 trait SMTSolver {
@@ -60,7 +60,7 @@ trait SMTSolver {
     *        `Unsat` if the input is unsatisfiable
     *        `Unknown` if the solver can't decide.
     */
-  def checksat(timeout: Int = 2000): Either[CheckSatResponse, Seq[ErrorResponse]]
+  def checkSat(timeout: Int = 2000): Either[CheckSatResponse, Seq[ErrorResponse]]
 
   /**
     * Executes the SMTSolver with the currently held commands

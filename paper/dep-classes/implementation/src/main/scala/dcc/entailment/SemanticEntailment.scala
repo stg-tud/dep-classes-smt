@@ -8,7 +8,7 @@ import dcc.types.Type
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.syntax.Primitives.True
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{And, Apply, Assert, Bool, CheckSat, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Not, Op1, Op2, Op3, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term}
+import smt.smtlib.syntax.{And, Apply, Assert, Bool, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Not, Op1, Op2, Op3, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
 import smt.solver.Z3Solver
 
 import scala.language.postfixOps
@@ -27,17 +27,25 @@ class SemanticEntailment(val program: Program) extends Entailment {
           Apply(SimpleSymbol("and"), context map {c => ConstraintToTerm(c, isPathDefined)}),
         ConstraintToTerm(constraint, isPathDefined)
     ))))
-    solver.addCommand(CheckSat)
+//    solver.addCommand(CheckSat)
 
-    val (exit, messages) = solver.execute()
-
-    if (exit != 0) {
-      messages foreach System.err.println
-      false
-    } else if (messages.nonEmpty && messages.head == "unsat")
-      true
-    else
-      false
+    val response = solver.checkSat()
+    response match {
+      case Left(Unsat) => true
+      case Left(_) => false
+      case Right(errors) =>
+        errors foreach { e => System.err.println(e.format()) }
+        false
+    }
+//    val (exit, messages) = solver.execute()
+//
+//    if (exit != 0) {
+//      messages foreach System.err.println
+//      false
+//    } else if (messages.nonEmpty && messages.head == "unsat")
+//      true
+//    else
+//      false
   }
 
   override def entails(context: List[Constraint], constraints: List[Constraint]): Boolean = constraints.forall(entails(context, _))
