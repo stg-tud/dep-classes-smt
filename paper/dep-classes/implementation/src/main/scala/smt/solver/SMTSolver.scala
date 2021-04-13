@@ -60,7 +60,7 @@ trait SMTSolver {
     *        `Unsat` if the input is unsatisfiable
     *        `Unknown` if the solver can't decide.
     */
-  def checksat(timeout: Int = 2000): Either[CheckSatResponse, ErrorResponse]
+  def checksat(timeout: Int = 2000): Either[CheckSatResponse, Seq[ErrorResponse]]
 
   /**
     * Executes the SMTSolver with the currently held commands
@@ -72,15 +72,13 @@ trait SMTSolver {
     *        `Unknown` if the solver can't decide.
     *        as well as a model in case of `Sat`
     */
-  def getModel(timeout: Int = 1000): Either[(CheckSatResponse, Option[GetModelResponse]), ErrorResponse]
+  def getModel(timeout: Int = 1000): Either[(CheckSatResponse, Option[GetModelResponse]), Seq[ErrorResponse]]
 
-  protected def parseSatResponse(s: String): Either[CheckSatResponse, ErrorResponse] = {
-    s match {
-      case "sat"                       => Left(Sat)
-      case "unsat"                     => Left(Unsat)
-      case "unknown"                   => Left(Unknown)
-      case _ if s.startsWith("(error") => Right(ErrorResponse(SMTLibString(s)))
-      case _                           => Right(ErrorResponse(SMTLibString("Undetected Error"))) // some other response?
-    }
+  protected def parseSatResponse(s: String): Either[CheckSatResponse, ErrorResponse] = s match {
+    case "sat"                       => Left(Sat)
+    case "unsat"                     => Left(Unsat)
+    case "unknown"                   => Left(Unknown)
+    case _ if s.startsWith("(error") => Right(ErrorResponse(SMTLibString(s)))
+    case _                           => Right(ErrorResponse(SMTLibString("Undetected Error"))) // some other response?
   }
 }

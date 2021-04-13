@@ -1,7 +1,6 @@
 package smt.solver
 
 import java.io.PrintWriter
-
 import smt.smtlib.syntax._
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
 
@@ -103,24 +102,30 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
     }
   }
 
-  override def checksat(timeout: Int): Either[CheckSatResponse, ErrorResponse] = {
+  override def checksat(timeout: Int): Either[CheckSatResponse, Seq[ErrorResponse]] = {
     val pre = commands
-
     addCommand(CheckSat)
-
     val (status, output) = execute(timeout)
-
     commands = pre
 
-    if (status == 0 && output.nonEmpty) {
-      parseSatResponse(output.last)
-    } else {
-      // In case of timeout
-      Right(ErrorResponse(SMTLibString("(error \"timeout\")")))
+    val responses: Seq[Either[CheckSatResponse, ErrorResponse]] = output map parseSatResponse
+
+    if (status == 0 && !(responses exists {_.isRight})) {
+      parseSatResponse(output.last) match {
+        case Left(response) => Left(response)
+        case Right(error)   => Right(List(error))// Shouldn't be possible.
+      }
+    } else if (status == 1 && (responses exists {_.isRight})) {
+      val errors: Seq[ErrorResponse] = responses.filter(p => p.isRight).map(x => x.getOrElse().asInstanceOf[ErrorResponse])
+      Right(errors)
+    }else {
+      // In case of io timeout or non z3 error
+      Right(List(ErrorResponse(SMTLibString("(error \"io timeout or non z3 error\")"))))
     }
   }
 
-  override def getModel(timeout: Int): Either[(CheckSatResponse, scala.Option[GetModelResponse]), ErrorResponse] = {
+  // TODO: overhaul ouput error handling (like in checksat)
+  override def getModel(timeout: Int): Either[(CheckSatResponse, scala.Option[GetModelResponse]), Seq[ErrorResponse]] = {
     val pre = commands
 
     addCommands(CheckSat, GetModel)
@@ -132,13 +137,13 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
     if (status == 0 && output.nonEmpty) {
       parseSatResponse(output.head) match {
         case Left(sat) =>
-          val model = None // TODO: Some(modelparsing)
+          val model = None // TODO: Some(model parsing)
           Left((sat, model))
-        case Right(error) => Right(error)
+        case Right(error) => Right(List(error))
       }
     } else {
       // In case of timeout
-      Right(ErrorResponse(SMTLibString("(error \"timeout\")")))
+      Right(List(ErrorResponse(SMTLibString("(error \"timeout\")"))))
     }
   }
 
