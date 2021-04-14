@@ -1,8 +1,8 @@
 package smt.smtlib
 
 import org.scalatest.funsuite.AnyFunSuite
-import syntax.Primitives.{False, True}
-import syntax.{And, Apply, Binary, Bool, ComposedIdentifier, Decimal, Distinct, Eq, Exists, Forall, Hexadecimal, IdentifierAs, Implies, Ite, Keyword, Let, Not, Numeral, Or, QuotedSymbol, SExpr, SExprs, SMTLibString, SimpleSymbol, SortedVar, Sorts, VarBinding, Xor}
+import syntax.{Apply, Binary, ComposedIdentifier, Decimal, Exists, Forall, Hexadecimal, IdentifierAs, Keyword, Let, Numeral, QuotedSymbol, SExpr, SExprs, SMTLibString, SimpleSymbol, SortedVar, Sorts, VarBinding}
+import theory.BoolPredefined._
 
 class TestFormatting extends AnyFunSuite{
   private val num1 = Numeral(0)
@@ -94,11 +94,11 @@ class TestFormatting extends AnyFunSuite{
   }
 
   test("SExpr") {
-    val sexpr1: SExpr = Numeral(123)
-    val sexpr2 = SExprs(Seq(num1, dec1, hex1, bin1, str1, symbol1, keyword1))
+    val sExpr1: SExpr = Numeral(123)
+    val sExpr2 = SExprs(Seq(num1, dec1, hex1, bin1, str1, symbol1, keyword1))
 
-    assert(sexpr1.format() == "123")
-    assert(sexpr2.format() == "(0 123.456 #xA1B54FF #b111100 \"foo\" <= :foo-bar)")
+    assert(sExpr1.format() == "123")
+    assert(sExpr2.format() == "(0 123.456 #xA1B54FF #b111100 \"foo\" <= :foo-bar)")
   }
 
   test("Identifier") {

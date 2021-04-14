@@ -5,6 +5,7 @@ import solver.Z3Solver
 import smtlib._
 import smtlib.syntax._
 import smtlib.syntax.Implicit._
+import smtlib.theory.BoolPredefined._
 
 class TestZ3Solver extends AnyFunSuite {
   private val const1: SMTLibCommand = DeclareConst("a", "Int")

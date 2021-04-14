@@ -11,11 +11,6 @@ case class Sorts(identifier: Identifier, sorts: Seq[Sort]) extends Sort {
   }
 }
 
-// Exists in every theory
-object Bool extends Sort {
-  override def format(): String = "Bool"
-}
-
 //trait Sort extends SMTLibFormatter
 //
 //case class SortTerm(identifier: Identifier, sorts: Seq[Sort]) extends Sort {

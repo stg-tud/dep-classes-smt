@@ -6,9 +6,10 @@ import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, 
 import dcc.syntax.Program.Program
 import dcc.types.Type
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
-import smt.smtlib.syntax.Primitives.True
+import smt.smtlib.syntax.Sugar.Op
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{And, Apply, Assert, Bool, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Eq, Forall, FunctionDef, Implies, Ite, Not, Op1, Op2, Op3, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
+import smt.smtlib.syntax.{Apply, Assert, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
+import smt.smtlib.theory.BoolPredefined._
 import smt.solver.Z3Solver
 
 import scala.language.postfixOps
@@ -315,13 +316,13 @@ class SemanticEntailment(val program: Program) extends Entailment {
 
     def substituteConstraintToTerm(constraint: Constraint, x: Id): Term = constraint match {
       case PathEquivalence(Id(_), Id(_)) => ConstraintToTerm(substitute(x, path, constraint), isPathDefined)
-      case PathEquivalence(p@Id(_), q) => Op2(functionPathEquivalence, PathToTerm(substitute(x, path, p), isPathDefined), PathToTerm(q, isPathDefined))
-      case PathEquivalence(p, q@Id(_)) => Op2(functionPathEquivalence, PathToTerm(p, isPathDefined), PathToTerm(substitute(x, path, q), isPathDefined))
-      case PathEquivalence(p, q) => Op2(functionPathEquivalence, substitutePath(PathToTerm(p, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)), substitutePath(PathToTerm(q, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)))
+      case PathEquivalence(p@Id(_), q) => Op(functionPathEquivalence)(PathToTerm(substitute(x, path, p), isPathDefined), PathToTerm(q, isPathDefined))
+      case PathEquivalence(p, q@Id(_)) => Op(functionPathEquivalence)(PathToTerm(p, isPathDefined), PathToTerm(substitute(x, path, q), isPathDefined))
+      case PathEquivalence(p, q) => Op(functionPathEquivalence)(substitutePath(PathToTerm(p, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)), substitutePath(PathToTerm(q, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)))
       case InstanceOf(Id(_), _) => ConstraintToTerm(substitute(x, path, constraint), isPathDefined)
-      case InstanceOf(p, cls) => Op2(functionInstanceOf, substitutePath(PathToTerm(p, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)), IdToSymbol(cls))
+      case InstanceOf(p, cls) => Op(functionInstanceOf)(substitutePath(PathToTerm(p, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)), IdToSymbol(cls))
       case InstantiatedBy(Id(_), _) => ConstraintToTerm(substitute(x, path, constraint), isPathDefined)
-      case InstantiatedBy(p, cls) => Op2(functionInstantiatedBy, substitutePath(PathToTerm(p, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)), IdToSymbol(cls))
+      case InstantiatedBy(p, cls) => Op(functionInstantiatedBy)(substitutePath(PathToTerm(p, isPathDefined), IdToSymbol(x), PathToTerm(path, isPathDefined)), IdToSymbol(cls))
     }
 
     SMTLibScript(constraintEntailments map {
@@ -393,16 +394,16 @@ object SemanticEntailment {
   def IdToSymbol(x: Id): SMTLibSymbol = SimpleSymbol(x.toString)
 
   def PathToTerm(path: Path, isPathDefined: Boolean): Term = path match {
-    case x@Id(_) => if (isPathDefined) Op1(constructorVar, IdToSymbol(x)) else IdToSymbol(x)
-    case FieldPath(p, f) => Op2(constructorPth, PathToTerm(p, isPathDefined), IdToSymbol(f))
+    case x@Id(_) => if (isPathDefined) Op(constructorVar)(IdToSymbol(x)) else IdToSymbol(x)
+    case FieldPath(p, f) => Op(constructorPth)(PathToTerm(p, isPathDefined), IdToSymbol(f))
     case MetaPath(p) => SimpleSymbol(p)
   }
 
   def ConstraintToTerm(constraint: Constraint, isPathDefined: Boolean): Term = constraint match {
-    case PathEquivalence(p, q) => Op2(functionPathEquivalence, PathToTerm(p, isPathDefined), PathToTerm(q, isPathDefined))
-    case InstanceOf(p, c) => Op2(functionInstanceOf, PathToTerm(p, isPathDefined), IdToSymbol(c))
-    case InstantiatedBy(p, c) => Op2(functionInstantiatedBy, PathToTerm(p, isPathDefined), IdToSymbol(c))
+    case PathEquivalence(p, q) => Op(functionPathEquivalence)(PathToTerm(p, isPathDefined), PathToTerm(q, isPathDefined))
+    case InstanceOf(p, c) => Op(functionInstanceOf)(PathToTerm(p, isPathDefined), IdToSymbol(c))
+    case InstantiatedBy(p, c) => Op(functionInstantiatedBy)(PathToTerm(p, isPathDefined), IdToSymbol(c))
   }
 
-  private def substitutePath(p: Term, x: Term, q: Term): Term = Op3(functionSubstitution, p, x, q)
+  private def substitutePath(p: Term, x: Term, q: Term): Term = Op(functionSubstitution)(p, x, q)
 }
