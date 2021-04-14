@@ -12,13 +12,14 @@ object BoolPredefined {
   val False: Term = SimpleSymbol("false")
 
   // TODO use !, =>, &&, ||, ^ as function names? make them infix (would require to put it into trait Term?)?
+  // TODO: safety check for sequence arguments if empty return true?
   // Operators
-  def Not(term: Term): Term                 = Apply(SimpleSymbol("not"), Seq(term))
-  def Implies(left: Term, right:Term): Term = Apply(SimpleSymbol("=>"),  Seq(left, right))
-  def And(left: Term, right:Term): Term     = Apply(SimpleSymbol("and"), Seq(left, right))
-  def Or(left: Term, right:Term): Term      = Apply(SimpleSymbol("or"),  Seq(left, right))
-  def Xor(left: Term, right:Term): Term     = Apply(SimpleSymbol("xor"), Seq(left, right))
-  def Eq(left: Term, right:Term): Term      = Apply(SimpleSymbol("="),   Seq(left, right))
-  def Distinct(args: Term*): Term           = Apply(SimpleSymbol("distinct"), args)
+  def Not(term: Term): Term          = Apply(SimpleSymbol("not"), Seq(term))
+  def Implies(l: Term, r:Term): Term = Apply(SimpleSymbol("=>"),  Seq(l, r))
+  def And(args: Term*): Term         = Apply(SimpleSymbol("and"),      args)
+  def Or(args: Term*): Term          = Apply(SimpleSymbol("or"),       args)
+  def Xor(args: Term*): Term         = Apply(SimpleSymbol("xor"),      args)
+  def Eq(args: Term*): Term          = Apply(SimpleSymbol("="),        args)
+  def Distinct(args: Term*): Term    = Apply(SimpleSymbol("distinct"), args)
   def Ite(condition: Term, ifTrue: Term, ifFalse: Term): Term = Apply(SimpleSymbol("ite"), Seq(condition, ifTrue, ifFalse))
 }

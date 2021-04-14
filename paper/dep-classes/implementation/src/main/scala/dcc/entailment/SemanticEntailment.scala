@@ -375,21 +375,26 @@ object SemanticEntailment {
   }
 
   // Sorts explicitly added in this translation.
-  object Variable extends Sort {
-    override def format(): String = "Variable"
-  }
+  val Variable: Sort = SimpleSymbol(sortVariable)
+  val Field: Sort = SimpleSymbol(sortField)
+  val Class: Sort = SimpleSymbol(sortClass)
+  val Path: Sort = SimpleSymbol(sortPath)
 
-  object Field extends Sort {
-    override def format(): String = "Field"
-  }
-
-  object Class extends Sort {
-    override def format(): String = "Class"
-  }
-
-  object Path extends Sort {
-    override def format(): String = "Path"
-  }
+//  object Variable extends Sort {
+//    override def format(): String = sortVariable
+//  }
+//
+//  object Field extends Sort {
+//    override def format(): String = sortField
+//  }
+//
+//  object Class extends Sort {
+//    override def format(): String = sortClass
+//  }
+//
+//  object Path extends Sort {
+//    override def format(): String = sortPath
+//  }
 
   def IdToSymbol(x: Id): SMTLibSymbol = SimpleSymbol(x.toString)
 

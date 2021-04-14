@@ -7,6 +7,7 @@ import smt.smtlib.syntax.{Apply, ConstructorDatatype, ConstructorDec, DeclareDat
   */
 
 trait SMTLibFormatter {
+  // TODO remove parens from function def
   def format(): String
 }
 
