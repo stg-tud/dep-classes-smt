@@ -1,9 +1,9 @@
 package dcc.program
 
-import dcc.syntax.{AbstractMethodDeclaration, ConstraintEntailment, ConstructorDeclaration, FieldAccess, FieldPath, Id, InstanceOf, MethodImplementation}
+import dcc.syntax.{AbstractMethodDeclaration, ConstraintEntailment, ConstructorDeclaration, FieldAccess, FieldPath, InstanceOf, MethodImplementation}
 import dcc.syntax.Program.Program
 import dcc.types.Type
-import dcc.syntax.Util.StringToId
+import dcc.syntax.Implicit.StringToId
 
 // TODO: add trait program
 object NaturalNumbers {
