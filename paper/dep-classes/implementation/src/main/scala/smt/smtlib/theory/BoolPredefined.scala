@@ -1,9 +1,6 @@
 package smt.smtlib.theory
 
-import smt.smtlib.syntax.{Apply, QualifiedIdentifier, SimpleSymbol, Sort, Term}
-import smt.smtlib.theory.BoolPredefined.And
-
-import scala.annotation.showAsInfix
+import smt.smtlib.syntax.{Apply, SimpleSymbol, Sort, Term}
 
 // Bool exists in every theory
 object BoolPredefined {
