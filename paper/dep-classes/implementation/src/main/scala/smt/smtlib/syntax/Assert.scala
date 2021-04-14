@@ -17,7 +17,6 @@ case class CheckSatAssuming(propLiteral: PropLiteral) extends SMTLibCommand {
 // Aux
 trait PropLiteral extends SMTLibFormatter
 
-// TODO: possible clash with Not sugar object?
 case class NotLiteral(symbol: SMTLibSymbol) extends PropLiteral {
   override def format(): String = s"(not ${symbol.format()})"
 }

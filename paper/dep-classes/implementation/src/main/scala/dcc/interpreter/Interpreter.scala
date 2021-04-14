@@ -6,7 +6,6 @@ import dcc.entailment.Entailment
 import dcc.syntax.Program.Program
 import dcc.syntax.{Constraint, Expression, FieldAccess, FieldPath, Id, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
 
-// TODO: define general entailment trait
 class Interpreter(program: Program, entailment: Entailment) {
   // TODO: change return type to Either or Option?
   def execute(heap: Heap, expr: Expression): (Heap, Expression) = expr match {

@@ -6,7 +6,6 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class TestSyntax extends AnyFunSuite{
   test("Syntax Construction") {
-    // TODO: remove val declarations and only keep the constructor calls?
     // Paths
     Id(Symbol("x"))
     FieldPath(Id(Symbol("y")), Id(Symbol("f")))

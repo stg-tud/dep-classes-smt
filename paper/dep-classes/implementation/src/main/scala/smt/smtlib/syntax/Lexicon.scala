@@ -47,7 +47,7 @@ object Binary {
 //  instead assume s without the delimiters and add them in the formatting? (test this )
 case class SMTLibString(s: String) extends SMTLibFormatter with SpecConstant with EchoResponse {
   // "\"" ++ s ++ "\""
-  override def format(): String = s""""$s"""" // TODO: raw instead of s?
+  override def format(): String = s""""$s""""
 }
 
 trait SMTLibSymbol extends SMTLibFormatter with SExpr with Index with Identifier with AttributeValue with PropLiteral
