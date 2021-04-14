@@ -127,8 +127,6 @@ class TestSemanticEntailmentAxiomGeneration extends AnyFunSuite{
     assert(pathDatatypeExists)
     assert(axioms.commands.size == 15)
 
-    println(axioms.format())
-
     // Data types are generated correctly
     assert(axioms.commands.contains(
       DeclareDatatype(Variable, ConstructorDatatype(Seq(ConstructorDec("x", Seq()), ConstructorDec("y", Seq()))))))
