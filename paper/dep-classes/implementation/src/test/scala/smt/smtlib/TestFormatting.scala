@@ -1,8 +1,8 @@
-package smt
+package smt.smtlib
 
 import org.scalatest.funsuite.AnyFunSuite
-import smtlib.syntax._
-import smtlib.syntax.Primitives._
+import syntax.Primitives.{False, True}
+import syntax.{And, Apply, Binary, Bool, ComposedIdentifier, Decimal, Distinct, Eq, Exists, Forall, Hexadecimal, IdentifierAs, Implies, Ite, Keyword, Let, Not, Numeral, Or, QuotedSymbol, SExpr, SExprs, SMTLibString, SimpleSymbol, SortedVar, Sorts, VarBinding, Xor}
 
 class TestFormatting extends AnyFunSuite{
   private val num1 = Numeral(0)
