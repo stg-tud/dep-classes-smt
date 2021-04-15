@@ -52,7 +52,6 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
 //      })
 //      writer.close()
 //    })
-    // TODO: make object for io?
     val io = new ProcessIO(
       in => {
         val writer = new PrintWriter(in)

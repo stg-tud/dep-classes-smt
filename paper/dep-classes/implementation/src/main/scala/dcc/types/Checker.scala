@@ -12,7 +12,6 @@ trait Checker {
   def typeOf(context: List[Constraint], expression: Expression): Either[Type, String]
   def typecheck(context: List[Constraint], expression: Expression, typ: Type): Boolean
   def typecheck(declaration: Declaration): Boolean
-  // TODO: rename 'typecheckProgram'?
   def typecheck: Boolean
 
   // Method Type

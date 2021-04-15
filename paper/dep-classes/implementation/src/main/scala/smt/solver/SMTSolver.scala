@@ -79,6 +79,6 @@ trait SMTSolver {
     case "unsat"                     => Left(Unsat)
     case "unknown"                   => Left(Unknown)
     case _ if s.startsWith("(error") => Right(ErrorResponse(SMTLibString(s)))
-    case _                           => Right(ErrorResponse(SMTLibString("Undetected Error"))) // some other response?
+    case _                           => Right(ErrorResponse(SMTLibString(s"Undetected response: $s"))) // some other response?
   }
 }
