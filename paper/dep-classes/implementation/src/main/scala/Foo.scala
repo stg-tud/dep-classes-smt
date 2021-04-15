@@ -1,7 +1,8 @@
 import dcc.entailment.SemanticEntailment
 import dcc.program.NaturalNumbers
 import dcc.syntax._
-import dcc.types.{IntegratedSubsumptionChecker, Type}
+import dcc.syntax.Implicit._
+import dcc.types.{FaithfulAdaptionChecker, IntegratedSubsumptionChecker, Type}
 import smt.smtlib.syntax._
 
 object Foo extends App {
@@ -26,10 +27,9 @@ object Foo extends App {
 
   println(checker.typecheck) // TODO returns false, one check is sat. investigate (x::Zero |- x::Succ is not valid, sat result makes sense, further investigate the problem)
 
-  def foo(is: Int*): Int = is.sum
+  println("------------------------------------------------")
 
-  println(foo(1,2,3,4,5,6,7,8,9))
-  println(foo(1,2,3,4,5,6,7,8))
-  println(foo(1))
-  println(foo())
+  val newChecker  = new FaithfulAdaptionChecker(NaturalNumbers.program, sem3)
+  val result = newChecker.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero")), FieldAccess("x", "p"))
+  println(result)
 }

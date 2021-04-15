@@ -9,7 +9,7 @@ import scala.language.postfixOps
 trait Checker {
   val program: Program
 
-  def typeOf(context: List[Constraint], expression: Expression): Type
+  def typeOf(context: List[Constraint], expression: Expression): Either[Type, String]
   def typecheck(context: List[Constraint], expression: Expression, typ: Type): Boolean
   def typecheck(declaration: Declaration): Boolean
   // TODO: rename 'typecheckProgram'?
