@@ -10,6 +10,7 @@ import ExecutionContext.Implicits.global
 import scala.io.Source
 
 class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.empty, var debug: Boolean = false) extends SMTSolver {
+  // TODO: add timeout as a general trait property and set it to Option type
   // commands to send to the solver
   var commands: Seq[SMTLibCommand] = Seq.empty
 
