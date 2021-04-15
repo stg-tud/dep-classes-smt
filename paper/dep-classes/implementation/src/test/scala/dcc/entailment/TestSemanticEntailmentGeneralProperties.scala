@@ -5,9 +5,9 @@ import dcc.syntax.{Constraint, FieldPath, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
 import org.scalatest.funsuite.AnyFunSuite
 import smt.smtlib.SMTLibScript
-import smt.smtlib.syntax.{Apply, Assert, ErrorResponse, Forall, SMTLibString, SortedVar, Unsat}
+import smt.smtlib.syntax.{Apply, Assert, ErrorResponse, Forall, SMTLibString, SortedVar, Unknown, Unsat}
 import smt.smtlib.syntax.Implicit.stringToSimpleSymbol
-import smt.smtlib.theory.BoolPredefined.{Implies, Not}
+import smt.smtlib.theory.BoolPredefined.{And, Implies, Not}
 import smt.solver.Z3Solver
 
 class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
@@ -42,7 +42,7 @@ class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
         Implies(Apply("path-equivalence", Seq("path-p", "path-q")), Apply("path-equivalence", Seq("path-q", "path-p"))))))
 
     val z3 = new Z3Solver(script, debug = true)
-    assert(z3.checkSat(50000) == Left(Unsat))
+    assert(z3.checkSat(40000) == Left(Unsat))
   }
 
   test("forall p, q. p===q => q===p  in Empty program with Path datatype") {
@@ -53,7 +53,41 @@ class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
         Implies(Apply("path-equivalence", Seq("path-p", "path-q")), Apply("path-equivalence", Seq("path-q", "path-p"))))))
 
     val z3 = new Z3Solver(script, debug = true)
-    val result = z3.checkSat(60000)
+    val result = z3.checkSat(120000)
     assert(result == Left(Unsat) || result == Right(List(ErrorResponse(SMTLibString("(error \"io timeout or non z3 error\")")))))
+  }
+
+  test("forall a, b, c. a===b /\\ b===c => a===c  in Empty program with 4 variables") {
+    val entailment = new SemanticEntailment(Empty.program)
+
+    val script:SMTLibScript = axioms(entailment)(PathEquivalence("a", "b"), PathEquivalence("c", "d")) :+
+      Assert(Not(Forall(Seq(SortedVar("path-a", "Variable"), SortedVar("path-c", "Variable"), SortedVar("path-b", "Variable")),
+        Implies(And(Apply("path-equivalence", Seq("path-a", "path-b")), Apply("path-equivalence", Seq("path-c", "path-b"))), Apply("path-equivalence", Seq("path-a", "path-c"))))))
+
+    val z3 = new Z3Solver(script, debug = true)
+    assert(z3.checkSat() == Left(Unsat))
+  }
+
+  test("forall a, b, c. a===b /\\ b===c => a===c  in Empty program with 12 variables") {
+    val entailment = new SemanticEntailment(Empty.program)
+
+    val script:SMTLibScript = axioms(entailment)(PathEquivalence("a", "b"), PathEquivalence("c", "d"), PathEquivalence("e", "f"), PathEquivalence("g", "h"), PathEquivalence("i", "j"), PathEquivalence("k", "l")) :+
+      Assert(Not(Forall(Seq(SortedVar("path-a", "Variable"), SortedVar("path-c", "Variable"), SortedVar("path-b", "Variable")),
+        Implies(And(Apply("path-equivalence", Seq("path-a", "path-b")), Apply("path-equivalence", Seq("path-c", "path-b"))), Apply("path-equivalence", Seq("path-a", "path-c"))))))
+
+    val z3 = new Z3Solver(script, debug = true)
+    assert(z3.checkSat(20000) == Left(Unsat))
+  }
+
+  test("forall a, b, c. a===b /\\ b===c => a===c  in Empty program with 13 variables") {
+    val entailment = new SemanticEntailment(Empty.program)
+
+    val script:SMTLibScript = axioms(entailment)(PathEquivalence("a", "b"), PathEquivalence("c", "d"), PathEquivalence("e", "f"), PathEquivalence("g", "h"), PathEquivalence("i", "j"), PathEquivalence("k", "l"),
+      PathEquivalence("m", "m")) :+
+      Assert(Not(Forall(Seq(SortedVar("path-a", "Variable"), SortedVar("path-c", "Variable"), SortedVar("path-b", "Variable")),
+        Implies(And(Apply("path-equivalence", Seq("path-a", "path-b")), Apply("path-equivalence", Seq("path-c", "path-b"))), Apply("path-equivalence", Seq("path-a", "path-c"))))))
+
+    val z3 = new Z3Solver(script, debug = true)
+    assert(z3.checkSat(30000) == Left(Unknown))
   }
 }
