@@ -57,7 +57,8 @@ class SemanticEntailment(val program: Program) extends Entailment {
     */
   def axioms(constraints: List[Constraint]): (SMTLibScript, Boolean) = {
     // TODO: Change this to be able to determine if the path datatype is defined without the pair return type
-    val classes: List[String] = getClasses
+    val classes: List[String] = getClasses // TODO: search in constraints for class names? All existing classes should be mentioned in the program,
+                                           //       currently produces smt error if we ask for an 'valid' entailment with a class that is not mentioned in the program
     val variables: List[String] = getVariableNames ++ extractVariableNames(constraints) distinct
     val fields: List[String] = getFieldNames ++ extractFieldNames(constraints) distinct
 
