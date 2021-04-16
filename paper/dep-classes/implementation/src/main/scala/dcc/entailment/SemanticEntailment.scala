@@ -30,7 +30,7 @@ class SemanticEntailment(val program: Program) extends Entailment {
     ))))
 //    solver.addCommand(CheckSat)
 
-    val response = solver.checkSat()
+    val response = solver.checkSat(10000)
     response match {
       case Left(Unsat) => true
       case Left(_) => false

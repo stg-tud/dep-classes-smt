@@ -29,6 +29,13 @@ object DCC {
     case _ :: rst => classInProgram(Cls, rst)
   }
 
+  @tailrec
+  def classInProgramSubst(Cls: Id, program: Program, x: Id): Option[List[Constraint]] = program match {
+    case Nil => None
+    case ConstructorDeclaration(Cls, y, a) :: _ => Some(Util.substitute(y, x, a))
+    case _ :: rst => classInProgramSubst(Cls, rst, x)
+  }
+
   def FV(constraints: List[Constraint]): List[Id] = constraints.flatMap(FV).distinct
 
   def FV(constraint: Constraint): List[Id] = constraint match {
