@@ -11,13 +11,13 @@ class IntegratedSubsumptionChecker(override val program: Program, entailment: En
     case Nil => Right(s"could not assign a type for $expression")
   }
 
-  override def typecheck(context: List[Constraint], expression: Expression, typ: Type): Boolean = typeAssignment(context, expression) exists {
+  override def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean = typeAssignment(context, expression) exists {
     case Type(z, c) =>
       c.size == typ.constraints.size &&
         (substitute(z, typ.x, c) forall typ.constraints.contains)
   }
 
-  override def typecheck: Boolean = {
+  override def typeCheck: Boolean = {
     val x = freshVariable()
     val y = freshVariable()
 
@@ -34,10 +34,10 @@ class IntegratedSubsumptionChecker(override val program: Program, entailment: En
                 b.forall(c => b1 contains c)
           }
       }
-    } && (program forall typecheck)
+    } && (program forall typeCheck)
   }
 
-  override def typecheck(declaration: Declaration): Boolean = declaration match {
+  override def typeCheck(declaration: Declaration): Boolean = declaration match {
     // WF-CD
     case ConstructorDeclaration(_, x, a) => FV(a) == List(x) || FV(a).isEmpty
     // WF-RD

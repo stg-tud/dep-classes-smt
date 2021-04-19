@@ -10,9 +10,9 @@ trait Checker {
   val program: Program
 
   def typeOf(context: List[Constraint], expression: Expression): Either[Type, String]
-  def typecheck(context: List[Constraint], expression: Expression, typ: Type): Boolean
-  def typecheck(declaration: Declaration): Boolean
-  def typecheck: Boolean
+  def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean
+  def typeCheck(declaration: Declaration): Boolean
+  def typeCheck: Boolean
 
   // Method Type
   def mType(m: Id, x: Id, y: Id): List[(List[Constraint], List[Constraint])] =
