@@ -65,8 +65,10 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
 //          }
 //        case None => Right(s"No constructor found for class '$cls'")
 //      }
-      val classConstraints = constructorConstraintsSubst(cls, program, x)
 
+      val classConstraints = constructorConstraintsSubst(cls, program, x)
+//      println(s"DEBUG: found ${classConstraints.size} constructors for class $cls")
+      
       if (classConstraints.isEmpty)
         Right(s"No constructor found for class '$cls'")
       else {

@@ -38,7 +38,7 @@ object DCC {
 
   def constructorConstraintsSubst(className: Id, program: Program, x: Id): List[List[Constraint]] = program match {
     case Nil => Nil
-    case ConstructorDeclaration(className, y, a) :: tail => Util.substitute(y, x, a) :: constructorConstraintsSubst(className, tail, x)
+    case ConstructorDeclaration(`className`, y, a) :: tail => Util.substitute(y, x, a) :: constructorConstraintsSubst(className, tail, x)
     case _ :: tail => constructorConstraintsSubst(className, tail, x)
   }
 
