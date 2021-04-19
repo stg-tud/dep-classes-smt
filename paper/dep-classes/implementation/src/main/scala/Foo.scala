@@ -15,7 +15,7 @@ object Foo extends App {
 
   // TODO: move this to a dedicated test
   val newChecker  = new FaithfulAdaptionChecker(NaturalNumbers.program, sem3)
-//  val result = newChecker.typeOf(List(InstanceOf("x", "Nat")), "x")
+  val result = newChecker.typeOf(List(InstanceOf("x", "Nat")), "x")
 //  val result = newChecker.typeOf(Nil, "x") // error
 //  val result = newChecker.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero")), FieldAccess("x", "p"))
 //  val result = newChecker.typeOf(List(InstanceOf("x", "Zero")), MethodCall("prev", "x"))
@@ -25,6 +25,6 @@ object Foo extends App {
 //  val result = newChecker.typeOf(List(InstanceOf("x", "Zero")), ObjectConstruction("Succ", List(("p", "x")))) // unbound x in result type, is this a problem? no, as x is in the context
 //  val result = newChecker.typeOf(Nil, ObjectConstruction("Succ", List(("p", ObjectConstruction("Zero", Nil)))))
 //  val result = newChecker.typeOf(Nil, ObjectConstruction("Succ", List(("p", ObjectConstruction("Succ", List(("p", ObjectConstruction("Zero", Nil))))))) )
-  val result = newChecker.typeOf(Nil, ObjectConstruction("Nat", Nil))  // Error: Nat
+//  val result = newChecker.typeOf(Nil, ObjectConstruction("Nat", Nil))  // Error: Nat
   println(result.getOrElse(result.swap.getOrElse()))
 }
