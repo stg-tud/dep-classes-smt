@@ -2,8 +2,7 @@ package smt.smtlib.syntax
 
 import smt.smtlib.SMTLibFormatter
 
-// TODO: long?
-case class Numeral(num: Int) extends SMTLibFormatter with SpecConstant with Index {
+case class Numeral(num: Long) extends SMTLibFormatter with SpecConstant with Index {
   override def format(): String = num.toString
 }
 
@@ -12,8 +11,7 @@ case class Decimal(dec: Double) extends SMTLibFormatter with SpecConstant {
 }
 
 case class Hexadecimal(hex: String) extends SMTLibFormatter with SpecConstant {
-  require(hex.forall(c => c.isDigit || aToF(c)), "Hexadecimals: only digits or letters from a/A to f/F")
-//  require(hex.filter(c => !c.isDigit && !aToF(c)).isEmpty, "Hexadecimals: only digits or letters from a/A to f/F")
+  require(hex.forall(c => c.isDigit || aToF(c)), s"Hexadecimal '$hex': only digits or letters from a/A to f/F")
 
 //  def this(hex: Int) = this(hex.toHexString)
 
@@ -56,7 +54,7 @@ case class SimpleSymbol(symbol: String) extends SMTLibSymbol {
   require(symbol.nonEmpty &&
     !symbol.charAt(0).isDigit &&
     symbol.forall(c => c.isLetterOrDigit || isAllowedChar(c)),
-  s"SimpleSymbol $symbol: nonempty, doesnt start with digit and only contains letters, digits and ~ ! @ $$ % ^ & * _ - + = < > . ?")
+  s"SimpleSymbol $symbol: nonempty, doesn't start with digit and only contains letters, digits and ~ ! @ $$ % ^ & * _ - + = < > . ?")
 
   override def format(): String = symbol
   def +(right: SimpleSymbol): SimpleSymbol = SimpleSymbol(symbol+right.symbol)

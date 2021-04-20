@@ -44,28 +44,6 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
       }
     case ObjectConstruction(cls, args) =>
       val x: Id = freshVariable()
-//      classInProgramSubst(cls, program, x) match { // TODO: what if more than one constructor exists in the program? (generate list and check if ↓ holds for at least one of them)
-//        case Some(b1) =>
-//          val fieldResults: List[(Id, Either[Type, String])] = args map { case (f, ei) => (f, typeOf(context, ei)) }
-//          val fieldErrors = fieldResults filter { case (_, t) => t.isRight }
-//          if (fieldErrors.nonEmpty) {
-//            val error: String = s"Class '$cls' can not be created, couldn't assign a type to field " + fieldErrors.foldLeft("") { case (rest, (f,Right(err))) => s"\n\t$f: $err$rest" }
-//            Right(error)
-//          } else {
-//            val fieldTypes: List[(Id, Type)] = fieldResults.foldLeft(Nil: List[(Id, Type)]) {
-//              case (rest, (f, Left(t))) => (f, t) :: rest
-//              case (rest, _) => rest
-//            }
-//            val b: List[Constraint] = InstantiatedBy(x, cls) :: fieldTypes.flatMap {case (f, Type(xi, ai)) => Util.substitute(xi, FieldPath(x, f), ai)}
-//
-//            if (entailment.entails(context++b, b1))
-//              Left(Type(x, b))
-//            else
-//              Right(s"New object does not fulfill the constraints of class '$cls'")
-//          }
-//        case None => Right(s"No constructor found for class '$cls'")
-//      }
-
       val classConstraints = constructorConstraintsSubst(cls, program, x)
 //      println(s"DEBUG: found ${classConstraints.size} constructors for class $cls")
       

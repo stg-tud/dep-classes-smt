@@ -3,6 +3,7 @@ import dcc.program.NaturalNumbers
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.types.{FaithfulAdaptionChecker, IntegratedSubsumptionChecker}
+import smt.smtlib.syntax.Numeral
 
 object Foo extends App {
   // TODO: is there a way to force the program if the entailment to be the same as the program of the checker/interpreter?
@@ -27,4 +28,7 @@ object Foo extends App {
 //  val result = newChecker.typeOf(Nil, ObjectConstruction("Succ", List(("p", ObjectConstruction("Succ", List(("p", ObjectConstruction("Zero", Nil))))))) )
 //  val result = newChecker.typeOf(Nil, ObjectConstruction("Nat", Nil))  // Error: Nat
   println(result.getOrElse(result.swap.getOrElse()))
+
+  val n = Numeral(1000000000000000000l)
+  println(n.format())
 }
