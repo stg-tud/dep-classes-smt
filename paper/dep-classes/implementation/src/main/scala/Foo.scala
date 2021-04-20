@@ -44,7 +44,9 @@ object Foo extends App {
       FieldAccess("x", "p"))
   )
 
-  println(newChecker.typeCheck(ConstructorDeclaration("Zero", "x", Nil)))
+  println(newChecker.typeCheck(
+    AbstractMethodDeclaration("prev", "x", List(InstanceOf("x", "Nat")), Type("y", List(InstanceOf("y", "Nat"))))
+  ))
 
 //  program.foreach(d => println(s"$d === ${newChecker.typeCheck(d)}"))
 }

@@ -81,20 +81,14 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
       // Emptiness check added to allow for zero argument constructors
     case ConstructorDeclaration(_, x, a) => a.isEmpty || FV(a) == List(x)
     case MethodImplementation(_, x, a, typ@Type(y, b), e) =>
-      val freeVarsB = FV(b)
-      FV(a) == List(x) &&
+      freeVariablesContainsMax(FV(a), x) &&
         x != y &&
-        freeVarsB.size == 2
-        (freeVarsB contains x) &&
-        (freeVarsB contains y) &&
-          typeCheck(a, e, typ)
+        freeVariablesContainsMax(FV(b), x, y) &&
+        typeCheck(a, e, typ)
     case AbstractMethodDeclaration(_, x, a, Type(y, b)) =>
-      val freeVarsB = FV(b)
-      FV(a) == List(x) &&
+      freeVariablesContainsMax(FV(a), x) &&
         x != y &&
-        freeVarsB.size == 2
-        (freeVarsB contains x) &&
-        (freeVarsB contains y)
+        freeVariablesContainsMax(FV(b), x, y)
     case ConstraintEntailment(x, a, InstanceOf(y, _)) =>
       x == y &&
         FV(a) == List(x) &&
@@ -113,4 +107,13 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
   }
 
   private def freshVariable(): Id = Id(freshName())
+
+  private def freeVariablesContainsMax(freeVariables: List[Id], x: Id): Boolean =
+    freeVariables.isEmpty || freeVariables == List(x)
+
+  private def freeVariablesContainsMax(freeVariables: List[Id], x: Id, y: Id): Boolean =
+    freeVariables.forall(v => v==x || v==y)
+//    freeVariables.isEmpty ||
+//      (freeVariables.size == 1 && (freeVariables == List(x) || freeVariables == List(y))) ||
+//      (freeVariables.size == 2 && freeVariables.contains(x) && freeVariables.contains(y))
 }
