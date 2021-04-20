@@ -11,14 +11,14 @@ object TypeTests {
 
       b.find(!a.contains(_)) match {
         case None => // succeed
-        case Some(constraint) => fail(s"Expected constraint $constraint does not exist in ${Type(x, a)}")
+        case Some(constraint) => fail(s"Expected constraint '$constraint' does not exist in ${Type(x, a)}")
       }
 
       a.find(!b.contains(_)) match {
         case None => // succeed
-        case Some(constraint) => fail(s"Actual result type contains unexpected constraint $constraint")
+        case Some(constraint) => fail(s"Actual result type contains unexpected constraint '$constraint'")
       }
-    case Right(error) => fail(s"Expected Type, but got error $error")
+    case Right(error) => fail(s"Expected Type, but got error '$error'")
   }
 
   def testTypeError(actual: Either[Type, String]): Unit = actual match {

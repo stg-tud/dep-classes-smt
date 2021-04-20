@@ -33,8 +33,7 @@ trait Checker {
 
   def classes: List[Id] = (program flatMap className) distinct
 
-  // TODO: add search for instance of for constraint entailment second param?
-  // TODO: search for class names in all constraints?
+  // TODO: search for class names in all constraints? nah, abstract classes must be a superclass. concrete classes must have a constructor
   private def className(d: Declaration): Option[Id] = d match {
     case ConstructorDeclaration(cls, _, _) => Some(cls)
     case ConstraintEntailment(_, _, InstanceOf(_, cls)) => Some(cls)
