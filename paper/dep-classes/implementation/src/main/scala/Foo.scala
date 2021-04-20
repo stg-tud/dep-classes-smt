@@ -2,7 +2,7 @@ import dcc.entailment.SemanticEntailment
 import dcc.program.NaturalNumbers
 import dcc.syntax._
 import dcc.syntax.Implicit._
-import dcc.types.{FaithfulAdaptionChecker, IntegratedSubsumptionChecker}
+import dcc.types.{FaithfulAdaptionChecker, IntegratedSubsumptionChecker, Type}
 import smt.smtlib.syntax.Numeral
 
 object Foo extends App {
@@ -29,6 +29,5 @@ object Foo extends App {
 //  val result = newChecker.typeOf(Nil, ObjectConstruction("Nat", Nil))  // Error: Nat
   println(result.getOrElse(result.swap.getOrElse()))
 
-  val n = Numeral(1000000000000000000l)
-  println(n.format())
+  println(newChecker.typeCheck(List(InstanceOf("x", "Nat")), "x", Type("y", List(PathEquivalence("x", "y")))))
 }

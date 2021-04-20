@@ -53,7 +53,7 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
         val fieldResults: List[(Id, Either[Type, String])] = args map { case (f, ei) => (f, typeOf(context, ei)) }
         val fieldErrors = fieldResults filter { case (_, t) => t.isRight }
         if (fieldErrors.nonEmpty) {
-          Right(s"Class '$cls' can not be created, couldn't assign a type to field " + fieldErrors.foldLeft("") { case (rest, (f,Right(err))) => s"\n\t$f: $err$rest" })
+          Right(s"Class '$cls' can not be created, couldn't assign a type to field " + fieldErrors.foldLeft("") { case (rest, (f,Right(err))) => s"\n\t$f: $err$rest" }) // TODO: add exhaustive check? will never fail, as Left() is already filtered out
         } else {
           val fieldTypes: List[(Id, Type)] = fieldResults.foldLeft(Nil: List[(Id, Type)]) {
             case (rest, (f, Left(t))) => (f, t) :: rest
@@ -69,7 +69,13 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
       }
   }
 
-  override def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean = false
+  override def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean = typeOf(context, expression) match {
+    case Left(Type(y, a1)) =>
+      val Type(x, a) = typ
+
+      entailment.entails(context++Util.substitute(y, x, a1), a)
+    case Right(_) => false // TODO: add debug output
+  }
 
   override def typeCheck(declaration: Declaration): Boolean = false
 
