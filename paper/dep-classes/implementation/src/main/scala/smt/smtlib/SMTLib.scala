@@ -7,19 +7,18 @@ import smt.smtlib.syntax.{Apply, ConstructorDatatype, ConstructorDec, DeclareDat
   */
 
 trait SMTLibFormatter {
-  // TODO remove parens from function def
-  def format(): String
+  def format: String
 }
 
 object SMTLibFormatter {
   def format(seq: Seq[SMTLibFormatter], separator: String = " "): String =
-    seq.foldRight(""){(x, xs) => s"${x.format()}$separator$xs"}.dropRight(1)
+    seq.foldRight(""){(x, xs) => s"${x.format}$separator$xs"}.dropRight(1)
 }
 
 trait SMTLibCommand extends SMTLibFormatter
 
 case class SMTLibScript(commands: Seq[SMTLibCommand]) extends SMTLibFormatter {
-  override def format(): String = SMTLibFormatter.format(commands, "\n")
+  override def format: String = SMTLibFormatter.format(commands, "\n")
   def ++(right: SMTLibScript): SMTLibScript = SMTLibScript(commands ++ right.commands)
   def :++(right: Seq[SMTLibCommand]): SMTLibScript = SMTLibScript(commands ++ right)
   def ++:(left: Seq[SMTLibCommand]): SMTLibScript = SMTLibScript(left ++ commands)

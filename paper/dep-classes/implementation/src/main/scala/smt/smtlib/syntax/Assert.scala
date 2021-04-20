@@ -3,20 +3,20 @@ package smt.smtlib.syntax
 import smt.smtlib.{SMTLibCommand, SMTLibFormatter}
 
 case class Assert(term: Term) extends SMTLibCommand {
-  override def format(): String = s"(assert ${term.format()})"
+  override def format: String = s"(assert ${term.format})"
 }
 
 case object CheckSat extends SMTLibCommand {
-  override def format(): String = "(check-sat)"
+  override def format: String = "(check-sat)"
 }
 
 case class CheckSatAssuming(propLiteral: PropLiteral) extends SMTLibCommand {
-  override def format(): String = s"(check-sat-assuming (${propLiteral.format()}))"
+  override def format: String = s"(check-sat-assuming (${propLiteral.format}))"
 }
 
 // Aux
 trait PropLiteral extends SMTLibFormatter
 
 case class NotLiteral(symbol: SMTLibSymbol) extends PropLiteral {
-  override def format(): String = s"(not ${symbol.format()})"
+  override def format: String = s"(not ${symbol.format})"
 }
