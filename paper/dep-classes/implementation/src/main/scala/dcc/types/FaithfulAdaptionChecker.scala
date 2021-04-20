@@ -98,7 +98,20 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
     case _ => false
   }
 
-  override def typeCheck: Boolean = false
+  override def typeCheck: Boolean = {
+    // TODO: add missing stuff
+    methods.forall{ m =>
+      val mTypes = mType(m)
+      mTypes.forall{
+        case (_, Type(_, b)) =>
+          mTypes.forall{
+            case (_, Type(_, b1)) => b == b1
+          }
+      }
+    } &&
+    program.forall(typeCheck)
+  }
+
 
   private var nameCounter: Int = 0
   private def freshName(): Symbol = {

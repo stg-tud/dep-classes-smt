@@ -15,10 +15,10 @@ trait Checker {
   def typeCheck: Boolean
 
   // Method Type
-  def mType(m: Id, x: Id, y: Id): List[(List[Constraint], List[Constraint])] =
-    program.foldRight(Nil: List[(List[Constraint], List[Constraint])]){
-      case (AbstractMethodDeclaration(`m`, `x`, a, Type(`y`, b)), rst) => (a, b) :: rst
-      case (MethodImplementation(`m`, `x`, a, Type(`y`, b), _), rst) => (a, b) :: rst
+  def mType(m: Id): List[(Type, Type)] =
+    program.foldRight(Nil: List[(Type, Type)]){
+      case (AbstractMethodDeclaration(`m`, x, a, ret), rst) => (Type(x, a), ret) :: rst
+      case (MethodImplementation(`m`, x, a, ret, _), rst) => (Type(x, a), ret) :: rst
       case (_, rst) => rst}
 
   // MType where the bound variables of declared argument and return type constraints are

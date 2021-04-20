@@ -4,7 +4,6 @@ import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
 import dcc.types.{FaithfulAdaptionChecker, IntegratedSubsumptionChecker, Type}
-import smt.smtlib.syntax.Numeral
 
 object Foo extends App {
   // TODO: is there a way to force the program if the entailment to be the same as the program of the checker/interpreter?
@@ -44,9 +43,12 @@ object Foo extends App {
       FieldAccess("x", "p"))
   )
 
-  println(newChecker.typeCheck(
-    AbstractMethodDeclaration("prev", "x", List(InstanceOf("x", "Nat")), Type("y", List(InstanceOf("y", "Nat"))))
-  ))
+//  println(newChecker.typeCheck(
+//    MethodImplementation("prev", "x", List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Nat")), Type("y", List(InstanceOf("y", "Nat"))),
+//      FieldAccess("x", "p"))
+//  ))
 
 //  program.foreach(d => println(s"$d === ${newChecker.typeCheck(d)}"))
+
+  println(newChecker.typeCheck)
 }

@@ -57,13 +57,13 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
         val writer = new PrintWriter(in)
 
         options.foreach(command => {
-          val format = command.format()
+          val format = command.format
           if (debug) println(s"< $format")
           writer.println(format)
         })
 
         axioms.commands.foreach(command => {
-          val format = command.format()
+          val format = command.format
           if (debug) println(s"< $format")
           writer.println(format)
         })
@@ -73,7 +73,7 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
 //        writer.println(format)
 
         commands.foreach(command => {
-          val format = command.format()
+          val format = command.format
           if (debug) println(s"< $format")
           writer.println(format)
         })

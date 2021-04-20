@@ -60,6 +60,7 @@ class IntegratedSubsumptionChecker(override val program: Program, entailment: En
             c.size == b.size &&
               substitute(z, y, c).forall(b.contains(_))
         }
+    case _ => false
   }
 
   private def typeAssignment(context: List[Constraint], expr: Expression): List[Type] = expr match {

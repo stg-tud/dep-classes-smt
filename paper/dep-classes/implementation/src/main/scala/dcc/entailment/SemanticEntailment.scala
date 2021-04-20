@@ -35,7 +35,7 @@ class SemanticEntailment(val program: Program) extends Entailment {
       case Left(Unsat) => true
       case Left(_) => false
       case Right(errors) =>
-        errors foreach { e => System.err.println(e.format()) }
+        errors foreach { e => System.err.println(e.format) }
         false
     }
 //    val (exit, messages) = solver.execute()
