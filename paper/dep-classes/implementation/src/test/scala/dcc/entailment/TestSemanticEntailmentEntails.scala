@@ -1,7 +1,7 @@
 package dcc.entailment
 
 import dcc.program.{Empty, NaturalNumbers}
-import dcc.syntax.{Constraint, FieldPath, InstanceOf, InstantiatedBy, PathEquivalence}
+import dcc.syntax.{FieldPath, InstanceOf, InstantiatedBy, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
 import org.scalatest.funsuite.AnyFunSuite
 

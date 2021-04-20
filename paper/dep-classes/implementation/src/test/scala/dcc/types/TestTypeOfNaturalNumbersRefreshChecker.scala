@@ -1,6 +1,5 @@
 package dcc.types
 
-import dcc.Util.substitute
 import dcc.entailment.SemanticEntailment
 import dcc.program.{Empty, NaturalNumbers}
 import dcc.syntax.{FieldAccess, FieldPath, InstanceOf, InstantiatedBy, MethodCall, ObjectConstruction, PathEquivalence}

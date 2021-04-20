@@ -1,5 +1,5 @@
 package dcc.types
-import dcc.DCC.{FV, classInProgramSubst, constructorConstraintsSubst}
+import dcc.DCC.{FV, constructorConstraintsSubst}
 import dcc.Util
 import dcc.entailment.Entailment
 import dcc.syntax.Program.Program

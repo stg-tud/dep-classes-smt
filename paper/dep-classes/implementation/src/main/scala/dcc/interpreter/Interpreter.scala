@@ -111,11 +111,12 @@ class Interpreter(program: Program, entailment: Entailment) {
   //private def boundVars(heap: Heap): List[Id] = heap.map{case (x, _) => x}.toList
 
   // Method Implementation
-  private def mImpl(m: Id, x: Id): List[(List[Constraint], Expression)] =
-    program.foldRight(Nil: List[(List[Constraint], Expression)]){
-      case (MethodImplementation(`m`, `x`, a, _, e), rst) => (a, e) :: rst
-      case (_, rst) => rst
-    }
+  // TODO: use this in interpreter instead of mImplSubst?
+//  private def mImpl(m: Id): List[(Id, List[Constraint], Expression)] =
+//    program.foldRight(Nil: List[(Id, List[Constraint], Expression)]){
+//      case (MethodImplementation(`m`, x, a, _, e), rst) => (x, a, e) :: rst
+//      case (_, rst) => rst
+//    }
 
   private def mImplSubst(m: Id, x: Id): List[(List[Constraint], Expression)] =
     program.foldRight(Nil: List[(List[Constraint], Expression)]){
