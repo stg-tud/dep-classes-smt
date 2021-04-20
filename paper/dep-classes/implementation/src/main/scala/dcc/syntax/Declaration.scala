@@ -3,7 +3,7 @@ package dcc.syntax
 import Util._
 import dcc.types.Type
 
-trait Declaration
+sealed trait Declaration
 
 case class ConstructorDeclaration(cls: Id, x: Id, as: List[Constraint]) extends Declaration {
   override def toString: String = as match {

@@ -1,9 +1,9 @@
 package dcc.types
-import dcc.DCC.{classInProgramSubst, constructorConstraintsSubst}
+import dcc.DCC.{FV, classInProgramSubst, constructorConstraintsSubst}
 import dcc.Util
 import dcc.entailment.Entailment
 import dcc.syntax.Program.Program
-import dcc.syntax.{Constraint, Declaration, Expression, FieldAccess, FieldPath, Id, InstanceOf, InstantiatedBy, MethodCall, ObjectConstruction, PathEquivalence}
+import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldAccess, FieldPath, Id, InstanceOf, InstantiatedBy, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
 import dcc.syntax.Util.commaSeparate
 
 class FaithfulAdaptionChecker(override val program: Program, entailment: Entailment) extends Checker {
@@ -77,7 +77,31 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
     case Right(_) => false // TODO: add debug output
   }
 
-  override def typeCheck(declaration: Declaration): Boolean = false
+  override def typeCheck(declaration: Declaration): Boolean = declaration match {
+    case ConstructorDeclaration(_, x, a) => FV(a) == List(x)
+    case MethodImplementation(_, x, a, typ@Type(y, b), e) =>
+      val freeVarsB = FV(b)
+      FV(a) == List(x) &&
+        x != y &&
+        freeVarsB.size == 2
+        (freeVarsB contains x) &&
+        (freeVarsB contains y) &&
+          typeCheck(a, e, typ)
+    case AbstractMethodDeclaration(_, x, a, Type(y, b)) =>
+      val freeVarsB = FV(b)
+      FV(a) == List(x) &&
+        x != y &&
+        freeVarsB.size == 2
+        (freeVarsB contains x) &&
+        (freeVarsB contains y)
+    case ConstraintEntailment(x, a, InstanceOf(y, _)) =>
+      x == y &&
+        FV(a) == List(x) &&
+        (a exists {
+          case InstanceOf(`x`, _) => true
+          case _ => false })
+    case _ => false
+  }
 
   override def typeCheck: Boolean = false
 
