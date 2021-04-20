@@ -78,7 +78,8 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
   }
 
   override def typeCheck(declaration: Declaration): Boolean = declaration match {
-    case ConstructorDeclaration(_, x, a) => FV(a) == List(x)
+      // Emptiness check added to allow for zero argument constructors
+    case ConstructorDeclaration(_, x, a) => a.isEmpty || FV(a) == List(x)
     case MethodImplementation(_, x, a, typ@Type(y, b), e) =>
       val freeVarsB = FV(b)
       FV(a) == List(x) &&
