@@ -5,15 +5,10 @@ import dcc.program.{Empty, NaturalNumbers}
 import dcc.syntax.{FieldAccess, FieldPath, InstanceOf, InstantiatedBy, MethodCall, ObjectConstruction, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
 import dcc.types.TypeTests.{testTypeError, testTypeOk}
-import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 
-class TestTypeOfNaturalNumbersRefreshChecker extends AnyFunSuite with BeforeAndAfterEach {
-  var checker: Checker = new FaithfulAdaptionChecker(Empty.program, new SemanticEntailment(Empty.program))
-
-  override protected def beforeEach(): Unit = {
-    checker = new FaithfulAdaptionChecker(NaturalNumbers.program, new SemanticEntailment(NaturalNumbers.program))
-  }
+class TestTypeOfNaturalNumbersReuseChecker extends AnyFunSuite {
+  var checker: Checker = FaithfulAdaptionChecker(NaturalNumbers.program)
 
   test ("type of bound variable") {
     val result = checker.typeOf(List(InstanceOf("x", "Nat")), "x")

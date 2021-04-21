@@ -1,7 +1,7 @@
 package dcc.types
 import dcc.DCC.{FV, constructorConstraintsSubst}
 import dcc.Util
-import dcc.entailment.Entailment
+import dcc.entailment.{Entailment, SemanticEntailment}
 import dcc.syntax.Program.Program
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldAccess, FieldPath, Id, InstanceOf, InstantiatedBy, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
 import dcc.syntax.Util.commaSeparate
@@ -99,7 +99,9 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
   }
 
   override def typeCheck: Boolean = {
-    // TODO: add missing stuff
+    // TODO: add complete/unique
+    //  requires some smt (or other) representation, as we would need to quantify over all heaps (inf)
+
     methods.forall{ m =>
       val mTypes = mType(m)
       mTypes.forall{
@@ -129,4 +131,8 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
 //    freeVariables.isEmpty ||
 //      (freeVariables.size == 1 && (freeVariables == List(x) || freeVariables == List(y))) ||
 //      (freeVariables.size == 2 && freeVariables.contains(x) && freeVariables.contains(y))
+}
+
+object FaithfulAdaptionChecker {
+  def apply(program: Program): FaithfulAdaptionChecker = new FaithfulAdaptionChecker(program, new SemanticEntailment(program))
 }
