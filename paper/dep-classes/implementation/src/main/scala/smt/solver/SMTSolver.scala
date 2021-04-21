@@ -3,6 +3,8 @@ package smt.solver
 import smt.smtlib.syntax.{CheckSatResponse, ErrorResponse, GetModelResponse, SMTLibString, Sat, Unknown, Unsat}
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
 
+// TODO: add timeout flag as Option[Int] default None
+//  add public setter/getter for timeout flag?
 trait SMTSolver {
   /**
     * The Axioms that are true for all queries to the solver.

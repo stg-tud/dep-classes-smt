@@ -2,7 +2,7 @@ package dcc.entailment
 
 import dcc.Util.substitute
 import dcc.entailment.SemanticEntailment.{Class, ConstraintToTerm, Field, IdToSymbol, MetaPath, Path, PathToTerm, Variable, constructorPth, constructorVar, functionInstanceOf, functionInstantiatedBy, functionPathEquivalence, functionSubstitution, selectorField, selectorId, selectorObj, sortClass, sortField, sortPath, sortVariable, substitutePath}
-import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence}
+import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence, Util}
 import dcc.syntax.Program.Program
 import dcc.types.Type
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
@@ -14,21 +14,28 @@ import smt.solver.Z3Solver
 
 import scala.language.postfixOps
 
-// TODO: add debug flag similar to SMTSolver
-class SemanticEntailment(val program: Program) extends Entailment {
+// TODO: change debug flag to Int to add verbosity? 0 - no debug, 1 - only entailment info debug, 2 - pass debug to solver
+// TODO: add timeout flag as Option[Int] default None
+class SemanticEntailment(program: Program, debug: Boolean = false) extends Entailment {
   override def entails(context: List[Constraint], constraint: Constraint): Boolean = {
-    val (smt, isPathDefined) = axioms(constraint::context)
-    val solver = new Z3Solver(smt, debug=true)
+    if (debug)
+      println(s"checking entailment: ${Util.commaSeparate(context)} |- $constraint")
 
-    solver.addCommand(Assert(Not(
-      Implies(
-        if (context.isEmpty)
-          True
-        else
-          Apply(SimpleSymbol("and"), context map {c => ConstraintToTerm(c, isPathDefined)}),
-        ConstraintToTerm(constraint, isPathDefined)
-    ))))
-//    solver.addCommand(CheckSat)
+    val (smt, isPathDefined) = axioms(constraint::context)
+    val solver = new Z3Solver(smt, debug=debug)
+
+    if (context.isEmpty)
+      solver.addCommand(Assert(Not(ConstraintToTerm(constraint, isPathDefined))))
+    else
+      solver.addCommand(Assert(Not(
+        Implies(
+          if (context.size == 1)
+            ConstraintToTerm(context.head, isPathDefined)
+          else
+            Apply(SimpleSymbol("and"), context map {c => ConstraintToTerm(c, isPathDefined)}),
+          ConstraintToTerm(constraint, isPathDefined)
+        )
+      )))
 
     val response = solver.checkSat(5000)
     response match {
@@ -38,15 +45,6 @@ class SemanticEntailment(val program: Program) extends Entailment {
         errors foreach { e => System.err.println(e.format) }
         false
     }
-//    val (exit, messages) = solver.execute()
-//
-//    if (exit != 0) {
-//      messages foreach System.err.println
-//      false
-//    } else if (messages.nonEmpty && messages.head == "unsat")
-//      true
-//    else
-//      false
   }
 
   override def entails(context: List[Constraint], constraints: List[Constraint]): Boolean = constraints.forall(entails(context, _))
@@ -337,7 +335,7 @@ class SemanticEntailment(val program: Program) extends Entailment {
               if (as.size==1)
                 substituteConstraintToTerm(as.head, x)
               else
-                // TODO: check if conjunction on rhs is correct: /\ (bs => a_i) === bs => /\ a_i ?
+                // TODO: check if conjunction on rhs is correct: /\ (bs => a_i) === bs => /\ a_i ? seems so
                 Apply(SimpleSymbol("and"), as map { constraint => substituteConstraintToTerm(constraint, x)})),
             Implies(b, Apply(functionInstanceOf, Seq(p, IdToSymbol(c))))
           )
