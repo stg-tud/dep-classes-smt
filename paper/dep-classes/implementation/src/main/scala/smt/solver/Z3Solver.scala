@@ -10,11 +10,13 @@ import ExecutionContext.Implicits.global
 import scala.io.Source
 
 class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.empty, var debug: Boolean = false) extends SMTSolver {
-  // TODO: add timeout as a general trait property and set it to Option type
   // commands to send to the solver
   var commands: Seq[SMTLibCommand] = Seq.empty
 
-  private def makeCall(timeout: Int = 2000): Seq[String] = Seq("z3", "-smt2", "trace=true", "proof=true", s"-t:${timeout.toString}", "-in")
+  private def makeCall: Seq[String] = timeout match {
+    case None => Seq("z3", "-smt2", "trace=true", "proof=true", "-in")
+    case Some(millis) => Seq("z3", "-smt2", "trace=true", "proof=true", s"-t:$millis", "-in")
+  }
 //    var call = Seq("z3")
 //
 //    // use SMTLib v2 as input language
@@ -35,8 +37,8 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
 //  }
 
   // TODO: move to trait, read makeCall as override method
-  override def execute(timeout: Int): (Int, Seq[String]) = {
-    val call = makeCall(timeout)
+  override def execute: (Int, Seq[String]) = {
+    val call = makeCall
     var output: Seq[String] = Seq.empty
 //    val io = BasicIO.standard(in => {
 //      val writer = new PrintWriter(in)
@@ -92,7 +94,8 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
 
     val f = Future(blocking(p.exitValue()))
     try {
-      (Await.result(f, duration.Duration(timeout*commands.size+100, "ms")),
+      // TODO: adjust for now existing optional timeout
+      (Await.result(f, duration.Duration(30000*commands.size+100, "ms")),
        output)
     } catch {
       case _: TimeoutException =>
@@ -102,10 +105,10 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
     }
   }
 
-  override def checkSat(timeout: Int): Either[CheckSatResponse, Seq[ErrorResponse]] = {
+  override def checkSat: Either[CheckSatResponse, Seq[ErrorResponse]] = {
     val pre = commands
     addCommand(CheckSat)
-    val (status, output) = execute(timeout)
+    val (status, output) = execute
     commands = pre
 
     val responses: Seq[Either[CheckSatResponse, ErrorResponse]] = output map parseSatResponse
@@ -125,12 +128,12 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
   }
 
   // TODO: overhaul output error handling (like in checkSat)
-  override def getModel(timeout: Int): Either[(CheckSatResponse, scala.Option[GetModelResponse]), Seq[ErrorResponse]] = {
+  override def getModel: Either[(CheckSatResponse, scala.Option[GetModelResponse]), Seq[ErrorResponse]] = {
     val pre = commands
 
     addCommands(CheckSat, GetModel)
 
-    val (status, output) = execute(timeout)
+    val (status, output) = execute
 
     commands = pre
 

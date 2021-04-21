@@ -37,7 +37,9 @@ class SemanticEntailment(program: Program, debug: Boolean = false) extends Entai
         )
       )))
 
-    val response = solver.checkSat(5000)
+    // TODO: what is a sensible timeout? remove it altogether? (currently not advisable, as some entailment checks do timeout)
+    solver.timeout = 10000
+    val response = solver.checkSat
     response match {
       case Left(Unsat) => true
       case Left(_) => false

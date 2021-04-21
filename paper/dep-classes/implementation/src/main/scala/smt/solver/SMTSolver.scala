@@ -3,9 +3,12 @@ package smt.solver
 import smt.smtlib.syntax.{CheckSatResponse, ErrorResponse, GetModelResponse, SMTLibString, Sat, Unknown, Unsat}
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
 
-// TODO: add timeout flag as Option[Int] default None
-//  add public setter/getter for timeout flag?
 trait SMTSolver {
+  private var _timeout: Option[Int] = None
+  def timeout: Option[Int] = _timeout
+  def timeout_= (millis: Int): Unit = _timeout = Some(millis)
+  def unsetTimeout(): Unit = _timeout = None
+
   /**
     * The Axioms that are true for all queries to the solver.
     */
@@ -48,33 +51,30 @@ trait SMTSolver {
 
   /**
     * Executes the SMTSolver with the currently held commands.
-    * @param timeout The timeout for each query to the SMTSolver in milliseconds.
     * @return The return code of the SMTSolver or -1 in case of a timeout
     *         and the stdout of the solver.
     */
-  def execute(timeout: Int = 2000): (Int, Seq[String])
+  def execute: (Int, Seq[String])
 
   /**
     * Executes the SMTSolver with the currently held commands
     * and checks them for satisfiability.
-    * @param timeout The timeout for each query to the SMTSolver in milliseconds.
     * @return `Sat` if the input is satisfiable
     *        `Unsat` if the input is unsatisfiable
     *        `Unknown` if the solver can't decide.
     */
-  def checkSat(timeout: Int = 2000): Either[CheckSatResponse, Seq[ErrorResponse]]
+  def checkSat: Either[CheckSatResponse, Seq[ErrorResponse]]
 
   /**
     * Executes the SMTSolver with the currently held commands
     * and checks them for satisfiability
     * and retrieves a model from the solver if possible.
-    * @param timeout The timeout for each query to the SMTSolver in milliseconds.
     * @return `Sat` if the input is satisfiable
     *        `Unsat` if the input is unsatisfiable
     *        `Unknown` if the solver can't decide.
     *        as well as a model in case of `Sat`
     */
-  def getModel(timeout: Int = 1000): Either[(CheckSatResponse, Option[GetModelResponse]), Seq[ErrorResponse]]
+  def getModel: Either[(CheckSatResponse, Option[GetModelResponse]), Seq[ErrorResponse]]
 
   protected def parseSatResponse(s: String): Either[CheckSatResponse, ErrorResponse] = s match {
     case "sat"                       => Left(Sat)

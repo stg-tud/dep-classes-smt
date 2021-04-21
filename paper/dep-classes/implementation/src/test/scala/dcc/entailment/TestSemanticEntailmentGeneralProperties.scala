@@ -20,7 +20,7 @@ class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
       Assert(Not(Forall(Seq(SortedVar("p", "Variable")), Apply("path-equivalence", Seq("p", "p")))))
 
     val z3 = new Z3Solver(script, debug = true)
-    assert(z3.checkSat() == Left(Unsat))
+    assert(z3.checkSat == Left(Unsat))
   }
 
   test("forall p. p===p  in Natural Numbers") {
@@ -30,7 +30,7 @@ class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
       Assert(Not(Forall(Seq(SortedVar("p", "Path")), Apply("path-equivalence", Seq("p", "p")))))
 
     val z3 = new Z3Solver(script, debug = true)
-    assert(z3.checkSat() == Left(Unsat))
+    assert(z3.checkSat == Left(Unsat))
   }
 
   test("forall p, q. p===q => q===p  in Empty program with 26 variables") {
@@ -42,7 +42,7 @@ class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
         Implies(Apply("path-equivalence", Seq("path-p", "path-q")), Apply("path-equivalence", Seq("path-q", "path-p"))))))
 
     val z3 = new Z3Solver(script, debug = true)
-    assert(z3.checkSat(40000) == Left(Unsat))
+    assert(z3.checkSat == Left(Unsat))
   }
 
   test("forall p, q. p===q => q===p  in Empty program with Path datatype") {
@@ -53,7 +53,7 @@ class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
         Implies(Apply("path-equivalence", Seq("path-p", "path-q")), Apply("path-equivalence", Seq("path-q", "path-p"))))))
 
     val z3 = new Z3Solver(script, debug = true)
-    val result = z3.checkSat(120000)
+    val result = z3.checkSat
     assert(result == Left(Unsat) || result == Right(List(ErrorResponse(SMTLibString("(error \"io timeout or non z3 error\")")))))
   }
 
@@ -65,7 +65,7 @@ class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
         Implies(And(Apply("path-equivalence", Seq("path-a", "path-b")), Apply("path-equivalence", Seq("path-c", "path-b"))), Apply("path-equivalence", Seq("path-a", "path-c"))))))
 
     val z3 = new Z3Solver(script, debug = true)
-    assert(z3.checkSat() == Left(Unsat))
+    assert(z3.checkSat == Left(Unsat))
   }
 
   test("forall a, b, c. a===b /\\ b===c => a===c  in Empty program with 12 variables") {
@@ -76,7 +76,7 @@ class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
         Implies(And(Apply("path-equivalence", Seq("path-a", "path-b")), Apply("path-equivalence", Seq("path-c", "path-b"))), Apply("path-equivalence", Seq("path-a", "path-c"))))))
 
     val z3 = new Z3Solver(script, debug = true)
-    assert(z3.checkSat(20000) == Left(Unsat))
+    assert(z3.checkSat == Left(Unsat))
   }
 
   test("forall a, b, c. a===b /\\ b===c => a===c  in Empty program with 13 variables") {
@@ -88,6 +88,6 @@ class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
         Implies(And(Apply("path-equivalence", Seq("path-a", "path-b")), Apply("path-equivalence", Seq("path-c", "path-b"))), Apply("path-equivalence", Seq("path-a", "path-c"))))))
 
     val z3 = new Z3Solver(script, debug = true)
-    assert(z3.checkSat(30000) == Left(Unknown))
+    assert(z3.checkSat == Left(Unknown))
   }
 }
