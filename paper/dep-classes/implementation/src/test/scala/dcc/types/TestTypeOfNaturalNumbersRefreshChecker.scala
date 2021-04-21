@@ -9,7 +9,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 
 class TestTypeOfNaturalNumbersRefreshChecker extends AnyFunSuite with BeforeAndAfterEach {
-  var checker: Checker = new FaithfulAdaptionChecker(Empty.program, new SemanticEntailment(Empty.program))
+  private var checker: Checker = new FaithfulAdaptionChecker(Empty.program, new SemanticEntailment(Empty.program))
 
   override protected def beforeEach(): Unit = {
     checker = new FaithfulAdaptionChecker(NaturalNumbers.program, new SemanticEntailment(NaturalNumbers.program))
