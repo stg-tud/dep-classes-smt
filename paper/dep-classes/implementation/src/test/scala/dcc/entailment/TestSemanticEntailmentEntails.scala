@@ -49,7 +49,7 @@ class TestSemanticEntailmentEntails extends AnyFunSuite{
       PathEquivalence("a", "g")))
   }
 
-  test("a=b,b=c,c=d,d=e,e=f,f=g,g=h |- a=h is unknown for natural numbers program") {
+  test("a=b,b=c,c=d,d=e,e=f,f=g,g=h |- a=h") {
     val entailmentEmpty = new SemanticEntailment(Empty.program)
     val entailmentNaturalNumbers = new SemanticEntailment(NaturalNumbers.program)
 
@@ -57,7 +57,7 @@ class TestSemanticEntailmentEntails extends AnyFunSuite{
       List(PathEquivalence("a", "b"), PathEquivalence("b", "c"), PathEquivalence("c", "d"), PathEquivalence("d", "e"), PathEquivalence("e", "f"), PathEquivalence("f", "g"), PathEquivalence("g", "h")),
       PathEquivalence("a", "h")))
 
-    assert(!entailmentNaturalNumbers.entails(  // returns unknown
+    assert(entailmentNaturalNumbers.entails(
       List(PathEquivalence("a", "b"), PathEquivalence("b", "c"), PathEquivalence("c", "d"), PathEquivalence("d", "e"), PathEquivalence("e", "f"), PathEquivalence("f", "g"), PathEquivalence("g", "h")),
       PathEquivalence("a", "h")))
   }
