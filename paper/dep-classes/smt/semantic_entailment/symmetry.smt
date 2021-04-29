@@ -1,0 +1,8 @@
+(set-logic UF)
+(declare-datatype Variable ((q) (p)))
+(declare-fun path-equivalence (Variable Variable) Bool)
+(define-fun substitute ((path-p Variable) (var-x Variable) (path-q Variable)) Variable (ite (= var-x path-p) path-q path-p))
+(assert (forall ((path-p Variable)) (path-equivalence path-p path-p)))
+(assert (forall ((cs-a Bool) (path-p Variable) (path-q Variable) (path-r Variable) (path-s Variable) (var-x Variable)) (=> (and (=> cs-a (path-equivalence (substitute path-p var-x path-r) (substitute path-q var-x path-r))) (=> cs-a (path-equivalence path-s path-r))) (=> cs-a (path-equivalence (substitute path-p var-x path-s) (substitute path-q var-x path-s))))))
+(assert (not (=> (path-equivalence p q) (path-equivalence q p))))
+(check-sat)

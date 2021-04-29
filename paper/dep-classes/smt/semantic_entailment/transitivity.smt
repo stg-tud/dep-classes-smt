@@ -1,0 +1,8 @@
+(declare-datatype Variable ((a) (h) (b) (c) (d) (e) (f) (g)))
+(declare-fun path-equivalence (Variable Variable) Bool)
+(define-fun substitute ((path-p Variable) (var-x Variable) (path-q Variable)) Variable (ite (= var-x path-p) path-q path-p))
+(assert (forall ((path-p Variable)) (path-equivalence path-p path-p)))
+(assert (forall ((cs-a Bool) (path-p Variable) (path-q Variable) (path-r Variable) (path-s Variable) (var-x Variable)) (=> (and (=> cs-a (path-equivalence (substitute path-p var-x path-r) (substitute path-q var-x path-r))) (=> cs-a (path-equivalence path-s path-r))) (=> cs-a (path-equivalence (substitute path-p var-x path-s) (substitute path-q var-x path-s))))))
+(assert (not (=> (and (path-equivalence a b) (path-equivalence b c) (path-equivalence c d) (path-equivalence d e) (path-equivalence e f) (path-equivalence f g) (path-equivalence g h)) (path-equivalence a h))))
+(check-sat)
+;(get-info :reason-unknown)
