@@ -5,13 +5,13 @@ import dcc.syntax.{Constraint, FieldPath, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
 import org.scalatest.funsuite.AnyFunSuite
 import smt.smtlib.SMTLibScript
-import smt.smtlib.syntax.{Apply, Assert, ErrorResponse, Forall, SMTLibString, SortedVar, Unknown, Unsat}
+import smt.smtlib.syntax.{Apply, Assert, ErrorResponse, Forall, SMTLibString, SortedVar, Unsat}
 import smt.smtlib.syntax.Implicit.stringToSimpleSymbol
 import smt.smtlib.theory.BoolPredefined.{And, Implies, Not}
 import smt.solver.Z3Solver
 
 class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
-  private def axioms(entailment: SemanticEntailment)(constraints: Constraint*): SMTLibScript = entailment.axioms(constraints.toList)._1
+  private def axioms(entailment: SemanticEntailment)(constraints: Constraint*): SMTLibScript = entailment.axioms(constraints.toList, None)._1
 
   test("forall p. p===p  in Empty program") {
     val entailment = new SemanticEntailment(Empty.program)
@@ -88,6 +88,6 @@ class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
         Implies(And(Apply("path-equivalence", Seq("path-a", "path-b")), Apply("path-equivalence", Seq("path-c", "path-b"))), Apply("path-equivalence", Seq("path-a", "path-c"))))))
 
     val z3 = new Z3Solver(script, debug = true)
-    assert(z3.checkSat == Left(Unknown))
+    assert(z3.checkSat == Left(Unsat))
   }
 }

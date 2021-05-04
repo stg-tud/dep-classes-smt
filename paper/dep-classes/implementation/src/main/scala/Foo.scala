@@ -4,6 +4,8 @@ import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
 import dcc.types.{FaithfulAdaptionChecker, Type}
+import smt.smtlib.syntax.{Apply, DefineFun, FunctionDef, SimpleSymbol, SortedVar}
+import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Or}
 
 object Foo extends App {
   // TODO: is there a way to force the program if the entailment to be the same as the program of the checker/interpreter?
@@ -22,5 +24,44 @@ object Foo extends App {
       FieldAccess("x", "p"))
   )
 
+
   println(newChecker.typeCheck)
+
+  import smt.smtlib.syntax.Implicit._
+  val Path = SimpleSymbol("Path")
+  val path_equivalence = "path-equivalence"
+
+  println(DefineFun(FunctionDef(
+    path_equivalence,
+    Seq(
+      SortedVar("path-p", Path),
+      SortedVar("path-q", Path)
+    ),
+    Bool,
+    Or(
+      Eq("path-p", "path-q"),
+      Or(
+        And(
+          Eq("path-p", Apply("var", Seq("X"))),
+          Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F")))
+        ),
+        Or(
+          And(
+            Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F"))),
+            Eq("path-p", Apply("var", Seq("X")))
+          ),
+          Or(
+            And(
+              Eq("path-p", Apply("var", Seq("X"))),
+              Eq("path-p", Apply("var", Seq("X")))
+            ),
+            And(
+              Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F"))),
+              Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F")))
+            )
+          )
+        )
+      )
+    )
+  )).format)
 }

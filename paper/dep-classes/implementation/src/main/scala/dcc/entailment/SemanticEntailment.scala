@@ -12,6 +12,7 @@ import smt.smtlib.syntax.{Apply, Assert, ConstructorDatatype, ConstructorDec, De
 import smt.smtlib.theory.BoolPredefined._
 import smt.solver.Z3Solver
 
+import scala.annotation.tailrec
 import scala.language.postfixOps
 
 // TODO: change debug flag to Int to add verbosity? 0 - no debug, 1 - only entailment info debug, 2 - pass debug to solver
@@ -21,7 +22,7 @@ class SemanticEntailment(program: Program, debug: Boolean = false) extends Entai
     if (debug)
       println(s"checking entailment: ${Util.commaSeparate(context)} |- $constraint")
 
-    val (smt, isPathDefined) = axioms(constraint::context)
+    val (smt, isPathDefined) = axioms(context, Some(constraint))
     val solver = new Z3Solver(smt, debug=debug)
 
     if (context.isEmpty)
@@ -55,12 +56,12 @@ class SemanticEntailment(program: Program, debug: Boolean = false) extends Entai
     * SMTLib commands capturing the semantic translation of the constraint system
     * @return SMTLib script representing the semantic translation
     */
-  def axioms(constraints: List[Constraint]): (SMTLibScript, Boolean) = {
+  def axioms(context: List[Constraint], constraint: Option[Constraint]): (SMTLibScript, Boolean) = {
     // TODO: Change this to be able to determine if the path datatype is defined without the pair return type
     val classes: List[String] = getClasses // TODO: search in constraints for class names? All existing classes should be mentioned in the program,
                                            //       currently produces smt error if we ask for an 'valid' entailment with a class that is not mentioned in the program
-    val variables: List[String] = getVariableNames ++ extractVariableNames(constraints) distinct
-    val fields: List[String] = getFieldNames ++ extractFieldNames(constraints) distinct
+    val variables: List[String] = getVariableNames ++ extractVariableNames(if (constraint.isEmpty) context else constraint.get :: context) distinct
+    val fields: List[String] = getFieldNames ++ extractFieldNames(if (constraint.isEmpty) context else constraint.get :: context) distinct
 
     val constraintEntailments: List[ConstraintEntailment] = program.filter(_.isInstanceOf[ConstraintEntailment]).map(_.asInstanceOf[ConstraintEntailment])
 
@@ -72,7 +73,7 @@ class SemanticEntailment(program: Program, debug: Boolean = false) extends Entai
       else
         generateEnumerationTypes(classes, variables, fields)
 
-    val functions: SMTLibScript = generateFunctionDeclarations(pathDatatype.isDefined, classes.nonEmpty) :+
+    val functions: SMTLibScript = generateConstraintPredicates(context, pathDatatype.isDefined, classes.nonEmpty) :+
       generateSubstitutionFunction(pathDatatype.isDefined)
 
     (sorts ++
@@ -154,18 +155,128 @@ class SemanticEntailment(program: Program, debug: Boolean = false) extends Entai
     None
   }
 
-  private def generateFunctionDeclarations(isPathDefined: Boolean, isClassDefined: Boolean): SMTLibScript = {
+  def generateConstraintPredicates(context: List[Constraint], isPathDefined: Boolean, isClassDefined: Boolean): SMTLibScript = {
     val sort: Sort = if (isPathDefined) Path else Variable
 
-    if (isClassDefined)
+    val pathEquivalencePredicate =
+      generatePathEquivalencePredicate(
+        context.foldRight(Nil: List[PathEquivalence]){
+          case (PathEquivalence(p, q), rest) => PathEquivalence(p, q) :: rest
+          case (_, rest) => rest
+      }, isPathDefined)
+
+    if (isClassDefined) {
+      // All constraint types
       SMTLibScript(Seq(
-        DeclareFun(functionInstanceOf, Seq(sort, Class), Bool),
-        DeclareFun(functionInstantiatedBy, Seq(sort, Class), Bool),
-        DeclareFun(functionPathEquivalence, Seq(sort, sort), Bool)
+        generateInstantiatedByPredicate(
+          context.foldRight(Nil: List[InstantiatedBy]) {
+            case (InstantiatedBy(p, cls), rest) => InstantiatedBy(p, cls) :: rest
+            case (_, rest) => rest
+          }, isPathDefined),
+        DeclareFun(functionInstanceOf, Seq(sort, Class), Bool), // TODO: define instance of constraint
+        pathEquivalencePredicate
       ))
-    else
-      SMTLibScript(Seq(DeclareFun(functionPathEquivalence, Seq(sort, sort), Bool)))
+    } else {
+      // Only path equivalence
+      SMTLibScript(Seq(pathEquivalencePredicate))
+    }
   }
+
+  private def generateInstantiatedByPredicate(contextInstantiations: List[InstantiatedBy], isPathDefined: Boolean): SMTLibCommand = {
+    val path: Sort = if (isPathDefined) Path else Variable
+
+    DefineFun(FunctionDef(
+      functionInstantiatedBy,
+      Seq(
+        SortedVar(SimpleSymbol("path-p"), path),
+        SortedVar(SimpleSymbol("class-c"), Class)
+      ),
+      Bool,
+      contextInstantiations.foldRight(False) {
+        case (InstantiatedBy(p, cls), rest) =>
+          Or(
+            And(
+              Eq(SimpleSymbol("path-p"), PathToTerm(p, isPathDefined)),
+              Eq(SimpleSymbol("class-c"), IdToSymbol(cls))
+            ),
+            rest
+          )
+      }
+    ))
+  }
+
+  private def generatePathEquivalencePredicate(contextPathEquivalences: List[PathEquivalence], isPathDefined: Boolean): SMTLibCommand = {
+    val path: Sort = if (isPathDefined) Path else Variable
+
+    val symmetricTransitiveClosure: List[Constraint] = buildReflexiveSymmetricTransitiveClosure(contextPathEquivalences.toSet).toList
+
+    val body: Term =
+      if (symmetricTransitiveClosure.isEmpty)
+        Eq(SimpleSymbol("path-p"), SimpleSymbol("path-q"))
+      else
+        Or(
+          Eq(SimpleSymbol("path-p"), SimpleSymbol("path-q")),
+          symmetricTransitiveClosure.foldRight(False) {
+            case (PathEquivalence(p, q), rest) =>
+              Or(
+                And(
+                  Eq(SimpleSymbol("path-p"), PathToTerm(p, isPathDefined)),
+                  Eq(SimpleSymbol("path-q"), PathToTerm(q, isPathDefined))
+                ),
+                rest
+              )
+            case (_, rest) => rest
+          }
+        )
+
+    DefineFun(FunctionDef(
+      functionPathEquivalence,
+      Seq(
+        SortedVar(SimpleSymbol("path-p"), path),
+        SortedVar(SimpleSymbol("path-q"), path)
+      ),
+      Bool,
+      body
+    ))
+  }
+
+  @tailrec
+  private def buildReflexiveSymmetricTransitiveClosure(pathEquivalences: Set[PathEquivalence]): Set[PathEquivalence] = {
+    def addTransitiveConstraints(source: PathEquivalence, target: Set[PathEquivalence]): Set[PathEquivalence] = {
+      val PathEquivalence(a, b) = source
+      target.foldLeft(Set.empty[PathEquivalence]) {
+        case (rest, PathEquivalence(`b`, c)) => rest + PathEquivalence(a, c)
+        case (rest, _) => rest
+      }
+    }
+
+    val symmetricClosure = pathEquivalences ++ pathEquivalences.map {
+      case PathEquivalence(p, q) => PathEquivalence(q, p)
+    }
+
+    var closureCandidate: Set[PathEquivalence] = symmetricClosure
+    symmetricClosure.foreach {
+      constraint => closureCandidate = closureCandidate union addTransitiveConstraints(constraint, closureCandidate)
+    }
+
+    if (closureCandidate == pathEquivalences)
+      closureCandidate
+    else
+      buildReflexiveSymmetricTransitiveClosure(closureCandidate)
+  }
+
+//  private def generateFunctionDeclarations(isPathDefined: Boolean, isClassDefined: Boolean): SMTLibScript = {
+//    val sort: Sort = if (isPathDefined) Path else Variable
+//
+//    if (isClassDefined)
+//      SMTLibScript(Seq(
+//        DeclareFun(functionInstanceOf, Seq(sort, Class), Bool),
+//        DeclareFun(functionInstantiatedBy, Seq(sort, Class), Bool),
+//        DeclareFun(functionPathEquivalence, Seq(sort, sort), Bool)
+//      ))
+//    else
+//      SMTLibScript(Seq(DeclareFun(functionPathEquivalence, Seq(sort, sort), Bool)))
+//  }
 
   private def generateSubstitutionFunction(isPathDefined: Boolean): SMTLibCommand = {
     val p: SMTLibSymbol = SimpleSymbol("path-p")
