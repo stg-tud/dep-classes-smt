@@ -1,19 +1,23 @@
 (declare-datatype Variable (X Y Z))
 (define-fun substitute ((path-p Variable) (var-x Variable) (path-q Variable)) Variable (ite (= var-x path-p) path-q path-p))
-(define-fun-rec path-equivalence ((path-p Variable) (path-q Variable)) Bool
+(define-fun equiv ((a Variable) (b Variable)) Bool
   (or
-    (= path-p path-q)
-    (and (= path-p X) (= path-q Y))
-    (and (= path-p Y) (= path-q Z))
+    (and (= a X) (= b Y))
+    (and (= a Y) (= b Z))))
+(define-fun path-equivalence ((path-a Variable) (path-b Variable)) Bool
+  (or
+    (= path-a path-b)
+    (equiv path-a path-b)
+    ;(equiv path-b path-a)
     (exists (
       (path-r Variable)
       (path-s Variable)
       (var-x Variable))
       (and
-        (path-equivalence path-s path-r)
-        (path-equivalence
-          (substitute path-p var-x path-r)
-          (substitute path-q var-x path-r))))
+        (equiv path-s path-r)
+        (equiv
+          (substitute path-a var-x path-r)
+          (substitute path-b var-x path-r))))
      ))
 ;(assert (forall ((path-p Variable)) (path-equivalence path-p path-p)))
 ;(assert (forall ((cs-a Bool) (path-p Variable) (path-q Variable) (path-r Variable) (path-s Variable) (var-x Variable))
@@ -32,6 +36,8 @@
 ;              (path-equivalence
 ;                (substitute path-p var-x path-s)
 ;                (substitute path-q var-x path-s))))))
+(assert (path-equivalence Y X))
 (assert (path-equivalence X Z))
+;(assert (path-equivalence Z X))
 (check-sat)
 (get-model)
