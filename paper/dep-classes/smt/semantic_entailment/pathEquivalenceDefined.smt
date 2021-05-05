@@ -1,12 +1,37 @@
-(declare-datatype Variable ((x)))
-(declare-datatype Field ((p)))
-(declare-datatype Path ((var (id Variable)) (pth (obj Path) (field Field))))
-(define-fun path-equivalence ((path-p Path) (path-q Path)) Bool
-  (or (= path-p path-q)
-      ))
-(define-fun-rec substitute ((path-p Path) (var-x Variable) (path-q Path)) Path (ite (is-var path-p) (ite (= var-x (id path-p)) path-q path-p) (pth (substitute (obj path-p) var-x path-q) (field path-p))))
-(assert (forall ((path-p Path)) (path-equivalence path-p path-p)))
-(assert (forall ((cs-a Bool) (path-p Path) (path-q Path) (path-r Path) (path-s Path) (var-x Variable)) (=> (and (=> cs-a (path-equivalence (substitute path-p var-x path-r) (substitute path-q var-x path-r))) (=> cs-a (path-equivalence path-s path-r))) (=> cs-a (path-equivalence (substitute path-p var-x path-s) (substitute path-q var-x path-s))))))
-(assert (path-equivalence (var x) (var x)))
+(declare-datatype Variable (X Y Z))
+(define-fun substitute ((path-p Variable) (var-x Variable) (path-q Variable)) Variable (ite (= var-x path-p) path-q path-p))
+(define-fun-rec path-equivalence ((path-p Variable) (path-q Variable)) Bool
+  (or
+    (= path-p path-q)
+    (and (= path-p X) (= path-q Y))
+    (and (= path-p Y) (= path-q Z))
+    (exists (
+      (path-r Variable)
+      (path-s Variable)
+      (var-x Variable))
+      (and
+        (path-equivalence path-s path-r)
+        (path-equivalence
+          (substitute path-p var-x path-r)
+          (substitute path-q var-x path-r))))
+     ))
+;(assert (forall ((path-p Variable)) (path-equivalence path-p path-p)))
+;(assert (forall ((cs-a Bool) (path-p Variable) (path-q Variable) (path-r Variable) (path-s Variable) (var-x Variable))
+;          (=>
+;            (and
+;              (=>
+;                cs-a
+;                (path-equivalence
+;                  (substitute path-p var-x path-r)
+;                  (substitute path-q var-x path-r)))
+;              (=>
+;                cs-a
+;                (path-equivalence path-s path-r)))
+;            (=>
+;              cs-a
+;              (path-equivalence
+;                (substitute path-p var-x path-s)
+;                (substitute path-q var-x path-s))))))
+(assert (path-equivalence X Z))
 (check-sat)
 (get-model)
