@@ -58,6 +58,7 @@
 \section{Current State}
 \subsection{General First-Order Encoding Template}
 
+
 \subsection{Natural Numbers Program}
 \begin{align}
 &\constr{\texttt{Zero}}{x}{\epsilon}\\
@@ -70,5 +71,27 @@
 \end{align}
 
 \subsection{First-Order Encoding for Natural Numbers Program}
+
+\section{How do we check entailments?}
+1. Create set of ``axioms'' from program and entailment to check
+1.1. datatype declarations (vars, classes, fields, paths if necessary)
+1.2. function declarations (path-equivalence, instOf, instBy if necessary)
+1.3. calculus rules (class, subst, one prog rule per entailment declaration in the program)
+2. assert entailment to be checked
+2.1. $c_1,...,c_n \vdash c \Rightarrow c_1 \land ... \land c_n → c$
+2.2. negate translated entailment and assert it.
+2.3. If unsat, it's valid/correct. If sat it's not valid.
+
+\section{Example Entailments}
+\subsection{working valid entailment}
+- can be checked unsat
+- unsat core gives contraticting rules
+
+\subsection{working invalid entailment}
+- can be checked sat
+- model gives interpretation (counter example?)
+
+\subsection{non-working invalid entailment (inf runtime)}
+- cannot be checked, solver has ``infinite'' runtime
 
 \end{document}
