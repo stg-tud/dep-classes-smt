@@ -1,0 +1,74 @@
+\documentclass[a4paper]{article}
+
+%% packages
+%%%%%%%%%%%
+\usepackage[utf8x]{inputenc}
+\usepackage[USenglish]{babel}
+\usepackage{amsbsy,amscd,amsfonts,amssymb,amstext,amsmath,amsthm,latexsym}
+% Package mathpartir is currently not available in nixpkgs
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{dot2texi}
+\usepackage{url}
+\usepackage{hyperref}
+%\usepackage[xindy]{glossaries}
+\usepackage[nottoc]{tocbibind}
+\usepackage{pdfpages}
+
+\usepackage{syntax} % for bnf grammar
+\usepackage{bussproofs} % for type rules
+\usepackage{todonotes}
+
+\usepackage{float} % for figures
+\floatstyle{boxed}
+\restylefloat{figure}
+
+\usepackage{listings}
+\usepackage{xcolor}
+%\usepackage{tikz}
+\usetikzlibrary{positioning,chains,shapes.arrows,shapes.geometric,fit,calc,arrows,decorations.pathmorphing}
+
+%\usepackage{subfig}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{adjustbox}
+\usepackage{cleveref}
+
+%% options
+%%%%%%%%%%
+% Currently no such things seem to be needed.
+% \newtheorem{definition}{Definition}
+% \newtheorem{example}{Example}
+% \newtheorem{lemma}{Lemma}
+% \newtheorem{theorem}{Theorem}
+% \newtheorem{claim}{Claim}
+% \numberwithin{definition}{chapter}
+
+\input{macros}
+%\input{tikz}
+
+\begin{document}
+% Table of contents
+%%%%%%%%%%%%%%%%%%%
+%\tableofcontents
+
+% Content
+%%%%%%%%%
+%\chapter{Bar}
+\section{Current State}
+\subsection{General First-Order Encoding Template}
+
+\subsection{Natural Numbers Program}
+\begin{align}
+&\constr{\texttt{Zero}}{x}{\epsilon}\\
+&\constr{\texttt{Succ}}{x}{\instOf{x.p}{\texttt{Nat}}}\\
+&\progEnt{x}{\instOf{x}{\texttt{Zero}}}{\instOf{x}{\texttt{Nat}}}\\
+&\progEnt{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\instOf{x}{\texttt{Nat}}}\\
+&\mDecl{\texttt{prev}}{x}{\instOf{x}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}\\
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Zero}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{\newInstNoArgs{\texttt{Zero}}}\\
+&\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x.p}
+\end{align}
+
+\subsection{First-Order Encoding for Natural Numbers Program}
+
+\end{document}
