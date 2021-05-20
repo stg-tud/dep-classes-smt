@@ -5,13 +5,11 @@
 \usepackage[utf8x]{inputenc}
 \usepackage[USenglish]{babel}
 \usepackage{amsbsy,amscd,amsfonts,amssymb,amstext,amsmath,amsthm,latexsym}
-% Package mathpartir is currently not available in nixpkgs
 \usepackage{mathpartir}
 \usepackage{stmaryrd}
 \usepackage{dot2texi}
 \usepackage{url}
 \usepackage{hyperref}
-%\usepackage[xindy]{glossaries}
 \usepackage[nottoc]{tocbibind}
 \usepackage{pdfpages}
 
@@ -54,10 +52,65 @@
 
 % Content
 %%%%%%%%%
-%\chapter{Bar}
-\section{Current State}
-\subsection{General First-Order Encoding Template}
+\section{How do we check entailments?}
+\begin{enumerate}
+  \item Create set of ``axioms'' based on the program and the entailment to check
+  \begin{enumerate}
+    \item Datatype Declarations
+    \begin{itemize}
+      \item Enumeration types: Variables, Classes, Fields
+      \item ADT: Path
+    \end{itemize}
+    \item Function Declarations
+    \begin{itemize}
+      \item Declared: path-equivalence, instance-of, instantiated-by
+      \item Defined recursively: substitute
+    \end{itemize}
+    \item Calculus rules as all quantified formulas
+    \begin{itemize}
+      \item Static Rules: C-Refl, C-Class, C-Subst
+      \item Dynamic Rules: C-Prog
+    \end{itemize}
+    \item Assert entailment to be checked: $c_1,...,c_n \vdash c \Rightarrow \neg (c_1 \land ... \land c_n → c)$
+  \end{enumerate}
+  \item Get Solution
+  \begin{itemize}
+    \item If unsat: valid/correct entailment.
+    \item If sat: invalid entailment.
+  \end{itemize}
+\end{enumerate}
 
+\subsection{General First-Order Encoding Template}
+\begin{align}
+  %&\texttt{\Variable~(...)}~~~~~\texttt{\Field~(...)}~~~~~\texttt{\Class~(...)}\\
+  &\texttt{\Variable~(...)}\\
+  &\texttt{\Field~(...)}\\
+  &\texttt{\Class~(...)}\\
+  &\Path~((\Variable)~(\Path~\Field))\\
+  &\pathEq{}{}\!\!: \Path \times \Path \rightarrow \TBool \\
+  &\instOf{}{}\!\!: \Path \times \Class \rightarrow \TBool\\
+  &\instBy{}{}\!\!: \Path \times \Class \rightarrow \TBool\\
+  &{\_}_{\sub{}{}}\!\!: \Path \times \Variable \times \Path \rightarrow \Path\\
+  % C-Refl
+  &\forall \sortedVar{p}{\Path}.~\pathEq{p}{p}\\
+  % C-Class
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}.\\
+  &\quad(a \rightarrow \instBy{p}{c}) \rightarrow (a \rightarrow \instOf{p}{c})\\
+  % C-Subst: pathEq
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{q}{\Path}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \pathEq{p_{\sub{x}{r}}}{q_{\sub{x}{r}}} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \pathEq{p_{\sub{x}{s}}}{q_{\sub{x}{s}}})\\
+  % C-Subst: instOf
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instOf{p_{\sub{x}{r}}}{c} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \instOf{p_{\sub{x}{s}}}{c})\\
+  % C-Subst: instBy
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instBy{p_{\sub{x}{r}}}{c} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \instBy{p_{\sub{x}{s}}}{c})\\
+  % C-Prog
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}.~(a \rightarrow \bigwedge \hole) \rightarrow (a \rightarrow \instOf{p}{\hole})
+\end{align}
 
 \subsection{Natural Numbers Program}
 \begin{align}
@@ -70,28 +123,52 @@
 &\mImpl{\texttt{prev}}{x}{\instOf{x}{\texttt{Succ}}, \instOf{x.p}{\texttt{Nat}}}{\type{y}{\instOf{y}{\texttt{Nat}}}}{x.p}
 \end{align}
 
-\subsection{First-Order Encoding for Natural Numbers Program}
-
-\section{How do we check entailments?}
-1. Create set of ``axioms'' from program and entailment to check
-1.1. datatype declarations (vars, classes, fields, paths if necessary)
-1.2. function declarations (path-equivalence, instOf, instBy if necessary)
-1.3. calculus rules (class, subst, one prog rule per entailment declaration in the program)
-2. assert entailment to be checked
-2.1. $c_1,...,c_n \vdash c \Rightarrow c_1 \land ... \land c_n → c$
-2.2. negate translated entailment and assert it.
-2.3. If unsat, it's valid/correct. If sat it's not valid.
+\subsection{C-Prog Rules for Natural Numbers Program}
+\begin{align}
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}.\\
+  &\quad (a \rightarrow \instOf{p}{\Zero}) \rightarrow\\
+  &\qquad (a \rightarrow \instOf{p}{\Nat})\\
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}.\\
+  &\quad (a \rightarrow \instOf{p}{\Succ} \land \instOf{x.p_{\sub{x}{p}}}{\Nat}) \rightarrow\\
+  &\qquad (a \rightarrow \instOf{p}{\Nat})
+\end{align}
 
 \section{Example Entailments}
-\subsection{working valid entailment}
-- can be checked unsat
-- unsat core gives contraticting rules
+\subsection{Working valid entailment}
+$\entails{\instBy{p}{\Zero}}{\instOf{p}{\Nat}}$
+\begin{itemize}
+  \item Checks unsatisfiable
+  \item Unsat Core: C-Class, C-Prog-Zero
+\end{itemize}
 
-\subsection{working invalid entailment}
-- can be checked sat
-- model gives interpretation (counter example?)
+\subsection{Working invalid entailment}
+TODO: search typechecking tests for (non-trivial) SAT entailment\\
+$\entails{·}{\pathEq{x}{y}}$
+\begin{itemize}
+  \item Checks satisfiable
+  \item Model: $\pathEq{p}{q} \doteq p=q$
+\end{itemize}
 
-\subsection{non-working invalid entailment (inf runtime)}
-- cannot be checked, solver has ``infinite'' runtime
+\subsection{Non-working invalid entailment}
+$\entails{\pathEq{x}{y}}{\pathEq{x}{z}}$
+\begin{itemize}
+  \item Checks unsatisfiable, but shouldn't
+  \item Unsat Core: C-Subst-PathEq
+  \item TODO: possible reason? (check instantiation of subst rule)
+\end{itemize}
+
+\subsection{Non-working invalid entailment}
+fieldAccessTimeout.smt
+\begin{itemize}
+  \item Neither checks satisfiable nor unsatisfiable.
+  \item Solver has ``infinite'' runtime.
+  \item TODO: check manually for a model?
+\end{itemize}
+
+\section{Undefinedness}
+\subsection{adding $\neg \pathEq{x}{x.p}$ results in ???}
+\subsection{asserting $\instOf{x}{\Zero} \land \instOf{x}{\Nat}$ is SAT}
+But with further investigation, again doesn't seem to be a problem,
+as we are searching conflicts
 
 \end{document}

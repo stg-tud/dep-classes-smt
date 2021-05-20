@@ -99,4 +99,16 @@ class TestSemanticEntailmentEntails extends AnyFunSuite{
 
     assert(entailment.entails(List(InstantiatedBy("a", "Succ"), InstantiatedBy(FieldPath("a", "p"), "Zero")), InstanceOf("a", "Nat")))
   }
+
+  test("· |- x=y") {
+    val entailment = new SemanticEntailment(NaturalNumbers.program)
+
+    assert(!entailment.entails(Nil, PathEquivalence("x", "y")))
+  }
+
+  test("a=b |- a=c") {
+    val entailment = new SemanticEntailment(NaturalNumbers.program)
+
+    assert(!entailment.entails(List(PathEquivalence("a", "b")), PathEquivalence("a", "c")))
+  }
 }
