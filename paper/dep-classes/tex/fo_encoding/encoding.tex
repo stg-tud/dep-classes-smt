@@ -199,7 +199,7 @@ $\entails{\instOf{x}{\Succ}, \instOf{x.p}{\Zero}}{\instOf{x}{\Zero}}$
   \item Current Solution: Impose a timeout on the solver.
   \begin{itemize}
     \item Assume an entailment to be invalid if the solver times out (to retain soundness).
-    \item Procedure isn't complete anymore.
+    \item The system isn't complete anymore.
     \item Balance the timeout between the amount of checkable valid entailments and tolerable waiting time.
     (Set it such that the majority of valid entailments can still be checked.)
   \end{itemize}
@@ -212,7 +212,7 @@ The solver is able to check the example satisfiable if we either
   \item add $\neg \pathEq{x}{x.p}$ to the context, resulting in ${\instOf{x}{\Succ} \land \instOf{x.p}{\Zero} \land \neg \pathEq{x}{x.p}} \rightarrow {\instOf{x}{\Zero}}$ or
   \item additionally assert $\neg \pathEq{x}{x.p}$.
 \end{itemize}
-TODO: investigate steps performed by the solver
+%TODO: investigate steps performed by the solver
 
 \subsection{Asserting two mutually exclusive classes to the same path}
 \label{section:mutually-exclusive-classes}
@@ -225,7 +225,8 @@ the entailment to check (context implies conclusion)
 and the asserted calculus rules.
 
 In other words: If the entailment context allows this to be true,
-the problem is a wrong annotation made by the programmer.
+it is not a problem of the encoding.
+%the problem is a wrong annotation made by the programmer.
 
  \section{Faithful encoding}
  As concluded in \ref{section:mutually-exclusive-classes},
@@ -240,6 +241,12 @@ the problem is a wrong annotation made by the programmer.
 % Instead $\bigwedge c_i \rightarrow conclusion$, use multiple asserts.
 % for $c_i$ in $context$. assert $c_i$
 % assert $\neg conclusion$
+%  Which logically is exactly the same.
+% ¬(c_1 /\ ... /\ c_n -> c) ===
+% ¬(¬(c_1 /\ ... /\ c_n) \/ c) ===
+% ¬¬(c_1 /\ ... /\ c_n) /\ ¬c ===
+% c_1 /\ ... /\ c_n /\ ¬c
+% Logically this change is equivalent. ¬(/\_{i in 1 to n} c_i -> c) === (/\_{i in 1 to n} c_i) /\ ¬c
 %
 % TODO: rename variables such that there is no inference with the variables introduces
 % through entailment declarations in the program
