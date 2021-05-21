@@ -1,5 +1,5 @@
 (declare-datatype Class ((Zero) (Nat) (Succ)))
-(declare-datatype Variable ((x)))
+(declare-datatype Variable ((x) (a)))
 (declare-datatype Field ((p)))
 (declare-datatype Path ((var (id Variable)) (pth (obj Path) (field Field))))
 (declare-fun instance-of (Path Class) Bool)
@@ -13,23 +13,7 @@
 (assert (forall ((cs-a Bool) (path-p Path) (class-c Class) (path-r Path) (path-s Path) (var-x Variable)) (=> (and (=> cs-a (instantiated-by (substitute path-p var-x path-r) class-c)) (=> cs-a (path-equivalence path-s path-r))) (=> cs-a (instantiated-by (substitute path-p var-x path-s) class-c)))))
 (assert (forall ((cs-a Bool) (path-p Path)) (=> (=> cs-a (instance-of path-p Zero)) (=> cs-a (instance-of path-p Nat)))))
 (assert (forall ((cs-a Bool) (path-p Path)) (=> (=> cs-a (and (instance-of path-p Succ) (instance-of (substitute (pth (var x) p) x path-p) Nat))) (=> cs-a (instance-of path-p Nat)))))
-; original check
-(assert (not (=> (and (instance-of (var x) Succ) (instance-of (pth (var x) p) Zero)) (instance-of (var x) Zero))))
-;
-; asserting x and x.p not equiv: makes it sat in "no time"
-;(assert (not (path-equivalence (var x) (pth (var x) p))))
-;(assert (not (=> (and (instance-of (var x) Succ) (instance-of (pth (var x) p) Zero)) (instance-of (var x) Zero))))
-;
-; asserting x and x.p not equiv in implication: makes it sat in "no time" as well
-;(assert (not (=> (and (instance-of (var x) Succ) (instance-of (pth (var x) p) Zero) (not (path-equivalence (var x) (pth (var x) p)))) (instance-of (var x) Zero))))
-;
-; checking x and x.p equiv: also returns sat in "no time"
-;(assert (not (=> (and (instance-of (var x) Succ) (instance-of (pth (var x) p) Zero)) (path-equivalence (var x) (pth (var x) p)))))
-;
-; checking x and x.p _not_ equiv runs "forever"
-;(assert (not (=> (and (instance-of (var x) Succ) (instance-of (pth (var x) p) Zero)) (not (path-equivalence (var x) (pth (var x) p))))))
-
-; checking this "sat" is possible.
-;(assert (=> (and (instance-of (var x) Succ) (instance-of (pth (var x) p) Zero)) (path-equivalence (var x) (pth (var x) p))))
+(assert (instance-of (var a) Zero))
+(assert (instance-of (var a) Succ))
 (check-sat)
 (get-model)

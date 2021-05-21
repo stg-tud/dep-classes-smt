@@ -181,6 +181,7 @@ $\entails{\pathEq{a}{b}}{\pathEq{a}{c}}$\\
   \end{align*}
 
 \subsection{Non-working invalid entailment}
+\label{example:field-access-timeout}
 $\entails{\instOf{x}{\Succ}, \instOf{x.p}{\Zero}}{\instOf{x}{\Zero}}$
 \begin{itemize}
   \item Location: /paper/dep-classes/smt/semantic_entailment/fieldAccessTimeout.smt
@@ -196,10 +197,25 @@ $\entails{\instOf{x}{\Succ}, \instOf{x.p}{\Zero}}{\instOf{x}{\Zero}}$
 \end{itemize}
 
 \section{Undefinedness}
-\subsection{adding $\neg \pathEq{x}{x.p}$ results in ???}
-\subsection{asserting $\instOf{x}{\Zero} \land \instOf{x}{\Nat}$ is SAT}
-But with further investigation, again doesn't seem to be a problem,
-as we are searching conflicts
+\subsection{Add expert knowledge to successfully check \ref{example:field-access-timeout}}
+The solver is able to check the example satisfiable if we either add
+\begin{itemize}
+  \item $\neg \pathEq{x}{x.p}$ to the context, resulting in ${\instOf{x}{\Succ} \land \instOf{x.p}{\Zero} \land \neg \pathEq{x}{x.p}} \rightarrow {\instOf{x}{\Zero}}$ or
+  \item additionally assert $\neg \pathEq{x}{x.p}$.
+\end{itemize}
+TODO: investigate steps performed by the solver
+
+\subsection{Asserting two mutually exclusive classes to the same path}
+Asserting both $\instOf{x}{\Zero}$ and $\instOf{x}{\Succ}$ in the solver yields SAT.
+
+This, at first, seems to be unintended behaviour.
+In reality, this is not the kind of problem we want to solve with the encoding.
+What we ask of the solver is if there exists a conflict between
+the entailment to check (context implies conclusion)
+and the asserted calculus rules.
+
+In other words: If the entailment context allows this to be true,
+the problem is a wrong annotation made by the programmer.
 
 \section{Faithful encoding}
 
@@ -208,13 +224,13 @@ Instead $\bigwedge c_i \rightarrow conclusion$, use multiple asserts.
 for $c_i$ in $context$. assert $c_i$
 assert $\neg conclusion$
 
-\section{Explicitly define constraint predicates}
-\subsection{Non-working invalid entailment}
-$\entails{\pathEq{x}{y}}{\pathEq{x}{z}}$
-\begin{itemize}
-  \item Checks unsatisfiable, but shouldn't
-  \item Unsat Core: C-Subst-PathEq
-  \item TODO: possible reason? (check instantiation of subst rule)
-\end{itemize}
+% \section{Explicitly define constraint predicates}
+% \subsection{Non-working invalid entailment}
+% $\entails{\pathEq{x}{y}}{\pathEq{x}{z}}$
+% \begin{itemize}
+%   \item Checks unsatisfiable, but shouldn't
+%   \item Unsat Core: C-Subst-PathEq
+%   \item TODO: possible reason? (check instantiation of subst rule)
+% \end{itemize}
 
 \end{document}
