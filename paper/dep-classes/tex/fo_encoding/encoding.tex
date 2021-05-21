@@ -86,7 +86,7 @@
   &\texttt{\Variable~(...)}\\
   &\texttt{\Field~(...)}\\
   &\texttt{\Class~(...)}\\
-  &\Path~((\Variable)~(\Path~\Field))\\
+  &\Path~((\Variable)~(\Path.\Field))\\
   &\pathEq{}{}\!\!: \Path \times \Path \rightarrow \TBool \\
   &\instOf{}{}\!\!: \Path \times \Class \rightarrow \TBool\\
   &\instBy{}{}\!\!: \Path \times \Class \rightarrow \TBool\\
@@ -111,6 +111,14 @@
   % C-Prog
   &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}.~(a \rightarrow \bigwedge \hole) \rightarrow (a \rightarrow \instOf{p}{\hole})
 \end{align}
+$(1)$, $(2)$ and $(3)$: Enumeration types, will be instantiated based on the program context.\\
+$(4)$: Path datatype. A path is either a variable or a path followed by a field.\\
+$(5)$, $(6)$ and $(7)$: Signatures of constraint predicates.\\
+$(8)$: Signature of path substitution, $p_{\sub{x}{q}}$ can be read as substitute $x$ in $p$ with $q$.\\
+$(9)$: Encoding for rule C-Refl.\\
+$(10-11)$: Encoding for rule C-Class.\\
+$(12-20)$: Encoding for rule C-Subst. There is one specialized rule per constraint type.\\
+$(21)$: Template for rule C-Prog. Will be instantiated based on the entailment declarations defined in the program.
 
 \subsection{Natural Numbers Program}
 \begin{align}
@@ -124,6 +132,7 @@
 \end{align}
 
 \subsection{C-Prog Rules for Natural Numbers Program}
+Create C-Prog rules based on $(24)$ and $(25)$.
 \begin{align}
   &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}.\\
   &\quad (a \rightarrow \instOf{p}{\Zero}) \rightarrow\\
@@ -231,6 +240,14 @@ the problem is a wrong annotation made by the programmer.
 % Instead $\bigwedge c_i \rightarrow conclusion$, use multiple asserts.
 % for $c_i$ in $context$. assert $c_i$
 % assert $\neg conclusion$
+%
+% TODO: rename variables such that there is no inference with the variables introduces
+% through entailment declarations in the program
+%
+% TODO: look if it is possible to get rid of having the variables from entailment declarations
+% in the Variable enumeration type in the logic encoding.
+% Is it possible to directly substitute those?
+% Maybe create multiple rules per entailment declaration?
 
 % \section{Explicitly define constraint predicates}
 % \subsection{Non-working invalid entailment}
