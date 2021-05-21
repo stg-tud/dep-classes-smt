@@ -8,7 +8,7 @@ import dcc.types.Type
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.syntax.Sugar.Op
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{Apply, Assert, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
+import smt.smtlib.syntax.{Apply, Assert, CheckSat, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, GetModel, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
 import smt.smtlib.theory.BoolPredefined._
 import smt.solver.Z3Solver
 
@@ -73,7 +73,7 @@ class SemanticEntailment(program: Program, debug: Boolean = false) extends Entai
       else
         generateEnumerationTypes(classes, variables, fields)
 
-    val functions: SMTLibScript = generateConstraintPredicates(context, pathDatatype.isDefined, classes.nonEmpty) :+
+    val functions: SMTLibScript = generateFunctionDeclarations(pathDatatype.isDefined, classes.nonEmpty) :+
       generateSubstitutionFunction(pathDatatype.isDefined)
 
     (sorts ++
@@ -153,6 +153,20 @@ class SemanticEntailment(program: Program, debug: Boolean = false) extends Entai
     ))))
   } else {
     None
+  }
+
+  private def generateFunctionDeclarations(isPathDefined: Boolean, isClassDefined: Boolean): SMTLibScript = {
+    val sort: Sort = if (isPathDefined) Path else Variable
+
+    if (isClassDefined) {
+      SMTLibScript(Seq(
+        DeclareFun(functionInstanceOf, Seq(sort, Class), Bool),
+        DeclareFun(functionInstantiatedBy, Seq(sort, Class), Bool),
+        DeclareFun(functionPathEquivalence, Seq(sort, sort), Bool)
+      ))
+    } else {
+      SMTLibScript(Seq(DeclareFun(functionPathEquivalence, Seq(sort, sort), Bool)))
+    }
   }
 
   def generateConstraintPredicates(context: List[Constraint], isPathDefined: Boolean, isClassDefined: Boolean): SMTLibScript = {

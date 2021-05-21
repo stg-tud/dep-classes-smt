@@ -111,4 +111,10 @@ class TestSemanticEntailmentEntails extends AnyFunSuite{
 
     assert(!entailment.entails(List(PathEquivalence("a", "b")), PathEquivalence("a", "c")))
   }
+
+  test ("a::Succ, a.p::Zero |- a::Zero") { // TODO: investigate why this (and above) terminates in less than 1s when called from the test, but times out when called directly in the solver or from type checking
+    val entailment = new SemanticEntailment(NaturalNumbers.program, debug = true)
+
+    assert(!entailment.entails(List(InstanceOf("a", "Succ"), InstanceOf(FieldPath("a", "p"), "Zero")), InstanceOf("a", "Zero")))
+  }
 }

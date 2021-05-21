@@ -142,27 +142,57 @@ $\entails{\instBy{p}{\Zero}}{\instOf{p}{\Nat}}$
 \end{itemize}
 
 \subsection{Working invalid entailment}
-TODO: search typechecking tests for (non-trivial) SAT entailment\\
 $\entails{·}{\pathEq{x}{y}}$
 \begin{itemize}
   \item Checks satisfiable
   \item Model: $\pathEq{p}{q} \doteq p=q$
 \end{itemize}
 
-\subsection{Non-working invalid entailment}
-$\entails{\pathEq{x}{y}}{\pathEq{x}{z}}$
-\begin{itemize}
-  \item Checks unsatisfiable, but shouldn't
-  \item Unsat Core: C-Subst-PathEq
-  \item TODO: possible reason? (check instantiation of subst rule)
-\end{itemize}
+$\entails{\pathEq{a}{b}}{\pathEq{a}{c}}$\\
+  Checks satisfiable\\
+  Model:
+  \begin{align*}
+    &\helper(\sortedVar{q}{\Path}) :=\\&\quad
+    \ite{q=a}{a}{\\&\qquad
+      \ite{q=c}{c}{\\&\qquad\quad
+        \ite{q=x}{x}{\\&\qquad\qquad
+          \ite{q=b}{b}{\\&\qquad\qquad\quad
+            \ite{q=b.p}{b.p}{\\&\qquad\qquad\qquad
+              \ite{q=a.b}{a.b}{c.p}
+            }
+          }
+        }
+      }
+    }\\
+    &\pathEq{\sortedVar{p}{\Path}}{\sortedVar{q}{\Path}} :=\\&\quad
+    \Let    a_1 := \helper(p)=a.p \land \helper(q)=b.p\\
+    &\quad\phantom{{}\Let{}} a_2 := \helper(p)=a.p \land \helper(q)=a.p\\
+    &\quad\phantom{{}\Let{}} a_3 := \helper(p)=c.p \land \helper(q)=c.p\\
+    &\quad\phantom{{}\Let{}} a_4 := \helper(p)=b.p \land \helper(q)=b.p\\
+    &\quad\phantom{{}\Let{}} a_5 := \helper(p)=b.p \land \helper(q)=a.p\\
+    &\quad\In
+    \bigvee_{i\in\{j | 1\leq j\leq5\}} a_i\\
+    &\quad\lor \helper(p)=a \land \helper(q)=a\\
+    &\quad\lor \helper(p)=b \land \helper(q)=b\\
+    &\quad\lor \helper(p)=b \land \helper(q)=a\\
+    &\quad\lor \helper(p)=c \land \helper(q)=c\\
+    &\quad\lor \helper(p)=x \land \helper(q)=x\\
+    &\quad\lor \helper(p)=a \land \helper(q)=b\\
+  \end{align*}
 
 \subsection{Non-working invalid entailment}
-fieldAccessTimeout.smt
+$\entails{\instOf{x}{\Succ}, \instOf{x.p}{\Zero}}{\instOf{x}{\Zero}}$
 \begin{itemize}
-  \item Neither checks satisfiable nor unsatisfiable.
+  \item Location: /paper/dep-classes/smt/semantic_entailment/fieldAccessTimeout.smt
   \item Solver has ``infinite'' runtime.
-  \item TODO: check manually for a model?
+  \item Wanted behavior: Checks satisfiable.
+  \item Current Solution: Impose a timeout on the solver.
+  \begin{itemize}
+    \item Assume an entailment to be invalid if the solver times out (to retain soundness).
+    \item Procedure isn't complete anymore.
+    \item Balance the timeout between the amount of checkable valid entailments and tolerable waiting time.
+    (Set it such that the majority of valid entailments can still be checked.)
+  \end{itemize}
 \end{itemize}
 
 \section{Undefinedness}
@@ -170,5 +200,21 @@ fieldAccessTimeout.smt
 \subsection{asserting $\instOf{x}{\Zero} \land \instOf{x}{\Nat}$ is SAT}
 But with further investigation, again doesn't seem to be a problem,
 as we are searching conflicts
+
+\section{Faithful encoding}
+
+\section{Change entailment translation}
+Instead $\bigwedge c_i \rightarrow conclusion$, use multiple asserts.
+for $c_i$ in $context$. assert $c_i$
+assert $\neg conclusion$
+
+\section{Explicitly define constraint predicates}
+\subsection{Non-working invalid entailment}
+$\entails{\pathEq{x}{y}}{\pathEq{x}{z}}$
+\begin{itemize}
+  \item Checks unsatisfiable, but shouldn't
+  \item Unsat Core: C-Subst-PathEq
+  \item TODO: possible reason? (check instantiation of subst rule)
+\end{itemize}
 
 \end{document}
