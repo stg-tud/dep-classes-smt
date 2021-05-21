@@ -207,9 +207,9 @@ $\entails{\instOf{x}{\Succ}, \instOf{x.p}{\Zero}}{\instOf{x}{\Zero}}$
 
 \section{Undefinedness}
 \subsection{Add expert knowledge to successfully check \ref{example:field-access-timeout}}
-The solver is able to check the example satisfiable if we either add
+The solver is able to check the example satisfiable if we either
 \begin{itemize}
-  \item $\neg \pathEq{x}{x.p}$ to the context, resulting in ${\instOf{x}{\Succ} \land \instOf{x.p}{\Zero} \land \neg \pathEq{x}{x.p}} \rightarrow {\instOf{x}{\Zero}}$ or
+  \item add $\neg \pathEq{x}{x.p}$ to the context, resulting in ${\instOf{x}{\Succ} \land \instOf{x.p}{\Zero} \land \neg \pathEq{x}{x.p}} \rightarrow {\instOf{x}{\Zero}}$ or
   \item additionally assert $\neg \pathEq{x}{x.p}$.
 \end{itemize}
 TODO: investigate steps performed by the solver
