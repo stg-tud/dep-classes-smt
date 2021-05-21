@@ -206,6 +206,7 @@ The solver is able to check the example satisfiable if we either add
 TODO: investigate steps performed by the solver
 
 \subsection{Asserting two mutually exclusive classes to the same path}
+\label{section:mutually-exclusive-classes}
 Asserting both $\instOf{x}{\Zero}$ and $\instOf{x}{\Succ}$ in the solver yields SAT.
 
 This, at first, seems to be unintended behaviour.
@@ -217,12 +218,19 @@ and the asserted calculus rules.
 In other words: If the entailment context allows this to be true,
 the problem is a wrong annotation made by the programmer.
 
-\section{Faithful encoding}
+ \section{Faithful encoding}
+ As concluded in \ref{section:mutually-exclusive-classes},
+ we want the system to answer the question:
+ ``does the entailment conform to the calculus rules'' or in other words:
+ ``does the negation of the entailment contradict the calculus rules''.
+ Therefore the fact that it is allowed for a path to be an instance of
+ two mutually exclusive classes (e.g. two classes that are not in a subtype relation),
+ is non-problematic as long as the entailment context doesn't explicitly forbid this.
 
-\section{Change entailment translation}
-Instead $\bigwedge c_i \rightarrow conclusion$, use multiple asserts.
-for $c_i$ in $context$. assert $c_i$
-assert $\neg conclusion$
+% \section{Change entailment translation}
+% Instead $\bigwedge c_i \rightarrow conclusion$, use multiple asserts.
+% for $c_i$ in $context$. assert $c_i$
+% assert $\neg conclusion$
 
 % \section{Explicitly define constraint predicates}
 % \subsection{Non-working invalid entailment}
