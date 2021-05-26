@@ -8,7 +8,7 @@ import dcc.types.Type
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.syntax.Sugar.Op
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{Apply, Assert, CheckSat, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, GetModel, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
+import smt.smtlib.syntax.{Apply, Assert, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
 import smt.smtlib.theory.BoolPredefined._
 import smt.solver.Z3Solver
 
@@ -452,7 +452,7 @@ class SemanticEntailment(program: Program, debug: Boolean = false) extends Entai
     }
 
     SMTLibScript(constraintEntailments map {
-      case ConstraintEntailment(x, as, InstanceOf(y, c)) if x==y =>
+      case ConstraintEntailment(x, as, InstanceOf(y, cls)) if x==y =>
         Assert(Forall(Seq(
           SortedVar(b, Bool),
           SortedVar(p, sort)
@@ -464,7 +464,7 @@ class SemanticEntailment(program: Program, debug: Boolean = false) extends Entai
               else
                 // TODO: check if conjunction on rhs is correct: /\ (bs => a_i) === bs => /\ a_i ? seems so
                 Apply(SimpleSymbol("and"), as map { constraint => substituteConstraintToTerm(constraint, x)})),
-            Implies(b, Apply(functionInstanceOf, Seq(p, IdToSymbol(c))))
+            Implies(b, Apply(functionInstanceOf, Seq(p, IdToSymbol(cls))))
           )
         ))
       case _ => Assert(True) // constraint entailment not well-formed
