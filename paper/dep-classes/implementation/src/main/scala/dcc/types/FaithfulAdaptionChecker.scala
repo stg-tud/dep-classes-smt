@@ -6,7 +6,9 @@ import dcc.syntax.Program.Program
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldAccess, FieldPath, Id, InstanceOf, InstantiatedBy, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
 import dcc.syntax.Util.commaSeparate
 
-class FaithfulAdaptionChecker(override val program: Program, entailment: Entailment) extends Checker {
+class FaithfulAdaptionChecker(override val program: Program, debug: Boolean = false) extends Checker {
+  val entailment: Entailment = new SemanticEntailment(program, debug)
+
   override def typeOf(context: List[Constraint], expression: Expression): Either[Type, String] = expression match {
     case x@Id(_) =>
       classes.find(cls => entailment.entails(context, InstanceOf(x, cls))) match {
@@ -53,7 +55,7 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
         val fieldResults: List[(Id, Either[Type, String])] = args map { case (f, ei) => (f, typeOf(context, ei)) }
         val fieldErrors = fieldResults filter { case (_, t) => t.isRight }
         if (fieldErrors.nonEmpty) {
-          Right(s"Class '$cls' can not be created, couldn't assign a type to field " + fieldErrors.foldLeft("") { case (rest, (f,Right(err))) => s"\n\t$f: $err$rest" }) // TODO: add exhaustive check? will never fail, as Left() is already filtered out
+          Right(s"Class '$cls' can not be created, couldn't assign a type to field " + fieldErrors.foldLeft("") { case (rest, (f,Right(err))) => s"\n\t$f: $err$rest" case (rest, _) => rest}) // exhaustive match not necessarily needed, as Left is already filtered out
         } else {
           val fieldTypes: List[(Id, Type)] = fieldResults.foldLeft(Nil: List[(Id, Type)]) {
             case (rest, (f, Left(t))) => (f, t) :: rest
@@ -134,5 +136,6 @@ class FaithfulAdaptionChecker(override val program: Program, entailment: Entailm
 }
 
 object FaithfulAdaptionChecker {
-  def apply(program: Program): FaithfulAdaptionChecker = new FaithfulAdaptionChecker(program, new SemanticEntailment(program))
+  //def apply(program: Program): FaithfulAdaptionChecker = new FaithfulAdaptionChecker(program, new SemanticEntailment(program))
+  def apply(program: Program): FaithfulAdaptionChecker = new FaithfulAdaptionChecker(program)
 }
