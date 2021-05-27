@@ -117,4 +117,10 @@ class TestSemanticEntailmentEntails extends AnyFunSuite{
 
     assert(!entailment.entails(List(InstanceOf("a", "Succ"), InstanceOf(FieldPath("a", "p"), "Zero")), InstanceOf("a", "Zero")))
   }
+
+  test ("x::Succ, x.p::Zero |- x::Zero") { // TODO: does time out. variable naming clash with var x in C-Prog rules?
+    val entailment = new SemanticEntailment(NaturalNumbers.program, debug = true)
+
+    assert(!entailment.entails(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero")), InstanceOf("x", "Zero")))
+  }
 }
