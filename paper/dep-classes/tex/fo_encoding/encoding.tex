@@ -205,6 +205,72 @@ $\entails{\instOf{x}{\Succ}, \instOf{x.p}{\Zero}}{\instOf{x}{\Zero}}$
   \end{itemize}
 \end{itemize}
 
+\section{Detailed look at infinite runtime example}
+\subsection{Formulae generated for \ref{example:field-access-timeout}}
+$\entails{\instOf{x}{\Succ}, \instOf{x.p}{\Zero}}{\instOf{x}{\Zero}}$
+\begin{align}
+  &\texttt{\Variable} := \{\mathtt{x}\}\\
+  &\texttt{\Field} := \{\mathtt{p}\}\\
+  &\texttt{\Class} := \{\Zero,\Succ,\Nat\}\\
+  &\Path := ((\Variable)~(\Path.\Field))\\
+  % C-Refl
+  &\forall \sortedVar{p}{\Path}.~\pathEq{p}{p}\\
+  % C-Class
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}.\\
+  &\quad(a \rightarrow \instBy{p}{c}) \rightarrow (a \rightarrow \instOf{p}{c})\\
+  % C-Subst: pathEq
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{q}{\Path}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \pathEq{p_{\sub{x}{r}}}{q_{\sub{x}{r}}} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \pathEq{p_{\sub{x}{s}}}{q_{\sub{x}{s}}})\\
+  % C-Subst: instOf
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instOf{p_{\sub{x}{r}}}{c} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \instOf{p_{\sub{x}{s}}}{c})\\
+  % C-Subst: instBy
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instBy{p_{\sub{x}{r}}}{c} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \instBy{p_{\sub{x}{s}}}{c})\\
+  % C-Prog: Zero -> Nat
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}.~(a \rightarrow \instOf{p}{\Zero}) \rightarrow (a \rightarrow \instOf{p}{\Nat})\\
+  % C-Prog: Succ -> Nat
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{q}{\Path}.~(a \rightarrow \instOf{q}{\Succ} \land \instOf{\mathtt{x.p}_{\sub{\mathtt{x}}{q}}}{\Nat}) \rightarrow (a \rightarrow \instOf{q}{\Nat})\\
+  & \neg (\instOf{\mathtt{x}}{\Succ} \land \instOf{\mathtt{x.p}}{\Zero} \rightarrow \instOf{\mathtt{x}}{\Zero})
+\end{align}
+
+\subsection{Formulae generated for alpha renamed \ref{example:field-access-timeout}}
+$\entails{\instOf{a}{\Succ}, \instOf{a.p}{\Zero}}{\instOf{a}{\Zero}}$
+\begin{align}
+  &\texttt{\Variable} := \{\mathtt{x}, \mathtt{a}\}\\
+  &\texttt{\Field} := \{\mathtt{p}\}\\
+  &\texttt{\Class} := \{\Zero,\Succ,\Nat\}\\
+  &\Path := ((\Variable)~(\Path.\Field))\\
+  % C-Refl
+  &\forall \sortedVar{p}{\Path}.~\pathEq{p}{p}\\
+  % C-Class
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}.\\
+  &\quad(a \rightarrow \instBy{p}{c}) \rightarrow (a \rightarrow \instOf{p}{c})\\
+  % C-Subst: pathEq
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{q}{\Path}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \pathEq{p_{\sub{x}{r}}}{q_{\sub{x}{r}}} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \pathEq{p_{\sub{x}{s}}}{q_{\sub{x}{s}}})\\
+  % C-Subst: instOf
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instOf{p_{\sub{x}{r}}}{c} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \instOf{p_{\sub{x}{s}}}{c})\\
+  % C-Subst: instBy
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instBy{p_{\sub{x}{r}}}{c} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \instBy{p_{\sub{x}{s}}}{c})\\
+  % C-Prog: Zero -> Nat
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}.~(a \rightarrow \instOf{p}{\Zero}) \rightarrow (a \rightarrow \instOf{p}{\Nat})\\
+  % C-Prog: Succ -> Nat
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{q}{\Path}.~(a \rightarrow \instOf{q}{\Succ} \land \instOf{\mathtt{x.p}_{\sub{\mathtt{x}}{q}}}{\Nat}) \rightarrow (a \rightarrow \instOf{q}{\Nat})\\
+  & \neg (\instOf{\mathtt{a}}{\Succ} \land \instOf{\mathtt{a.p}}{\Zero} \rightarrow \instOf{\mathtt{a}}{\Zero})
+\end{align}
+
+\subsection{Get rid of encoding x as a enumeratable variable by directly substituting with variable path, or by adding quantified variable to C-Prog rules}
+% TODO
+
 \section{Undefinedness}
 \subsection{Add expert knowledge to successfully check \ref{example:field-access-timeout}}
 The solver is able to check the example satisfiable if we either
