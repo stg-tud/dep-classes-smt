@@ -268,8 +268,81 @@ $\entails{\instOf{a}{\Succ}, \instOf{a.p}{\Zero}}{\instOf{a}{\Zero}}$
   & \neg (\instOf{\mathtt{a}}{\Succ} \land \instOf{\mathtt{a.p}}{\Zero} \rightarrow \instOf{\mathtt{a}}{\Zero})
 \end{align}
 
-\subsection{Get rid of encoding x as a enumeratable variable by directly substituting with variable path, or by adding quantified variable to C-Prog rules}
-% TODO
+\subsection{Completely preprocess substitution in C-Prog}
+$\entails{\instOf{x}{\Succ}, \instOf{x.p}{\Zero}}{\instOf{x}{\Zero}}$
+\begin{align}
+  &\texttt{\Variable} := \{\mathtt{x}\}\\
+  &\texttt{\Field} := \{\mathtt{p}\}\\
+  &\texttt{\Class} := \{\Zero,\Succ,\Nat\}\\
+  &\Path := ((\Variable)~(\Path.\Field))\\
+  % C-Refl
+  &\forall \sortedVar{p}{\Path}.~\pathEq{p}{p}\\
+  % C-Class
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}.\\
+  &\quad(a \rightarrow \instBy{p}{c}) \rightarrow (a \rightarrow \instOf{p}{c})\\
+  % C-Subst: pathEq
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{q}{\Path}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \pathEq{p_{\sub{x}{r}}}{q_{\sub{x}{r}}} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \pathEq{p_{\sub{x}{s}}}{q_{\sub{x}{s}}})\\
+  % C-Subst: instOf
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instOf{p_{\sub{x}{r}}}{c} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \instOf{p_{\sub{x}{s}}}{c})\\
+  % C-Subst: instBy
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instBy{p_{\sub{x}{r}}}{c} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \instBy{p_{\sub{x}{s}}}{c})\\
+  % C-Prog: Zero -> Nat
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}.~(a \rightarrow \instOf{p}{\Zero}) \rightarrow (a \rightarrow \instOf{p}{\Nat})\\
+  % C-Prog: Succ -> Nat
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{q}{\Path}.~(a \rightarrow \instOf{q}{\Succ} \land \instOf{q\mathtt{.p}}{\Nat}) \rightarrow (a \rightarrow \instOf{q}{\Nat})\\
+  & \neg (\instOf{\mathtt{x}}{\Succ} \land \instOf{\mathtt{x.p}}{\Zero} \rightarrow \instOf{\mathtt{x}}{\Zero})
+\end{align}
+Result: Still infinite runtime.
+
+\subsection{Add variable to quantifier for C-Prog}
+\label{example:field-access-quantified-variable-timeout}
+$\entails{\instOf{x}{\Succ}, \instOf{x.p}{\Zero}}{\instOf{x}{\Zero}}$
+\begin{align}
+  &\texttt{\Variable} := \{\mathtt{x}\}\\
+  &\texttt{\Field} := \{\mathtt{p}\}\\
+  &\texttt{\Class} := \{\Zero,\Succ,\Nat\}\\
+  &\Path := ((\Variable)~(\Path.\Field))\\
+  % C-Refl
+  &\forall \sortedVar{p}{\Path}.~\pathEq{p}{p}\\
+  % C-Class
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}.\\
+  &\quad(a \rightarrow \instBy{p}{c}) \rightarrow (a \rightarrow \instOf{p}{c})\\
+  % C-Subst: pathEq
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{q}{\Path}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \pathEq{p_{\sub{x}{r}}}{q_{\sub{x}{r}}} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \pathEq{p_{\sub{x}{s}}}{q_{\sub{x}{s}}})\\
+  % C-Subst: instOf
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instOf{p_{\sub{x}{r}}}{c} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \instOf{p_{\sub{x}{s}}}{c})\\
+  % C-Subst: instBy
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{c}{\Class}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instBy{p_{\sub{x}{r}}}{c} \land (a \rightarrow \pathEq{s}{r})) \rightarrow\\
+  &\qquad (a \rightarrow \instBy{p_{\sub{x}{s}}}{c})\\
+  % C-Prog: Zero -> Nat
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instOf{x_{\sub{x}{p}}}{\Zero}) \rightarrow (a \rightarrow \instOf{x_{\sub{x}{p}}}{\Nat})\\
+  % C-Prog: Succ -> Nat
+  &\forall \sortedVar{a}{\TBool}, \sortedVar{p}{\Path}, \sortedVar{x}{\Variable}.\\
+  &\quad (a \rightarrow \instOf{x_{\sub{x}{p}}}{\Succ} \land \instOf{x\mathtt{.p}_{\sub{x}{p}}}{\Nat}) \rightarrow (a \rightarrow \instOf{x_{\sub{x}{p}}}{\Nat})\\
+  % Entailment
+  & \neg (\instOf{\mathtt{x}}{\Succ} \land \instOf{\mathtt{x.p}}{\Zero} \rightarrow \instOf{\mathtt{x}}{\Zero})
+\end{align}
+Result: Still infinite runtime.
+
+\subsection{Weird Observations: Solver heuristics?}
+Ordering of the enumeration types matter. E.g. appending an additional variable $\mathtt{y}$ to  \ref{example:field-access-quantified-variable-timeout} gives us the expected result from the solver,
+but when we prepend it still runs infinitely.
+\begin{itemize}
+  \item $\Variable ::= x~|~y$: Gives expected result
+  \item $\Variable ::= y~|~x$: Runs infinitely
+\end{itemize}
 
 \section{Undefinedness}
 \subsection{Add expert knowledge to successfully check \ref{example:field-access-timeout}}
