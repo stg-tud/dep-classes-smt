@@ -71,6 +71,7 @@ trait ModelResponse extends SMTLibFormatter
 
 case class ValuationPair(left: Term, right: Term) extends SMTLibFormatter {
   override def format: String = s"(${left.format} ${right.format})"
+  override def pretty: String = s"(${left.pretty}, ${right.pretty})"
 }
 
 //case class TValuationPair(symbol: SMTLibSymbol, b: BValue) extends SMTLibFormatter {
@@ -78,4 +79,5 @@ case class ValuationPair(left: Term, right: Term) extends SMTLibFormatter {
 //}
 case class TValuationPair(symbol: SMTLibSymbol, b: Boolean) extends SMTLibFormatter {
   override def format: String = s"(${symbol.format} $b)"
+  override def pretty: String = s"(${symbol.pretty}, $b)"
 }

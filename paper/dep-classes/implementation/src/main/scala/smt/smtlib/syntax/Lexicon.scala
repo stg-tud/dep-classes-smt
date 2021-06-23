@@ -4,10 +4,12 @@ import smt.smtlib.SMTLibFormatter
 
 case class Numeral(num: Long) extends SMTLibFormatter with SpecConstant with Index {
   override def format: String = num.toString
+  override def pretty: String = format
 }
 
 case class Decimal(dec: Double) extends SMTLibFormatter with SpecConstant {
   override def format: String = dec.toString
+  override def pretty: String = format
 }
 
 case class Hexadecimal(hex: String) extends SMTLibFormatter with SpecConstant {
@@ -16,6 +18,7 @@ case class Hexadecimal(hex: String) extends SMTLibFormatter with SpecConstant {
 //  def this(hex: Int) = this(hex.toHexString)
 
   override def format: String = s"#x${hex.toUpperCase}"
+  override def pretty: String = format
 
   private def aToF(c: Char): Boolean = c.toUpper match {
     case 'A' => true
@@ -35,6 +38,7 @@ case class Binary(bin: String) extends SMTLibFormatter with SpecConstant {
   require(bin.forall(c => c == '0' || c == '1'), "Binary: only digits 0 or 1")
 //  require(bin.filter(c => c != '0' && c != '1').isEmpty, "Binary: only digits 0 or 1")
   override def format: String = s"#b$bin"
+  override def pretty: String = format
 }
 
 object Binary {
@@ -46,6 +50,7 @@ object Binary {
 case class SMTLibString(s: String) extends SMTLibFormatter with SpecConstant with EchoResponse {
   // "\"" ++ s ++ "\""
   override def format: String = s""""$s""""
+  override def pretty: String = s
 }
 
 trait SMTLibSymbol extends SMTLibFormatter with SExpr with Index with Identifier with AttributeValue with PropLiteral
@@ -57,6 +62,7 @@ case class SimpleSymbol(symbol: String) extends SMTLibSymbol {
   s"SimpleSymbol $symbol: nonempty, doesn't start with digit and only contains letters, digits and ~ ! @ $$ % ^ & * _ - + = < > . ?")
 
   override def format: String = symbol
+  override def pretty: String = format
   def +(right: SimpleSymbol): SimpleSymbol = SimpleSymbol(symbol+right.symbol)
 
   private def isAllowedChar(c: Char): Boolean = c match {
@@ -86,9 +92,11 @@ case class QuotedSymbol(symbol: String) extends SMTLibSymbol {
   s"QuotedSymbol $symbol: must not contain | or \\")
 
   override def format: String = s"|$symbol|"
+  override def pretty: String = format
 }
 
 case class Keyword(symbol: String) extends SMTLibFormatter with SExpr with Attribute with InfoFlag {
   require(SimpleSymbol(symbol).symbol == symbol)
   override def format: String = s":$symbol"
+  override def pretty: String = symbol
 }

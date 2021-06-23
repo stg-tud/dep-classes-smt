@@ -2,7 +2,9 @@ package smt.smtlib.syntax
 
 import smt.smtlib.SMTLibFormatter
 
-trait InfoResponse extends SMTLibFormatter
+sealed trait InfoResponse extends SMTLibFormatter {
+  override def pretty: String = format
+}
 
 case class AssertionStackLevelsResponse(numeral: Numeral) extends InfoResponse {
   override def format: String = s":assertion-stack-levels ${numeral.format}"
@@ -29,7 +31,9 @@ case class VersionResponse(string: SMTLibString) extends InfoResponse {
 }
 
 // Aux
-trait ErrorBehavior extends SMTLibFormatter
+sealed trait ErrorBehavior extends SMTLibFormatter {
+  override def pretty: String = format
+}
 
 case object ImmediateExit extends ErrorBehavior {
   override def format: String = "immediate-exit"
@@ -43,8 +47,10 @@ trait ReasonUnknown extends SMTLibFormatter
 
 case object Memout extends ReasonUnknown {
   override def format: String = "memout"
+  override def pretty: String = format
 }
 
 case object Incomplete extends ReasonUnknown {
   override def format: String = "incomplete"
+  override def pretty: String = format
 }
