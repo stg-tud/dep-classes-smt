@@ -10,6 +10,9 @@ import smt.solver.Z3Solver
 import scala.language.postfixOps
 
 class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
+  // TODO: refresh variable names to ensure that we do not have ambiguous constructor names?
+  //  eg Variable = {p} and Field = {p}
+
   // Sort names
   private val SortNameClass: String = "Class"
   private val SortNameVariable: String = "Variable"
@@ -56,8 +59,8 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
 
   def encoding(context: List[Constraint], conclusion: Option[Constraint]): SMTLibScript = {
     val variableNames = extractVariableNames(if (conclusion.isEmpty) context else conclusion.get :: context)
-    val fieldNames = extractFieldNames(if (conclusion.isEmpty) context else conclusion.get :: context)
-    val classNames = getDefinedClassNamesInProgram // SMT error if an entailment includes a class not mentioned in the program
+    val fieldNames = getFieldNamesDefinedInProgram // SMT error if an entailment includes a field not mentioned an a constructor
+    val classNames = getClassNamesDefinedInProgram // SMT error if an entailment includes a class not mentioned in the program
 
     val (datatypeDeclarations, pathDatatypeExists, classDatatypeExists) = constructTypeDeclarations(classNames, variableNames, fieldNames)
     val functionDeclarations = constructFunctionDeclarations(pathDatatypeExists, classDatatypeExists)
@@ -257,9 +260,11 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
 
   // TODO: test this specifically, to see if the output is what we want (quantified-path.f.g.h)
   // TODO: check whether it's ok to discard entailment declarations with paths containing fields if the path datatype doesn't exist based on the input entailment
-  //  e.g. 'x :: Zero, y :: Succ |- y :: Nat' hints that it should be ok, as we coudn't apply C-Prog-Succ anyways
+  //  e.g. 'x :: Zero, y :: Succ |- y :: Nat' hints that it should be ok, as we couldn't apply C-Prog-Succ anyways
   //  but is this the case for all possibilities? (are there even other possibilities than these of the form above?)
   //  requirement: includes constraints containing classes, doesn't include fields
+  //  :
+  //  if so: filter those out and only use input constraints to search for fields and not the constructors declared in the program
   private def constructProgRule(declaration: ConstraintEntailment, pathDatatypeExists: Boolean): SMTLibCommand = declaration match {
     case ConstraintEntailment(x, context, InstanceOf(y, cls)) if x==y && context.nonEmpty =>
       val path = if (pathDatatypeExists) SortPath else SortVariable
@@ -286,11 +291,18 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
     case None        => SMTLibScript(context map (constraint => Assert(ConstraintToTerm(constraint, pathDatatypeExists))))
   }
 
-  private def getDefinedClassNamesInProgram: List[String] = program flatMap {
+  // A valid class name is either introduces through a constructor or as the conclusion of an constraint entailment
+  private def getClassNamesDefinedInProgram: List[String] = program flatMap {
     case ConstructorDeclaration(cls, _, _) => cls.name.name :: Nil
     case ConstraintEntailment(_, _, InstanceOf(_, cls)) => cls.name.name :: Nil
     case _ => Nil
   } distinct
+
+  // All valid field names must be introduced via constructors.
+  private def getFieldNamesDefinedInProgram: List[String] = program flatMap {
+    case ConstructorDeclaration(_, _, as) => extractFieldNames(as)
+    case _ => Nil
+  }
 
   private def extractVariableNames(constraints: List[Constraint]): List[String] = constraints flatMap {
     case PathEquivalence(p, q) => List(p.baseName, q.baseName)

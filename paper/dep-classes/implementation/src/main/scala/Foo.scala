@@ -67,5 +67,5 @@ object Foo extends App {
 
   val sim = new SimplifiedSemanticEntailment(NaturalNumbers.program, debug = 3)
 
-  println(sim.entails(List(), PathEquivalence("p", "p")))
+  println(sim.entails(List(), PathEquivalence("q", "q")))
 }
