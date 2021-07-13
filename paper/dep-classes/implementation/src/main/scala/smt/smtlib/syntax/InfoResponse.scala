@@ -2,7 +2,7 @@ package smt.smtlib.syntax
 
 import smt.smtlib.SMTLibFormatter
 
-sealed trait InfoResponse extends SMTLibFormatter {
+trait InfoResponse extends SMTLibFormatter {
   override def pretty: String = format
 }
 
