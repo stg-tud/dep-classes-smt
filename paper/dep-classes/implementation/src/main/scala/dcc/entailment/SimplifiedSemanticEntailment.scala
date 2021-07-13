@@ -58,6 +58,9 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
   override def entails(context: List[Constraint], constraints: List[Constraint]): Boolean = constraints.forall(entails(context, _))
 
   def encoding(context: List[Constraint], conclusion: Option[Constraint]): SMTLibScript = {
+    // Reset counters for fresh name generation
+    resetFreshNameCounter()
+
     val variableNames = extractVariableNames(if (conclusion.isEmpty) context else conclusion.get :: context)
     val fieldNames = getFieldNamesDefinedInProgram // SMT error if an entailment includes a field not mentioned an a constructor
     val classNames = getClassNamesDefinedInProgram // SMT error if an entailment includes a class not mentioned in the program
@@ -112,9 +115,9 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
   }
 
   private def constructSubstitutionFunction(pathDatatypeExists: Boolean): SMTLibCommand = {
-    val p: SMTLibSymbol = SimpleSymbol("path-p")
-    val q: SMTLibSymbol = SimpleSymbol("path-q")
-    val x: SMTLibSymbol = SimpleSymbol("var-x")
+    val p: SMTLibSymbol = freshPath()
+    val q: SMTLibSymbol = freshPath()
+    val x: SMTLibSymbol = freshVariable()
 
     if (pathDatatypeExists) {
       DefineFunRec(FunctionDef(
@@ -154,88 +157,99 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
   private def constructCalculusRules(pathDatatypeExists: Boolean, classDatatypeExists: Boolean): SMTLibScript = {
     val path = if (pathDatatypeExists) SortPath else SortVariable
 
-    val x: SMTLibSymbol = SimpleSymbol("quantified-variable-x")
-    val p: SMTLibSymbol = SimpleSymbol("quantified-path-p")
-    val q: SMTLibSymbol = SimpleSymbol("quantified-path-q")
-    val r: SMTLibSymbol = SimpleSymbol("quantified-path-r")
-    val s: SMTLibSymbol = SimpleSymbol("quantified-path-s")
-    val c: SMTLibSymbol = SimpleSymbol("quantified-class-c")
+    val pRefl: SMTLibSymbol = freshPath()
+    val cReflexivity = Assert(Forall(Seq(SortedVar(pRefl, path)), Apply(FunctionPathEquivalence, Seq(pRefl, pRefl))))
 
-    val cReflexivity = Assert(Forall(Seq(SortedVar(p, path)), Apply(FunctionPathEquivalence, Seq(p, p))))
-
+    val pClass: SMTLibSymbol = freshPath()
+    val clsClass: SMTLibSymbol = freshClassVar()
     val cClass = Assert(Forall(
       Seq(
-        SortedVar(p, path),
-        SortedVar(c, SortClass)
+        SortedVar(pClass, path),
+        SortedVar(clsClass, SortClass)
       ),
-      Implies(Apply(FunctionInstantiatedBy, Seq(p, c)), Apply(FunctionInstanceOf, Seq(p, c)))
+      Implies(Apply(FunctionInstantiatedBy, Seq(pClass, clsClass)), Apply(FunctionInstanceOf, Seq(pClass, clsClass)))
     ))
 
+    val xSubstEq = freshVariable()
+    val pSubstEq = freshPath()
+    val qSubstEq = freshPath()
+    val rSubstEq = freshPath()
+    val sSubstEq = freshPath()
     val cSubstPathEq = Assert(Forall(
       Seq(
-        SortedVar(p, path),
-        SortedVar(q, path),
-        SortedVar(x, SortVariable),
-        SortedVar(r, path),
-        SortedVar(s, path)
+        SortedVar(pSubstEq, path),
+        SortedVar(qSubstEq, path),
+        SortedVar(xSubstEq, SortVariable),
+        SortedVar(rSubstEq, path),
+        SortedVar(sSubstEq, path)
       ),
       Implies(
         And(
-          Apply(FunctionPathEquivalence, Seq(s, r)),
+          Apply(FunctionPathEquivalence, Seq(sSubstEq, rSubstEq)),
           Apply(FunctionPathEquivalence, Seq(
-            Apply(FunctionSubstitution, Seq(p, x, r)),
-            Apply(FunctionSubstitution, Seq(q, x, r)),
+            Apply(FunctionSubstitution, Seq(pSubstEq, xSubstEq, rSubstEq)),
+            Apply(FunctionSubstitution, Seq(qSubstEq, xSubstEq, rSubstEq)),
           ))
         ),
         Apply(FunctionPathEquivalence, Seq(
-          Apply(FunctionSubstitution, Seq(p, x, s)),
-          Apply(FunctionSubstitution, Seq(q, x, s))
+          Apply(FunctionSubstitution, Seq(pSubstEq, xSubstEq, sSubstEq)),
+          Apply(FunctionSubstitution, Seq(qSubstEq, xSubstEq, sSubstEq))
         ))
       )
     ))
 
+    val xSubstOf = freshVariable()
+    val pSubstOf = freshPath()
+    val clsSubstOf = freshClassVar()
+    val rSubstOf = freshPath()
+    val sSubstOf = freshPath()
     val cSubstInstOf = Assert(Forall(
       Seq(
-        SortedVar(p, path),
-        SortedVar(c, SortClass),
-        SortedVar(x, SortVariable),
-        SortedVar(r, path),
-        SortedVar(s, path)
+        SortedVar(pSubstOf, path),
+        SortedVar(clsSubstOf, SortClass),
+        SortedVar(xSubstOf, SortVariable),
+        SortedVar(rSubstOf, path),
+        SortedVar(sSubstOf, path)
       ),
       Implies(
         And(
-          Apply(FunctionPathEquivalence, Seq(s, r)),
+          Apply(FunctionPathEquivalence, Seq(sSubstOf, rSubstOf)),
           Apply(FunctionInstanceOf, Seq(
-            Apply(FunctionSubstitution, Seq(p, x, r)),
-            c
+            Apply(FunctionSubstitution, Seq(pSubstOf, xSubstOf, rSubstOf)),
+            clsSubstOf
           ))
         ),
         Apply(FunctionInstanceOf, Seq(
-          Apply(FunctionSubstitution, Seq(p, x, s)),
-          c
+          Apply(FunctionSubstitution, Seq(pSubstOf, xSubstOf, sSubstOf)),
+          clsSubstOf
         ))
       )
     ))
 
+    val xSubstBy = freshVariable()
+    val pSubstBy = freshPath()
+    val clsSubstBy = freshClassVar()
+    val rSubstBy = freshPath()
+    val sSubstBy = freshPath()
     val cSubstInstBy = Assert(Forall(
       Seq(
-        SortedVar(p, path),
-        SortedVar(c, SortClass),
-        SortedVar(x, SortVariable),
-        SortedVar(r, path),
-        SortedVar(s, path)
+        SortedVar(pSubstBy, path),
+        SortedVar(clsSubstBy, SortClass),
+        SortedVar(xSubstBy, SortVariable),
+        SortedVar(rSubstBy, path),
+        SortedVar(sSubstBy, path)
       ),
       Implies(
         And(
-          Apply(FunctionPathEquivalence, Seq(s, r)),
+          Apply(FunctionPathEquivalence, Seq(sSubstBy, rSubstBy)),
           Apply(FunctionInstantiatedBy, Seq(
-            Apply(FunctionSubstitution, Seq(p, x, r)),
-            c
+            Apply(FunctionSubstitution, Seq(pSubstBy, xSubstBy, rSubstBy)),
+            clsSubstBy
           ))
         ),
         Apply(FunctionInstantiatedBy, Seq(
-          Apply(FunctionSubstitution, Seq(p, x, s)),
-          c
+          Apply(FunctionSubstitution, Seq(pSubstBy, xSubstBy, sSubstBy)),
+          clsSubstBy
         ))
       )
     ))
@@ -269,6 +283,7 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
     case ConstraintEntailment(x, context, InstanceOf(y, cls)) if x==y && context.nonEmpty =>
       val path = if (pathDatatypeExists) SortPath else SortVariable
 
+      // TODO: how to pick a fresh name for this name (without a new function)?
       val pDCC: Path = MetaPath("quantified-path")
       val pSMT: SMTLibSymbol = SimpleSymbol(pDCC.baseName)
 
@@ -278,7 +293,7 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
           if (context.size == 1)
             ConstraintToTerm(dcc.Util.substitute(x, pDCC, context.head), pathDatatypeExists)
           else
-            Apply(SimpleSymbol("and"), context.map(constraint => ConstraintToTerm(dcc.Util.substitute(x, pDCC, constraint), pathDatatypeExists)))
+            And(context.map(constraint => ConstraintToTerm(dcc.Util.substitute(x, pDCC, constraint), pathDatatypeExists)): _*)
           ,
           Apply(FunctionInstanceOf, Seq(pSMT, IdToSMTLibSymbol(cls)))
         )
@@ -334,6 +349,28 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
     case PathEquivalence(p, q) => Apply(FunctionPathEquivalence, Seq(PathToTerm(p, pathDatatypeExists), PathToTerm(q, pathDatatypeExists)))
     case InstanceOf(p, cls) => Apply(FunctionInstanceOf, Seq(PathToTerm(p, pathDatatypeExists), IdToSMTLibSymbol(cls)))
     case InstantiatedBy(p, cls) => Apply(FunctionInstantiatedBy, Seq(PathToTerm(p, pathDatatypeExists), IdToSMTLibSymbol(cls)))
+  }
+
+  private var varCounter = 0
+  private def freshVariable(): SMTLibSymbol = {
+    varCounter = varCounter + 1
+    SimpleSymbol(s"x$varCounter")
+  }
+  private var pathCounter = 0
+  private def freshPath(): SMTLibSymbol = {
+    pathCounter = pathCounter + 1
+    SimpleSymbol(s"p$pathCounter")
+  }
+  private var classCounter = 0
+  private def freshClassVar(): SMTLibSymbol = {
+    classCounter = classCounter + 1
+    SimpleSymbol(s"cls$classCounter")
+  }
+
+  private def resetFreshNameCounter(): Unit = {
+    varCounter = 0
+    pathCounter = 0
+    classCounter = 0
   }
 
   private case class MetaPath(s: String) extends Path {
