@@ -1,5 +1,5 @@
 import dcc.entailment.SemanticEntailment
-import dcc.program.NaturalNumbers
+import dcc.program.{BooleanExpressions, NaturalNumbers}
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
@@ -27,41 +27,44 @@ object Foo extends App {
 
 //  println(newChecker.typeCheck)
 
-  import smt.smtlib.syntax.Implicit._
-  val Path = SimpleSymbol("Path")
-  val path_equivalence = "path-equivalence"
+//  import smt.smtlib.syntax.Implicit._
+//  val Path = SimpleSymbol("Path")
+//  val path_equivalence = "path-equivalence"
+//
+//  println(DefineFun(FunctionDef(
+//    path_equivalence,
+//    Seq(
+//      SortedVar("path-p", Path),
+//      SortedVar("path-q", Path)
+//    ),
+//    Bool,
+//    Or(
+//      Eq("path-p", "path-q"),
+//      Or(
+//        And(
+//          Eq("path-p", Apply("var", Seq("X"))),
+//          Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F")))
+//        ),
+//        Or(
+//          And(
+//            Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F"))),
+//            Eq("path-p", Apply("var", Seq("X")))
+//          ),
+//          Or(
+//            And(
+//              Eq("path-p", Apply("var", Seq("X"))),
+//              Eq("path-p", Apply("var", Seq("X")))
+//            ),
+//            And(
+//              Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F"))),
+//              Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F")))
+//            )
+//          )
+//        )
+//      )
+//    )
+//  )).format)
 
-  println(DefineFun(FunctionDef(
-    path_equivalence,
-    Seq(
-      SortedVar("path-p", Path),
-      SortedVar("path-q", Path)
-    ),
-    Bool,
-    Or(
-      Eq("path-p", "path-q"),
-      Or(
-        And(
-          Eq("path-p", Apply("var", Seq("X"))),
-          Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F")))
-        ),
-        Or(
-          And(
-            Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F"))),
-            Eq("path-p", Apply("var", Seq("X")))
-          ),
-          Or(
-            And(
-              Eq("path-p", Apply("var", Seq("X"))),
-              Eq("path-p", Apply("var", Seq("X")))
-            ),
-            And(
-              Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F"))),
-              Eq("path-q", Apply("pth", Seq(Apply("var", Seq("Y")), "F")))
-            )
-          )
-        )
-      )
-    )
-  )).format)
+  val boolChecker = new FaithfulAdaptionChecker(BooleanExpressions.program)
+  println(boolChecker.typeCheck)
 }
