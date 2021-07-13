@@ -70,7 +70,7 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
     val calculusRules = constructCalculusRules(pathDatatypeExists, classDatatypeExists)
     val entailmentJudgement = constructEntailmentJudgement(context, conclusion, pathDatatypeExists)
 
-    val smt: SMTLibScript = datatypeDeclarations ++ functionDeclarations ++ calculusRules ++ entailmentJudgement
+    val smt: SMTLibScript = datatypeDeclarations ++ functionDeclarations ++ entailmentJudgement ++ calculusRules
     if (debug > 1) {
       println("First-Order Encoding:")
       println(smt.pretty)
@@ -302,6 +302,11 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
   }
 
   private def constructEntailmentJudgement(context: List[Constraint], conclusion: Option[Constraint], pathDatatypeExists: Boolean): SMTLibScript = conclusion match {
+    case Some(value) if context.size == 1 =>
+      SMTLibScript(Seq(Assert(Not(Implies(
+        ConstraintToTerm(context.head, pathDatatypeExists),
+        ConstraintToTerm(value, pathDatatypeExists)
+      )))))
     case Some(value) =>
       val ctx: Seq[Term] = context map (constraint => ConstraintToTerm(constraint, pathDatatypeExists))
       SMTLibScript(Seq(Assert(Not(Implies(
