@@ -287,7 +287,13 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
   }
 
   private def constructEntailmentJudgement(context: List[Constraint], conclusion: Option[Constraint], pathDatatypeExists: Boolean): SMTLibScript = conclusion match {
-    case Some(value) => SMTLibScript(context map (constraint => Assert(ConstraintToTerm(constraint, pathDatatypeExists)))) :+ Assert(Not(ConstraintToTerm(value, pathDatatypeExists)))
+    case Some(value) =>
+      val ctx: Seq[Term] = context map (constraint => ConstraintToTerm(constraint, pathDatatypeExists))
+      SMTLibScript(Seq(Assert(Not(Implies(
+        And(ctx: _*),
+        ConstraintToTerm(value, pathDatatypeExists)
+      )))))
+//    case Some(value) => SMTLibScript(context map (constraint => Assert(ConstraintToTerm(constraint, pathDatatypeExists)))) :+ Assert(Not(ConstraintToTerm(value, pathDatatypeExists)))
     case None        => SMTLibScript(context map (constraint => Assert(ConstraintToTerm(constraint, pathDatatypeExists))))
   }
 

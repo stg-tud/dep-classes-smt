@@ -67,9 +67,10 @@ object Foo extends App {
 //    )
 //  )).format)
 
-  val boolChecker = new FaithfulAdaptionChecker(BooleanExpressions.program)
-  println(boolChecker.typeCheck)
+//  val boolChecker = new FaithfulAdaptionChecker(BooleanExpressions.program)
+//  println(boolChecker.typeCheck)
 
   val sim = new SimplifiedSemanticEntailment(NaturalNumbers.program, debug = 3)
-  println(sim.entails(List(), PathEquivalence("q", "q")))
+//  println(sim.entails(List(), PathEquivalence("q", "q")))
+  println(sim.entails(List(PathEquivalence("a", "b")), PathEquivalence("b", "a")))
 }
