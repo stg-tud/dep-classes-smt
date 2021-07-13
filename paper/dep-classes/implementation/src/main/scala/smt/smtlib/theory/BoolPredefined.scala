@@ -2,6 +2,7 @@ package smt.smtlib.theory
 
 import smt.smtlib.syntax.{Apply, SimpleSymbol, Sort, Term}
 
+// TODO: move functions into case classes to enable pretty printing?
 // Bool exists in every theory
 object BoolPredefined {
   // Sorts

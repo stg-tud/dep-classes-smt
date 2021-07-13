@@ -1,5 +1,7 @@
 import dcc.entailment.SemanticEntailment
 import dcc.program.{BooleanExpressions, NaturalNumbers}
+import dcc.entailment.{SemanticEntailment, SimplifiedSemanticEntailment}
+import dcc.program.NaturalNumbers
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
@@ -67,4 +69,7 @@ object Foo extends App {
 
   val boolChecker = new FaithfulAdaptionChecker(BooleanExpressions.program)
   println(boolChecker.typeCheck)
+
+  val sim = new SimplifiedSemanticEntailment(NaturalNumbers.program, debug = 3)
+  println(sim.entails(List(), PathEquivalence("q", "q")))
 }

@@ -6,6 +6,7 @@ trait SExpr extends SMTLibFormatter
 
 case class SExprs(expressions: Seq[SExpr] = Nil) extends SExpr with ReasonUnknown with GetProofResponse {
   override def format: String = s"(${SMTLibFormatter.format(expressions)})"
+  override def pretty: String = s"${SMTLibFormatter.pretty(expressions, ", ")}"
 }
 
 // TODO: remove SMTLibFormatter? SExpr... inherits from it anyways

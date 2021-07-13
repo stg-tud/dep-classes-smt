@@ -2,7 +2,9 @@ package smt.smtlib.syntax
 
 import smt.smtlib.SMTLibFormatter
 
-trait Option extends SMTLibFormatter
+trait Option extends SMTLibFormatter {
+  override def pretty: String = ""
+}
 
 case class DiagnosticOutputChannel(string: SMTLibString) extends Option {
   override def format: String = s":diagnostic-output-channel ${string.format}"

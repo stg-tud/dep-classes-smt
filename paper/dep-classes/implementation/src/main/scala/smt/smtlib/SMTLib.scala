@@ -8,17 +8,22 @@ import smt.smtlib.syntax.{Apply, ConstructorDatatype, ConstructorDec, DeclareDat
 
 trait SMTLibFormatter {
   def format: String
+  def pretty: String
 }
 
 object SMTLibFormatter {
   def format(seq: Seq[SMTLibFormatter], separator: String = " "): String =
-    seq.foldRight(""){(x, xs) => s"${x.format}$separator$xs"}.dropRight(1)
+    seq.foldRight(""){(x, xs) => s"${x.format}$separator$xs"}.dropRight(separator.length)
+
+  def pretty(seq: Seq[SMTLibFormatter], separator: String = " "): String =
+    seq.foldRight(""){(x, xs) => s"${x.pretty}$separator$xs"}.dropRight(separator.length)
 }
 
 trait SMTLibCommand extends SMTLibFormatter
 
 case class SMTLibScript(commands: Seq[SMTLibCommand]) extends SMTLibFormatter {
   override def format: String = SMTLibFormatter.format(commands, "\n")
+  override def pretty: String = SMTLibFormatter.pretty(commands, "\n")
   def ++(right: SMTLibScript): SMTLibScript = SMTLibScript(commands ++ right.commands)
   def :++(right: Seq[SMTLibCommand]): SMTLibScript = SMTLibScript(commands ++ right)
   def ++:(left: Seq[SMTLibCommand]): SMTLibScript = SMTLibScript(left ++ commands)
@@ -26,7 +31,10 @@ case class SMTLibScript(commands: Seq[SMTLibCommand]) extends SMTLibFormatter {
   def :+(right: SMTLibCommand): SMTLibScript = SMTLibScript(commands :+ right)
 }
 
-trait SMTLibResponse extends SMTLibFormatter
+trait SMTLibResponse extends SMTLibFormatter {
+  // TODO: currently pretty printing is only supposed to give readable results on the input FO formulae
+  override def pretty: String = format
+}
 
 object SMTLib {
 //  example:
