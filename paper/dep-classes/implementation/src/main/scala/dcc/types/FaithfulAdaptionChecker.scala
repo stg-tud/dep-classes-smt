@@ -2,13 +2,13 @@ package dcc.types
 import dcc.DCC.{FV, constructorConstraintsSubst}
 import dcc.Util
 import dcc.entailment.EntailmentSort.EntailmentSort
-import dcc.entailment.{Entailment, EntailmentFactory, SemanticEntailment}
+import dcc.entailment.{Entailment, EntailmentFactory}
 import dcc.syntax.Program.Program
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldAccess, FieldPath, Id, InstanceOf, InstantiatedBy, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
 import dcc.syntax.Util.commaSeparate
 
-class FaithfulAdaptionChecker(override val program: Program, entailmentSort: EntailmentSort, debug: Boolean = false) extends Checker {
-  val entailment: Entailment = EntailmentFactory(entailmentSort)(program, if (debug) 1 else 0) // TODO: update debug
+class FaithfulAdaptionChecker(override val program: Program, entailmentSort: EntailmentSort, debug: Int = 0) extends Checker {
+  val entailment: Entailment = EntailmentFactory(entailmentSort)(program, debug)
 
   override def typeOf(context: List[Constraint], expression: Expression): Either[Type, String] = expression match {
     case x@Id(_) =>

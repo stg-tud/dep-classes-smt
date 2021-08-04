@@ -15,15 +15,14 @@ import smt.solver.Z3Solver
 import scala.annotation.tailrec
 import scala.language.postfixOps
 
-// TODO: change debug flag to Int to add verbosity? 0 - no debug, 1 - only entailment info debug, 2 - pass debug to solver
 // TODO: add timeout flag as Option[Int] default None
-class SemanticEntailment(program: Program, debug: Boolean = false) extends Entailment {
+class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
   override def entails(context: List[Constraint], constraint: Constraint): Boolean = {
-    if (debug)
-      println(s"checking entailment: ${Util.commaSeparate(context)} |- $constraint")
+    if (debug > 0)
+      println(s"entailment: ${Util.commaSeparate(context)} |- $constraint")
 
     val (smt, isPathDefined) = axioms(context, Some(constraint))
-    val solver = new Z3Solver(smt, debug=debug)
+    val solver = new Z3Solver(smt, debug = if (debug > 2) true else false)
 
     if (context.isEmpty)
       solver.addCommand(Assert(Not(ConstraintToTerm(constraint, isPathDefined))))
