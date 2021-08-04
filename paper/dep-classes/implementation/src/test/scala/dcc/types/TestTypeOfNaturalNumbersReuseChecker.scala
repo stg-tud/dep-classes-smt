@@ -1,5 +1,6 @@
 package dcc.types
 
+import dcc.entailment.EntailmentSort
 import dcc.program.NaturalNumbers
 import dcc.syntax.{FieldAccess, FieldPath, InstanceOf, InstantiatedBy, MethodCall, ObjectConstruction, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
@@ -7,7 +8,7 @@ import dcc.types.TypeTests.{testTypeError, testTypeOk}
 import org.scalatest.funsuite.AnyFunSuite
 
 class TestTypeOfNaturalNumbersReuseChecker extends AnyFunSuite {
-  private val checker: Checker = FaithfulAdaptionChecker(NaturalNumbers.program)
+  private val checker: Checker = FaithfulAdaptionChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic)
 
   test ("type of bound variable") {
     val result = checker.typeOf(List(InstanceOf("x", "Nat")), "x")

@@ -1,12 +1,13 @@
 package dcc.types
 
+import dcc.entailment.EntailmentSort
 import dcc.program.NaturalNumbers
 import dcc.syntax.{AbstractMethodDeclaration, ConstraintEntailment, ConstructorDeclaration, FieldAccess, FieldPath, InstanceOf, MethodImplementation, ObjectConstruction}
 import dcc.syntax.Implicit.StringToId
 import org.scalatest.funsuite.AnyFunSuite
 
 class TestTypeCheckDeclarations extends AnyFunSuite {
-  private val checker = FaithfulAdaptionChecker(NaturalNumbers.program)
+  private val checker = FaithfulAdaptionChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic)
 
   test ("check constructor declaration: Zero") {
     assert(checker.typeCheck(ConstructorDeclaration("Zero", "x", Nil)))

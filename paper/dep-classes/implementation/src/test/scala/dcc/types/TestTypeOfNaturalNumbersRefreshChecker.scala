@@ -1,5 +1,6 @@
 package dcc.types
 
+import dcc.entailment.EntailmentSort
 import dcc.program.{Empty, NaturalNumbers}
 import dcc.syntax.{FieldAccess, FieldPath, InstanceOf, InstantiatedBy, MethodCall, ObjectConstruction, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
@@ -8,10 +9,10 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 
 class TestTypeOfNaturalNumbersRefreshChecker extends AnyFunSuite with BeforeAndAfterEach {
-  private var checker: Checker = new FaithfulAdaptionChecker(Empty.program)
+  private var checker: Checker = new FaithfulAdaptionChecker(Empty.program, EntailmentSort.SimplifiedSemantic)
 
   override protected def beforeEach(): Unit = {
-    checker = new FaithfulAdaptionChecker(NaturalNumbers.program, debug = true)
+    checker = new FaithfulAdaptionChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic, debug = true)
   }
 
   test ("type of bound variable") {

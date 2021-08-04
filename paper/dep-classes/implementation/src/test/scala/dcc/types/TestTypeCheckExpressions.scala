@@ -1,12 +1,13 @@
 package dcc.types
 
+import dcc.entailment.EntailmentSort
 import dcc.program.NaturalNumbers
 import dcc.syntax.{FieldAccess, FieldPath, InstanceOf, MethodCall, ObjectConstruction, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
 import org.scalatest.funsuite.AnyFunSuite
 
 class TestTypeCheckExpressions extends AnyFunSuite {
-  private val checker = FaithfulAdaptionChecker(NaturalNumbers.program)
+  private val checker = FaithfulAdaptionChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic)
 
   test ("check bound variable") {
     assert(checker.typeCheck(List(InstanceOf("x", "Nat")), "x", Type("y", List(PathEquivalence("x", "y")))))
