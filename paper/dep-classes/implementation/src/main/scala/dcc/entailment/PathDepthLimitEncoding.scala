@@ -1,9 +1,11 @@
 package dcc.entailment
-import dcc.syntax.{Constraint, Util}
-import dcc.syntax.Program.Program
+import dcc.syntax.{Constraint, InstanceOf, InstantiatedBy, PathEquivalence, Util}
+import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
 import smt.smtlib.SMTLibScript
 import smt.smtlib.syntax.{SMTLibSymbol, SimpleSymbol, Unsat}
 import smt.solver.Z3Solver
+
+import scala.language.postfixOps
 
 class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailment {
   override def entails(context: List[Constraint], constraint: Constraint): Boolean = {
@@ -26,11 +28,22 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
   override def entails(context: List[Constraint], constraints: List[Constraint]): Boolean = constraints.forall(entails(context, _))
 
   def encode(context: List[Constraint], conclusion: Constraint): SMTLibScript = {
+    // Reset counters for fresh name generation
     resetFreshNameCounter()
+
+    val variableNames = extractVariableNames(conclusion :: context)
+    val fieldNames = DefinedFieldNames(program)
+    val classNames = DefinedClassNames(program)
 
     //TODO
     SMTLibScript(Seq())
   }
+
+  private def extractVariableNames(constraints: List[Constraint]): List[String] = constraints flatMap {
+    case PathEquivalence(p, q) => List(p.baseName, q.baseName)
+    case InstanceOf(p, _) => List(p.baseName)
+    case InstantiatedBy(p, _) => List(p.baseName)
+  } distinct
 
   private var varCounter = 0
   private def freshVariable(): SMTLibSymbol = {

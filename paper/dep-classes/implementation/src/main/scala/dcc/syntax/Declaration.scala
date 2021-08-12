@@ -27,6 +27,25 @@ case class ConstraintEntailment(x: Id, as: List[Constraint], a: Constraint) exte
     s"∀$x. ${commaSeparate(as.map(_.toString))} => $a"
 }
 
+import scala.language.postfixOps
+
 object Program {
   type Program = List[Declaration]
+
+  def DefinedFieldNames(p: Program): List[String] = p flatMap {
+    case ConstructorDeclaration(_, _, as) => extractFieldNames(as)
+    case _ => Nil
+  }
+
+  private def extractFieldNames(constraints: List[Constraint]): List[String] = constraints flatMap {
+    case PathEquivalence(p, q) => p.fieldNames ++ q.fieldNames
+    case InstanceOf(p, _) => p.fieldNames
+    case InstantiatedBy(p, _) => p.fieldNames
+  } distinct
+
+  def DefinedClassNames(p: Program): List[String] = p flatMap {
+    case ConstructorDeclaration(cls, _, _) => cls.name.name :: Nil
+    case ConstraintEntailment(_, _, InstanceOf(_, cls)) => cls.name.name :: Nil
+    case _ => Nil
+  } distinct
 }
