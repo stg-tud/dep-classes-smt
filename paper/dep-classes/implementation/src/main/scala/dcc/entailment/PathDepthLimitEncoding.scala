@@ -1,13 +1,32 @@
 package dcc.entailment
 import dcc.syntax.{Constraint, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
-import smt.smtlib.SMTLibScript
-import smt.smtlib.syntax.{SMTLibSymbol, SimpleSymbol, Unsat}
+import smt.smtlib.{SMTLibCommand, SMTLibScript}
+import smt.smtlib.syntax.{DefineFun, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Unsat}
+import smt.smtlib.theory.BoolPredefined.{Bool, True}
 import smt.solver.Z3Solver
 
 import scala.language.postfixOps
 
 class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailment {
+  // Sort names
+  private val SortNameClass: String = "Class"
+  private val SortNameVariable: String = "Variable"
+  private val SortNameField: String = "Field"
+  private val SortNamePath: String = "Path"
+
+  // Sorts
+  private val SortClass: Sort = SimpleSymbol(SortNameClass)
+  private val SortVariable: Sort = SimpleSymbol(SortNameVariable)
+  private val SortField: Sort = SimpleSymbol(SortNameField)
+  private val SortPath: Sort = SimpleSymbol(SortNamePath)
+
+  // Function names
+  private val FunctionPathEquivalence: SMTLibSymbol = SimpleSymbol("path-equivalence")
+  private val FunctionInstanceOf: SMTLibSymbol = SimpleSymbol("instance-of")
+  private val FunctionInstantiatedBy: SMTLibSymbol = SimpleSymbol("instantiated-by")
+  private val FunctionSubstitution: SMTLibSymbol = SimpleSymbol("substitute")
+
   override def entails(context: List[Constraint], constraint: Constraint): Boolean = {
     if (debug > 0)
       println(s"entailment: ${if (context.isEmpty) "·" else Util.commaSeparate(context)} |- $constraint")
@@ -43,6 +62,27 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     SMTLibScript(Seq())
   }
 
+  def generateSubstitutionFunction(paths: List[Path], pathDatatypeExists: Boolean): SMTLibCommand = {
+    val source = freshPath()
+    val target = freshVariable()
+    val replace = freshPath()
+    val result = freshPath()
+
+    val path: Sort = if (pathDatatypeExists) SortPath else SortVariable
+
+    DefineFun(FunctionDef(
+      FunctionSubstitution,
+      Seq(
+        SortedVar(source, path),
+        SortedVar(target, SortVariable),
+        SortedVar(replace, path),
+        SortedVar(result, path)
+      ),
+      Bool,
+      True
+    ))
+  }
+
   def enumeratePaths(vars: List[String], fields: List[String], depthLimit: Int): List[Path] = {
     // Initialize paths with variables
     var paths: List[Path] = vars.map(s => Id(Symbol(s)))
@@ -55,10 +95,6 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
   }
 
   def addFieldsToPaths(paths: List[Path], fields: List[String]): List[Path] = paths.flatMap{p => addFieldsToPath(p, fields)}
-//  paths match {
-//    case Nil => Nil
-//    case p :: rest => addFieldsToPath(p, fields) ++ addFieldsToPaths(rest, fields)
-//  }
 
   def addFieldsToPath(path: Path, fields: List[String]): List[Path] = fields.map(f => FieldPath(path, Id(Symbol(f))))
 
