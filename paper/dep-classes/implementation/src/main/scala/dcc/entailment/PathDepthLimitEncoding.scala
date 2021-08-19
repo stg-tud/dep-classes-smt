@@ -1,5 +1,5 @@
 package dcc.entailment
-import dcc.syntax.{Constraint, InstanceOf, InstantiatedBy, PathEquivalence, Util}
+import dcc.syntax.{Constraint, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
 import smt.smtlib.SMTLibScript
 import smt.smtlib.syntax.{SMTLibSymbol, SimpleSymbol, Unsat}
@@ -35,9 +35,32 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     val fieldNames = DefinedFieldNames(program)
     val classNames = DefinedClassNames(program)
 
+    // TODO: determine depth limit based on program/other means
+    val depthLimit = 1
+    val paths = enumeratePaths(variableNames, fieldNames, depthLimit)
+
     //TODO
     SMTLibScript(Seq())
   }
+
+  def enumeratePaths(vars: List[String], fields: List[String], depthLimit: Int): List[Path] = {
+    // Initialize paths with variables
+    var paths: List[Path] = vars.map(s => Id(Symbol(s)))
+
+    (1 to depthLimit) foreach { _ =>
+      paths = paths ++ addFieldsToPaths(paths, fields)
+    }
+
+    paths.distinct
+  }
+
+  def addFieldsToPaths(paths: List[Path], fields: List[String]): List[Path] = paths.flatMap{p => addFieldsToPath(p, fields)}
+//  paths match {
+//    case Nil => Nil
+//    case p :: rest => addFieldsToPath(p, fields) ++ addFieldsToPaths(rest, fields)
+//  }
+
+  def addFieldsToPath(path: Path, fields: List[String]): List[Path] = fields.map(f => FieldPath(path, Id(Symbol(f))))
 
   private def extractVariableNames(constraints: List[Constraint]): List[String] = constraints flatMap {
     case PathEquivalence(p, q) => List(p.baseName, q.baseName)

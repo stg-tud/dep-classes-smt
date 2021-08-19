@@ -1,4 +1,4 @@
-import dcc.entailment.{EntailmentSort, SemanticEntailment, SimplifiedSemanticEntailment}
+import dcc.entailment.{EntailmentSort, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.program.{BooleanExpressions, NaturalNumbers}
 import dcc.program.NaturalNumbers
 import dcc.syntax._
@@ -71,5 +71,11 @@ object Foo extends App {
 
   val sim = new SimplifiedSemanticEntailment(NaturalNumbers.program, debug = 3)
 //  println(sim.entails(List(), PathEquivalence("q", "q")))
-  println(sim.entails(List(PathEquivalence("a", "b")), PathEquivalence("b", "a")))
+//  println(sim.entails(List(PathEquivalence("a", "b")), PathEquivalence("b", "a")))
+
+  val limitEnc = new PathDepthLimitEncoding(NaturalNumbers.program, debug = 3)
+
+  val paths = limitEnc.enumeratePaths(List("x", "y", "z"), List("f", "g", "h"), 2)
+
+  println(paths)
 }
