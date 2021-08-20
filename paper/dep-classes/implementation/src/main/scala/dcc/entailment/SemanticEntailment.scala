@@ -497,6 +497,7 @@ object SemanticEntailment {
     override def toString: String = s
     override def baseName: String = s
     override def fieldNames: List[String] = Nil
+    override def depth: Int = 0
   }
 
   // Sorts explicitly added in this translation.

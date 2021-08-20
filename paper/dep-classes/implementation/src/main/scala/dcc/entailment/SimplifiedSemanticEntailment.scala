@@ -382,5 +382,6 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
     override def toString: String = s
     override def baseName: String = s
     override def fieldNames: List[String] = Nil
+    override def depth: Int = 0
   }
 }
