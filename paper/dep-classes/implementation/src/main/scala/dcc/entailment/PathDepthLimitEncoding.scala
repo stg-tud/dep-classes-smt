@@ -1,9 +1,10 @@
 package dcc.entailment
+import dcc.Util.substitute
 import dcc.syntax.{Constraint, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{DefineFun, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Unsat}
-import smt.smtlib.theory.BoolPredefined.{Bool, True}
+import smt.smtlib.syntax.{Apply, DefineFun, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Term, Unsat}
+import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Or}
 import smt.solver.Z3Solver
 
 import scala.language.postfixOps
@@ -62,7 +63,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     SMTLibScript(Seq())
   }
 
-  def generateSubstitutionFunction(paths: List[Path], pathDatatypeExists: Boolean): SMTLibCommand = {
+  def generateSubstitutionFunction(paths: List[Path], vars: List[String], depthLimit: Int, pathDatatypeExists: Boolean): SMTLibCommand = {
     val source = freshPath()
     val target = freshVariable()
     val replace = freshPath()
@@ -79,8 +80,33 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
         SortedVar(result, path)
       ),
       Bool,
-      True
+      generateSubstitutionFunctionBody(paths, vars.map(s => Id(Symbol(s))), source, target, replace, result, depthLimit)
     ))
+  }
+
+  def generateSubstitutionFunctionBody(paths: List[Path], vars: List[Id], sourceName: SMTLibSymbol, targetName: SMTLibSymbol, replaceName: SMTLibSymbol, resultName: SMTLibSymbol, depthLimit: Int): Term = {
+    var relation: List[Term] = Nil
+
+    paths.foreach(source =>
+      vars.foreach(target =>
+        paths.foreach { replace =>
+          val result: Path = substitute(target, source, replace) // TODO: check if target != source.base, skip substitution in that case
+
+          if (result.depth <= depthLimit) {
+            val elem: Term = And(
+              Eq(sourceName, PathToSMTLibSymbol(source)),
+              Eq(targetName, IdToSMTLibSymbol(target)),
+              Eq(replaceName, PathToSMTLibSymbol(replace)),
+              Eq(resultName, PathToSMTLibSymbol(result))
+            )
+
+            relation = elem :: relation
+          }
+        }
+      )
+    )
+
+    Or(relation: _*)
   }
 
   def enumeratePaths(vars: List[String], fields: List[String], depthLimit: Int): List[Path] = {
@@ -103,6 +129,16 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     case InstanceOf(p, _) => List(p.baseName)
     case InstantiatedBy(p, _) => List(p.baseName)
   } distinct
+
+  private def IdToSMTLibSymbol(id: Id): SMTLibSymbol = SimpleSymbol(id.name.name)
+
+  private def PathToSMTLibSymbol(path: Path): SMTLibSymbol = SimpleSymbol(path.toString)
+
+  private def ConstraintToTerm(constraint: Constraint): Term = constraint match {
+    case PathEquivalence(p, q) => Apply(FunctionPathEquivalence, Seq(PathToSMTLibSymbol(p), PathToSMTLibSymbol(q)))
+    case InstanceOf(p, cls) => Apply(FunctionInstanceOf, Seq(PathToSMTLibSymbol(p), IdToSMTLibSymbol(cls)))
+    case InstantiatedBy(p, cls) => Apply(FunctionInstantiatedBy, Seq(PathToSMTLibSymbol(p), IdToSMTLibSymbol(cls)))
+  }
 
   private var varCounter = 0
   private def freshVariable(): SMTLibSymbol = {
