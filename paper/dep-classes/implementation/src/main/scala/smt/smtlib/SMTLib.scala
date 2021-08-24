@@ -43,8 +43,10 @@ object SMTLib {
   def buildEnumerationType(typename: SMTLibSymbol, constructors: Seq[ConstructorDec]): SMTLibCommand =
     DeclareDatatype(typename, ConstructorDatatype(constructors))
 
-  def buildEnumerationType(typename: String, constructors: Seq[String]): SMTLibCommand =
-    DeclareDatatype(SimpleSymbol(typename), ConstructorDatatype(constructors.map(constructor => ConstructorDec(SimpleSymbol(constructor), Seq()))))
+  def buildEnumerationType(typename: String, constructors: Seq[Any]): SMTLibCommand = constructors match {
+    case _: Seq[String] => DeclareDatatype(SimpleSymbol(typename), ConstructorDatatype(constructors.map(constructor => ConstructorDec(SimpleSymbol(constructor.asInstanceOf[String]), Seq()))))
+    case _ => DeclareDatatype(SimpleSymbol(typename), ConstructorDatatype(constructors.map(constructor => ConstructorDec(SimpleSymbol(constructor.toString), Seq()))))
+  }
 
   def is(constructor: SimpleSymbol, arg: Term): Term = Apply(SimpleSymbol("is-") + constructor, Seq(arg))
   def selector(selector: QualifiedIdentifier, arg: Term): Term = Apply(selector, Seq(arg))

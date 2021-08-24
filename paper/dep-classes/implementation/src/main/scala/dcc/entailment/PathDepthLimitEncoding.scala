@@ -2,7 +2,7 @@ package dcc.entailment
 import dcc.Util.substitute
 import dcc.syntax.{Constraint, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
-import smt.smtlib.{SMTLibCommand, SMTLibScript}
+import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
 import smt.smtlib.syntax.{Apply, DefineFun, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Term, Unsat}
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Or}
 import smt.solver.Z3Solver
@@ -59,8 +59,24 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     val depthLimit = 1
     val paths = enumeratePaths(variableNames, fieldNames, depthLimit)
 
+    val (datatypeDeclarations, pathDatatypeExists, classDatatypeExists) = constructTypeDeclarations(classNames, variableNames, fieldNames, paths)
+
     //TODO
     SMTLibScript(Seq())
+  }
+
+  private def constructTypeDeclarations(classes: List[String], variables: List[String], fields: List[String], paths: List[Path]): (SMTLibScript, Boolean, Boolean) = {
+    var declarations: SMTLibScript = SMTLibScript(Seq(SMTLib.buildEnumerationType(SortNameVariable, variables)))
+
+    val doAddClassDatatype = classes.nonEmpty
+    if (doAddClassDatatype)
+      declarations =  declarations :+ SMTLib.buildEnumerationType(SortNameField, fields)
+
+    val doAddPathDatatype = fields.nonEmpty
+    if (doAddPathDatatype)
+      declarations =  declarations :+ SMTLib.buildEnumerationType(SortNameField, fields) :+ SMTLib.buildEnumerationType(SortNamePath, paths)
+
+    (declarations, doAddPathDatatype, doAddClassDatatype)
   }
 
   def generateSubstitutionFunction(paths: List[Path], vars: List[String], depthLimit: Int, pathDatatypeExists: Boolean): SMTLibCommand = {
