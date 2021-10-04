@@ -81,7 +81,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       constraintPropositionDeclarations ++
       substitutionFunctionDeclaration ++
       staticCalculusRules ++
-      dynamicCalculusRules ++
+//      dynamicCalculusRules ++ // TODO: add those again when the prog rule generation SMT error is fixed
       entailmentJudgement
   }
 
@@ -367,12 +367,15 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     ))
   }
 
+  // TODO: fix body generation: the substitutions it produces doesn't hold. e.g. y y x y which should be y y x x
+  // TODO: probably because of the prefixing of the paths
   def generateSubstitutionFunctionBody(paths: List[Path], vars: List[Id], sourceName: SMTLibSymbol, targetName: SMTLibSymbol, replaceName: SMTLibSymbol, resultName: SMTLibSymbol, depthLimit: Int): Term = {
     var relation: List[Term] = Nil
 
     paths.foreach(source =>
       vars.foreach(target =>
         paths.foreach { replace =>
+          // TODO: expected culprit
           val result: Path = if (target.baseName != source.baseName) source else substitute(target, source, replace)
 
           if (result.depth <= depthLimit) {

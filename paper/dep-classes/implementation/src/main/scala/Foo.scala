@@ -132,6 +132,16 @@ object Foo extends App {
   // TODO: fix ambiguous name errors (variables are also paths)
   // TODO: add substitution result paths into quantifier list (subst rules)
   // TODO: in prog rule generation, do not perform the substitution prior (p25.p)
+  // unsat
   val res = limitEnc.entails(Nil, PathEquivalence("x", "x"))
   println(res)
+
+  // unsat
+  limitEnc.entails(List(PathEquivalence("y", "x")), PathEquivalence("x", "y"))
+
+  // unsat
+  limitEnc.entails(List(PathEquivalence("y", "x"), PathEquivalence("z", "x")), PathEquivalence("z", "y"))
+
+  // sat?
+  limitEnc.entails(Nil, PathEquivalence("x", "y"))
 }
