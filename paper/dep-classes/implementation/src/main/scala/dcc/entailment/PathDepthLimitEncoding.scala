@@ -137,6 +137,8 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     //   SortedVar(replace, path),
     //   SortedVar(result, path)
 
+    // TODO: move substitution checks to RHS of the implication
+
     // C-Subst-Eq
     val xSubstEq = freshVariable()
     val pSubstEq = freshPath()
