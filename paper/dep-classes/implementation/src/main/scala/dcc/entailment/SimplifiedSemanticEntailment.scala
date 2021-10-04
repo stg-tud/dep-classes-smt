@@ -157,9 +157,11 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
   private def constructCalculusRules(pathDatatypeExists: Boolean, classDatatypeExists: Boolean): SMTLibScript = {
     val path = if (pathDatatypeExists) SortPath else SortVariable
 
+    // C-Refl
     val pRefl: SMTLibSymbol = freshPath()
     val cReflexivity = Assert(Forall(Seq(SortedVar(pRefl, path)), Apply(FunctionPathEquivalence, Seq(pRefl, pRefl))))
 
+    // C-Class
     val pClass: SMTLibSymbol = freshPath()
     val clsClass: SMTLibSymbol = freshClassVar()
     val cClass = Assert(Forall(
@@ -170,6 +172,7 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
       Implies(Apply(FunctionInstantiatedBy, Seq(pClass, clsClass)), Apply(FunctionInstanceOf, Seq(pClass, clsClass)))
     ))
 
+    // C-Subst-Eq
     val xSubstEq = freshVariable()
     val pSubstEq = freshPath()
     val qSubstEq = freshPath()
@@ -198,6 +201,7 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
       )
     ))
 
+    // C-Subst-InstOf
     val xSubstOf = freshVariable()
     val pSubstOf = freshPath()
     val clsSubstOf = freshClassVar()
@@ -226,6 +230,7 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
       )
     ))
 
+    // C-Subst-InstBy
     val xSubstBy = freshVariable()
     val pSubstBy = freshPath()
     val clsSubstBy = freshClassVar()
