@@ -81,7 +81,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       constraintPropositionDeclarations ++
       substitutionFunctionDeclaration ++
       staticCalculusRules ++
-//      dynamicCalculusRules ++ // TODO: add those again when the prog rule generation SMT error is fixed
+//      dynamicCalculusRules ++ // TODO: add those again when the C-Prog rule generation SMT error is fixed
       entailmentJudgement
   }
 
@@ -281,7 +281,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
           InstantiatedBy(p, cls)
       }
 
-      // TODO: do not perform the substitution prior (results in p25.p, which doesnt work anymore with enumerated paths)
+      // TODO: do not perform the substitution prior (results in p25.p, which doesn't work anymore with enumerated paths)
       // TODO: possible solution: ground the path variable of the quantifier and perform the substitution for each path instance
 //      val lhs =
 //        if (context.size == 1)
