@@ -51,13 +51,11 @@ object Bar extends App {
           Apply("path-equivalence", Seq("p9", "p8")),
           Apply("substitute", Seq("p6", "x2", "p8", "p10")),
           Apply("substitute", Seq("p7", "x2", "p8", "p11")),
-          Apply("path-equivalence", Seq("p10", "p11"))
-        ),
-        And(
           Apply("substitute", Seq("p6", "x2", "p9", "p12")),
           Apply("substitute", Seq("p7", "x2", "p9", "p13")),
-          Apply("path-equivalence", Seq("p12", "p13"))
-        )
+          Apply("path-equivalence", Seq("p10", "p11"))
+        ),
+        Apply("path-equivalence", Seq("p12", "p13"))
       )
     )),
     Assert(Not(Apply("path-equivalence", Seq("x", "y")))),
@@ -80,13 +78,11 @@ object Bar extends App {
         Apply("path-equivalence", Seq(s, r)),
         Apply("substitute", Seq(p, x, r, res1)),
         Apply("substitute", Seq(q, x, r, res2)),
-        Apply("path-equivalence", Seq(res1, res2))
-      ),
-      And(
         Apply("substitute", Seq(p, x, s, res3)),
         Apply("substitute", Seq(q, x, s, res4)),
-        Apply("path-equivalence", Seq(res3, res4))
-      )
+        Apply("path-equivalence", Seq(res1, res2))
+      ),
+      Apply("path-equivalence", Seq(res3, res4))
     ),
     Seq(KeyValueAttribute(Keyword("named"), s"C-Subst-$p-$q-$x-$r-$s-$res1-$res2-$res3-$res4"))
   ))
@@ -137,9 +133,9 @@ object Bar extends App {
         )
       )),
       Assert(Not(Apply("path-equivalence", Seq("x", "y")))),
-    )) ++ SMTLibScript(vars.map(reflTemplate)) ++ SMTLibScript(substRules) ++ SMTLibScript(Seq(CheckSat, GetUnsatCore))
+    )) ++ SMTLibScript(vars.map(reflTemplate)) ++ SMTLibScript(substRules)
 
   solver.flush()
   solver.addScript(groundSMT)
-  solver.execute
+  solver.checkSat
 }

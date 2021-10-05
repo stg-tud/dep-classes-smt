@@ -70,10 +70,6 @@ object Foo extends App {
 //  val boolChecker = new FaithfulAdaptionChecker(BooleanExpressions.program)
 //  println(boolChecker.typeCheck)
 
-  val sim = new SimplifiedSemanticEntailment(NaturalNumbers.program, debug = 3)
-//  println(sim.entails(List(), PathEquivalence("q", "q")))
-//  println(sim.entails(List(PathEquivalence("a", "b")), PathEquivalence("b", "a")))
-
   val limitEnc = new PathDepthLimitEncoding(NaturalNumbers.program, debug = 3)
 
   val vars = List("x", "y", "z")
@@ -129,8 +125,6 @@ object Foo extends App {
 
 //  List(ConstructorDeclaration("Zero", "x", Nil)).collect(limitEnc.constructProgRule(_, false))
 
-  // TODO: fix ambiguous name errors (variables are also paths)
-  // TODO: add substitution result paths into quantifier list (subst rules)
   // TODO: in prog rule generation, do not perform the substitution prior (p25.p)
   // unsat
   val res = limitEnc.entails(Nil, PathEquivalence("x", "x"))
@@ -142,16 +136,6 @@ object Foo extends App {
   // unsat
   limitEnc.entails(List(PathEquivalence("y", "x"), PathEquivalence("z", "x")), PathEquivalence("z", "y"))
 
-  // sat?
+  // sat
   limitEnc.entails(Nil, PathEquivalence("x", "y"))
-
-  val x = Id(Symbol("x"))
-  val p = Id(Symbol("x"))
-  val q = Id(Symbol("y"))
-  val pf = FieldPath(Id(Symbol("x")), Id(Symbol("f")))
-  val qf = FieldPath(Id(Symbol("y")), Id(Symbol("f")))
-  println(dcc.Util.substitute(x, p, q))
-  println(dcc.Util.substitute(x, q, p))
-  println(dcc.Util.substitute(x, pf, q))
-  println(dcc.Util.substitute(x, q, pf))
 }
