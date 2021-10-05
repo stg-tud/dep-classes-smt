@@ -146,6 +146,21 @@ object Foo extends App {
   // sat
   limitEnc.entails(Nil, PathEquivalence("x", "y"))
 
+  // unsat
+  limitEnc.entails(List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat"))
+
+  // unsat
+  limitEnc.entails(List(InstantiatedBy("x", "Zero")), InstanceOf("x", "Nat"))
+
+  // sat
+  limitEnc.entails(List(InstantiatedBy("x", "Zero")), InstanceOf("x", "Succ"))
+
+  // unsat
+  limitEnc.entails(List(InstantiatedBy("x", "Succ"), InstantiatedBy(FieldPath("x", "p"), "Zero")), InstanceOf("x", "Succ"))
+
+  // sat
+  limitEnc.entails(List(InstantiatedBy("x", "Succ"), InstantiatedBy(FieldPath("x", "p"), "Zero")), InstanceOf("x", "Zero"))
+
 
 
   // Prog rule generation
