@@ -282,6 +282,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       }
 
       // TODO: do not perform the substitution prior (results in p25.p, which doesnt work anymore with enumerated paths)
+      // TODO: possible solution: ground the path variable of the quantifier and perform the substitution for each path instance
 //      val lhs =
 //        if (context.size == 1)
 //          ConstraintToTerm(dcc.Util.substitute(x, pDCC, context.head))
@@ -304,7 +305,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
   }
 
   private def constructEntailmentJudgement(context: List[Constraint], conclusion: Constraint): SMTLibScript = {
-    // prefix the paths, since we prefixed the paths during enumeration (TODO make this better, see also def enumeratePaths)
+    // prefix the paths, since we prefixed the paths during enumeration (TODO make this better, see also def enumeratePaths and generateSubstitutionFunctionBody)
     def prefixPath(p: Path): Path = p match {
       case FieldPath(p, f) => FieldPath(prefixPath(p), f)
       case Id(name) => Id(Symbol(s"pth_${name.name}"))
@@ -361,16 +362,16 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     ))
   }
 
-  // TODO: fix body generation: the substitutions it produces doesn't hold. e.g. y y x y which should be y y x x
-  // TODO: probably because of the prefixing of the paths
   def generateSubstitutionFunctionBody(paths: List[Path], vars: List[Id], sourceName: SMTLibSymbol, targetName: SMTLibSymbol, replaceName: SMTLibSymbol, resultName: SMTLibSymbol, depthLimit: Int): Term = {
     var relation: List[Term] = Nil
 
     paths.foreach(source =>
       vars.foreach(target =>
         paths.foreach { replace =>
-          // TODO: expected culprit
-          val result: Path = if (target.baseName != source.baseName) source else substitute(target, source, replace)
+          // prefix target such that it matches the prefixed paths TODO: make this better (see also def enumeratePaths and constructEntailmentJudgement)
+          val prefixedTarget = Id(Symbol("pth_")) + target
+
+          val result: Path = if (prefixedTarget.baseName != source.baseName) source else substitute(prefixedTarget, replace, source)
 
           if (result.depth <= depthLimit) {
             val elem: Term = And(
@@ -391,7 +392,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
 
   def enumeratePaths(vars: List[String], fields: List[String], depthLimit: Int): List[Path] = {
     // Initialize paths with variables
-    var paths: List[Path] = vars.map(s => Id(Symbol(s"pth_$s"))) // prefix to not have ambiguous names between variables and paths (TODO: make this better, see also def constructEntailmentJudgement)
+    var paths: List[Path] = vars.map(s => Id(Symbol(s"pth_$s"))) // prefix to not have ambiguous names between variables and paths (TODO: make this better, see also def constructEntailmentJudgement and generateSubstitutionFunctionBody)
 
     (1 to depthLimit) foreach { _ =>
       paths = paths ++ addFieldsToPaths(paths, fields)

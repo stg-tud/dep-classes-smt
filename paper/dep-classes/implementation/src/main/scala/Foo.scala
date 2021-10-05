@@ -144,4 +144,14 @@ object Foo extends App {
 
   // sat?
   limitEnc.entails(Nil, PathEquivalence("x", "y"))
+
+  val x = Id(Symbol("x"))
+  val p = Id(Symbol("x"))
+  val q = Id(Symbol("y"))
+  val pf = FieldPath(Id(Symbol("x")), Id(Symbol("f")))
+  val qf = FieldPath(Id(Symbol("y")), Id(Symbol("f")))
+  println(dcc.Util.substitute(x, p, q))
+  println(dcc.Util.substitute(x, q, p))
+  println(dcc.Util.substitute(x, pf, q))
+  println(dcc.Util.substitute(x, q, pf))
 }

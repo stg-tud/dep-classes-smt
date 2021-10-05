@@ -18,10 +18,10 @@ object Util {
   def alphaConversion(x: Id, y: Id, cs: List[Constraint]): List[Constraint] =
     cs.map(renameIdInConstraint(x, y, _))
 
-  def substitute(x: Id, p: Path, q: Path): Path = q match {
-    case `x` => p
+  def substitute(x: Id, replace: Path, source: Path): Path = source match {
+    case `x` => replace
     case y@Id(_) => y
-    case FieldPath(q1, f) => FieldPath(substitute(x, p, q1), f)
+    case FieldPath(p, f) => FieldPath(substitute(x, replace, p), f)
   }
 
   def substitute(x: Id, path: Path, c: Constraint): Constraint = c match {
