@@ -111,31 +111,37 @@ object Foo extends App {
   println(tList.filter(parFun3.isDefinedAt).map(parFun3(_)))
   println(tList.collect(parFun3))
 
-  println(limitEnc.constructProgRule.isDefinedAt(ConstructorDeclaration("Zero", "x", Nil), true))
-
-  println(limitEnc.constructProgRule.isDefinedAt(
-    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")), true
-  ))
-  println(limitEnc.constructProgRule.isDefinedAt(
-    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")), false
-  ))
-  println(limitEnc.constructProgRule.isDefinedAt(
-    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("y", "Nat")), true
-  ))
+//  println(limitEnc.constructProgRule.isDefinedAt(ConstructorDeclaration("Zero", "x", Nil), true))
+//
+//  println(limitEnc.constructProgRule.isDefinedAt(
+//    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")), true
+//  ))
+//  println(limitEnc.constructProgRule.isDefinedAt(
+//    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")), false
+//  ))
+//  println(limitEnc.constructProgRule.isDefinedAt(
+//    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("y", "Nat")), true
+//  ))
 
 //  List(ConstructorDeclaration("Zero", "x", Nil)).collect(limitEnc.constructProgRule(_, false))
 
   // TODO: in prog rule generation, do not perform the substitution prior (p25.p)
-  // unsat
-  val res = limitEnc.entails(Nil, PathEquivalence("x", "x"))
-  println(res)
+//  // unsat
+//  val res = limitEnc.entails(Nil, PathEquivalence("x", "x"))
+//  println(res)
+//
+//  // unsat
+//  limitEnc.entails(List(PathEquivalence("y", "x")), PathEquivalence("x", "y"))
+//
+//  // unsat
+//  limitEnc.entails(List(PathEquivalence("y", "x"), PathEquivalence("z", "x")), PathEquivalence("z", "y"))
+//
+//  // sat
+//  limitEnc.entails(Nil, PathEquivalence("x", "y"))
 
-  // unsat
-  limitEnc.entails(List(PathEquivalence("y", "x")), PathEquivalence("x", "y"))
-
-  // unsat
-  limitEnc.entails(List(PathEquivalence("y", "x"), PathEquivalence("z", "x")), PathEquivalence("z", "y"))
-
-  // sat
-  limitEnc.entails(Nil, PathEquivalence("x", "y"))
+//  val progs1 = limitEnc.constructProgRules(ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")), List(Id(Symbol("x")), Id(Symbol("y"))), 1)
+//  println(progs1.format)
+//
+//  val progs2 = limitEnc.constructProgRules(ConstraintEntailment("x", List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Nat")), InstanceOf("x", "Nat")), List(Id(Symbol("pth_x")), Id(Symbol("pth_y")), FieldPath(Id(Symbol("pth_x")), Id(Symbol("p")))), 1)
+//  println(progs2.format)
 }

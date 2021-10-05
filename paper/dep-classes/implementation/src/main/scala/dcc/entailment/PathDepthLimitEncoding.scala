@@ -73,7 +73,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     val substitutionFunctionDeclaration = generateSubstitutionFunction(paths, variableNames, depthLimit, pathDatatypeExists)
 
     val staticCalculusRules = constructStaticCalculusRules(pathDatatypeExists, classDatatypeExists)
-    val dynamicCalculusRules = constructDynamicCalculusRules(pathDatatypeExists, classDatatypeExists)
+    val dynamicCalculusRules = constructDynamicCalculusRules(paths, depthLimit, classDatatypeExists)
 
     val entailmentJudgement = constructEntailmentJudgement(context, conclusion)
 
@@ -245,83 +245,57 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       ))
   }
 
-  private def constructDynamicCalculusRules(pathDatatypeExists: Boolean, classDatatypeExists: Boolean): SMTLibScript = {
+  private def constructDynamicCalculusRules(paths: List[Path], depthLimit: Int, classDatatypeExists: Boolean): SMTLibScript = {
     if (!classDatatypeExists)
       SMTLibScript.EMPTY
     else
       // TODO: why does collect not work here (see simplified example in Foo)
 //      SMTLibScript(program.collect(constructProgRule(_, pathDatatypeExists)))
-      SMTLibScript(program.filter(constructProgRule.isDefinedAt(_, pathDatatypeExists)).map(constructProgRule(_, pathDatatypeExists)))
+      program.filter(constructProgRules.isDefinedAt(_, paths, depthLimit)).foldRight(SMTLibScript.EMPTY)( (elem, acc) => constructProgRules(elem, paths, depthLimit) ++ acc)
   }
 
-  val constructProgRule: PartialFunction[(Declaration, Boolean), SMTLibCommand] = {
-    case (ConstraintEntailment(x, context, InstanceOf(y, cls)), pathDatatypeExists: Boolean) if x==y && context.nonEmpty =>
-      val path = if (pathDatatypeExists) SortPath else SortVariable
+  val constructProgRules: PartialFunction[(Declaration, List[Path], Int), SMTLibScript] = {
+    case (ConstraintEntailment(x, context, InstanceOf(y, cls)), paths, depthLimit) if x==y && context.nonEmpty =>
+      var rules: SMTLibScript = SMTLibScript.EMPTY
 
-      val metaPathName = freshPath()
-      val pDCC: Path = MetaPath(metaPathName.symbol)
-      val pSMT: SMTLibSymbol = SimpleSymbol(pDCC.baseName)
+      paths.foreach{ pDCC =>
+        val ctx = context.map(substitute(x, pDCC, _))
+        // We need to respect the depth limit when substituting
 
-      // directly substitute if the path only describes a variable
-      val smtSubstContext = context.map {
-        case PathEquivalence(p, q) if p.depth == 0 && q.depth == 0 =>
-          ConstraintToTerm(PathEquivalence(substitute(x, pDCC, p), substitute(x, pDCC, q)))
-        case PathEquivalence(p, q) if p.depth == 0 => // TODO: what to do with the unsubstituted variable? we need to apply the substitution function of the solver, but the problem is the binding variable x as it is not part of the variable list. possible solution: ground this and enumerate over all paths?
-          PathEquivalence(substitute(x, pDCC, p), q)
-        case PathEquivalence(p, q) if q.depth == 0 =>
-          PathEquivalence(p, substitute(x, pDCC, q))
-        case PathEquivalence(p, q) => PathEquivalence(p, q)
-        case InstanceOf(p, cls) if p.depth == 0 =>
-          InstanceOf(substitute(x, pDCC, p), cls)
-        case InstanceOf(p, cls) =>
-          InstanceOf(p, cls)
-        case InstantiatedBy(p, cls) if p.depth == 0 =>
-          InstantiatedBy(substitute(x, pDCC, p), cls)
-        case InstantiatedBy(p, cls) =>
-          InstantiatedBy(p, cls)
+        // Possibility 1: Ignore the depth limit. Obviously bad.
+        // val rule = cProgRuleTemplate(context, pDCC, cls)
+        // rules = rules :+ rule
+
+        // Possibility 2: Only remove the constraints from the context that exceed the depth limit
+        //                No good solution. Could lead to possible wrong conclusions. E.g. (assert (=> (and (instance-of pth_x.p Succ)) (instance-of pth_x.p Nat)))
+        // val rule = cProgRuleTemplate(ctx.filter(_.maxPathDepth <= depthLimit), pDCC, cls)
+        // rules = rules :+ rule
+
+        // Possibility 3: Discard the rule if one of the paths exceeds the limit.
+        if (ctx.forall(_.maxPathDepth <= depthLimit)){
+          val rule = cProgRuleTemplate(ctx, pDCC, cls)
+          rules = rules :+ rule
+        }
       }
 
-      // TODO: do not perform the substitution prior (results in p25.p, which doesn't work anymore with enumerated paths)
-      // TODO: possible solution: ground the path variable of the quantifier and perform the substitution for each path instance
-//      val lhs =
-//        if (context.size == 1)
-//          ConstraintToTerm(dcc.Util.substitute(x, pDCC, context.head))
-//        else
-//          And(context.map(constraint => ConstraintToTerm(dcc.Util.substitute(x, pDCC, constraint))): _*)
-//
-//      val lhs =
-//        if (context.size == 1)
-//          ConstraintToTerm(dcc.Util.substitute(x, pDCC, context.head))
-//        else
-//          And(context.map(constraint => ConstraintToTerm(dcc.Util.substitute(x, pDCC, constraint))): _*)
-//
-//      Assert(Forall(
-//        Seq(SortedVar(pSMT, path)),
-//        Implies(
-//          lhs,
-//          Apply(FunctionInstanceOf, Seq(pSMT, IdToSMTLibSymbol(cls)))
-//        )
-//      ))
-
-      cProgRuleTemplate(context.map(constraint => ConstraintToTerm(dcc.Util.substitute(x, pDCC, constraint))), pSMT, IdToSMTLibSymbol(cls), pathDatatypeExists)
+      rules
   }
 
-  private def cProgRuleTemplate(context: List[Term], boundPath: SMTLibSymbol, classInstance: SMTLibSymbol, pathDatatypeExists: Boolean): SMTLibCommand = {
-    val path = if (pathDatatypeExists) SortPath else SortVariable
+  def cProgRuleTemplate(context: List[Constraint], path: Path, cls: Id): SMTLibCommand = {
 
     val lhs =
-      if (context.size == 1)
-        context.head
-      else
-        And(context: _*)
+      if (context.size == 1) {
+        ConstraintToTerm(context.head)
+      } else {
+         And(context.map(ConstraintToTerm): _*)
+      }
 
-    Assert(Forall(
-      Seq(SortedVar(boundPath, path)),
+    Assert(
       Implies(
         lhs,
-        Apply(FunctionInstanceOf, Seq(boundPath, classInstance))
+        Apply(FunctionInstanceOf, Seq(PathToSMTLibSymbol(path), IdToSMTLibSymbol(cls)))
       )
-    ))
+    )
   }
 
   private def constructEntailmentJudgement(context: List[Constraint], conclusion: Constraint): SMTLibScript = {
