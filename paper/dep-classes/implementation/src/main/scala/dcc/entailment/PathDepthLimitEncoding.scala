@@ -137,8 +137,6 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     //   SortedVar(replace, path),
     //   SortedVar(result, path)
 
-    // TODO: move substitution checks to RHS of the implication
-
     // C-Subst-Eq
     val xSubstEq = freshVariable()
     val pSubstEq = freshPath()
@@ -166,13 +164,11 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
           Apply(FunctionPathEquivalence, Seq(sSubstEq, rSubstEq)),
           Apply(FunctionSubstitution, Seq(pSubstEq, xSubstEq, rSubstEq, p_subst_r_Eq)),
           Apply(FunctionSubstitution, Seq(qSubstEq, xSubstEq, rSubstEq, q_subst_r_Eq)),
-          Apply(FunctionPathEquivalence, Seq(p_subst_r_Eq, q_subst_r_Eq))
-        ),
-        And(
           Apply(FunctionSubstitution, Seq(pSubstEq, xSubstEq, sSubstEq, p_subst_s_Eq)),
           Apply(FunctionSubstitution, Seq(qSubstEq, xSubstEq, sSubstEq, q_subst_s_Eq)),
-          Apply(FunctionPathEquivalence, Seq(p_subst_s_Eq, q_subst_s_Eq))
-        )
+          Apply(FunctionPathEquivalence, Seq(p_subst_r_Eq, q_subst_r_Eq))
+        ),
+        Apply(FunctionPathEquivalence, Seq(p_subst_s_Eq, q_subst_s_Eq))
       )
     ))
 
@@ -198,12 +194,10 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
         And(
           Apply(FunctionPathEquivalence, Seq(sSubstOf, rSubstOf)),
           Apply(FunctionSubstitution, Seq(pSubstOf, xSubstOf, rSubstOf, p_subst_r_Of)),
+          Apply(FunctionSubstitution, Seq(pSubstOf, xSubstOf, sSubstOf, p_subst_s_Of)),
           Apply(FunctionInstanceOf, Seq(p_subst_r_Of, clsSubstOf))
         ),
-        And(
-          Apply(FunctionSubstitution, Seq(pSubstOf, xSubstOf, sSubstOf, p_subst_s_Of)),
-          Apply(FunctionInstanceOf, Seq(p_subst_s_Of, clsSubstOf))
-        )
+        Apply(FunctionInstanceOf, Seq(p_subst_s_Of, clsSubstOf))
       )
     ))
 
@@ -229,12 +223,10 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
         And(
           Apply(FunctionPathEquivalence, Seq(sSubstBy, rSubstBy)),
           Apply(FunctionSubstitution, Seq(pSubstBy, xSubstBy, rSubstBy, p_subst_r_By)),
+          Apply(FunctionSubstitution, Seq(pSubstBy, xSubstBy, sSubstBy, p_subst_s_By)),
           Apply(FunctionInstantiatedBy, Seq(p_subst_r_By, clsSubstBy))
         ),
-        And(
-          Apply(FunctionSubstitution, Seq(pSubstBy, xSubstBy, sSubstBy, p_subst_s_By)),
-          Apply(FunctionInstantiatedBy, Seq(p_subst_s_By, clsSubstBy))
-        )
+        Apply(FunctionInstantiatedBy, Seq(p_subst_s_By, clsSubstBy))
       )
     ))
 
