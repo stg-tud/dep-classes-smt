@@ -72,73 +72,83 @@ object Foo extends App {
 
   val limitEnc = new PathDepthLimitEncoding(NaturalNumbers.program, debug = 3)
 
-  val vars = List("x", "y", "z")
-  val fields = List("f", "g", "h")
-  println(s"Variables: $vars")
-  println(s"Fields: $fields\n")
-  (0 to 2).foreach {
-    i =>
-      val paths = limitEnc.enumeratePaths(vars, fields, i)
-      println(s"depth-limit: $i")
-      paths.foreach(println)
-      println
-  }
+  // Path enumeration process
+//  val vars = List("x", "y", "z")
+//  val fields = List("f", "g", "h")
+//  println(s"Variables: $vars")
+//  println(s"Fields: $fields\n")
+//  (0 to 2).foreach {
+//    i =>
+//      val paths = limitEnc.enumeratePaths(vars, fields, i)
+//      println(s"depth-limit: $i")
+//      paths.foreach(println)
+//      println
+//  }
 
-  val parFun: PartialFunction[Int, Int] = {
-    case i: Int if i != 0 => i+1
-  }
 
-  println((0 to 10).collect(parFun))
 
-  val parFun2: PartialFunction[Object, Int] = {
-    case _: String => 1
-    case _: BigInt => 2
-    case _: BigDecimal => 3
-  }
-
-  sealed trait T
-  case class A(x: Int) extends T
-  case class B(x: Int, y: Int) extends T
-  case class C(x: Float, y: Double) extends T
-
-  val parFun3: PartialFunction[T, Int] = {
-    case A(i) => i
-  }
-
-  val tList = List(C(0.1f, 0.2), A(1), B(1, 2), A(2), B(2, 1), A(3), B(1, 1))
-
-  println(tList.map(parFun3.isDefinedAt))
-  println(tList.filter(parFun3.isDefinedAt).map(parFun3(_)))
-  println(tList.collect(parFun3))
-
-//  println(limitEnc.constructProgRule.isDefinedAt(ConstructorDeclaration("Zero", "x", Nil), true))
+  // Partial function oddities
+//  val parFun: PartialFunction[Int, Int] = {
+//    case i: Int if i != 0 => i+1
+//  }
 //
-//  println(limitEnc.constructProgRule.isDefinedAt(
-//    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")), true
+//  println((0 to 10).collect(parFun))
+//
+//  val parFun2: PartialFunction[Object, Int] = {
+//    case _: String => 1
+//    case _: BigInt => 2
+//    case _: BigDecimal => 3
+//  }
+//
+//  sealed trait T
+//  case class A(x: Int) extends T
+//  case class B(x: Int, y: Int) extends T
+//  case class C(x: Float, y: Double) extends T
+//
+//  val parFun3: PartialFunction[T, Int] = {
+//    case A(i) => i
+//  }
+//
+//  val tList = List(C(0.1f, 0.2), A(1), B(1, 2), A(2), B(2, 1), A(3), B(1, 1))
+//
+//  println(tList.map(parFun3.isDefinedAt))
+//  println(tList.filter(parFun3.isDefinedAt).map(parFun3(_)))
+//  println(tList.collect(parFun3))
+//
+//  println(limitEnc.constructProgRules.isDefinedAt(ConstructorDeclaration("Zero", "x", Nil), Nil, 0))
+//
+//  println(limitEnc.constructProgRules.isDefinedAt(
+//    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")), Nil, 0
 //  ))
-//  println(limitEnc.constructProgRule.isDefinedAt(
-//    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")), false
+//  println(limitEnc.constructProgRules.isDefinedAt(
+//    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")), Nil, 0
 //  ))
-//  println(limitEnc.constructProgRule.isDefinedAt(
-//    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("y", "Nat")), true
+//  println(limitEnc.constructProgRules.isDefinedAt(
+//    ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("y", "Nat")), Nil, 0
 //  ))
-
-//  List(ConstructorDeclaration("Zero", "x", Nil)).collect(limitEnc.constructProgRule(_, false))
-
-  // TODO: in prog rule generation, do not perform the substitution prior (p25.p)
-//  // unsat
-//  val res = limitEnc.entails(Nil, PathEquivalence("x", "x"))
-//  println(res)
 //
-//  // unsat
-//  limitEnc.entails(List(PathEquivalence("y", "x")), PathEquivalence("x", "y"))
-//
-//  // unsat
-//  limitEnc.entails(List(PathEquivalence("y", "x"), PathEquivalence("z", "x")), PathEquivalence("z", "y"))
-//
-//  // sat
-//  limitEnc.entails(Nil, PathEquivalence("x", "y"))
+//  List(ConstructorDeclaration("Zero", "x", Nil)).collect(limitEnc.constructProgRules(_, Nil, 0))
 
+
+
+
+  // Quick (simple) plausibility tests for path depth limit encoding
+  // unsat
+  val res = limitEnc.entails(Nil, PathEquivalence("x", "x"))
+  println(res)
+
+  // unsat
+  limitEnc.entails(List(PathEquivalence("y", "x")), PathEquivalence("x", "y"))
+
+  // unsat
+  limitEnc.entails(List(PathEquivalence("y", "x"), PathEquivalence("z", "x")), PathEquivalence("z", "y"))
+
+  // sat
+  limitEnc.entails(Nil, PathEquivalence("x", "y"))
+
+
+
+  // Prog rule generation
 //  val progs1 = limitEnc.constructProgRules(ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")), List(Id(Symbol("x")), Id(Symbol("y"))), 1)
 //  println(progs1.format)
 //

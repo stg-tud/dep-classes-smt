@@ -81,7 +81,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       constraintPropositionDeclarations ++
       substitutionFunctionDeclaration ++
       staticCalculusRules ++
-//      dynamicCalculusRules ++ // TODO: add those again when the C-Prog rule generation SMT error is fixed
+      dynamicCalculusRules ++
       entailmentJudgement
   }
 
