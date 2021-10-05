@@ -386,6 +386,7 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
   private case class MetaPath(s: String) extends Path {
     override def toString: String = s
     override def baseName: String = s
+    override def prefixBaseName(prefix: String): Path = MetaPath(prefix+s)
     override def fieldNames: List[String] = Nil
     override def depth: Int = 0
   }

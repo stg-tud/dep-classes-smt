@@ -10,6 +10,9 @@ import smt.solver.Z3Solver
 import scala.language.postfixOps
 
 class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailment {
+  // Path prefix to be used for the basename in the SMT encoding
+  private val PathPrefix: String = "pth_"
+
   // Sort names
   private val SortNameClass: String = "Class"
   private val SortNameVariable: String = "Variable"
@@ -300,16 +303,11 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
 
   private def constructEntailmentJudgement(context: List[Constraint], conclusion: Constraint): SMTLibScript = {
     // prefix the paths, since we prefixed the paths during enumeration (TODO make this better, see also def enumeratePaths and generateSubstitutionFunctionBody)
-    def prefixPath(p: Path): Path = p match {
-      case FieldPath(p, f) => FieldPath(prefixPath(p), f)
-      case Id(name) => Id(Symbol(s"pth_${name.name}"))
-      case MetaPath(s) => MetaPath(s)
-    }
 
     def prefixConstraint(c: Constraint): Constraint = c match {
-      case PathEquivalence(p, q) => PathEquivalence(prefixPath(p), prefixPath(q))
-      case InstanceOf(p, cls) => InstanceOf(prefixPath(p), cls)
-      case InstantiatedBy(p, cls) => InstantiatedBy(prefixPath(p), cls)
+      case PathEquivalence(p, q) => PathEquivalence(p.prefixBaseName(PathPrefix), q.prefixBaseName(PathPrefix))
+      case InstanceOf(p, cls) => InstanceOf(p.prefixBaseName(PathPrefix), cls)
+      case InstantiatedBy(p, cls) => InstantiatedBy(p.prefixBaseName(PathPrefix), cls)
     }
 
     val prefixedContext = context.map(prefixConstraint)
@@ -363,7 +361,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       vars.foreach(target =>
         paths.foreach { replace =>
           // prefix target such that it matches the prefixed paths TODO: make this better (see also def enumeratePaths and constructEntailmentJudgement)
-          val prefixedTarget = Id(Symbol("pth_")) + target
+          val prefixedTarget = Id(Symbol(PathPrefix)) + target
 
           val result: Path = if (prefixedTarget.baseName != source.baseName) source else substitute(prefixedTarget, replace, source)
 
@@ -386,7 +384,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
 
   def enumeratePaths(vars: List[String], fields: List[String], depthLimit: Int): List[Path] = {
     // Initialize paths with variables
-    var paths: List[Path] = vars.map(s => Id(Symbol(s"pth_$s"))) // prefix to not have ambiguous names between variables and paths (TODO: make this better, see also def constructEntailmentJudgement and generateSubstitutionFunctionBody)
+    var paths: List[Path] = vars.map(s => Id(Symbol(s"$PathPrefix$s"))) // prefix to not have ambiguous names between variables and paths (TODO: make this better, see also def constructEntailmentJudgement and generateSubstitutionFunctionBody)
 
     (1 to depthLimit) foreach { _ =>
       paths = paths ++ addFieldsToPaths(paths, fields)
@@ -435,12 +433,5 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     varCounter = 0
     pathCounter = 0
     classCounter = 0
-  }
-
-  private case class MetaPath(s: String) extends Path {
-    override def toString: String = s
-    override def baseName: String = s
-    override def fieldNames: List[String] = Nil
-    override def depth: Int = 0
   }
 }
