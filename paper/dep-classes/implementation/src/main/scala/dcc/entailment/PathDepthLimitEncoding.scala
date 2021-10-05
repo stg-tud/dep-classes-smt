@@ -288,20 +288,40 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
 //          ConstraintToTerm(dcc.Util.substitute(x, pDCC, context.head))
 //        else
 //          And(context.map(constraint => ConstraintToTerm(dcc.Util.substitute(x, pDCC, constraint))): _*)
+//
+//      val lhs =
+//        if (context.size == 1)
+//          ConstraintToTerm(dcc.Util.substitute(x, pDCC, context.head))
+//        else
+//          And(context.map(constraint => ConstraintToTerm(dcc.Util.substitute(x, pDCC, constraint))): _*)
+//
+//      Assert(Forall(
+//        Seq(SortedVar(pSMT, path)),
+//        Implies(
+//          lhs,
+//          Apply(FunctionInstanceOf, Seq(pSMT, IdToSMTLibSymbol(cls)))
+//        )
+//      ))
 
-      val lhs =
-        if (context.size == 1)
-          ConstraintToTerm(dcc.Util.substitute(x, pDCC, context.head))
-        else
-          And(context.map(constraint => ConstraintToTerm(dcc.Util.substitute(x, pDCC, constraint))): _*)
+      cProgRuleTemplate(context.map(constraint => ConstraintToTerm(dcc.Util.substitute(x, pDCC, constraint))), pSMT, IdToSMTLibSymbol(cls), pathDatatypeExists)
+  }
 
-      Assert(Forall(
-        Seq(SortedVar(pSMT, path)),
-        Implies(
-          lhs,
-          Apply(FunctionInstanceOf, Seq(pSMT, IdToSMTLibSymbol(cls)))
-        )
-      ))
+  private def cProgRuleTemplate(context: List[Term], boundPath: SMTLibSymbol, classInstance: SMTLibSymbol, pathDatatypeExists: Boolean): SMTLibCommand = {
+    val path = if (pathDatatypeExists) SortPath else SortVariable
+
+    val lhs =
+      if (context.size == 1)
+        context.head
+      else
+        And(context: _*)
+
+    Assert(Forall(
+      Seq(SortedVar(boundPath, path)),
+      Implies(
+        lhs,
+        Apply(FunctionInstanceOf, Seq(boundPath, classInstance))
+      )
+    ))
   }
 
   private def constructEntailmentJudgement(context: List[Constraint], conclusion: Constraint): SMTLibScript = {
