@@ -1,0 +1,281 @@
+\documentclass[a4paper]{article}
+
+%% packages
+%%%%%%%%%%%
+\usepackage[utf8x]{inputenc}
+\usepackage[USenglish]{babel}
+\usepackage{amsbsy,amscd,amsfonts,amssymb,amstext,amsmath,amsthm,latexsym}
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{dot2texi}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage[nottoc]{tocbibind}
+\usepackage{pdfpages}
+
+\usepackage{syntax} % for bnf grammar
+\usepackage{bussproofs} % for type rules
+\usepackage{todonotes}
+
+\usepackage{float} % for figures
+\floatstyle{boxed}
+\restylefloat{figure}
+
+\usepackage{listings}
+\usepackage{xcolor}
+%\usepackage{tikz}
+\usetikzlibrary{positioning,chains,shapes.arrows,shapes.geometric,fit,calc,arrows,decorations.pathmorphing}
+
+%\usepackage{subfig}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{adjustbox}
+\usepackage{cleveref}
+
+\input{macros}
+%\input{tikz}
+
+\begin{document}
+\section{How do we check entailments?}
+\begin{enumerate}
+  \item Create set of ``axioms'' based on the program and the entailment to check
+  \begin{enumerate}
+    \item Datatype Declarations: Model everything as an enumeration type (Variables, Classes, Fields, Paths)
+    \begin{itemize}
+      \item Extract field and class names from the program (constructor declarations).
+      \item Extract variable names from the entailment to be checked.
+      \item Enumerate all paths that do not exceed the depth limit based on the extracted information.
+    \end{itemize}
+    \item Function Declarations
+    \begin{itemize}
+      \item Declare boolean predicates for the constraints: path-equivalence, instance-of, instantiated-by
+      \item For substitution we previously had \[\Path \times \Variable \times \Path \rightarrow \Path\] as the substitution function signature.
+            This is no longer possible. The enumeration of paths with a depth limit would result in a partial function,
+            as we would no longer be able to compute result paths for substitutions that would exceed the depth limit.
+            Since the SMT solver only supports total functions, we form a relation
+            \[\Path \times \Variable \times \Path \times \Path \rightarrow \TBool\]
+            that only is true for each $\Path \times \Variable \times \Path$ triple where the partial function would be defined at.
+    \end{itemize}
+    \item Calculus rules
+    \begin{itemize}
+      \item Static Rules: C-Refl, C-Class, C-Subst
+      \item Dynamic Rules: C-Prog\\
+            The creation of C-Prog rules is handled context-sensitive to the program.
+            We transforme each constraint entailment declaration
+            \[ \progEnt{x}{c_1, c_2, ..., c_n}{\instOf{x}{cls}} \]
+            from the program into a C-Prog rule template of the form
+            \[ p:\Path \Rightarrow \subst{c_1}{x}{p} \land \subst{c_2}{x}{p} \land ... \land \subst{c_n}{x}{p} \rightarrow \instOf{p}{cls} \]
+            and instantiate the template with all available paths.
+            Instantiations where one of the paths post substitution exceed the depth limit are discarded.
+    \end{itemize}
+    \item Assert entailment to be checked: $c_1,...,c_n \vdash c \Rightarrow \neg (c_1 \land ... \land c_n → c)$
+  \end{enumerate}
+  \item Obtain Solution: Does the entailment contradict the rules?
+  \begin{itemize}
+    \item If unsat: there is a contradiction between the negated entailment and the calculus rules, thus the entailment holds.
+    \item If sat: there is no contradiction between the negated entailment and the calculus rules, thus the entailment does not hold.
+  \end{itemize}
+\end{enumerate}
+
+\section{Simplified example encoding}
+To encode: $\entails{\pathEq{y}{x}}{\pathEq{x}{y}}$
+\begin{align}
+  &\texttt{\Variable} := \{\mathtt{x}, \mathtt{y}\}\\
+  % def subst
+  &\subst{p}{v}{q} = s :=\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{x} \land s=\mathtt{x})~\lor\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{y} \land s=\mathtt{y})~\lor\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{y} \land q=\mathtt{x} \land s=\mathtt{x})~\lor\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{y} \land q=\mathtt{y} \land s=\mathtt{x})~\lor\\
+  &\quad (p=\mathtt{y} \land v=\mathtt{x} \land q=\mathtt{x} \land s=\mathtt{y})~\lor\\
+  &\quad (p=\mathtt{y} \land v=\mathtt{x} \land q=\mathtt{y} \land s=\mathtt{y})~\lor\\
+  &\quad (p=\mathtt{y} \land v=\mathtt{y} \land q=\mathtt{x} \land s=\mathtt{x})~\lor\\
+  &\quad (p=\mathtt{y} \land v=\mathtt{y} \land q=\mathtt{y} \land s=\mathtt{y})\\
+  % C-Refl
+  &\forall p.~\pathEq{p}{p}\\
+  % C-Subst: pathEq
+  &\forall p, q, v, r, s, a, b, c, d.\\
+  &\quad \pathEq{s}{r} \land \subst{p}{v}{r}=a \land \subst{q}{v}{r}=b~\land\\
+  &\quad \pathEq{a}{b} \land
+         \subst{p}{v}{s}=c \land \subst{q}{v}{s}=d\\
+  &\qquad \rightarrow \pathEq{c}{d}\\
+  % Entailment
+  &\neg (\pathEq{\mathtt{y}}{\mathtt{x}} \rightarrow \pathEq{\mathtt{x}}{\mathtt{y}})
+\end{align}
+\newpage
+
+\section{Complete example encoding}
+To encode: $\entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}}$
+with $\mathit{depth\!\!-\!\!limit}=1$
+\begin{align}
+  &\texttt{\Variable} := \{\mathtt{x}, \mathtt{y}\}\\
+  &\texttt{\Class} := \{\Zero,\Succ,\Nat\}\\
+  &\texttt{\Path} := \{\mathtt{x}, \mathtt{x}.\mathtt{p}, \mathtt{y}, \mathtt{y}.\mathtt{p}\}\\
+  % def subst
+  &\subst{p}{v}{q} = s :=\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{x} \land s=\mathtt{x})~\lor\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{x.p} \land s=\mathtt{x.p})~\lor\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{y} \land s=\mathtt{y})~\lor\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{y.p} \land s=\mathtt{y.p})~\lor\\
+  %&\quad (p=\mathtt{x} \land v=\mathtt{y} \land q=\mathtt{x} \land s=\mathtt{x})~\lor\\
+  %&\quad (p=\mathtt{x} \land v=\mathtt{y} \land q=\mathtt{x.p} \land s=\mathtt{x})~\lor\\
+  %&\quad (p=\mathtt{x} \land v=\mathtt{y} \land q=\mathtt{y} \land s=\mathtt{x})~\lor\\
+  %&\quad (p=\mathtt{x} \land v=\mathtt{y} \land q=\mathtt{y.p} \land s=\mathtt{x})~\lor\\
+  &\quad (p=\mathtt{x.p} \land v=\mathtt{x} \land q=\mathtt{x} \land s=\mathtt{x.p})~\lor\\
+  &\quad (p=\mathtt{x.p} \land v=\mathtt{x} \land q=\mathtt{y} \land s=\mathtt{y.p})~\lor\\
+  &\quad~...\\
+  % C-Refl
+  &\forall p.~\pathEq{p}{p}\\
+  % C-Class
+  &\forall p, c.~\instBy{p}{c} \rightarrow \instOf{p}{c}\\
+  % C-Subst: pathEq
+  &\forall p, q, v, r, s, a, b, c, d.\\
+  &\quad \pathEq{s}{r} \land \subst{p}{v}{r}=a \land \subst{q}{v}{r}=b~\land\\
+  &\quad \pathEq{a}{b} \land
+         \subst{p}{v}{s}=c \land \subst{q}{v}{s}=d\\
+  &\qquad \rightarrow \pathEq{c}{d}\\
+  % C-Subst: instOf
+  &\forall p, c, v, r, s, a, b.\\
+  &\quad \pathEq{s}{r} \land \subst{p}{v}{r}=a~\land\\
+  &\quad \instOf{a}{c} \land
+         \subst{p}{v}{s}=b\\
+  &\qquad \rightarrow \instOf{b}{c}\\
+  % C-Subst: instBy
+  &\forall p, c, v, r, s, a, b.\\
+  &\quad \pathEq{s}{r} \land \subst{p}{v}{r}=a~\land\\
+  &\quad \instBy{a}{c} \land
+         \subst{p}{v}{s}=b\\
+  &\qquad \rightarrow \instBy{b}{c}\\
+  % C-Prog
+  &\instOf{\mathtt{x}}{\Zero} \rightarrow \instOf{\mathtt{x}}{\Nat}\\
+  &\instOf{\mathtt{x.p}}{\Zero} \rightarrow \instOf{\mathtt{x.p}}{\Nat}\\
+  &\instOf{\mathtt{x}}{\Succ} \land \instOf{\mathtt{x.p}}{\Nat} \rightarrow \instOf{\mathtt{x}}{\Nat}\\
+  % Entailment
+  &\neg (\instBy{\mathtt{x}}{\Succ} \land \instBy{\mathtt{x.p}}{\Zero} \land \pathEq{\mathtt{x}}{\mathtt{y}} \rightarrow \instOf{\mathtt{y}}{\Nat})
+\end{align}
+\newpage
+
+\section{Is using a depth limit reasonable?}
+\begin{tabular}{c c c}
+\parbox{0.33\textwidth}{
+% C-Refl
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Refl)}
+\UnaryInfC{\entails{\epsilon}{\pathEq{p}{p}}}
+\end{prooftree}
+}
+&
+\parbox{0.33\textwidth}{
+% C-Ident
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Ident)}
+\UnaryInfC{\entails{a}{a}}
+\end{prooftree}
+}
+&
+\parbox{0.33\textwidth}{
+% C-Class
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{\instantiatedBy{p}{C}}}
+\RightLabel{(C-Class)}
+\UnaryInfC{\entails{\overline{a}}{\instanceOf{p}{C}}}
+\end{prooftree}
+}
+\end{tabular}
+\begin{tabular}{c c}
+\parbox{0.5\textwidth}{
+% C-Subst
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{a_{\sub{x}{p}}}}
+\AxiomC{\entails{\overline{a}}{\pathEq{p'}{p}}}
+\RightLabel{(C-Subst)}
+\BinaryInfC{\entails{\overline{a}}{a_{\sub{x}{p'}}}}
+\end{prooftree}
+}
+&
+\parbox{0.5\textwidth}{
+% C-Prog
+\begin{prooftree}
+\AxiomC{$(\progEnt{x}{\overline{a}}{a}) \in P$}
+\AxiomC{\entails{\overline{b}}{\overline{a}_{\sub{x}{p}}}}
+\RightLabel{(C-Prog)}
+\BinaryInfC{\entails{\overline{b}}{a_{\sub{x}{p}}}}
+\end{prooftree}
+}
+\end{tabular}
+
+\subsection{Where can we use substitution?}
+% C-Subst
+\begin{prooftree}
+\AxiomC{\entails{\overline{a}}{a_{\sub{x}{p}}}}
+\AxiomC{\entails{\overline{a}}{\pathEq{p'}{p}}}
+\RightLabel{(C-Subst)}
+\BinaryInfC{\entails{\overline{a}}{a_{\sub{x}{p'}}}}
+\end{prooftree}
+
+We can substitute an equivalent path in the conclusion of an entailment.
+This substitution might exceed the depth limit,
+but we might only alter the conclusion and not the context of the entailment.
+Also the prooftree-lowest conclusion is already the result of a substitution.
+
+\subsection{How can we close branches?}
+\begin{tabular}{c c}
+\parbox{0.5\textwidth}{
+% C-Refl
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Refl)}
+\UnaryInfC{\entails{\epsilon}{\pathEq{p}{p}}}
+\end{prooftree}
+}
+&
+\parbox{0.5\textwidth}{
+% C-Ident
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{(C-Ident)}
+\UnaryInfC{\entails{a}{a}}
+\end{prooftree}
+}
+\end{tabular}
+
+\begin{itemize}
+\item[\textbf{C-Refl}] Reflexive paths, independent of context. %Could potentially exceed the depth limit.
+\item[\textbf{C-Ident}] Constraints that are already in the context.
+\end{itemize}
+
+\subsection{Observation}
+\begin{prooftree}
+% left branch
+\AxiomC{...}
+\UnaryInfC{\entails{\instOf{x}{\Zero}, \pathEq{x}{y}}{ \instOf{x}{\Zero} }}
+\UnaryInfC{\entails{\instOf{x}{\Zero}, \pathEq{x}{y}}{ \subst{\instOf{y}{\Zero}}{\color{orange} y}{\color{blue} x} }}
+% right branch
+\AxiomC{...}
+\UnaryInfC{\entails{\instOf{x}{\Zero}, \pathEq{x}{y}}{\pathEq{\color{blue} x}{y}}}
+% op
+\BinaryInfC{\entails{\instOf{x}{\Zero}, \pathEq{x}{y}}{\instOf{\color{orange} y}{\Zero}}}
+\end{prooftree}
+
+To be able to close a branch in practice, we wan't to come back to a form that is already in the context.
+We wan't to substitute with path equivalences that the context already provides.
+The variable we want to substitute is the base of the path in the conclusion constraint.
+
+\subsection{Whats with program entailment instantiations?}
+% C-Prog
+\begin{prooftree}
+\AxiomC{$(\progEnt{x}{\overline{a}}{a}) \in P$}
+\AxiomC{\entails{\overline{b}}{\overline{a}_{\sub{x}{p}}}}
+\RightLabel{(C-Prog)}
+\BinaryInfC{\entails{\overline{b}}{a_{\sub{x}{p}}}}
+\end{prooftree}
+
+Usages of rule C-Prog replace the conclusion of an entailment with new proof goals.
+It does so by instantiating a declaration from the program.
+
+\subsection{Hypothesis}
+The depth of paths used in proofs in the sequent calculus only grows within a certain bound.
+
+\end{document}
