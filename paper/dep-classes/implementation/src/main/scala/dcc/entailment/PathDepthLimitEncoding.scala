@@ -96,7 +96,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       declarations =  declarations :+ SMTLib.buildEnumerationType(SortNameClass, classes)
 
     val doAddPathDatatype = fields.nonEmpty
-    if (doAddPathDatatype)
+    if (doAddPathDatatype) // TODO: remove field datatype, as it is no longer used separately
       declarations =  declarations :+ SMTLib.buildEnumerationType(SortNameField, fields) :+ SMTLib.buildEnumerationType(SortNamePath, paths)
 
     (declarations, doAddPathDatatype, doAddClassDatatype)
