@@ -2,7 +2,7 @@ package dcc.entailment
 
 import dcc.entailment.EntailmentSort.PathDepthLimit
 import dcc.program.NaturalNumbers
-import dcc.syntax.{FieldPath, InstanceOf, InstantiatedBy, PathEquivalence}
+import dcc.syntax.{Constraint, FieldPath, InstanceOf, InstantiatedBy, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
@@ -29,17 +29,31 @@ class TestPathDepthLimitEncodingEntails extends AnyFunSuite with BeforeAndAfterE
   }
 
   // takes ~20 seconds, uncomment if wanting to show this
-//  test("a=b,b=c,c=d,d=e,e=f,f=g |- a=g") {
-//    assert(entailment.entails(
-//      List(PathEquivalence("a", "b"), PathEquivalence("b", "c"), PathEquivalence("c", "d"), PathEquivalence("d", "e"), PathEquivalence("e", "f"), PathEquivalence("f", "g")),
-//      PathEquivalence("a", "g")))
-//  }
+  test("a=b,b=c,c=d,d=e,e=f,f=g |- a=g") {
+    assert(entailment.entails(
+      List(PathEquivalence("a", "b"), PathEquivalence("b", "c"), PathEquivalence("c", "d"), PathEquivalence("d", "e"), PathEquivalence("e", "f"), PathEquivalence("f", "g")),
+      PathEquivalence("a", "g")))
+  }
 
-  // TODO: i/o timeout, change i/o call in Z3Solver to respect the no timeout option
-//  test("a=b,b=c,c=d,d=e,e=f,f=g,g=h |- a=h") {
-//    assert(entailmentNaturalNumbers.entails(
-//      List(PathEquivalence("a", "b"), PathEquivalence("b", "c"), PathEquivalence("c", "d"), PathEquivalence("d", "e"), PathEquivalence("e", "f"), PathEquivalence("f", "g"), PathEquivalence("g", "h")),
-//      PathEquivalence("a", "h")))
+  // takes >90 secs
+  test("a=b,b=c,c=d,d=e,e=f,f=g,g=h |- a=h") {
+    assert(entailment.entails(
+      List(PathEquivalence("a", "b"), PathEquivalence("b", "c"), PathEquivalence("c", "d"), PathEquivalence("d", "e"), PathEquivalence("e", "f"), PathEquivalence("f", "g"), PathEquivalence("g", "h")),
+      PathEquivalence("a", "h")))
+  }
+
+  // does some i/o error in process call (process call timeout?)
+//  test("a=b,b=c,c=d,d=e,e=f,f=g,g=h,h=i,i=j,j=k,k=l,l=m,m=n,n=o,o=p,p=q,q=r,r=s,s=t,t=u,u=v,v=w,w=x,x=y,y=z |- a=z") {
+//    def constructTransitiveContext(vars: List[String]): List[Constraint] = vars match {
+//      case Nil => Nil
+//      case _ :: Nil => Nil
+//      case l :: r :: tl => PathEquivalence(l,r)::constructTransitiveContext(r::tl)
+//    }
+//
+//    val vars: List[String] = ('a' to 'z').map(_.toString).toList
+//    val ctx = constructTransitiveContext(vars)
+//
+//    assert(entailment.entails(ctx, PathEquivalence("a", "z")))
 //  }
 
   test("a.cls=C |- a::C") {

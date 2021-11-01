@@ -16,13 +16,11 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
   // Sort names
   private val SortNameClass: String = "Class"
   private val SortNameVariable: String = "Variable"
-  private val SortNameField: String = "Field"
   private val SortNamePath: String = "Path"
 
   // Sorts
   private val SortClass: Sort = SimpleSymbol(SortNameClass)
   private val SortVariable: Sort = SimpleSymbol(SortNameVariable)
-  //private val SortField: Sort = SimpleSymbol(SortNameField)
   private val SortPath: Sort = SimpleSymbol(SortNamePath)
 
   // Function names
@@ -96,8 +94,8 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       declarations =  declarations :+ SMTLib.buildEnumerationType(SortNameClass, classes)
 
     val doAddPathDatatype = fields.nonEmpty
-    if (doAddPathDatatype) // TODO: remove field datatype, as it is no longer used separately
-      declarations =  declarations :+ SMTLib.buildEnumerationType(SortNameField, fields) :+ SMTLib.buildEnumerationType(SortNamePath, paths)
+    if (doAddPathDatatype)
+      declarations =  declarations :+ SMTLib.buildEnumerationType(SortNamePath, paths)
 
     (declarations, doAddPathDatatype, doAddClassDatatype)
   }
