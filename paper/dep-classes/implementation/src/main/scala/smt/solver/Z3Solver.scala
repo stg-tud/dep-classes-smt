@@ -97,9 +97,10 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
     val f = Future(blocking(p.exitValue()))
     try {
       val duration = if (timeout.isDefined) Duration(timeout.get, TimeUnit.MILLISECONDS) else Duration.Inf
+
+      val result = (Await.result(f, duration), output)
       p.destroy()
-      (Await.result(f, duration),
-       output)
+      result
     } catch {
       case _: TimeoutException =>
         p.destroy()
