@@ -4,9 +4,11 @@ import java.io.PrintWriter
 import smt.smtlib.syntax._
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent._
 import scala.sys.process._
 import ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 import scala.io.Source
 
 class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.empty, var debug: Boolean = false) extends SMTSolver {
@@ -94,9 +96,9 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
 
     val f = Future(blocking(p.exitValue()))
     try {
-      // TODO: is there a way to not set a timeout at all?
-      val millis = timeout.getOrElse(Long.MaxValue)
-      (Await.result(f, duration.Duration(millis, "ms")),
+      val duration = if (timeout.isDefined) Duration(timeout.get, TimeUnit.MILLISECONDS) else Duration.Inf
+      p.destroy()
+      (Await.result(f, duration),
        output)
     } catch {
       case _: TimeoutException =>

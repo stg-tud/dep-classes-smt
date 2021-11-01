@@ -43,18 +43,18 @@ class TestPathDepthLimitEncodingEntails extends AnyFunSuite with BeforeAndAfterE
   }
 
   // does some i/o error in process call (process call timeout?)
-//  test("a=b,b=c,c=d,d=e,e=f,f=g,g=h,h=i,i=j,j=k,k=l,l=m,m=n,n=o,o=p,p=q,q=r,r=s,s=t,t=u,u=v,v=w,w=x,x=y,y=z |- a=z") {
-//    def constructTransitiveContext(vars: List[String]): List[Constraint] = vars match {
-//      case Nil => Nil
-//      case _ :: Nil => Nil
-//      case l :: r :: tl => PathEquivalence(l,r)::constructTransitiveContext(r::tl)
-//    }
-//
-//    val vars: List[String] = ('a' to 'z').map(_.toString).toList
-//    val ctx = constructTransitiveContext(vars)
-//
-//    assert(entailment.entails(ctx, PathEquivalence("a", "z")))
-//  }
+  test("a=b,b=c,c=d,d=e,e=f,f=g,g=h,h=i,i=j,j=k,k=l,l=m,m=n,n=o,o=p,p=q,q=r,r=s,s=t,t=u,u=v,v=w,w=x,x=y,y=z |- a=z") {
+    def constructTransitiveContext(vars: List[String]): List[Constraint] = vars match {
+      case Nil => Nil
+      case _ :: Nil => Nil
+      case l :: r :: tl => PathEquivalence(l,r)::constructTransitiveContext(r::tl)
+    }
+
+    val vars: List[String] = ('a' to 'z').map(_.toString).toList
+    val ctx = constructTransitiveContext(vars)
+
+    assert(entailment.entails(ctx, PathEquivalence("a", "z")))
+  }
 
   test("a.cls=C |- a::C") {
     assert(entailment.entails(List(InstantiatedBy("a", "Zero")), InstanceOf("a", "Zero")))
