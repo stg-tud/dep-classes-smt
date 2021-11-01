@@ -4,9 +4,9 @@ import smt.smtlib.syntax.{CheckSatResponse, ErrorResponse, GetModelResponse, SMT
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
 
 trait SMTSolver {
-  private var _timeout: Option[Int] = None
-  def timeout: Option[Int] = _timeout
-  def timeout_= (millis: Int): Unit = _timeout = Some(millis)
+  private var _timeout: Option[Long] = None
+  def timeout: Option[Long] = _timeout
+  def timeout_= (millis: Long): Unit = _timeout = Some(millis)
   def unsetTimeout(): Unit = _timeout = None
 
   /**

@@ -95,7 +95,7 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
     val f = Future(blocking(p.exitValue()))
     try {
       // TODO: is there a way to not set a timeout at all?
-      val millis = timeout.getOrElse(Int.MaxValue)
+      val millis = timeout.getOrElse(Long.MaxValue)
       (Await.result(f, duration.Duration(millis, "ms")),
        output)
     } catch {
