@@ -86,26 +86,28 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       entailmentJudgement
   }
 
-  // TODO: determine depth limit based on program/entailment context/other means
   private def determineDepthLimit(context: List[Constraint], conclusion: Constraint): Int = {
-    (S_primeprime(context, conclusion) map (_.depth)).foldRight(0)((i, is) => math.max(i, is))
+    (derivationPaths(context, conclusion) map (_.depth)).foldRight(0)((i, is) => math.max(i, is))
   }
 
-  // TODO: rename S functions
-  private def S(x: Id): Set[Path] = (program flatMap {
-    case ConstraintEntailment(x1, ctx, InstanceOf(y, cls)) if x1==y => ctx.flatMap(_.containedPaths).map(substitute(x1, x, _))
+  // S
+  private def programEntailmentPaths(x: Id): Set[Path] = (program flatMap {
+    // if x==x1 (unifying binder equals entailment binder) substitution doesn't change a thing
+    case ConstraintEntailment(x1, ctx, InstanceOf(y, _)) if x1==y => ctx.flatMap(_.containedPaths).map(substitute(x1, x, _))
     case _ => Nil
   }).toSet
 
-  private def S_prime(constraints: List[Constraint], x: Id): Set[Path] = S(x) flatMap {
+  // S'
+  private def CAProgPaths(constraints: List[Constraint], x: Id): Set[Path] = programEntailmentPaths(x) flatMap {
     p => constraints.flatMap(_.containedPaths).map(substitute(x, _, p)).toSet
   }
 
-  private def S_primeprime(context: List[Constraint], conclusion: Constraint): Set[Path] = {
-    // TODO: just use some static value and check in the S function if the binder in the entailment is equal to it. if so, alpha rename the constraints of the entailment decl to something else
-    val unifyingVar: Id = Id(Symbol(s"xyz${Random.between(10000,99999)}"))
+  // S''
+  private def derivationPaths(context: List[Constraint], conclusion: Constraint): Set[Path] = {
+    // using a static binder for unification is fine
+    val unifyingVar: Id = Id(Symbol(s"unify"))
 
-    S_prime(context, unifyingVar) union ((conclusion::context) flatMap (_.containedPaths) toSet)
+    CAProgPaths(context, unifyingVar) union ((conclusion::context) flatMap (_.containedPaths) toSet)
   }
 
   private def constructTypeDeclarations(classes: List[String], variables: List[String], fields: List[String], paths: List[Path]): (SMTLibScript, Boolean, Boolean) = {
