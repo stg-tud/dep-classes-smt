@@ -18,9 +18,10 @@ object Util {
   def alphaConversion(x: Id, y: Id, cs: List[Constraint]): List[Constraint] =
     cs.map(renameIdInConstraint(x, y, _))
 
+  // TODO: change argument order? currently weird to use
   def substitute(x: Id, replace: Path, source: Path): Path = source match {
     case `x` => replace
-    case y@Id(_) => y
+    case Id(_) => source
     case FieldPath(p, f) => FieldPath(substitute(x, replace, p), f)
   }
 

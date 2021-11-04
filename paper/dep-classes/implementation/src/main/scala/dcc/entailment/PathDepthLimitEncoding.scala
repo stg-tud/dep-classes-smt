@@ -8,6 +8,7 @@ import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Not, Or, True}
 import smt.solver.Z3Solver
 
 import scala.language.postfixOps
+import scala.util.Random
 
 class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailment {
   // Path prefix to be used for the basename in the SMT encoding
@@ -64,8 +65,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     val fieldNames = DefinedFieldNames(program)
     val classNames = DefinedClassNames(program)
 
-    // TODO: determine depth limit based on program/entailment context/other means
-    val depthLimit = 1
+    val depthLimit = determineDepthLimit(context, conclusion)
     val paths = enumeratePaths(variableNames, fieldNames, depthLimit)
 
     val (datatypeDeclarations, pathDatatypeExists, classDatatypeExists) = constructTypeDeclarations(classNames, variableNames, fieldNames, paths)
@@ -84,6 +84,28 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       staticCalculusRules ++
       dynamicCalculusRules ++
       entailmentJudgement
+  }
+
+  // TODO: determine depth limit based on program/entailment context/other means
+  private def determineDepthLimit(context: List[Constraint], conclusion: Constraint): Int = {
+    (S_primeprime(context, conclusion) map (_.depth)).foldRight(0)((i, is) => math.max(i, is))
+  }
+
+  // TODO: rename S functions
+  private def S(x: Id): Set[Path] = (program flatMap {
+    case ConstraintEntailment(x1, ctx, InstanceOf(y, cls)) if x1==y => ctx.flatMap(_.containedPaths).map(substitute(x1, x, _))
+    case _ => Nil
+  }).toSet
+
+  private def S_prime(constraints: List[Constraint], x: Id): Set[Path] = S(x) flatMap {
+    p => constraints.flatMap(_.containedPaths).map(substitute(x, _, p)).toSet
+  }
+
+  private def S_primeprime(context: List[Constraint], conclusion: Constraint): Set[Path] = {
+    // TODO: just use some static value and check in the S function if the binder in the entailment is equal to it. if so, alpha rename the constraints of the entailment decl to something else
+    val unifyingVar: Id = Id(Symbol(s"xyz${Random.between(10000,99999)}"))
+
+    S_prime(context, unifyingVar) union ((conclusion::context) flatMap (_.containedPaths) toSet)
   }
 
   private def constructTypeDeclarations(classes: List[String], variables: List[String], fields: List[String], paths: List[Path]): (SMTLibScript, Boolean, Boolean) = {
