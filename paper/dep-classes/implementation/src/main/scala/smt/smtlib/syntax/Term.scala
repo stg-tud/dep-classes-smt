@@ -15,7 +15,18 @@ case class Apply(id: QualifiedIdentifier, terms: Seq[Term]) extends Term {
   require(terms.nonEmpty, "argument terms must not be empty")
 
   override def format: String = s"(${id.format} ${SMTLibFormatter.format(terms)})"
-  override def pretty: String = s"${id.pretty}(${SMTLibFormatter.pretty(terms, ", ")})"
+  override def pretty: String = id match {
+    // TODO: move predefined pretty printing somewhere else (predefined theories), s.t. it's not in the general SMTLib syntax definition
+    case SimpleSymbol("=") if terms.size==2 => s"(${terms.head.pretty} ≡ ${terms.last.pretty}"
+    case SimpleSymbol("=>") if terms.size==2 => s"(${terms.head.pretty} → ${terms.last.pretty}"
+    case SimpleSymbol("and") => s"(${SMTLibFormatter.pretty(terms, " ∧ ")})"
+    case SimpleSymbol("or") => s"(${SMTLibFormatter.pretty(terms, " ∨ ")})"
+    case _ => s"${id.pretty}(${SMTLibFormatter.pretty(terms, ", ")})"
+  }
+//    if (terms.size == 2)
+//      s"(${terms.head.pretty} ${id.pretty} ${terms.last.pretty}"
+//    else
+//      s"${id.pretty}(${SMTLibFormatter.pretty(terms, ", ")})"
 }
 
 case class VarBinding(symbol: SMTLibSymbol, term: Term) extends SMTLibFormatter {

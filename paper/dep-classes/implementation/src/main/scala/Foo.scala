@@ -1,4 +1,4 @@
-import dcc.entailment.{EntailmentSort, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
+import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.program.{BooleanExpressions, NaturalNumbers}
 import dcc.program.NaturalNumbers
 import dcc.syntax._
@@ -170,4 +170,22 @@ object Foo extends App {
 //
 //  val progs2 = limitEnc.constructProgRules(ConstraintEntailment("x", List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Nat")), InstanceOf("x", "Nat")), List(Id(Symbol("pth_x")), Id(Symbol("pth_y")), FieldPath(Id(Symbol("pth_x")), Id(Symbol("p")))), 1)
 //  println(progs2.format)
+
+//  val groundEnc = EntailmentFactory(EntailmentSort.GroundPathDepthLimit)(NaturalNumbers.program, 3)
+  val groundEnc = new GroundPathDepthLimitEncoding(NaturalNumbers.program, 3)
+
+  println("\n\n")
+  println(groundEnc.encode(Nil, PathEquivalence("a", "a")).pretty)
+
+//  val l = List(1, 2, 3)
+//
+//  val k: List[Int] = l flatMap (
+//    a => l flatMap (
+//      b => l map (
+//        c => a+b+c
+//      )
+//    )
+//  )
+//
+//  println(k)
 }

@@ -3,7 +3,7 @@ import dcc.Util.substitute
 import dcc.syntax.{Constraint, ConstraintEntailment, Declaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
 import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{Apply, Assert, DeclareFun, DefineFun, Forall, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Sugar, Term, Unsat}
+import smt.smtlib.syntax.{Apply, Assert, DeclareFun, DefineFun, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Sugar, Term, Unsat}
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Not, Or, True}
 import smt.solver.Z3Solver
 
@@ -69,19 +69,43 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
 
     val (datatypeDeclarations, pathDatatypeExists, classDatatypeExists) = constructTypeDeclarations(classNames, variableNames, fieldNames, paths)
 
+//    println("Variable names:")
+//    variableNames foreach (x => println(s"\t$x"))
+//    println("classNames names:")
+//    classNames foreach (x => println(s"\t$x"))
+//    println("paths:")
+//    paths foreach (x => println(s"\t$x"))
+
     val constraintPropositionDeclarations = constructConstraintPropositions(pathDatatypeExists, classDatatypeExists)
     val substitutionFunctionDeclaration = generateSubstitutionFunction(paths, variableNames, depthLimit, pathDatatypeExists)
 
-    val staticCalculusRules = constructStaticCalculusRules(pathDatatypeExists, classDatatypeExists)
-    val dynamicCalculusRules = constructDynamicCalculusRules(paths, depthLimit, classDatatypeExists)
+    val cReflRules = constructReflRules(paths)
+    val cClassRules = constructClassRules(paths, classNames map (cls => Id(Symbol(cls)))) // TODO: update class name extraction to return IDs
+    val cSubstPathEqRules = constructSubstPathEqRules(paths, variableNames map (x => Id(Symbol(x)))) // TODO: update variable name extraction to return IDs
+    val cSubstInstOfRules = constructSubstInstOfRules(paths, classNames map (cls => Id(Symbol(cls))), variableNames map (x => Id(Symbol(x))))
+    val cSubstInstByRules = constructSubstInstByRules(paths, classNames map (cls => Id(Symbol(cls))), variableNames map (x => Id(Symbol(x))))
+    val cProgRules = constructCProgRules(paths, depthLimit, classDatatypeExists)
 
     val entailmentJudgement = constructEntailmentJudgement(context, conclusion)
+
+/*    println("datatypes:")
+    datatypeDeclarations.commands foreach (x => println(s"\t${x.pretty}"))
+    println("constraints:")
+    constraintPropositionDeclarations.commands foreach (x => println(s"\t${x.pretty}"))
+    println("substitution:")
+    substitutionFunctionDeclaration.commands foreach (x => println(s"\t${x.pretty}"))
+    println("refl rules:")
+    cReflRules.commands foreach (x => println(s"\t${x.pretty}"))*/
 
     datatypeDeclarations ++
       constraintPropositionDeclarations ++
       substitutionFunctionDeclaration ++
-      staticCalculusRules ++
-      dynamicCalculusRules ++
+      cReflRules ++
+      cClassRules ++
+      cSubstPathEqRules ++
+      cSubstInstOfRules ++
+      cSubstInstByRules ++
+      cProgRules ++
       entailmentJudgement
   }
 
@@ -137,139 +161,68 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     declarations
   }
 
-  private def constructStaticCalculusRules(pathDatatypeExists: Boolean, classDatatypeExists: Boolean): SMTLibScript = {
-    val path = if (pathDatatypeExists) SortPath else SortVariable
+  private def constructReflRules(paths: List[Path]): SMTLibScript =
+    SMTLibScript(paths map cReflRuleTemplate)
 
-    // C-Refl
-    val pRefl: SMTLibSymbol = freshPath()
-    val cReflexivity = Assert(Forall(Seq(SortedVar(pRefl, path)), Apply(FunctionPathEquivalence, Seq(pRefl, pRefl))))
+  private def constructClassRules(paths: List[Path], classes: List[Id]): SMTLibScript =
+    SMTLibScript(paths flatMap (p => classes map (cls => cClassRuleTemplate(p, cls))))
 
-    // C-Class
-    val pClass: SMTLibSymbol = freshPath()
-    val clsClass: SMTLibSymbol = freshClassVar()
-    val cClass = Assert(Forall(
-      Seq(
-        SortedVar(pClass, path),
-        SortedVar(clsClass, SortClass)
-      ),
-      Implies(Apply(FunctionInstantiatedBy, Seq(pClass, clsClass)), Apply(FunctionInstanceOf, Seq(pClass, clsClass)))
-    ))
-
-    // Substitution Signature:
-    //   SortedVar(source, path),
-    //   SortedVar(target, SortVariable),
-    //   SortedVar(replace, path),
-    //   SortedVar(result, path)
-
-    // C-Subst-Eq
-    val xSubstEq = freshVariable()
-    val pSubstEq = freshPath()
-    val qSubstEq = freshPath()
-    val rSubstEq = freshPath()
-    val sSubstEq = freshPath()
-    val p_subst_r_Eq = freshPath()
-    val q_subst_r_Eq = freshPath()
-    val p_subst_s_Eq = freshPath()
-    val q_subst_s_Eq = freshPath()
-    val cSubstPathEq = Assert(Forall(
-      Seq(
-        SortedVar(pSubstEq, path),
-        SortedVar(qSubstEq, path),
-        SortedVar(xSubstEq, SortVariable),
-        SortedVar(rSubstEq, path),
-        SortedVar(sSubstEq, path),
-        SortedVar(p_subst_r_Eq, path),
-        SortedVar(q_subst_r_Eq, path),
-        SortedVar(p_subst_s_Eq, path),
-        SortedVar(q_subst_s_Eq, path)
-      ),
-      Implies(
-        And(
-          Apply(FunctionPathEquivalence, Seq(sSubstEq, rSubstEq)),
-          Apply(FunctionSubstitution, Seq(pSubstEq, xSubstEq, rSubstEq, p_subst_r_Eq)),
-          Apply(FunctionSubstitution, Seq(qSubstEq, xSubstEq, rSubstEq, q_subst_r_Eq)),
-          Apply(FunctionSubstitution, Seq(pSubstEq, xSubstEq, sSubstEq, p_subst_s_Eq)),
-          Apply(FunctionSubstitution, Seq(qSubstEq, xSubstEq, sSubstEq, q_subst_s_Eq)),
-          Apply(FunctionPathEquivalence, Seq(p_subst_r_Eq, q_subst_r_Eq))
-        ),
-        Apply(FunctionPathEquivalence, Seq(p_subst_s_Eq, q_subst_s_Eq))
+  private def constructSubstPathEqRules(paths: List[Path], vars: List[Id]): SMTLibScript =
+    SMTLibScript(paths flatMap (
+      p => paths flatMap (
+        q => vars flatMap (
+          x => paths flatMap (
+            r => paths flatMap (
+              s => paths flatMap (
+                pr => paths flatMap (
+                  qr => paths flatMap (
+                    ps => paths map (
+                      qs => cSubstPathEqTemplate(p, q, x, r, s, pr, qr, ps, qs)
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
       )
     ))
 
-    // C-Subst-InstOf
-    val xSubstOf = freshVariable()
-    val pSubstOf = freshPath()
-    val clsSubstOf = freshClassVar()
-    val rSubstOf = freshPath()
-    val sSubstOf = freshPath()
-    val p_subst_r_Of = freshPath()
-    val p_subst_s_Of = freshPath()
-    val cSubstInstOf = Assert(Forall(
-      Seq(
-        SortedVar(pSubstOf, path),
-        SortedVar(clsSubstOf, SortClass),
-        SortedVar(xSubstOf, SortVariable),
-        SortedVar(rSubstOf, path),
-        SortedVar(sSubstOf, path),
-        SortedVar(p_subst_r_Of, path),
-        SortedVar(p_subst_s_Of, path)
-      ),
-      Implies(
-        And(
-          Apply(FunctionPathEquivalence, Seq(sSubstOf, rSubstOf)),
-          Apply(FunctionSubstitution, Seq(pSubstOf, xSubstOf, rSubstOf, p_subst_r_Of)),
-          Apply(FunctionSubstitution, Seq(pSubstOf, xSubstOf, sSubstOf, p_subst_s_Of)),
-          Apply(FunctionInstanceOf, Seq(p_subst_r_Of, clsSubstOf))
-        ),
-        Apply(FunctionInstanceOf, Seq(p_subst_s_Of, clsSubstOf))
+  private def constructSubstInstOfRules(paths: List[Path], classes: List[Id], vars: List[Id]): SMTLibScript =
+    SMTLibScript(paths flatMap (
+      p => classes flatMap (
+        cls => vars flatMap (
+          x => paths flatMap (
+            r => paths flatMap (
+              s => paths flatMap (
+                pr => paths map (
+                  ps => cSubstInstOfTemplate(p, cls, x, r, s, pr, ps)
+                )
+              )
+            )
+          )
+        )
       )
     ))
 
-    // C-Subst-InstBy
-    val xSubstBy = freshVariable()
-    val pSubstBy = freshPath()
-    val clsSubstBy = freshClassVar()
-    val rSubstBy = freshPath()
-    val sSubstBy = freshPath()
-    val p_subst_r_By = freshPath()
-    val p_subst_s_By = freshPath()
-    val cSubstInstBy = Assert(Forall(
-      Seq(
-        SortedVar(pSubstBy, path),
-        SortedVar(clsSubstBy, SortClass),
-        SortedVar(xSubstBy, SortVariable),
-        SortedVar(rSubstBy, path),
-        SortedVar(sSubstBy, path),
-        SortedVar(p_subst_r_By, path),
-        SortedVar(p_subst_s_By, path)
-      ),
-      Implies(
-        And(
-          Apply(FunctionPathEquivalence, Seq(sSubstBy, rSubstBy)),
-          Apply(FunctionSubstitution, Seq(pSubstBy, xSubstBy, rSubstBy, p_subst_r_By)),
-          Apply(FunctionSubstitution, Seq(pSubstBy, xSubstBy, sSubstBy, p_subst_s_By)),
-          Apply(FunctionInstantiatedBy, Seq(p_subst_r_By, clsSubstBy))
-        ),
-        Apply(FunctionInstantiatedBy, Seq(p_subst_s_By, clsSubstBy))
-      )
-    ))
-
-    if (classDatatypeExists)
-      SMTLibScript(Seq(
-        cReflexivity,
-        cClass,
-        cSubstPathEq,
-        cSubstInstOf,
-        cSubstInstBy
+  private def constructSubstInstByRules(paths: List[Path], classes: List[Id], vars: List[Id]): SMTLibScript =
+    SMTLibScript(paths flatMap (
+      p => classes flatMap (
+        cls => vars flatMap (
+          x => paths flatMap (
+            r => paths flatMap (
+              s => paths flatMap (
+                pr => paths map (
+                  ps => cSubstInstByTemplate(p, cls, x, r, s, pr, ps)
+                  )
+                )
+              )
+            )
+          )
+        )
       ))
-    else
-      SMTLibScript(Seq(
-        cReflexivity,
-        cSubstPathEq
-      ))
-  }
 
-  private def constructDynamicCalculusRules(paths: List[Path], depthLimit: Int, classDatatypeExists: Boolean): SMTLibScript = {
+  private def constructCProgRules(paths: List[Path], depthLimit: Int, classDatatypeExists: Boolean): SMTLibScript = {
     if (!classDatatypeExists)
       SMTLibScript.EMPTY
     else
@@ -538,15 +491,15 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     pathCounter = pathCounter + 1
     SimpleSymbol(s"p$pathCounter")
   }
-  private var classCounter = 0
-  private def freshClassVar(): SimpleSymbol = {
-    classCounter = classCounter + 1
-    SimpleSymbol(s"cls$classCounter")
-  }
+//  private var classCounter = 0
+//  private def freshClassVar(): SimpleSymbol = {
+//    classCounter = classCounter + 1
+//    SimpleSymbol(s"cls$classCounter")
+//  }
 
   private def resetFreshNameCounter(): Unit = {
     varCounter = 0
     pathCounter = 0
-    classCounter = 0
+//    classCounter = 0
   }
 }

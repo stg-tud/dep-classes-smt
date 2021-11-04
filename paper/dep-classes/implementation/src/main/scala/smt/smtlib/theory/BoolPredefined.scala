@@ -16,25 +16,10 @@ object BoolPredefined {
   // Operators
   def Not(term: Term): Term          = Apply(SimpleSymbol("not"), Seq(term))
   def Implies(l: Term, r:Term): Term = Apply(SimpleSymbol("=>"),  Seq(l, r))
-  def And(args: Term*): Term = {
-    require(args.nonEmpty, "invalid function application, arguments missing")
-    Apply(SimpleSymbol("and"), args)
-  }
-  def Or(args: Term*): Term = {
-    require(args.nonEmpty, "invalid function application, arguments missing")
-    Apply(SimpleSymbol("or"), args)
-  }
-  def Xor(args: Term*): Term = {
-    require(args.nonEmpty, "invalid function application, arguments missing")
-    Apply(SimpleSymbol("xor"), args)
-  }
-  def Eq(args: Term*): Term = {
-    require(args.nonEmpty, "invalid function application, arguments missing")
-    Apply(SimpleSymbol("="), args)
-  }
-  def Distinct(args: Term*): Term = {
-    require(args.nonEmpty, "invalid function application, arguments missing")
-    Apply(SimpleSymbol("distinct"), args)
-  }
+  def And(args: Term*): Term = Apply(SimpleSymbol("and"), args)
+  def Or(args: Term*): Term = Apply(SimpleSymbol("or"), args)
+  def Xor(args: Term*): Term = Apply(SimpleSymbol("xor"), args)
+  def Eq(args: Term*): Term = Apply(SimpleSymbol("="), args)
+  def Distinct(args: Term*): Term = Apply(SimpleSymbol("distinct"), args)
   def Ite(condition: Term, ifTrue: Term, ifFalse: Term): Term = Apply(SimpleSymbol("ite"), Seq(condition, ifTrue, ifFalse))
 }
