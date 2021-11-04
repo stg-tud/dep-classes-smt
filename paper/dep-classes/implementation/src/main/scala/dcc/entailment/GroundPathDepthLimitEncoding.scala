@@ -3,7 +3,7 @@ import dcc.Util.substitute
 import dcc.syntax.{Constraint, ConstraintEntailment, Declaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
 import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{Apply, Assert, DeclareFun, DefineFun, Forall, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Term, Unsat}
+import smt.smtlib.syntax.{Apply, Assert, DeclareFun, DefineFun, Forall, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Sugar, Term, Unsat}
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Not, Or, True}
 import smt.solver.Z3Solver
 
@@ -305,9 +305,92 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
       rules
   }
 
-//  def cReflRuleTemplate(path: Path):SMTLibCommand = Assert(Sugar.Op(FunctionPathEquivalence)(???))
+  private def cReflRuleTemplate(path: Path):SMTLibCommand = {
+    val p = PathToSMTLibSymbol(path)
+    Assert(PathEq(p, p))
+  }
 
-  def cProgRuleTemplate(context: List[Constraint], path: Path, cls: Id): SMTLibCommand = {
+  private def cClassRuleTemplate(path: Path, cls: Id): SMTLibCommand = {
+    val p = PathToSMTLibSymbol(path)
+    val c = IdToSMTLibSymbol(cls)
+
+    Assert(Implies(
+      InstBy(p, c),
+      InstOf(p, c)
+    ))
+  }
+
+  // TODO: Optimize subst rule templates:
+  //  - remove substitution results from parameters (pr, ps, ...)
+  //  - calculate substitution results based on the given inputs
+  //  - this leads to the substitute predicate to be true
+  //  - remove the substitute predicate checks in the encoding (as they are guaranteed to be true)
+  //  - if this is possible in all rules using the substitute predicate, remove it altogether (check prog rule)
+  private def cSubstPathEqTemplate(p: Path, q: Path, x: Id, r: Path, s: Path, pr: Path, qr: Path, ps: Path, qs: Path): SMTLibCommand = {
+    val pSMTLib = PathToSMTLibSymbol(p)
+    val qSMTLib = PathToSMTLibSymbol(q)
+    val xSMTLib = IdToSMTLibSymbol(x)
+    val rSMTLib = PathToSMTLibSymbol(r)
+    val sSMTLib = PathToSMTLibSymbol(s)
+    val prSMTLib = PathToSMTLibSymbol(pr)
+    val qrSMTLib = PathToSMTLibSymbol(qr)
+    val psSMTLib = PathToSMTLibSymbol(ps)
+    val qsSMTLib = PathToSMTLibSymbol(qs)
+
+    Assert(Implies(
+      And(
+        PathEq(sSMTLib, rSMTLib),
+        Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
+        Subst(qSMTLib, xSMTLib, rSMTLib, qrSMTLib),
+        Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
+        Subst(qSMTLib, xSMTLib, sSMTLib, qsSMTLib),
+        PathEq(prSMTLib, qrSMTLib)
+      ),
+      PathEq(psSMTLib, qsSMTLib)
+    ))
+  }
+
+  private def cSubstInstOfTemplate(p: Path, cls: Id, x: Id, r: Path, s: Path, pr: Path, ps: Path): SMTLibCommand = {
+    val pSMTLib = PathToSMTLibSymbol(p)
+    val clsSMTLib = IdToSMTLibSymbol(cls)
+    val xSMTLib = IdToSMTLibSymbol(x)
+    val rSMTLib = PathToSMTLibSymbol(r)
+    val sSMTLib = PathToSMTLibSymbol(s)
+    val prSMTLib = PathToSMTLibSymbol(pr)
+    val psSMTLib = PathToSMTLibSymbol(ps)
+
+    Assert(Implies(
+      And(
+        PathEq(sSMTLib, rSMTLib),
+        Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
+        Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
+        InstOf(prSMTLib, clsSMTLib)
+      ),
+      InstOf(psSMTLib, clsSMTLib)
+    ))
+  }
+
+  private def cSubstInstByTemplate(p: Path, cls: Id, x: Id, r: Path, s: Path, pr: Path, ps: Path): SMTLibCommand = {
+    val pSMTLib = PathToSMTLibSymbol(p)
+    val clsSMTLib = IdToSMTLibSymbol(cls)
+    val xSMTLib = IdToSMTLibSymbol(x)
+    val rSMTLib = PathToSMTLibSymbol(r)
+    val sSMTLib = PathToSMTLibSymbol(s)
+    val prSMTLib = PathToSMTLibSymbol(pr)
+    val psSMTLib = PathToSMTLibSymbol(ps)
+
+    Assert(Implies(
+      And(
+        PathEq(sSMTLib, rSMTLib),
+        Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
+        Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
+        InstBy(prSMTLib, clsSMTLib)
+      ),
+      InstBy(psSMTLib, clsSMTLib)
+    ))
+  }
+
+  private def cProgRuleTemplate(context: List[Constraint], path: Path, cls: Id): SMTLibCommand = {
 
     val lhs =
       if (context.size == 1) {
@@ -405,11 +488,13 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     Or(relation: _*)
   }
 
-//  private def PathEq(p: Term, q: Term): Term = Sugar.Op(FunctionPathEquivalence)(p, q)
-//
-//  private def InstOf(p: Term, cls: Term): Term = Sugar.Op(FunctionInstanceOf)(p, cls)
-//
-//  private def InstBy(p: Term, cls: Term): Term = Sugar.Op(FunctionInstantiatedBy)(p, cls)
+  private def PathEq(p: Term, q: Term): Term = Sugar.Op(FunctionPathEquivalence)(p, q)
+
+  private def InstOf(p: Term, cls: Term): Term = Sugar.Op(FunctionInstanceOf)(p, cls)
+
+  private def InstBy(p: Term, cls: Term): Term = Sugar.Op(FunctionInstantiatedBy)(p, cls)
+
+  private def Subst(source: Term, target: Term, replace: Term, result: Term): Term = Sugar.Op(FunctionSubstitution)(source, target, replace, result)
 
   def enumeratePaths(vars: List[String], fields: List[String], depthLimit: Int): List[Path] = {
     // Initialize paths with variables
