@@ -8,7 +8,6 @@ import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Not, Or, True}
 import smt.solver.Z3Solver
 
 import scala.language.postfixOps
-import scala.util.Random
 
 class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailment {
   // Path prefix to be used for the basename in the SMT encoding
@@ -324,7 +323,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
   }
 
   private def constructEntailmentJudgement(context: List[Constraint], conclusion: Constraint): SMTLibScript = {
-    // prefix the paths, since we prefixed the paths during enumeration (TODO make this better, see also def enumeratePaths and generateSubstitutionFunctionBody)
+    // prefix the paths, since we prefixed the paths during enumeration
 
     def prefixConstraint(c: Constraint): Constraint = c match {
       case PathEquivalence(p, q) => PathEquivalence(p.prefixBaseName(PathPrefix), q.prefixBaseName(PathPrefix))
@@ -382,7 +381,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     paths.foreach(source =>
       vars.foreach(target =>
         paths.foreach { replace =>
-          // prefix target such that it matches the prefixed paths TODO: make this better (see also def enumeratePaths and constructEntailmentJudgement)
+          // prefix target such that it matches the prefixed paths
           val prefixedTarget = Id(Symbol(PathPrefix)) + target
 
           val result: Path = if (prefixedTarget.baseName != source.baseName) source else substitute(prefixedTarget, replace, source)
@@ -406,8 +405,9 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
 
   def enumeratePaths(vars: List[String], fields: List[String], depthLimit: Int): List[Path] = {
     // Initialize paths with variables
-    var paths: List[Path] = vars.map(s => Id(Symbol(s"$PathPrefix$s"))) // prefix to not have ambiguous names between variables and paths (TODO: make this better, see also def constructEntailmentJudgement and generateSubstitutionFunctionBody)
+    var paths: List[Path] = vars.map(s => Id(Symbol(s"$PathPrefix$s"))) // prefix to not have ambiguous names between variables and paths
 
+    // start with 1, as zero length is init
     (1 to depthLimit) foreach { _ =>
       paths = paths ++ addFieldsToPaths(paths, fields)
     }
