@@ -175,7 +175,7 @@ object Foo extends App {
   val groundEnc = new GroundPathDepthLimitEncoding(NaturalNumbers.program, 3)
 
   println("\n\n")
-  println(groundEnc.encode(Nil, PathEquivalence("a", "a")).pretty)
+  println(groundEnc.entails(List(PathEquivalence("b", "a")), PathEquivalence("a", "b")))
 
 //  val l = List(1, 2, 3)
 //
