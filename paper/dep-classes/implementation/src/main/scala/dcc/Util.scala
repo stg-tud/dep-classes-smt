@@ -43,4 +43,6 @@ object Util {
     })
     case MethodCall(m, e) => MethodCall(m, alphaRename(x, y, e))
   }
+
+  def prefixedSubstitute(prefix: String)(source: Path, target: Id, replace: Path): Path = substitute(Id(Symbol(prefix))+target, replace, source)
 }

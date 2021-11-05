@@ -1,5 +1,5 @@
 package dcc.entailment
-import dcc.Util.substitute
+import dcc.Util.{prefixedSubstitute, substitute}
 import dcc.syntax.{Constraint, ConstraintEntailment, Declaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
 import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
@@ -328,19 +328,22 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
   // TODO: Optimize subst rule templates:
   //  ✓ remove substitution results from parameters (pr, ps, ...)
   //  ✓ calculate substitution results based on the given inputs
-  //  - this leads to the substitute predicate to be true
+  //  ✓ this leads to the substitute predicate to be true
+  //  - change templates to be partial functions, that are only defined if the substitution result is within the depth limit
   //  - remove the substitute predicate checks in the encoding (as they are guaranteed to be true)
   //  - if this is possible in all rules using the substitute predicate, remove it altogether (check prog rule)
   private def cSubstPathEqTemplate(p: Path, q: Path, x: Id, r: Path, s: Path): SMTLibCommand = {
+    val prefixSubst = (source: Path, target: Id, replace: Path) => prefixedSubstitute(PathPrefix)(source, target, replace)
+
     val pSMTLib = PathToSMTLibSymbol(p)
     val qSMTLib = PathToSMTLibSymbol(q)
     val xSMTLib = IdToSMTLibSymbol(x)
     val rSMTLib = PathToSMTLibSymbol(r)
     val sSMTLib = PathToSMTLibSymbol(s)
-    val prSMTLib = PathToSMTLibSymbol(substitute(x, r, p))
-    val qrSMTLib = PathToSMTLibSymbol(substitute(x, r, q))
-    val psSMTLib = PathToSMTLibSymbol(substitute(x, s, p))
-    val qsSMTLib = PathToSMTLibSymbol(substitute(x, s, q))
+    val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
+    val qrSMTLib = PathToSMTLibSymbol(prefixSubst(q, x, r))
+    val psSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, s))
+    val qsSMTLib = PathToSMTLibSymbol(prefixSubst(q, x, s))
 
     Assert(Implies(
       And(
@@ -356,13 +359,15 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
   }
 
   private def cSubstInstOfTemplate(p: Path, cls: Id, x: Id, r: Path, s: Path): SMTLibCommand = {
+    val prefixSubst = (source: Path, target: Id, replace: Path) => prefixedSubstitute(PathPrefix)(source, target, replace)
+
     val pSMTLib = PathToSMTLibSymbol(p)
     val clsSMTLib = IdToSMTLibSymbol(cls)
     val xSMTLib = IdToSMTLibSymbol(x)
     val rSMTLib = PathToSMTLibSymbol(r)
     val sSMTLib = PathToSMTLibSymbol(s)
-    val prSMTLib = PathToSMTLibSymbol(substitute(x, r, p))
-    val psSMTLib = PathToSMTLibSymbol(substitute(x, s, p))
+    val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
+    val psSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, s))
 
     Assert(Implies(
       And(
@@ -376,13 +381,15 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
   }
 
   private def cSubstInstByTemplate(p: Path, cls: Id, x: Id, r: Path, s: Path): SMTLibCommand = {
+    val prefixSubst = (source: Path, target: Id, replace: Path) => prefixedSubstitute(PathPrefix)(source, target, replace)
+
     val pSMTLib = PathToSMTLibSymbol(p)
     val clsSMTLib = IdToSMTLibSymbol(cls)
     val xSMTLib = IdToSMTLibSymbol(x)
     val rSMTLib = PathToSMTLibSymbol(r)
     val sSMTLib = PathToSMTLibSymbol(s)
-    val prSMTLib = PathToSMTLibSymbol(substitute(x, r, p))
-    val psSMTLib = PathToSMTLibSymbol(substitute(x, s, p))
+    val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
+    val psSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, s))
 
     Assert(Implies(
       And(
