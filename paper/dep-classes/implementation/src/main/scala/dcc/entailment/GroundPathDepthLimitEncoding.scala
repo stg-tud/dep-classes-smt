@@ -184,16 +184,7 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
         for (x <- vars) {
           for (r <- paths) {
             for (s <- paths) {
-              // TODO: remove underlying iterations, calculate subst result
-              for (pr <- paths) {
-                for (qr <- paths) {
-                  for (ps <- paths) {
-                    for (qs <- paths) {
-                      rules = cSubstPathEqTemplate(p, q, x, r, s, pr, qr, ps, qs) :: rules
-                    }
-                  }
-                }
-              }
+              rules = cSubstPathEqTemplate(p, q, x, r, s) :: rules
             }
           }
         }
@@ -228,11 +219,7 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
         for (x <- vars) {
           for (r <- paths) {
             for (s <- paths) {
-              for (pr <- paths) {
-                for (ps <- paths) {
-                  rules = cSubstInstOfTemplate(p, cls, x, r, s, pr, ps) :: rules
-                }
-              }
+              rules = cSubstInstOfTemplate(p, cls, x, r, s) :: rules
             }
           }
         }
@@ -263,11 +250,7 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
         for (x <- vars) {
           for (r <- paths) {
             for (s <- paths) {
-              for (pr <- paths) {
-                for (ps <- paths) {
-                  rules = cSubstInstByTemplate(p, cls, x, r, s, pr, ps) :: rules
-                }
-              }
+              rules = cSubstInstByTemplate(p, cls, x, r, s) :: rules
             }
           }
         }
@@ -343,21 +326,21 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
   }
 
   // TODO: Optimize subst rule templates:
-  //  - remove substitution results from parameters (pr, ps, ...)
-  //  - calculate substitution results based on the given inputs
+  //  ✓ remove substitution results from parameters (pr, ps, ...)
+  //  ✓ calculate substitution results based on the given inputs
   //  - this leads to the substitute predicate to be true
   //  - remove the substitute predicate checks in the encoding (as they are guaranteed to be true)
   //  - if this is possible in all rules using the substitute predicate, remove it altogether (check prog rule)
-  private def cSubstPathEqTemplate(p: Path, q: Path, x: Id, r: Path, s: Path, pr: Path, qr: Path, ps: Path, qs: Path): SMTLibCommand = {
+  private def cSubstPathEqTemplate(p: Path, q: Path, x: Id, r: Path, s: Path): SMTLibCommand = {
     val pSMTLib = PathToSMTLibSymbol(p)
     val qSMTLib = PathToSMTLibSymbol(q)
     val xSMTLib = IdToSMTLibSymbol(x)
     val rSMTLib = PathToSMTLibSymbol(r)
     val sSMTLib = PathToSMTLibSymbol(s)
-    val prSMTLib = PathToSMTLibSymbol(pr)
-    val qrSMTLib = PathToSMTLibSymbol(qr)
-    val psSMTLib = PathToSMTLibSymbol(ps)
-    val qsSMTLib = PathToSMTLibSymbol(qs)
+    val prSMTLib = PathToSMTLibSymbol(substitute(x, r, p))
+    val qrSMTLib = PathToSMTLibSymbol(substitute(x, r, q))
+    val psSMTLib = PathToSMTLibSymbol(substitute(x, s, p))
+    val qsSMTLib = PathToSMTLibSymbol(substitute(x, s, q))
 
     Assert(Implies(
       And(
@@ -372,14 +355,14 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     ))
   }
 
-  private def cSubstInstOfTemplate(p: Path, cls: Id, x: Id, r: Path, s: Path, pr: Path, ps: Path): SMTLibCommand = {
+  private def cSubstInstOfTemplate(p: Path, cls: Id, x: Id, r: Path, s: Path): SMTLibCommand = {
     val pSMTLib = PathToSMTLibSymbol(p)
     val clsSMTLib = IdToSMTLibSymbol(cls)
     val xSMTLib = IdToSMTLibSymbol(x)
     val rSMTLib = PathToSMTLibSymbol(r)
     val sSMTLib = PathToSMTLibSymbol(s)
-    val prSMTLib = PathToSMTLibSymbol(pr)
-    val psSMTLib = PathToSMTLibSymbol(ps)
+    val prSMTLib = PathToSMTLibSymbol(substitute(x, r, p))
+    val psSMTLib = PathToSMTLibSymbol(substitute(x, s, p))
 
     Assert(Implies(
       And(
@@ -392,14 +375,14 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     ))
   }
 
-  private def cSubstInstByTemplate(p: Path, cls: Id, x: Id, r: Path, s: Path, pr: Path, ps: Path): SMTLibCommand = {
+  private def cSubstInstByTemplate(p: Path, cls: Id, x: Id, r: Path, s: Path): SMTLibCommand = {
     val pSMTLib = PathToSMTLibSymbol(p)
     val clsSMTLib = IdToSMTLibSymbol(cls)
     val xSMTLib = IdToSMTLibSymbol(x)
     val rSMTLib = PathToSMTLibSymbol(r)
     val sSMTLib = PathToSMTLibSymbol(s)
-    val prSMTLib = PathToSMTLibSymbol(pr)
-    val psSMTLib = PathToSMTLibSymbol(ps)
+    val prSMTLib = PathToSMTLibSymbol(substitute(x, r, p))
+    val psSMTLib = PathToSMTLibSymbol(substitute(x, s, p))
 
     Assert(Implies(
       And(
