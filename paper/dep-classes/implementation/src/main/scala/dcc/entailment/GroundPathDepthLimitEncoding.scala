@@ -161,66 +161,135 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     declarations
   }
 
+  // TODO: update rule generation s.t. we only need to iterate once and not repeat this iteration thingy over and over
   private def constructReflRules(paths: List[Path]): SMTLibScript =
     SMTLibScript(paths map cReflRuleTemplate)
 
-  private def constructClassRules(paths: List[Path], classes: List[Id]): SMTLibScript =
-    SMTLibScript(paths flatMap (p => classes map (cls => cClassRuleTemplate(p, cls))))
+  private def constructClassRules(paths: List[Path], classes: List[Id]): SMTLibScript = {
+    var rules: List[SMTLibCommand] = Nil
+    for (p <- paths) {
+      for (cls <- classes) {
+        rules = cClassRuleTemplate(p, cls) :: rules
+      }
+    }
 
-  private def constructSubstPathEqRules(paths: List[Path], vars: List[Id]): SMTLibScript =
-    SMTLibScript(paths flatMap (
-      p => paths flatMap (
-        q => vars flatMap (
-          x => paths flatMap (
-            r => paths flatMap (
-              s => paths flatMap (
-                pr => paths flatMap (
-                  qr => paths flatMap (
-                    ps => paths map (
-                      qs => cSubstPathEqTemplate(p, q, x, r, s, pr, qr, ps, qs)
-                    )
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-    ))
+    SMTLibScript(rules)
+  }
+//    SMTLibScript(paths flatMap (p => classes map (cls => cClassRuleTemplate(p, cls))))
 
-  private def constructSubstInstOfRules(paths: List[Path], classes: List[Id], vars: List[Id]): SMTLibScript =
-    SMTLibScript(paths flatMap (
-      p => classes flatMap (
-        cls => vars flatMap (
-          x => paths flatMap (
-            r => paths flatMap (
-              s => paths flatMap (
-                pr => paths map (
-                  ps => cSubstInstOfTemplate(p, cls, x, r, s, pr, ps)
-                )
-              )
-            )
-          )
-        )
-      )
-    ))
+  private def constructSubstPathEqRules(paths: List[Path], vars: List[Id]): SMTLibScript = {
+    var rules: List[SMTLibCommand] = Nil
+    for (p <- paths) {
+      for (q <- paths) {
+        for (x <- vars) {
+          for (r <- paths) {
+            for (s <- paths) {
+              // TODO: remove underlying iterations, calculate subst result
+              for (pr <- paths) {
+                for (qr <- paths) {
+                  for (ps <- paths) {
+                    for (qs <- paths) {
+                      rules = cSubstPathEqTemplate(p, q, x, r, s, pr, qr, ps, qs) :: rules
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    SMTLibScript(rules)
+  }
+//    SMTLibScript(paths flatMap (
+//      p => paths flatMap (
+//        q => vars flatMap (
+//          x => paths flatMap (
+//            r => paths flatMap (
+//              s => paths flatMap (
+//                pr => paths flatMap (
+//                  qr => paths flatMap (
+//                    ps => paths map (
+//                      qs => cSubstPathEqTemplate(p, q, x, r, s, pr, qr, ps, qs)
+//                    )
+//                  )
+//                )
+//              )
+//            )
+//          )
+//        )
+//      )
+//    ))
 
-  private def constructSubstInstByRules(paths: List[Path], classes: List[Id], vars: List[Id]): SMTLibScript =
-    SMTLibScript(paths flatMap (
-      p => classes flatMap (
-        cls => vars flatMap (
-          x => paths flatMap (
-            r => paths flatMap (
-              s => paths flatMap (
-                pr => paths map (
-                  ps => cSubstInstByTemplate(p, cls, x, r, s, pr, ps)
-                  )
-                )
-              )
-            )
-          )
-        )
-      ))
+  private def constructSubstInstOfRules(paths: List[Path], classes: List[Id], vars: List[Id]): SMTLibScript = {
+    var rules: List[SMTLibCommand] = Nil
+    for (p <- paths) {
+      for (cls <- classes) {
+        for (x <- vars) {
+          for (r <- paths) {
+            for (s <- paths) {
+              for (pr <- paths) {
+                for (ps <- paths) {
+                  rules = cSubstInstOfTemplate(p, cls, x, r, s, pr, ps) :: rules
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    SMTLibScript(rules)
+  }
+//    SMTLibScript(paths flatMap (
+//      p => classes flatMap (
+//        cls => vars flatMap (
+//          x => paths flatMap (
+//            r => paths flatMap (
+//              s => paths flatMap (
+//                pr => paths map (
+//                  ps => cSubstInstOfTemplate(p, cls, x, r, s, pr, ps)
+//                )
+//              )
+//            )
+//          )
+//        )
+//      )
+//    ))
+
+  private def constructSubstInstByRules(paths: List[Path], classes: List[Id], vars: List[Id]): SMTLibScript = {
+    var rules: List[SMTLibCommand] = Nil
+    for (p <- paths) {
+      for (cls <- classes) {
+        for (x <- vars) {
+          for (r <- paths) {
+            for (s <- paths) {
+              for (pr <- paths) {
+                for (ps <- paths) {
+                  rules = cSubstInstByTemplate(p, cls, x, r, s, pr, ps) :: rules
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    SMTLibScript(rules)
+  }
+//    SMTLibScript(paths flatMap (
+//      p => classes flatMap (
+//        cls => vars flatMap (
+//          x => paths flatMap (
+//            r => paths flatMap (
+//              s => paths flatMap (
+//                pr => paths map (
+//                  ps => cSubstInstByTemplate(p, cls, x, r, s, pr, ps)
+//                  )
+//                )
+//              )
+//            )
+//          )
+//        )
+//      ))
 
   private def constructCProgRules(paths: List[Path], depthLimit: Int, classDatatypeExists: Boolean): SMTLibScript = {
     if (!classDatatypeExists)
