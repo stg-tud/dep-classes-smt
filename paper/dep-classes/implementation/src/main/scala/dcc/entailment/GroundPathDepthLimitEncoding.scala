@@ -7,6 +7,7 @@ import smt.smtlib.syntax.{Apply, Assert, DeclareFun, SMTLibSymbol, SimpleSymbol,
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Implies, Not, True}
 import smt.solver.Z3Solver
 
+import scala.collection.mutable
 import scala.language.postfixOps
 
 class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailment {
@@ -65,20 +66,13 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
 
     val (datatypeDeclarations, pathDatatypeExists, classDatatypeExists) = constructTypeDeclarations(classNames, variableNames, fieldNames, paths)
 
-//    println("Variable names:")
-//    variableNames foreach (x => println(s"\t$x"))
-//    println("classNames names:")
-//    classNames foreach (x => println(s"\t$x"))
-//    println("paths:")
-//    paths foreach (x => println(s"\t$x"))
-
     val constraintPropositionDeclarations = constructConstraintPropositions(pathDatatypeExists, classDatatypeExists)
 
-    val cReflRules = constructReflRules(paths)
-    val cClassRules = constructClassRules(paths, classNames map (cls => Id(Symbol(cls)))) // TODO: update class name extraction to return IDs
-    val cSubstPathEqRules = constructSubstPathEqRules(paths, variableNames map (x => Id(Symbol(x))), depthLimit) // TODO: update variable name extraction to return IDs
-    val cSubstInstOfRules = constructSubstInstOfRules(paths, classNames map (cls => Id(Symbol(cls))), variableNames map (x => Id(Symbol(x))), depthLimit)
-    val cSubstInstByRules = constructSubstInstByRules(paths, classNames map (cls => Id(Symbol(cls))), variableNames map (x => Id(Symbol(x))), depthLimit)
+    // TODO:
+    //  - update class name extraction to return IDs?
+    //  - update variable name extraction to return IDs?
+    val staticRules = constructStaticRules(paths=paths, classes=classNames map (cls => Id(Symbol(cls))), vars = variableNames map (x => Id(Symbol(x))), depthLimit)
+
     val cProgRules = constructCProgRules(paths, depthLimit, classDatatypeExists)
 
     val entailmentJudgement = constructEntailmentJudgement(context, conclusion)
@@ -94,11 +88,7 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
 
     datatypeDeclarations ++
       constraintPropositionDeclarations ++
-      cReflRules ++
-      cClassRules ++
-      cSubstPathEqRules ++
-      cSubstInstOfRules ++
-      cSubstInstByRules ++
+      staticRules ++
       cProgRules ++
       entailmentJudgement
   }
@@ -155,121 +145,41 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     declarations
   }
 
-  // TODO: update rule generation s.t. we only need to iterate once and not repeat this iteration thingy over and over
-  private def constructReflRules(paths: List[Path]): SMTLibScript =
-    SMTLibScript(paths map cReflRuleTemplate)
+  // rule generation with only one iteration:
+  //  ✓ C-Refl
+  //  ✓ C-Class
+  //  ✓ C-SubstPathEq
+  //  ✓ C-SubstInstBy
+  //  ✓ C-SubstInstBy
+  private def constructStaticRules(paths: List[Path], classes: List[Id], vars: List[Id], depthLimit: Int): SMTLibScript = {
+    val rules: mutable.HashSet[SMTLibCommand] = new mutable.HashSet[SMTLibCommand]()
 
-  private def constructClassRules(paths: List[Path], classes: List[Id]): SMTLibScript = {
-    var rules: List[SMTLibCommand] = Nil
     for (p <- paths) {
+      rules += cReflRuleTemplate(p)
       for (cls <- classes) {
-        rules = cClassRuleTemplate(p, cls) :: rules
-      }
-    }
-
-    SMTLibScript(rules)
-  }
-//    SMTLibScript(paths flatMap (p => classes map (cls => cClassRuleTemplate(p, cls))))
-
-  private def constructSubstPathEqRules(paths: List[Path], vars: List[Id], depthLimit: Int): SMTLibScript = {
-    var rules: List[SMTLibCommand] = Nil
-    for (p <- paths) {
-      for (q <- paths) {
+        rules += cClassRuleTemplate(p, cls)
         for (x <- vars) {
           for (r <- paths) {
             for (s <- paths) {
-              if (cSubstPathEqTemplate.isDefinedAt(p, q, x, r, s, depthLimit))
-                rules = cSubstPathEqTemplate(p, q, x, r, s, depthLimit) :: rules
-            }
-          }
-        }
-      }
-    }
-    SMTLibScript(rules)
-  }
-//    SMTLibScript(paths flatMap (
-//      p => paths flatMap (
-//        q => vars flatMap (
-//          x => paths flatMap (
-//            r => paths flatMap (
-//              s => paths flatMap (
-//                pr => paths flatMap (
-//                  qr => paths flatMap (
-//                    ps => paths map (
-//                      qs => cSubstPathEqTemplate(p, q, x, r, s, pr, qr, ps, qs)
-//                    )
-//                  )
-//                )
-//              )
-//            )
-//          )
-//        )
-//      )
-//    ))
-
-  private def constructSubstInstOfRules(paths: List[Path], classes: List[Id], vars: List[Id], depthLimit: Int): SMTLibScript = {
-    var rules: List[SMTLibCommand] = Nil
-    for (p <- paths) {
-      for (cls <- classes) {
-        for (x <- vars) {
-          for (r <- paths) {
-            for (s <- paths) {
+              // TODO: merge InstOf and InstBy templates?
               if (cSubstInstOfTemplate.isDefinedAt(p, cls, x, r, s, depthLimit))
-                rules = cSubstInstOfTemplate(p, cls, x, r, s, depthLimit) :: rules
-            }
-          }
-        }
-      }
-    }
-    SMTLibScript(rules)
-  }
-//    SMTLibScript(paths flatMap (
-//      p => classes flatMap (
-//        cls => vars flatMap (
-//          x => paths flatMap (
-//            r => paths flatMap (
-//              s => paths flatMap (
-//                pr => paths map (
-//                  ps => cSubstInstOfTemplate(p, cls, x, r, s, pr, ps)
-//                )
-//              )
-//            )
-//          )
-//        )
-//      )
-//    ))
+                rules += cSubstInstOfTemplate(p, cls, x, r, s, depthLimit)
 
-  private def constructSubstInstByRules(paths: List[Path], classes: List[Id], vars: List[Id], depthLimit: Int): SMTLibScript = {
-    var rules: List[SMTLibCommand] = Nil
-    for (p <- paths) {
-      for (cls <- classes) {
-        for (x <- vars) {
-          for (r <- paths) {
-            for (s <- paths) {
               if (cSubstInstByTemplate.isDefinedAt(p, cls, x, r, s, depthLimit))
-                rules = cSubstInstByTemplate(p, cls, x, r, s, depthLimit) :: rules
+                rules += cSubstInstByTemplate(p, cls, x, r, s, depthLimit)
+
+              for (q <- paths) {
+                if (cSubstPathEqTemplate.isDefinedAt(p, q, x, r, s, depthLimit))
+                  rules += cSubstPathEqTemplate(p, q, x, r, s, depthLimit)
+              }
             }
           }
         }
       }
     }
-    SMTLibScript(rules)
+
+    SMTLibScript(rules.toList)
   }
-//    SMTLibScript(paths flatMap (
-//      p => classes flatMap (
-//        cls => vars flatMap (
-//          x => paths flatMap (
-//            r => paths flatMap (
-//              s => paths flatMap (
-//                pr => paths map (
-//                  ps => cSubstInstByTemplate(p, cls, x, r, s, pr, ps)
-//                  )
-//                )
-//              )
-//            )
-//          )
-//        )
-//      ))
 
   private def constructCProgRules(paths: List[Path], depthLimit: Int, classDatatypeExists: Boolean): SMTLibScript = {
     if (!classDatatypeExists)

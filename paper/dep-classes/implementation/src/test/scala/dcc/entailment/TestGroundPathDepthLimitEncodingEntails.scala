@@ -34,7 +34,7 @@ class TestGroundPathDepthLimitEncodingEntails extends AnyFunSuite with BeforeAnd
     assert(entailment.entails(List(PathEquivalence("a", "b"), PathEquivalence("c", "b")), PathEquivalence("c", "a")))
   }
 
-  // takes ~15 seconds
+  // takes ~5 seconds
   test("a=b,b=c,c=d,d=e,e=f,f=g |- a=g") {
     val vars = ('a' to 'g').map(_.toString).toList
     val ctx = constructTransitiveContext(vars)
@@ -42,7 +42,7 @@ class TestGroundPathDepthLimitEncodingEntails extends AnyFunSuite with BeforeAnd
     assert(entailment.entails(ctx, PathEquivalence("a", "g")))
   }
 
-  // takes ~20 secs
+  // takes ~10 secs
   test("a=b,b=c,c=d,d=e,e=f,f=g,g=h |- a=h") {
     val vars = ('a' to 'h').map(_.toString).toList
     val ctx = constructTransitiveContext(vars)
