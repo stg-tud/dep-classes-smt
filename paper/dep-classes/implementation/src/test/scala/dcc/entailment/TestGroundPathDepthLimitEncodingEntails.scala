@@ -34,7 +34,7 @@ class TestGroundPathDepthLimitEncodingEntails extends AnyFunSuite with BeforeAnd
     assert(entailment.entails(List(PathEquivalence("a", "b"), PathEquivalence("c", "b")), PathEquivalence("c", "a")))
   }
 
-  // takes ~20 seconds, uncomment if wanting to show this
+  // takes ~15 seconds
   test("a=b,b=c,c=d,d=e,e=f,f=g |- a=g") {
     val vars = ('a' to 'g').map(_.toString).toList
     val ctx = constructTransitiveContext(vars)
@@ -42,7 +42,7 @@ class TestGroundPathDepthLimitEncodingEntails extends AnyFunSuite with BeforeAnd
     assert(entailment.entails(ctx, PathEquivalence("a", "g")))
   }
 
-  // takes >90 secs
+  // takes ~20 secs
   test("a=b,b=c,c=d,d=e,e=f,f=g,g=h |- a=h") {
     val vars = ('a' to 'h').map(_.toString).toList
     val ctx = constructTransitiveContext(vars)
@@ -50,13 +50,13 @@ class TestGroundPathDepthLimitEncodingEntails extends AnyFunSuite with BeforeAnd
     assert(entailment.entails( ctx, PathEquivalence("a", "h")))
   }
 
-  // does some i/o error in process call (exceeds available mem?)
-  //  test("a=b,b=c,c=d,d=e,e=f,f=g,g=h,h=i,i=j,j=k,k=l,l=m,m=n,n=o,o=p,p=q,q=r,r=s,s=t,t=u,u=v,v=w,w=x,x=y,y=z |- a=z") {
-  //    val vars: List[String] = ('a' to 'z').map(_.toString).toList
-  //    val ctx = constructTransitiveContext(vars)
-  //
-  //    assert(entailment.entails(ctx, PathEquivalence("a", "z")))
-  //  }
+  // java heap space error (out of memory)
+//    test("a=b,b=c,c=d,d=e,e=f,f=g,g=h,h=i,i=j,j=k,k=l,l=m,m=n,n=o,o=p,p=q,q=r,r=s,s=t,t=u,u=v,v=w,w=x,x=y,y=z |- a=z") {
+//      val vars: List[String] = ('a' to 'z').map(_.toString).toList
+//      val ctx = constructTransitiveContext(vars)
+//
+//      assert(entailment.entails(ctx, PathEquivalence("a", "z")))
+//    }
 
   test("a.cls=C |- a::C") {
     assert(entailment.entails(List(InstantiatedBy("a", "Zero")), InstanceOf("a", "Zero")))

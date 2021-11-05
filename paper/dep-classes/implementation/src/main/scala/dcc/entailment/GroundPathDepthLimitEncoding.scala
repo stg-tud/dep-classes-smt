@@ -3,8 +3,8 @@ import dcc.Util.{prefixedSubstitute, substitute}
 import dcc.syntax.{Constraint, ConstraintEntailment, Declaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
 import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{Apply, Assert, DeclareFun, DefineFun, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Sugar, Term, Unsat}
-import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Not, Or, True}
+import smt.smtlib.syntax.{Apply, Assert, DeclareFun, SMTLibSymbol, SimpleSymbol, Sort, Sugar, Term, Unsat}
+import smt.smtlib.theory.BoolPredefined.{And, Bool, Implies, Not, True}
 import smt.solver.Z3Solver
 
 import scala.language.postfixOps
@@ -27,7 +27,6 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
   private val FunctionPathEquivalence: SMTLibSymbol = SimpleSymbol("path-equivalence")
   private val FunctionInstanceOf: SMTLibSymbol = SimpleSymbol("instance-of")
   private val FunctionInstantiatedBy: SMTLibSymbol = SimpleSymbol("instantiated-by")
-  private val FunctionSubstitution: SMTLibSymbol = SimpleSymbol("substitute")
 
   override def entails(context: List[Constraint], constraint: Constraint): Boolean = {
     if (debug > 0)
@@ -57,9 +56,6 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     //    - dynamic rules: C-Prog
     //  - entailment judgement
 
-    // Reset counters for fresh name generation
-    resetFreshNameCounter()
-
     val variableNames = extractVariableNames(conclusion :: context)
     val fieldNames = DefinedFieldNames(program)
     val classNames = DefinedClassNames(program)
@@ -77,7 +73,6 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
 //    paths foreach (x => println(s"\t$x"))
 
     val constraintPropositionDeclarations = constructConstraintPropositions(pathDatatypeExists, classDatatypeExists)
-    val substitutionFunctionDeclaration = generateSubstitutionFunction(paths, variableNames, depthLimit, pathDatatypeExists)
 
     val cReflRules = constructReflRules(paths)
     val cClassRules = constructClassRules(paths, classNames map (cls => Id(Symbol(cls)))) // TODO: update class name extraction to return IDs
@@ -99,7 +94,6 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
 
     datatypeDeclarations ++
       constraintPropositionDeclarations ++
-      substitutionFunctionDeclaration ++
       cReflRules ++
       cClassRules ++
       cSubstPathEqRules ++
@@ -328,24 +322,19 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     ))
   }
 
-  // TODO: Optimize subst rule templates:
+  // Optimize subst rule templates:
   //  ✓ remove substitution results from parameters (pr, ps, ...)
   //  ✓ calculate substitution results based on the given inputs
   //  ✓ this leads to the substitute predicate to be true
   //  ✓ change templates to be partial functions, that are only defined if the substitution result is within the depth limit
-  //  - remove the substitute predicate checks in the encoding (as they are guaranteed to be true)
-  //  - if this is possible in all rules using the substitute predicate, remove it altogether (check prog rule)
-  private val prefixSubst = (source: Path, target: Id, replace: Path) => prefixedSubstitute(PathPrefix)(source, target, replace)
-
+  //  ✓ remove the substitute predicate checks in the encoding (as they are guaranteed to be true)
+  //  ✓ if this is possible in all rules using the substitute predicate, remove it altogether
   private val cSubstPathEqTemplate: PartialFunction[(Path, Path, Id, Path, Path, Int), SMTLibCommand] = {
     case (p, q, x, r, s, limit)
       if prefixSubst(p, x, r).depth <= limit && // TODO: move check to call site to avoid calculating the substitution twice?
         prefixSubst(q, x, r).depth <= limit &&
         prefixSubst(p, x, s).depth <= limit &&
         prefixSubst(q, x, s).depth <= limit =>
-      val pSMTLib = PathToSMTLibSymbol(p)
-      val qSMTLib = PathToSMTLibSymbol(q)
-      val xSMTLib = IdToSMTLibSymbol(x)
       val rSMTLib = PathToSMTLibSymbol(r)
       val sSMTLib = PathToSMTLibSymbol(s)
       val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
@@ -356,10 +345,6 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
       Assert(Implies(
         And(
           PathEq(sSMTLib, rSMTLib),
-          Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
-          Subst(qSMTLib, xSMTLib, rSMTLib, qrSMTLib),
-          Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
-          Subst(qSMTLib, xSMTLib, sSMTLib, qsSMTLib),
           PathEq(prSMTLib, qrSMTLib)
         ),
         PathEq(psSMTLib, qsSMTLib)
@@ -370,9 +355,7 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     case (p, cls, x, r, s, limit)
       if prefixSubst(p, x, r).depth <= limit &&
         prefixSubst(p, x, s).depth <= limit =>
-      val pSMTLib = PathToSMTLibSymbol(p)
       val clsSMTLib = IdToSMTLibSymbol(cls)
-      val xSMTLib = IdToSMTLibSymbol(x)
       val rSMTLib = PathToSMTLibSymbol(r)
       val sSMTLib = PathToSMTLibSymbol(s)
       val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
@@ -381,8 +364,6 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
       Assert(Implies(
         And(
           PathEq(sSMTLib, rSMTLib),
-          Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
-          Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
           InstOf(prSMTLib, clsSMTLib)
         ),
         InstOf(psSMTLib, clsSMTLib)
@@ -393,9 +374,7 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     case (p, cls, x, r, s, limit)
       if prefixSubst(p, x, r).depth <= limit &&
         prefixSubst(p, x, s).depth <= limit =>
-      val pSMTLib = PathToSMTLibSymbol(p)
       val clsSMTLib = IdToSMTLibSymbol(cls)
-      val xSMTLib = IdToSMTLibSymbol(x)
       val rSMTLib = PathToSMTLibSymbol(r)
       val sSMTLib = PathToSMTLibSymbol(s)
       val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
@@ -404,8 +383,6 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
       Assert(Implies(
         And(
           PathEq(sSMTLib, rSMTLib),
-          Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
-          Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
           InstBy(prSMTLib, clsSMTLib)
         ),
         InstBy(psSMTLib, clsSMTLib)
@@ -457,66 +434,11 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     ))
   }
 
-  // Substitution Function would be a partial function with the depth limit in place,
-  // it is transformed into a total function by modeling it as a relation that is false for substitutions exceeding the depth limit
-  def generateSubstitutionFunction(paths: List[Path], vars: List[String], depthLimit: Int, pathDatatypeExists: Boolean): SMTLibScript = {
-    val source = freshPath()
-    val target = freshVariable()
-    val replace = freshPath()
-    val result = freshPath()
-
-    val path: Sort = if (pathDatatypeExists) SortPath else SortVariable
-
-    SMTLibScript(Seq(
-      DefineFun(FunctionDef(
-        FunctionSubstitution,
-        Seq(
-          SortedVar(source, path),
-          SortedVar(target, SortVariable),
-          SortedVar(replace, path),
-          SortedVar(result, path)
-        ),
-        Bool,
-        generateSubstitutionFunctionBody(paths, vars.map(s => Id(Symbol(s))), source, target, replace, result, depthLimit)
-      ))
-    ))
-  }
-
-  def generateSubstitutionFunctionBody(paths: List[Path], vars: List[Id], sourceName: SMTLibSymbol, targetName: SMTLibSymbol, replaceName: SMTLibSymbol, resultName: SMTLibSymbol, depthLimit: Int): Term = {
-    var relation: List[Term] = Nil
-
-    paths.foreach(source =>
-      vars.foreach(target =>
-        paths.foreach { replace =>
-          // prefix target such that it matches the prefixed paths
-          val prefixedTarget = Id(Symbol(PathPrefix)) + target
-
-          val result: Path = if (prefixedTarget.baseName != source.baseName) source else substitute(prefixedTarget, replace, source)
-
-          if (result.depth <= depthLimit) {
-            val elem: Term = And(
-              Eq(sourceName, PathToSMTLibSymbol(source)),
-              Eq(targetName, IdToSMTLibSymbol(target)),
-              Eq(replaceName, PathToSMTLibSymbol(replace)),
-              Eq(resultName, PathToSMTLibSymbol(result))
-            )
-
-            relation = elem :: relation
-          }
-        }
-      )
-    )
-
-    Or(relation: _*)
-  }
-
   private def PathEq(p: Term, q: Term): Term = Sugar.Op(FunctionPathEquivalence)(p, q)
 
   private def InstOf(p: Term, cls: Term): Term = Sugar.Op(FunctionInstanceOf)(p, cls)
 
   private def InstBy(p: Term, cls: Term): Term = Sugar.Op(FunctionInstantiatedBy)(p, cls)
-
-  private def Subst(source: Term, target: Term, replace: Term, result: Term): Term = Sugar.Op(FunctionSubstitution)(source, target, replace, result)
 
   def enumeratePaths(vars: List[String], fields: List[String], depthLimit: Int): List[Path] = {
     // Initialize paths with variables
@@ -550,25 +472,5 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     case InstantiatedBy(p, cls) => Apply(FunctionInstantiatedBy, Seq(PathToSMTLibSymbol(p), IdToSMTLibSymbol(cls)))
   }
 
-  private var varCounter = 0
-  private def freshVariable(): SimpleSymbol = {
-    varCounter = varCounter + 1
-    SimpleSymbol(s"x$varCounter")
-  }
-  private var pathCounter = 0
-  private def freshPath(): SimpleSymbol = {
-    pathCounter = pathCounter + 1
-    SimpleSymbol(s"p$pathCounter")
-  }
-//  private var classCounter = 0
-//  private def freshClassVar(): SimpleSymbol = {
-//    classCounter = classCounter + 1
-//    SimpleSymbol(s"cls$classCounter")
-//  }
-
-  private def resetFreshNameCounter(): Unit = {
-    varCounter = 0
-    pathCounter = 0
-//    classCounter = 0
-  }
+  private val prefixSubst = (source: Path, target: Id, replace: Path) => prefixedSubstitute(PathPrefix)(source, target, replace)
 }
