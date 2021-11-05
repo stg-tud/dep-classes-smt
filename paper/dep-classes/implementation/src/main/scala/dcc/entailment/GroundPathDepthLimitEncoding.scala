@@ -81,9 +81,9 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
 
     val cReflRules = constructReflRules(paths)
     val cClassRules = constructClassRules(paths, classNames map (cls => Id(Symbol(cls)))) // TODO: update class name extraction to return IDs
-    val cSubstPathEqRules = constructSubstPathEqRules(paths, variableNames map (x => Id(Symbol(x)))) // TODO: update variable name extraction to return IDs
-    val cSubstInstOfRules = constructSubstInstOfRules(paths, classNames map (cls => Id(Symbol(cls))), variableNames map (x => Id(Symbol(x))))
-    val cSubstInstByRules = constructSubstInstByRules(paths, classNames map (cls => Id(Symbol(cls))), variableNames map (x => Id(Symbol(x))))
+    val cSubstPathEqRules = constructSubstPathEqRules(paths, variableNames map (x => Id(Symbol(x))), depthLimit) // TODO: update variable name extraction to return IDs
+    val cSubstInstOfRules = constructSubstInstOfRules(paths, classNames map (cls => Id(Symbol(cls))), variableNames map (x => Id(Symbol(x))), depthLimit)
+    val cSubstInstByRules = constructSubstInstByRules(paths, classNames map (cls => Id(Symbol(cls))), variableNames map (x => Id(Symbol(x))), depthLimit)
     val cProgRules = constructCProgRules(paths, depthLimit, classDatatypeExists)
 
     val entailmentJudgement = constructEntailmentJudgement(context, conclusion)
@@ -177,14 +177,15 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
   }
 //    SMTLibScript(paths flatMap (p => classes map (cls => cClassRuleTemplate(p, cls))))
 
-  private def constructSubstPathEqRules(paths: List[Path], vars: List[Id]): SMTLibScript = {
+  private def constructSubstPathEqRules(paths: List[Path], vars: List[Id], depthLimit: Int): SMTLibScript = {
     var rules: List[SMTLibCommand] = Nil
     for (p <- paths) {
       for (q <- paths) {
         for (x <- vars) {
           for (r <- paths) {
             for (s <- paths) {
-              rules = cSubstPathEqTemplate(p, q, x, r, s) :: rules
+              if (cSubstPathEqTemplate.isDefinedAt(p, q, x, r, s, depthLimit))
+                rules = cSubstPathEqTemplate(p, q, x, r, s, depthLimit) :: rules
             }
           }
         }
@@ -212,14 +213,15 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
 //      )
 //    ))
 
-  private def constructSubstInstOfRules(paths: List[Path], classes: List[Id], vars: List[Id]): SMTLibScript = {
+  private def constructSubstInstOfRules(paths: List[Path], classes: List[Id], vars: List[Id], depthLimit: Int): SMTLibScript = {
     var rules: List[SMTLibCommand] = Nil
     for (p <- paths) {
       for (cls <- classes) {
         for (x <- vars) {
           for (r <- paths) {
             for (s <- paths) {
-              rules = cSubstInstOfTemplate(p, cls, x, r, s) :: rules
+              if (cSubstInstOfTemplate.isDefinedAt(p, cls, x, r, s, depthLimit))
+                rules = cSubstInstOfTemplate(p, cls, x, r, s, depthLimit) :: rules
             }
           }
         }
@@ -243,14 +245,15 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
 //      )
 //    ))
 
-  private def constructSubstInstByRules(paths: List[Path], classes: List[Id], vars: List[Id]): SMTLibScript = {
+  private def constructSubstInstByRules(paths: List[Path], classes: List[Id], vars: List[Id], depthLimit: Int): SMTLibScript = {
     var rules: List[SMTLibCommand] = Nil
     for (p <- paths) {
       for (cls <- classes) {
         for (x <- vars) {
           for (r <- paths) {
             for (s <- paths) {
-              rules = cSubstInstByTemplate(p, cls, x, r, s) :: rules
+              if (cSubstInstByTemplate.isDefinedAt(p, cls, x, r, s, depthLimit))
+                rules = cSubstInstByTemplate(p, cls, x, r, s, depthLimit) :: rules
             }
           }
         }
@@ -329,77 +332,84 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
   //  ✓ remove substitution results from parameters (pr, ps, ...)
   //  ✓ calculate substitution results based on the given inputs
   //  ✓ this leads to the substitute predicate to be true
-  //  - change templates to be partial functions, that are only defined if the substitution result is within the depth limit
+  //  ✓ change templates to be partial functions, that are only defined if the substitution result is within the depth limit
   //  - remove the substitute predicate checks in the encoding (as they are guaranteed to be true)
   //  - if this is possible in all rules using the substitute predicate, remove it altogether (check prog rule)
-  private def cSubstPathEqTemplate(p: Path, q: Path, x: Id, r: Path, s: Path): SMTLibCommand = {
-    val prefixSubst = (source: Path, target: Id, replace: Path) => prefixedSubstitute(PathPrefix)(source, target, replace)
+  private val prefixSubst = (source: Path, target: Id, replace: Path) => prefixedSubstitute(PathPrefix)(source, target, replace)
 
-    val pSMTLib = PathToSMTLibSymbol(p)
-    val qSMTLib = PathToSMTLibSymbol(q)
-    val xSMTLib = IdToSMTLibSymbol(x)
-    val rSMTLib = PathToSMTLibSymbol(r)
-    val sSMTLib = PathToSMTLibSymbol(s)
-    val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
-    val qrSMTLib = PathToSMTLibSymbol(prefixSubst(q, x, r))
-    val psSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, s))
-    val qsSMTLib = PathToSMTLibSymbol(prefixSubst(q, x, s))
+  private val cSubstPathEqTemplate: PartialFunction[(Path, Path, Id, Path, Path, Int), SMTLibCommand] = {
+    case (p, q, x, r, s, limit)
+      if prefixSubst(p, x, r).depth <= limit && // TODO: move check to call site to avoid calculating the substitution twice?
+        prefixSubst(q, x, r).depth <= limit &&
+        prefixSubst(p, x, s).depth <= limit &&
+        prefixSubst(q, x, s).depth <= limit =>
+      val pSMTLib = PathToSMTLibSymbol(p)
+      val qSMTLib = PathToSMTLibSymbol(q)
+      val xSMTLib = IdToSMTLibSymbol(x)
+      val rSMTLib = PathToSMTLibSymbol(r)
+      val sSMTLib = PathToSMTLibSymbol(s)
+      val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
+      val qrSMTLib = PathToSMTLibSymbol(prefixSubst(q, x, r))
+      val psSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, s))
+      val qsSMTLib = PathToSMTLibSymbol(prefixSubst(q, x, s))
 
-    Assert(Implies(
-      And(
-        PathEq(sSMTLib, rSMTLib),
-        Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
-        Subst(qSMTLib, xSMTLib, rSMTLib, qrSMTLib),
-        Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
-        Subst(qSMTLib, xSMTLib, sSMTLib, qsSMTLib),
-        PathEq(prSMTLib, qrSMTLib)
-      ),
-      PathEq(psSMTLib, qsSMTLib)
-    ))
+      Assert(Implies(
+        And(
+          PathEq(sSMTLib, rSMTLib),
+          Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
+          Subst(qSMTLib, xSMTLib, rSMTLib, qrSMTLib),
+          Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
+          Subst(qSMTLib, xSMTLib, sSMTLib, qsSMTLib),
+          PathEq(prSMTLib, qrSMTLib)
+        ),
+        PathEq(psSMTLib, qsSMTLib)
+      ))
   }
 
-  private def cSubstInstOfTemplate(p: Path, cls: Id, x: Id, r: Path, s: Path): SMTLibCommand = {
-    val prefixSubst = (source: Path, target: Id, replace: Path) => prefixedSubstitute(PathPrefix)(source, target, replace)
+  private val cSubstInstOfTemplate: PartialFunction[(Path, Id, Id, Path, Path, Int), SMTLibCommand] = {
+    case (p, cls, x, r, s, limit)
+      if prefixSubst(p, x, r).depth <= limit &&
+        prefixSubst(p, x, s).depth <= limit =>
+      val pSMTLib = PathToSMTLibSymbol(p)
+      val clsSMTLib = IdToSMTLibSymbol(cls)
+      val xSMTLib = IdToSMTLibSymbol(x)
+      val rSMTLib = PathToSMTLibSymbol(r)
+      val sSMTLib = PathToSMTLibSymbol(s)
+      val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
+      val psSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, s))
 
-    val pSMTLib = PathToSMTLibSymbol(p)
-    val clsSMTLib = IdToSMTLibSymbol(cls)
-    val xSMTLib = IdToSMTLibSymbol(x)
-    val rSMTLib = PathToSMTLibSymbol(r)
-    val sSMTLib = PathToSMTLibSymbol(s)
-    val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
-    val psSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, s))
-
-    Assert(Implies(
-      And(
-        PathEq(sSMTLib, rSMTLib),
-        Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
-        Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
-        InstOf(prSMTLib, clsSMTLib)
-      ),
-      InstOf(psSMTLib, clsSMTLib)
-    ))
+      Assert(Implies(
+        And(
+          PathEq(sSMTLib, rSMTLib),
+          Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
+          Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
+          InstOf(prSMTLib, clsSMTLib)
+        ),
+        InstOf(psSMTLib, clsSMTLib)
+      ))
   }
 
-  private def cSubstInstByTemplate(p: Path, cls: Id, x: Id, r: Path, s: Path): SMTLibCommand = {
-    val prefixSubst = (source: Path, target: Id, replace: Path) => prefixedSubstitute(PathPrefix)(source, target, replace)
+  private val cSubstInstByTemplate: PartialFunction[(Path, Id, Id, Path, Path, Int), SMTLibCommand] = {
+    case (p, cls, x, r, s, limit)
+      if prefixSubst(p, x, r).depth <= limit &&
+        prefixSubst(p, x, s).depth <= limit =>
+      val pSMTLib = PathToSMTLibSymbol(p)
+      val clsSMTLib = IdToSMTLibSymbol(cls)
+      val xSMTLib = IdToSMTLibSymbol(x)
+      val rSMTLib = PathToSMTLibSymbol(r)
+      val sSMTLib = PathToSMTLibSymbol(s)
+      val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
+      val psSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, s))
 
-    val pSMTLib = PathToSMTLibSymbol(p)
-    val clsSMTLib = IdToSMTLibSymbol(cls)
-    val xSMTLib = IdToSMTLibSymbol(x)
-    val rSMTLib = PathToSMTLibSymbol(r)
-    val sSMTLib = PathToSMTLibSymbol(s)
-    val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
-    val psSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, s))
-
-    Assert(Implies(
-      And(
-        PathEq(sSMTLib, rSMTLib),
-        Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
-        Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
-        InstBy(prSMTLib, clsSMTLib)
-      ),
-      InstBy(psSMTLib, clsSMTLib)
-    ))
+      Assert(Implies(
+        And(
+          PathEq(sSMTLib, rSMTLib),
+          Subst(pSMTLib, xSMTLib, rSMTLib, prSMTLib),
+          Subst(pSMTLib, xSMTLib, sSMTLib, psSMTLib),
+          InstBy(prSMTLib, clsSMTLib)
+        ),
+        InstBy(psSMTLib, clsSMTLib)
+      ))
   }
 
   private def cProgRuleTemplate(context: List[Constraint], path: Path, cls: Id): SMTLibCommand = {
