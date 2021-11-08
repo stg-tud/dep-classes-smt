@@ -6,6 +6,8 @@ sealed trait Constraint {
 }
 
 case class PathEquivalence(p: Path, q: Path) extends Constraint {
+  def isReflexive: Boolean = p == q
+
   override def maxPathDepth: Int = p.depth max q.depth
   override def containedPaths: List[Path] = List(p, q)
   override def toString: String = s"$p ≡ $q"

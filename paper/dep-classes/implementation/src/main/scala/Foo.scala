@@ -1,4 +1,4 @@
-import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
+import dcc.entailment.{Algorithmic, EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.program.{BooleanExpressions, NaturalNumbers}
 import dcc.program.NaturalNumbers
 import dcc.syntax._
@@ -195,4 +195,8 @@ object Foo extends App {
   println("\n---------------------------------------------------------------\n")
   println("ground encoding: · |- a=a")
   println(groundEnc.encode(Nil, PathEquivalence("a", "a")).pretty)
+
+  println("\n\nalgo:")
+  val algo = new Algorithmic()
+  println(algo.entails(List(PathEquivalence("p", "p"), InstantiatedBy("p", "cls")), InstanceOf("p", "cls")))
 }
