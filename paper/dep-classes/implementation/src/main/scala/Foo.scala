@@ -188,4 +188,11 @@ object Foo extends App {
 //  )
 //
 //  println(k)
+
+  println("\n\n")
+  println("limit encoding: · |- a=a")
+  println(limitEnc.encode(Nil, PathEquivalence("a", "a")).pretty)
+  println("\n---------------------------------------------------------------\n")
+  println("ground encoding: · |- a=a")
+  println(groundEnc.encode(Nil, PathEquivalence("a", "a")).pretty)
 }

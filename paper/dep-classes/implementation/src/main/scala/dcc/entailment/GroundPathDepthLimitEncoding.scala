@@ -161,12 +161,13 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
         for (x <- vars) {
           for (r <- paths) {
             for (s <- paths) {
-              // TODO: merge InstOf and InstBy templates?
               if (cSubstInstOfTemplate.isDefinedAt(p, cls, x, r, s, depthLimit))
                 rules += cSubstInstOfTemplate(p, cls, x, r, s, depthLimit)
 
               if (cSubstInstByTemplate.isDefinedAt(p, cls, x, r, s, depthLimit))
                 rules += cSubstInstByTemplate(p, cls, x, r, s, depthLimit)
+//              if (cSubstInstTemplate.isDefinedAt(p, cls, x, r, s, depthLimit))
+//                cSubstInstTemplate(p, cls, x, r, s, depthLimit).foreach(rules += _)
 
               for (q <- paths) {
                 if (cSubstPathEqTemplate.isDefinedAt(p, q, x, r, s, depthLimit))
@@ -260,6 +261,34 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
         PathEq(psSMTLib, qsSMTLib)
       ))
   }
+
+//  private val cSubstInstTemplate: PartialFunction[(Path, Id, Id, Path, Path, Int), List[SMTLibCommand]] = {
+//    case (p, cls, x, r, s, limit)
+//      if prefixSubst(p, x, r).depth <= limit &&
+//        prefixSubst(p, x, s).depth <= limit =>
+//      val clsSMTLib = IdToSMTLibSymbol(cls)
+//      val rSMTLib = PathToSMTLibSymbol(r)
+//      val sSMTLib = PathToSMTLibSymbol(s)
+//      val prSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, r))
+//      val psSMTLib = PathToSMTLibSymbol(prefixSubst(p, x, s))
+//
+//      List(
+//        Assert(Implies(
+//          And(
+//            PathEq(sSMTLib, rSMTLib),
+//            InstOf(prSMTLib, clsSMTLib)
+//          ),
+//          InstOf(psSMTLib, clsSMTLib)
+//        )),
+//        Assert(Implies(
+//          And(
+//            PathEq(sSMTLib, rSMTLib),
+//            InstBy(prSMTLib, clsSMTLib)
+//          ),
+//          InstBy(psSMTLib, clsSMTLib)
+//        ))
+//      )
+//  }
 
   private val cSubstInstOfTemplate: PartialFunction[(Path, Id, Id, Path, Path, Int), SMTLibCommand] = {
     case (p, cls, x, r, s, limit)
