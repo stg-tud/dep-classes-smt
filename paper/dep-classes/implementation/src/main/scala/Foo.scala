@@ -201,4 +201,5 @@ object Foo extends App {
   println(algo.entails(List(PathEquivalence("p", "p"), InstantiatedBy("p", "cls")), InstanceOf("p", "cls")))
   println(algo.entails(List(PathEquivalence("a", "b"), PathEquivalence("b", "c"), InstantiatedBy("p", "cls")), PathEquivalence("b", "c")))
   println(algo.entails(List(PathEquivalence("a", "b")), PathEquivalence("b", "a")))
+  println(algo.entails(List(PathEquivalence("a", "b"), PathEquivalence("b", "c")), PathEquivalence("a", "c")))
 }
