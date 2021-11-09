@@ -199,4 +199,6 @@ object Foo extends App {
   println("\n\nalgo:")
   val algo = new Algorithmic()
   println(algo.entails(List(PathEquivalence("p", "p"), InstantiatedBy("p", "cls")), InstanceOf("p", "cls")))
+  println(algo.entails(List(PathEquivalence("a", "b"), PathEquivalence("b", "c"), InstantiatedBy("p", "cls")), PathEquivalence("b", "c")))
+  println(algo.entails(List(PathEquivalence("a", "b")), PathEquivalence("b", "a")))
 }
