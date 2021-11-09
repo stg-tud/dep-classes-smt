@@ -196,10 +196,133 @@ object Foo extends App {
   println("ground encoding: · |- a=a")
   println(groundEnc.encode(Nil, PathEquivalence("a", "a")).pretty)
 
-  println("\n\nalgo:")
+  @inline
+  def NsToMs(l: Double): Double = l/1000000d
+  var t1: Long = 0L
+  var t2: Long = 0L
+  var result: Boolean = false
+
+  println("\n\nalgorithmic system:")
   val algo = new Algorithmic()
-  println(algo.entails(List(PathEquivalence("p", "p"), InstantiatedBy("p", "cls")), InstanceOf("p", "cls")))
-  println(algo.entails(List(PathEquivalence("a", "b"), PathEquivalence("b", "c"), InstantiatedBy("p", "cls")), PathEquivalence("b", "c")))
-  println(algo.entails(List(PathEquivalence("a", "b")), PathEquivalence("b", "a")))
-  println(algo.entails(List(PathEquivalence("a", "b"), PathEquivalence("b", "c")), PathEquivalence("a", "c")))
+
+  print("check p=p,p.cls=cls |- p::cls: ")
+  t1 = System.nanoTime()
+  result = algo.entails(List(PathEquivalence("p", "p"), InstantiatedBy("p", "cls")), InstanceOf("p", "cls"))
+  t2 = System.nanoTime()
+  println(if (result) "✓" else "×")
+  println(s"\ttook ${NsToMs(t2-t1)}ms")
+
+  print("check a=b,b=c,p.cls=cls |- b=c: ")
+  t1 = System.nanoTime()
+  result = algo.entails(List(PathEquivalence("a", "b"), PathEquivalence("b", "c"), InstantiatedBy("p", "cls")), PathEquivalence("b", "c"))
+  t2 = System.nanoTime()
+  println(if (result) "✓" else "×")
+  println(s"\ttook ${NsToMs(t2-t1)}ms")
+
+  print("check a=b |- b=a: ")
+  t1 = System.nanoTime()
+  result = algo.entails(List(PathEquivalence("a", "b")), PathEquivalence("b", "a"))
+  t2 = System.nanoTime()
+  println(if (result) "✓" else "×")
+  println(s"\ttook ${NsToMs(t2-t1)}ms")
+
+  print("check a=b,b=c |- a=c: ")
+  t1 = System.nanoTime()
+  result = algo.entails(List(PathEquivalence("a", "b"), PathEquivalence("b", "c")), PathEquivalence("a", "c"))
+  t2 = System.nanoTime()
+  println(if (result) "✓" else "×")
+  println(s"\ttook ${NsToMs(t2-t1)}ms")
+
+  print("check a=b,b=c,c=d |- a=d: ")
+  t1 = System.nanoTime()
+  result = algo.entails(
+    List(
+      PathEquivalence("a", "b"),
+      PathEquivalence("b", "c"),
+      PathEquivalence("c", "d")
+    ), PathEquivalence("a", "d"))
+  t2 = System.nanoTime()
+  println(if (result) "✓" else "×")
+  println(s"\ttook ${NsToMs(t2-t1)}ms")
+
+  print("check a=b,b=c,c=d,d=e |- a=e: ")
+  t1 = System.nanoTime()
+  result = algo.entails(
+    List(
+      PathEquivalence("a", "b"),
+      PathEquivalence("b", "c"),
+      PathEquivalence("c", "d"),
+      PathEquivalence("d", "e")
+    ), PathEquivalence("a", "e"))
+  t2 = System.nanoTime()
+  println(if (result) "✓" else "×")
+  println(s"\ttook ${NsToMs(t2-t1)}ms")
+
+//  print("check a=b,b=c,...,q=r |- a=r: ")
+//  t1 = System.nanoTime()
+//  result = algo.entails(
+//    List(
+//      PathEquivalence("a", "b"),
+//      PathEquivalence("b", "c"),
+//      PathEquivalence("c", "d"),
+//      PathEquivalence("d", "e"),
+//      PathEquivalence("e", "f"),
+//      PathEquivalence("f", "g"),
+//      PathEquivalence("g", "h"),
+//      PathEquivalence("h", "i"),
+//      PathEquivalence("i", "j"),
+//      PathEquivalence("j", "k"),
+//      PathEquivalence("k", "l"),
+//      PathEquivalence("l", "m"),
+//      PathEquivalence("m", "n"),
+//      PathEquivalence("n", "o"),
+//      PathEquivalence("o", "p"),
+//      PathEquivalence("p", "q"),
+//      PathEquivalence("q", "r")
+//    ), PathEquivalence("a", "r"))
+//  t2 = System.nanoTime()
+//  println(if (result) "✓" else "×")
+//  println(s"\ttook ${NsToMs(t2-t1)}ms")
+
+  private def measureAvgTime[R](block: => R, repeats: Int): (R, Double) = {
+    val result = block
+    var total = 0L
+
+    (0 until repeats).foreach { _ =>
+      val t0 = System.nanoTime()
+      block
+      val t1 = System.nanoTime()
+      total += t1-t0
+    }
+
+    (result, total.toDouble/repeats)
+  }
+
+  private def constructTransitiveContext(vars: List[String]): List[Constraint] = vars match {
+    case Nil => Nil
+    case _ :: Nil => Nil
+    case l :: r :: tl => PathEquivalence(l,r)::constructTransitiveContext(r::tl)
+  }
+
+  private def constraintsToString(cs: List[Constraint]): String = cs match {
+    case Nil => "·"
+    case last::Nil => last.toString
+    case x::xs => s"$x, ${constraintsToString(xs)}"
+  }
+
+  val repeats = 1
+
+  println(s"measure avg runtime of transitivity chain entailments over $repeats repeats")
+
+  val start: Char = 'a'
+  ('a' to 'f').foreach {
+    end: Char =>
+      val vars = (start to end).map(_.toString).toList
+      val ctx = constructTransitiveContext(vars)
+      val conclusion = PathEquivalence(start.toString, end.toString)
+      print(s"check ${constraintsToString(ctx)} |- $conclusion: ")
+      val (result, time) = measureAvgTime(algo.entails(ctx, conclusion), repeats)
+      println(if (result) "✓" else "×")
+      println(f"\ttook ${NsToMs(time)}%1.4fms")
+    }
 }
