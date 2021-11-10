@@ -1,0 +1,16 @@
+algorithmic system:
+measure avg runtime of transitivity chain entailments
+measure '· |- a ≡ a' using 20 iterations: ✓
+	took 882ns on avg
+measure 'a ≡ b |- a ≡ b' using 20 iterations: ✓
+	took 1757ns on avg
+measure 'a ≡ b, b ≡ c |- a ≡ c' using 20 iterations: ✓
+	took 90589ns on avg
+measure 'a ≡ b, b ≡ c, c ≡ d |- a ≡ d' using 20 iterations: ✓
+	took 725280ns on avg
+measure 'a ≡ b, b ≡ c, c ≡ d, d ≡ e |- a ≡ e' using 20 iterations: ✓
+	took 26,034ms on avg
+measure 'a ≡ b, b ≡ c, c ≡ d, d ≡ e, e ≡ f |- a ≡ f' using 2 iterations: ✓
+	took 3,77min on avg
+measure 'a ≡ b, b ≡ c, c ≡ d, d ≡ e, e ≡ f, f ≡ g |- a ≡ g' using 1 iterations: 
+        interrupted after > 3 hours
