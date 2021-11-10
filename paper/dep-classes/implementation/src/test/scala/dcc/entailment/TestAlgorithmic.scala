@@ -1,5 +1,6 @@
 package dcc.entailment
 
+import dcc.program.NaturalNumbers
 import dcc.syntax.{Constraint, InstanceOf, InstantiatedBy, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
 import org.scalatest.funsuite.AnyFunSuite
@@ -22,7 +23,7 @@ class TestAlgorithmic extends AnyFunSuite{
   @inline
   private def NsToMs(l: Double): Double = l/1000000d
 
-  val algo = new Algorithmic()
+  val algo = new Algorithmic(NaturalNumbers.program)
 
   test ("check p=p,p.cls=cls |- p::cls") {
     val repeats = 10

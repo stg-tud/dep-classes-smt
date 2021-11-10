@@ -204,7 +204,7 @@ object Foo extends App {
 //  var result: Boolean = false
 
   println("\n\nalgorithmic system:")
-  val algo = new Algorithmic()
+  val algo = new Algorithmic(NaturalNumbers.program)
 
 //  print("check p=p,p.cls=cls |- p::cls: ")
 //  t1 = System.nanoTime()
@@ -346,6 +346,11 @@ object Foo extends App {
 
     f"$min%1.2fmin"
   }
+
+  println(s"check x::Zero |- x::Nat: ${algo.entails(
+    List(InstanceOf("a", "Zero")),
+    InstanceOf("a", "Nat")
+  )}")
 
 //  println(s"measure avg runtime of transitivity chain entailments over $repeats repeats")
   println(s"measure avg runtime of transitivity chain entailments")

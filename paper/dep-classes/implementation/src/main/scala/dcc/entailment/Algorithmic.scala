@@ -1,13 +1,16 @@
 package dcc.entailment
-import dcc.syntax.{Constraint, FieldPath, InstanceOf, InstantiatedBy, PathEquivalence}
+import dcc.syntax.Program.{GetMatchingConstraintEntailments, Program}
+import dcc.syntax.{Constraint, ConstraintEntailment, FieldPath, InstanceOf, InstantiatedBy, PathEquivalence}
 
-class Algorithmic extends Entailment {
+class Algorithmic(program: Program) extends Entailment {
   override def entails(context: List[Constraint], constraints: List[Constraint]): Boolean = constraints.forall(entails(context, _))
 
   override def entails(context: List[Constraint], constraint: Constraint): Boolean = search(context, constraint, Nil, Nil, Nil, Nil, Nil, Nil)
 
   // TODO: keep track of already "visited" conclusions? o/w it might happen to test for the same one again leading to non-terminating behaviour
   //  do this per rule, as they are not mutually exclusive
+  //  ↑ also memoize if the corresponding branch could be closed successfully?
+  // TODO: consolidate cases (instance of checks)
   def search(context: List[Constraint], conclusion: Constraint,
              visitedClass: List[Constraint],
              visitedProg: List[Constraint],
@@ -38,7 +41,20 @@ class Algorithmic extends Entailment {
         }
 
         // CA-Prog
-        // TODO
+        if (!visitedProg.contains(conclusion) && conclusion.isInstanceOf[InstanceOf]) {
+          val InstanceOf(p, cls) = conclusion
+
+          if (context.flatMap(_.containedPaths).contains(p)) {
+            // find matching constraint entailment declarations
+            for (elem@ConstraintEntailment(x, as, _) <- GetMatchingConstraintEntailments(program, cls)) {
+//              println(s"want to show '$conclusion'")
+//              println(s"found matching declaration '$elem'")
+              if (as.exists(c => search(context, dcc.Util.substitute(x, p, c), visitedClass, conclusion::visitedProg, visitedSubst1, visitedSubst2, visitedSubst3, visitedSubst4))) {
+                return true
+              }
+            }
+          }
+        }
 
         // CA-Subst1
         if (!visitedSubst1.contains(conclusion) && conclusion.isInstanceOf[InstantiatedBy]) {

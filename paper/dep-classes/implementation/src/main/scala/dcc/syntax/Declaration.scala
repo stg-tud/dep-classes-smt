@@ -29,6 +29,7 @@ case class ConstraintEntailment(x: Id, as: List[Constraint], a: Constraint) exte
 
 import scala.language.postfixOps
 
+// TODO: change program to be a trait?
 object Program {
   type Program = List[Declaration]
 
@@ -48,4 +49,10 @@ object Program {
     case ConstraintEntailment(_, _, InstanceOf(_, cls)) => cls.name.name :: Nil
     case _ => Nil
   } distinct
+
+  def GetMatchingConstraintEntailments(program: Program, cls: Id): List[ConstraintEntailment] = program match {
+    case Nil => Nil
+    case ConstraintEntailment(x, ctx, InstanceOf(y, cls1)) :: rest if x==y && cls1==cls => ConstraintEntailment(x, ctx, InstanceOf(x, cls)) :: GetMatchingConstraintEntailments(rest, cls)
+    case _ :: rest => GetMatchingConstraintEntailments(rest, cls)
+  }
 }
