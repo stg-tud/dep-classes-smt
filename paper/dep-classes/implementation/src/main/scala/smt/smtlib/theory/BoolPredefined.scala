@@ -3,14 +3,29 @@ package smt.smtlib.theory
 import smt.smtlib.syntax.{Apply, SimpleSymbol, Sort, Term}
 
 // TODO: move functions into case classes to enable pretty printing?
+//  - the downside of this is that it's different elements in the syntax tree
 // Bool exists in every theory
 object BoolPredefined {
   // Sorts
   val Bool: Sort = SimpleSymbol("Bool")
 
-  // Primitives
-  val True: Term = SimpleSymbol("true")
-  val False: Term = SimpleSymbol("false")
+//  // Primitives
+//  val True: Term = SimpleSymbol("true")
+//  val False: Term = SimpleSymbol("false")
+
+  case object True extends Term {
+    def apply(): Term = SimpleSymbol("true")
+
+    override def format: String = True().format
+    override def pretty: String = "⊤"
+  }
+
+  case object False extends Term {
+    def apply(): Term = SimpleSymbol("false")
+
+    override def format: String = False().format
+    override def pretty: String = "⊥"
+  }
 
   // TODO use !, =>, &&, ||, ^ as function names? make them infix (would require to put it into trait Term?)?
   // Operators

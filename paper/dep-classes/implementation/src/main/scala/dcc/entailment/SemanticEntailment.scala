@@ -208,7 +208,7 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
         SortedVar(SimpleSymbol("class-c"), Class)
       ),
       Bool,
-      contextInstantiations.foldRight(False) {
+      contextInstantiations.foldRight(False: Term) {
         case (InstantiatedBy(p, cls), rest) =>
           Or(
             And(
@@ -232,7 +232,7 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
       else
         Or(
           Eq(SimpleSymbol("path-p"), SimpleSymbol("path-q")),
-          symmetricTransitiveClosure.foldRight(False) {
+          symmetricTransitiveClosure.foldRight(False: Term) {
             case (PathEquivalence(p, q), rest) =>
               Or(
                 And(

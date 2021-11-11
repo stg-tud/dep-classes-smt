@@ -6,7 +6,7 @@ import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
 import dcc.types.{FaithfulAdaptionChecker, Type}
 import smt.smtlib.SMTLibScript
-import smt.smtlib.syntax.{Apply, DefineFun, FunctionDef, SimpleSymbol, SortedVar}
+import smt.smtlib.syntax.{Apply, DefineFun, FunctionDef, SimpleSymbol, SortedVar, Term}
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, False, Or, True}
 
 object Foo extends App {
@@ -203,4 +203,15 @@ object Foo extends App {
     List(InstanceOf("a", "Zero")),
     InstanceOf("a", "Nat")
   )}")
+
+  println(True.format)
+  println(True().format)
+  println(SimpleSymbol("true").format)
+  println(True.pretty)
+  println(True().pretty)
+  println(SimpleSymbol("true").pretty)
+
+  val t: Term = Apply(SimpleSymbol("foo"), Seq(SimpleSymbol("true"), True, False))
+  println(t.format)
+  println(t.pretty)
 }
