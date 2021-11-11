@@ -1,6 +1,7 @@
 package dcc.entailment
 
 import dcc.Util.substitute
+import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.entailment.SemanticEntailment.{Class, ConstraintToTerm, Field, IdToSymbol, MetaPath, Path, PathToTerm, Variable, constructorPth, constructorVar, functionInstanceOf, functionInstantiatedBy, functionPathEquivalence, functionSubstitution, selectorField, selectorId, selectorObj, sortClass, sortField, sortPath, sortVariable, substitutePath}
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence, Util}
 import dcc.syntax.Program.Program
@@ -17,6 +18,8 @@ import scala.language.postfixOps
 
 // TODO: add timeout flag as Option[Int] default None
 class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
+  override def typ: EntailmentSort = EntailmentSort.Semantic
+
   override def entails(context: List[Constraint], constraint: Constraint): Boolean = {
     if (debug > 0)
       println(s"entailment: ${Util.commaSeparate(context)} |- $constraint")

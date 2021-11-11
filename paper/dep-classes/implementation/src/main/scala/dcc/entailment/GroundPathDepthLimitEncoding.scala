@@ -1,5 +1,6 @@
 package dcc.entailment
 import dcc.Util.{prefixedSubstitute, substitute}
+import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{Constraint, ConstraintEntailment, Declaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
 import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
@@ -28,6 +29,8 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
   private val FunctionPathEquivalence: SMTLibSymbol = SimpleSymbol("path-equivalence")
   private val FunctionInstanceOf: SMTLibSymbol = SimpleSymbol("instance-of")
   private val FunctionInstantiatedBy: SMTLibSymbol = SimpleSymbol("instantiated-by")
+
+  override def typ: EntailmentSort = EntailmentSort.GroundPathDepthLimit
 
   override def entails(context: List[Constraint], constraint: Constraint): Boolean = {
     if (debug > 0)

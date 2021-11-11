@@ -1,4 +1,5 @@
 package dcc.entailment
+import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.Program.Program
 import dcc.syntax.{Constraint, ConstraintEntailment, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import smt.smtlib.SMTLib.{is, selector}
@@ -37,6 +38,8 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
   private val FunctionInstanceOf: SMTLibSymbol = SimpleSymbol("instance-of")
   private val FunctionInstantiatedBy: SMTLibSymbol = SimpleSymbol("instantiated-by")
   private val FunctionSubstitution: SMTLibSymbol = SimpleSymbol("substitute")
+
+  override def typ: EntailmentSort = EntailmentSort.SimplifiedSemantic
 
   override def entails(context: List[Constraint], constraint: Constraint): Boolean = {
     if (debug > 0)

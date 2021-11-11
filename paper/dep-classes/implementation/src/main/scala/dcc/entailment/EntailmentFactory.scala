@@ -1,6 +1,6 @@
 package dcc.entailment
 
-import dcc.entailment.EntailmentSort.{EntailmentSort, GroundPathDepthLimit, PathDepthLimit, Semantic, SimplifiedSemantic}
+import dcc.entailment.EntailmentSort.{Algorithmic, EntailmentSort, GroundPathDepthLimit, PathDepthLimit, Semantic, SimplifiedSemantic}
 import dcc.syntax.Program.Program
 
 object EntailmentFactory {
@@ -9,10 +9,11 @@ object EntailmentFactory {
     case SimplifiedSemantic => new SimplifiedSemanticEntailment(program, debug)
     case PathDepthLimit => new PathDepthLimitEncoding(program, debug)
     case GroundPathDepthLimit => new GroundPathDepthLimitEncoding(program, debug)
+    case Algorithmic => new Algorithmic(program, debug)
   }
 }
 
 object EntailmentSort extends Enumeration {
   type EntailmentSort = Value
-  val Semantic, SimplifiedSemantic, PathDepthLimit, GroundPathDepthLimit = Value
+  val Semantic, SimplifiedSemantic, PathDepthLimit, GroundPathDepthLimit, Algorithmic = Value
 }
