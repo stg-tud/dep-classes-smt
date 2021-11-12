@@ -7,7 +7,7 @@ import dcc.syntax.Program.Program
 import dcc.types.{FaithfulAdaptionChecker, Type}
 import smt.smtlib.SMTLibScript
 import smt.smtlib.syntax.{Apply, DefineFun, FunctionDef, SimpleSymbol, SortedVar, Term}
-import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, False, Or, True}
+import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, False, Implies, Not, Or, True, Xor, Ite}
 
 object Foo extends App {
   // TODO: is there a way to force the program if the entailment to be the same as the program of the checker/interpreter?
@@ -214,4 +214,15 @@ object Foo extends App {
   val t: Term = Apply(SimpleSymbol("foo"), Seq(SimpleSymbol("true"), True, False))
   println(t.format)
   println(t.pretty)
+
+  println(Not(True))
+  println(Not(True).format)
+  println(Not(True).pretty)
+
+  println(And(
+    Or(True, False, True),
+    Implies(False, True),
+    Xor(True, Eq(True, Not(True)))
+  ).pretty)
+  println(Ite(Not(False), False, True).pretty)
 }

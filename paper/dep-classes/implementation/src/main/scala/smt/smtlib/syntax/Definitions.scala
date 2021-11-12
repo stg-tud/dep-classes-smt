@@ -16,7 +16,7 @@ case class DefineFunsRec(declarations: Seq[FunctionDec], terms: Seq[Term]) exten
   override def format: String = s"(define-funs-rec (${SMTLibFormatter.format(declarations)}) (${SMTLibFormatter.format(terms)}))"
   override def pretty: String =
     if (declarations.size == terms.size)
-      declarations.zip(terms).foldRight(""){ case ((decl, body), xs) => s"${decl.pretty} = ${body.pretty}\n$xs" }
+      declarations.zip(terms).foldRight(""){ case ((declaration, body), xs) => s"${declaration.pretty} ≔ ${body.pretty}\n$xs" }
     else
       ""
 }
@@ -34,5 +34,5 @@ case class FunctionDec(symbol: SMTLibSymbol, args: Seq[SortedVar], ret: Sort) ex
 
 case class FunctionDef(symbol: SMTLibSymbol, args: Seq[SortedVar], ret: Sort, body: Term) extends SMTLibFormatter {
   override def format: String = s"${symbol.format} (${SMTLibFormatter.format(args)}) ${ret.format} ${body.format}"
-  override def pretty: String = s"def ${symbol.pretty}(${SMTLibFormatter.pretty(args, ", ")}): ${ret.pretty} = ${body.pretty}"
+  override def pretty: String = s"def ${symbol.pretty}(${SMTLibFormatter.pretty(args, ", ")}): ${ret.pretty} ≔ ${body.pretty}"
 }
