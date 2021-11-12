@@ -1,20 +1,30 @@
 In the algorithmic system, how would we solve 'a=b |- b=a'.
 CA-Subst3 is the only rule we can apply.
 
+
           p < as
 as |- p=p2      as |- p1=p
 --------------------------- CA-Subst3
          as |- p1=p2
 
 
----------- Refl           ----------- Same as init
+We have two possibilities to satisfy p < a=b, namely p=a and p=b
+resulting in the following deviations:
+
+
+                              ...
+---------- CA-Refl        ----------- same as below
 a=b |- a=a                a=b |- b=a
-------------------------------------- Subst3 with p=a
+------------------------------------- CA-Subst3 with p=a
             a=b |- b=a
 
 
----------- same as init   ----------- Refl
+   ...
+---------- same as below  ----------- CA-Refl
 a=b |- b=a                a=b |- b=b
-------------------------------------- Subst3 with p=b
+------------------------------------- CA-Subst3 with p=b
             a=b |- b=a
 
+
+In both cases we replicate the same proof goal
+we wanted to show initially in one of the branches.
