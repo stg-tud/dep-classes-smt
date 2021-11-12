@@ -12,7 +12,7 @@ case class IdentifierAs(identifier: Identifier, sort: Sort) extends QualifiedIde
 }
 
 case class Apply(id: QualifiedIdentifier, terms: Seq[Term]) extends Term {
-  require(terms.nonEmpty, "argument terms must not be empty")
+  require(terms.nonEmpty, s"argument terms must not be empty (during calling ${id.pretty})")
 
   override def format: String = s"(${id.format} ${SMTLibFormatter.format(terms)})"
   override def pretty: String = id match {

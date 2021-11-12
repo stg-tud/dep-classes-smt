@@ -2,7 +2,7 @@ package dcc.entailment
 import dcc.Util.substitute
 import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{Constraint, ConstraintEntailment, Declaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
-import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
+import dcc.syntax.Program.{DefinedClasses, DefinedFields, Program}
 import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
 import smt.smtlib.syntax.{Assert, DeclareFun, DefineFun, Forall, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Term, Unsat}
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Not, Or, True}
@@ -48,17 +48,17 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     // Reset counters for fresh name generation
     resetFreshNameCounter()
 
-    val variableNames = extractVariableNames(conclusion :: context)
-    val fieldNames = DefinedFieldNames(program)
-    val classNames = DefinedClassNames(program)
+    val variables: List[Id] = extractVariableNames(conclusion :: context)
+    val fields: List[Id] = DefinedFields(program)
+    val classes: List[Id] = DefinedClasses(program)
 
     val depthLimit = determineDepthLimit(context, conclusion)
-    val paths = enumeratePaths(variableNames, fieldNames, depthLimit)
+    val paths = enumeratePaths(variables, fields, depthLimit)
 
-    val (datatypeDeclarations, pathDatatypeExists, classDatatypeExists) = constructTypeDeclarations(classNames, variableNames, fieldNames, paths)
+    val (datatypeDeclarations, pathDatatypeExists, classDatatypeExists) = constructTypeDeclarations(classes, variables, fields, paths)
 
     val constraintPropositionDeclarations = constructConstraintPropositions(pathDatatypeExists, classDatatypeExists)
-    val substitutionFunctionDeclaration = generateSubstitutionFunction(paths, variableNames, depthLimit, pathDatatypeExists)
+    val substitutionFunctionDeclaration = generateSubstitutionFunction(paths, variables, depthLimit, pathDatatypeExists)
 
     val staticCalculusRules = constructStaticCalculusRules(pathDatatypeExists, classDatatypeExists)
     val dynamicCalculusRules = constructDynamicCalculusRules(paths, depthLimit, classDatatypeExists)
@@ -97,7 +97,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     CAProgPaths(context, unifyingVar) union ((conclusion::context) flatMap (_.containedPaths) toSet)
   }
 
-  private def constructTypeDeclarations(classes: List[String], variables: List[String], fields: List[String], paths: List[Path]): (SMTLibScript, Boolean, Boolean) = {
+  private def constructTypeDeclarations(classes: List[Id], variables: List[Id], fields: List[Id], paths: List[Path]): (SMTLibScript, Boolean, Boolean) = {
     var declarations: SMTLibScript = SMTLibScript(Seq(SMTLib.buildEnumerationType(SortNameVariable, variables)))
 
     val doAddClassDatatype = classes.nonEmpty
@@ -340,7 +340,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
 
   // Substitution Function would be a partial function with the depth limit in place,
   // it is transformed into a total function by modeling it as a relation that is false for substitutions exceeding the depth limit
-  def generateSubstitutionFunction(paths: List[Path], vars: List[String], depthLimit: Int, pathDatatypeExists: Boolean): SMTLibScript = {
+  def generateSubstitutionFunction(paths: List[Path], vars: List[Id], depthLimit: Int, pathDatatypeExists: Boolean): SMTLibScript = {
     val source = freshPath()
     val target = freshVariable()
     val replace = freshPath()
@@ -358,7 +358,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
           SortedVar(result, path)
         ),
         Bool,
-        generateSubstitutionFunctionBody(paths, vars.map(s => Id(Symbol(s))), source, target, replace, result, depthLimit)
+        generateSubstitutionFunctionBody(paths, vars, source, target, replace, result, depthLimit)
       ))
     ))
   }
@@ -391,9 +391,9 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     Or(relation: _*)
   }
 
-  def enumeratePaths(vars: List[String], fields: List[String], depthLimit: Int): List[Path] = {
+  def enumeratePaths(vars: List[Id], fields: List[Id], depthLimit: Int): List[Path] = {
     // Initialize paths with variables
-    var paths: List[Path] = vars.map(s => Id(Symbol(s"$PathPrefix$s"))) // prefix to not have ambiguous names between variables and paths
+    var paths: List[Path] = vars.map(x => PathPrefix+:x) // prefix to not have ambiguous names between variables and paths
 
     // start with 1, as zero length is init
     (1 to depthLimit) foreach { _ =>
@@ -403,14 +403,14 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     paths.distinct
   }
 
-  private def addFieldsToPaths(paths: List[Path], fields: List[String]): List[Path] = paths.flatMap{p => addFieldsToPath(p, fields)}
+  private def addFieldsToPaths(paths: List[Path], fields: List[Id]): List[Path] = paths.flatMap{p => addFieldsToPath(p, fields)}
 
-  private def addFieldsToPath(path: Path, fields: List[String]): List[Path] = fields.map(f => FieldPath(path, Id(Symbol(f))))
+  private def addFieldsToPath(path: Path, fields: List[Id]): List[Path] = fields.map(f => FieldPath(path, f))
 
-  private def extractVariableNames(constraints: List[Constraint]): List[String] = constraints flatMap {
-    case PathEquivalence(p, q) => List(p.baseName, q.baseName)
-    case InstanceOf(p, _) => List(p.baseName)
-    case InstantiatedBy(p, _) => List(p.baseName)
+  private def extractVariableNames(constraints: List[Constraint]): List[Id] = constraints flatMap {
+    case PathEquivalence(p, q) => List(p.base, q.base)
+    case InstanceOf(p, _) => List(p.base)
+    case InstantiatedBy(p, _) => List(p.base)
   } distinct
 
   private def IdToSMTLibSymbol(id: Id): SMTLibSymbol = SimpleSymbol(id.name.name)

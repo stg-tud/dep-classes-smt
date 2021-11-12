@@ -33,20 +33,22 @@ import scala.language.postfixOps
 object Program {
   type Program = List[Declaration]
 
-  def DefinedFieldNames(p: Program): List[String] = p flatMap {
+  // All valid field names must be introduced via constructors.
+  def DefinedFields(p: Program): List[Id] = p flatMap {
     case ConstructorDeclaration(_, _, as) => extractFieldNames(as)
     case _ => Nil
   }
 
-  private def extractFieldNames(constraints: List[Constraint]): List[String] = constraints flatMap {
-    case PathEquivalence(p, q) => p.fieldNames ++ q.fieldNames
-    case InstanceOf(p, _) => p.fieldNames
-    case InstantiatedBy(p, _) => p.fieldNames
+  private def extractFieldNames(constraints: List[Constraint]): List[Id] = constraints flatMap {
+    case PathEquivalence(p, q) => p.fields ++ q.fields
+    case InstanceOf(p, _) => p.fields
+    case InstantiatedBy(p, _) => p.fields
   } distinct
 
-  def DefinedClassNames(p: Program): List[String] = p flatMap {
-    case ConstructorDeclaration(cls, _, _) => cls.name.name :: Nil
-    case ConstraintEntailment(_, _, InstanceOf(_, cls)) => cls.name.name :: Nil
+  // A valid class name is either introduces through a constructor or as the conclusion of a constraint entailment
+  def DefinedClasses(p: Program): List[Id] = p flatMap {
+    case ConstructorDeclaration(cls, _, _) => cls :: Nil
+    case ConstraintEntailment(_, _, InstanceOf(_, cls)) => cls :: Nil
     case _ => Nil
   } distinct
 

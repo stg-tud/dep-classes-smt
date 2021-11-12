@@ -3,9 +3,8 @@ package dcc.entailment
 import dcc.Util.substitute
 import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.entailment.SemanticEntailment.{Class, ConstraintToTerm, Field, IdToSymbol, MetaPath, Path, PathToTerm, Variable, constructorPth, constructorVar, functionInstanceOf, functionInstantiatedBy, functionPathEquivalence, functionSubstitution, selectorField, selectorId, selectorObj, sortClass, sortField, sortPath, sortVariable, substitutePath}
-import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence, Util}
-import dcc.syntax.Program.Program
-import dcc.types.Type
+import dcc.syntax.{Constraint, ConstraintEntailment, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
+import dcc.syntax.Program.{DefinedClasses, DefinedFields, Program}
 import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
 import smt.smtlib.syntax.Sugar.Op
 import smt.smtlib.{SMTLibCommand, SMTLibScript}
@@ -40,7 +39,8 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
         )
       )))
 
-    // TODO: what is a sensible timeout? remove it altogether? (currently not advisable, as some entailment checks do timeout)
+    // timeout needs to be set high enough that the solver will encounter a counter example if there exists one
+    // it's not possible to get rid of the timeout altogether, because of recursion/quantifiers over infinite structures
     solver.timeout = 10000
     val response = solver.checkSat
     response match {
@@ -60,10 +60,9 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
     */
   def axioms(context: List[Constraint], constraint: Option[Constraint]): (SMTLibScript, Boolean) = {
     // TODO: Change this to be able to determine if the path datatype is defined without the pair return type
-    val classes: List[String] = getClasses // TODO: search in constraints for class names? All existing classes should be mentioned in the program,
-                                           //       currently produces smt error if we ask for an 'valid' entailment with a class that is not mentioned in the program
-    val variables: List[String] = getVariableNames ++ extractVariableNames(if (constraint.isEmpty) context else constraint.get :: context) distinct
-    val fields: List[String] = getFieldNames ++ extractFieldNames(if (constraint.isEmpty) context else constraint.get :: context) distinct
+    val classes: List[Id] = DefinedClasses(program)
+    val variables: List[Id] = getVariableNames ++ extractVariableNames(if (constraint.isEmpty) context else constraint.get :: context) distinct
+    val fields: List[Id] = DefinedFields(program)
 
     val constraintEntailments: List[ConstraintEntailment] = program.filter(_.isInstanceOf[ConstraintEntailment]).map(_.asInstanceOf[ConstraintEntailment])
 
@@ -84,42 +83,18 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
       generateProgRules(constraintEntailments, pathDatatype.isDefined), pathDatatype.isDefined)
   }
 
-  private def getClasses: List[String] = program flatMap {
-    case ConstructorDeclaration(cls, _, as) => cls.toString :: extractClasses(as)
-    case ConstraintEntailment(_, as, a) => extractClasses(a::as)
-    case MethodImplementation(_, _, as, Type(_, bs), _) => extractClasses(as) ++ extractClasses(bs)
-    case AbstractMethodDeclaration(_, _, as, Type(_, bs)) => extractClasses(as) ++ extractClasses(bs)
-  } distinct
-
-  private def extractClasses(constraints: List[Constraint]): List[String] = constraints map {
-    case InstanceOf(_, cls) => cls.toString
-    case InstantiatedBy(_, cls) =>cls.toString
-    case PathEquivalence(_, _) => ""
-  } distinct
-
-  private def getVariableNames: List[String] = program flatMap {
-    case ConstraintEntailment(x, as, a) => x.toString :: extractVariableNames(a :: as)
+  private def getVariableNames: List[Id] = program flatMap {
+    case ConstraintEntailment(x, as, a) => x :: extractVariableNames(a :: as)
     case _ => Nil
   } distinct
 
-  private def extractVariableNames(constraints: List[Constraint]): List[String] = constraints flatMap {
-    case InstanceOf(p, _) => List(p.baseName)
-    case InstantiatedBy(p, _) => List(p.baseName)
-    case PathEquivalence(p, q) => List(p.baseName, q.baseName)
+  private def extractVariableNames(constraints: List[Constraint]): List[Id] = constraints flatMap {
+    case InstanceOf(p, _) => List(p.base)
+    case InstantiatedBy(p, _) => List(p.base)
+    case PathEquivalence(p, q) => List(p.base, q.base)
   } distinct
 
-  private def getFieldNames: List[String] = program flatMap {
-    case ConstraintEntailment(_, as, a) => extractFieldNames(a :: as)
-    case _ => Nil
-  } distinct
-
-  private def extractFieldNames(constraints: List[Constraint]): List[String] = constraints flatMap {
-    case InstanceOf(p, _) => p.fieldNames
-    case InstantiatedBy(p, _) => p.fieldNames
-    case PathEquivalence(p, q) => p.fieldNames ++ q.fieldNames
-  } distinct
-
-  private def generateEnumerationTypes(classes: List[String], variables: List[String], fields: List[String]): SMTLibScript = {
+  private def generateEnumerationTypes(classes: List[Id], variables: List[Id], fields: List[Id]): SMTLibScript = {
     if (classes.isEmpty && fields.isEmpty) {
       //  no classes → don't add class datatype
       //  no fields → don't add field datatype
@@ -498,9 +473,10 @@ object SemanticEntailment {
 
   private case class MetaPath(s: String) extends Path {
     override def toString: String = s
+    override def base: Id = Id(Symbol(s))
     override def baseName: String = s
     override def prefixBaseName(prefix: String): Path = MetaPath(prefix+s)
-    override def fieldNames: List[String] = Nil
+    override def fields: List[Id] = Nil
     override def depth: Int = 0
   }
 

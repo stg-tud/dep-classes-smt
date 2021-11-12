@@ -1,7 +1,7 @@
 package dcc.entailment
 import dcc.entailment.EntailmentSort.EntailmentSort
-import dcc.syntax.Program.Program
-import dcc.syntax.{Constraint, ConstraintEntailment, ConstructorDeclaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
+import dcc.syntax.Program.{DefinedClasses, DefinedFields, Program}
+import dcc.syntax.{Constraint, ConstraintEntailment, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import smt.smtlib.SMTLib.{is, selector}
 import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
 import smt.smtlib.syntax.{Apply, Assert, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
@@ -14,6 +14,7 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
   // TODO: refresh variable names to ensure that we do not have ambiguous constructor names?
   //  eg Variable = {p} and Field = {p}
 
+  // TODO: use DCCPredefined
   // Sort names
   private val SortNameClass: String = "Class"
   private val SortNameVariable: String = "Variable"
@@ -64,11 +65,11 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
     // Reset counters for fresh name generation
     resetFreshNameCounter()
 
-    val variableNames = extractVariableNames(if (conclusion.isEmpty) context else conclusion.get :: context)
-    val fieldNames = getFieldNamesDefinedInProgram // SMT error if an entailment includes a field not mentioned an a constructor
-    val classNames = getClassNamesDefinedInProgram // SMT error if an entailment includes a class not mentioned in the program
+    val variables: List[Id] = extractVariableNames(if (conclusion.isEmpty) context else conclusion.get :: context)
+    val fields: List[Id] = DefinedFields(program) // SMT error if an entailment includes a field not mentioned an a constructor
+    val classes: List[Id] = DefinedClasses(program) // SMT error if an entailment includes a class not mentioned in the program
 
-    val (datatypeDeclarations, pathDatatypeExists, classDatatypeExists) = constructTypeDeclarations(classNames, variableNames, fieldNames)
+    val (datatypeDeclarations, pathDatatypeExists, classDatatypeExists) = constructTypeDeclarations(classes, variables, fields)
     val functionDeclarations = constructFunctionDeclarations(pathDatatypeExists, classDatatypeExists)
     val calculusRules = constructCalculusRules(pathDatatypeExists, classDatatypeExists)
     val entailmentJudgement = constructEntailmentJudgement(context, conclusion, pathDatatypeExists)
@@ -86,7 +87,7 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
     ConstructorDec(DatatypeConstructorPathExtension, Seq(SelectorDec(DatatypeSelectorPathExtensionObject, SortPath), SelectorDec(DatatypeSelectorPathExtensionField, SortField)))
   )))
 
-  private def constructTypeDeclarations(classes: List[String], variables: List[String], fields: List[String]): (SMTLibScript, Boolean, Boolean) = {
+  private def constructTypeDeclarations(classes: List[Id], variables: List[Id], fields: List[Id]): (SMTLibScript, Boolean, Boolean) = {
     // variables can never be empty (theoretically we could call _encoding_ with an empty list, but from a DCC perspective we have at least one variable at all times)
     var declarations: SMTLibScript = SMTLibScript(Seq(SMTLib.buildEnumerationType(SortNameVariable, variables)))
 
@@ -325,29 +326,10 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
     case None        => SMTLibScript(context map (constraint => Assert(ConstraintToTerm(constraint, pathDatatypeExists))))
   }
 
-  // A valid class name is either introduces through a constructor or as the conclusion of an constraint entailment
-  private def getClassNamesDefinedInProgram: List[String] = program flatMap {
-    case ConstructorDeclaration(cls, _, _) => cls.name.name :: Nil
-    case ConstraintEntailment(_, _, InstanceOf(_, cls)) => cls.name.name :: Nil
-    case _ => Nil
-  } distinct
-
-  // All valid field names must be introduced via constructors.
-  private def getFieldNamesDefinedInProgram: List[String] = program flatMap {
-    case ConstructorDeclaration(_, _, as) => extractFieldNames(as)
-    case _ => Nil
-  }
-
-  private def extractVariableNames(constraints: List[Constraint]): List[String] = constraints flatMap {
-    case PathEquivalence(p, q) => List(p.baseName, q.baseName)
-    case InstanceOf(p, _) => List(p.baseName)
-    case InstantiatedBy(p, _) => List(p.baseName)
-  } distinct
-
-  private def extractFieldNames(constraints: List[Constraint]): List[String] = constraints flatMap {
-    case PathEquivalence(p, q) => p.fieldNames ++ q.fieldNames
-    case InstanceOf(p, _) => p.fieldNames
-    case InstantiatedBy(p, _) => p.fieldNames
+  private def extractVariableNames(constraints: List[Constraint]): List[Id] = constraints flatMap {
+    case PathEquivalence(p, q) => List(p.base, q.base)
+    case InstanceOf(p, _) => List(p.base)
+    case InstantiatedBy(p, _) => List(p.base)
   } distinct
 
   private def IdToSMTLibSymbol(id: Id): SMTLibSymbol = SimpleSymbol(id.name.name)
@@ -388,9 +370,10 @@ class SimplifiedSemanticEntailment(program: Program, debug: Int = 0) extends Ent
 
   private case class MetaPath(s: String) extends Path {
     override def toString: String = s
+    override def base: Id = Id(Symbol(s))
     override def baseName: String = s
     override def prefixBaseName(prefix: String): Path = MetaPath(prefix+s)
-    override def fieldNames: List[String] = Nil
+    override def fields: List[Id] = Nil
     override def depth: Int = 0
   }
 }
