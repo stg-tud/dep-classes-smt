@@ -4,8 +4,9 @@ import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{Constraint, ConstraintEntailment, Declaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
 import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{Apply, Assert, DeclareFun, DefineFun, Forall, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Term, Unsat}
+import smt.smtlib.syntax.{Assert, DeclareFun, DefineFun, Forall, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Term, Unsat}
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Not, Or, True}
+import smt.smtlib.theory.DCCPredefined.{SortNameClass, SortNameVariable, SortNamePath, SortClass, SortVariable, SortPath, FunctionPathEquivalence, FunctionInstanceOf, FunctionInstantiatedBy, FunctionSubstitution, PathEq, InstOf, InstBy, SubstEq}
 import smt.solver.Z3Solver
 
 import scala.language.postfixOps
@@ -13,22 +14,6 @@ import scala.language.postfixOps
 class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailment {
   // Path prefix to be used for the basename in the SMT encoding
   private val PathPrefix: String = "pth_"
-
-  // Sort names
-  private val SortNameClass: String = "Class"
-  private val SortNameVariable: String = "Variable"
-  private val SortNamePath: String = "Path"
-
-  // Sorts
-  private val SortClass: Sort = SimpleSymbol(SortNameClass)
-  private val SortVariable: Sort = SimpleSymbol(SortNameVariable)
-  private val SortPath: Sort = SimpleSymbol(SortNamePath)
-
-  // Function names
-  private val FunctionPathEquivalence: SMTLibSymbol = SimpleSymbol("path-equivalence")
-  private val FunctionInstanceOf: SMTLibSymbol = SimpleSymbol("instance-of")
-  private val FunctionInstantiatedBy: SMTLibSymbol = SimpleSymbol("instantiated-by")
-  private val FunctionSubstitution: SMTLibSymbol = SimpleSymbol("substitute")
 
   override def typ: EntailmentSort = EntailmentSort.PathDepthLimit
 
@@ -145,7 +130,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
 
     // C-Refl
     val pRefl: SMTLibSymbol = freshPath()
-    val cReflexivity = Assert(Forall(Seq(SortedVar(pRefl, path)), Apply(FunctionPathEquivalence, Seq(pRefl, pRefl))))
+    val cReflexivity = Assert(Forall(Seq(SortedVar(pRefl, path)), PathEq(pRefl, pRefl)))
 
     // C-Class
     val pClass: SMTLibSymbol = freshPath()
@@ -155,7 +140,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
         SortedVar(pClass, path),
         SortedVar(clsClass, SortClass)
       ),
-      Implies(Apply(FunctionInstantiatedBy, Seq(pClass, clsClass)), Apply(FunctionInstanceOf, Seq(pClass, clsClass)))
+      Implies(InstBy(pClass, clsClass), InstOf(pClass, clsClass))
     ))
 
     // Substitution Signature:
@@ -188,14 +173,14 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       ),
       Implies(
         And(
-          Apply(FunctionPathEquivalence, Seq(sSubstEq, rSubstEq)),
-          Apply(FunctionSubstitution, Seq(pSubstEq, xSubstEq, rSubstEq, p_subst_r_Eq)),
-          Apply(FunctionSubstitution, Seq(qSubstEq, xSubstEq, rSubstEq, q_subst_r_Eq)),
-          Apply(FunctionSubstitution, Seq(pSubstEq, xSubstEq, sSubstEq, p_subst_s_Eq)),
-          Apply(FunctionSubstitution, Seq(qSubstEq, xSubstEq, sSubstEq, q_subst_s_Eq)),
-          Apply(FunctionPathEquivalence, Seq(p_subst_r_Eq, q_subst_r_Eq))
+          PathEq(sSubstEq, rSubstEq),
+          SubstEq(pSubstEq, xSubstEq, rSubstEq, p_subst_r_Eq),
+          SubstEq(qSubstEq, xSubstEq, rSubstEq, q_subst_r_Eq),
+          SubstEq(pSubstEq, xSubstEq, sSubstEq, p_subst_s_Eq),
+          SubstEq(qSubstEq, xSubstEq, sSubstEq, q_subst_s_Eq),
+          PathEq(p_subst_r_Eq, q_subst_r_Eq)
         ),
-        Apply(FunctionPathEquivalence, Seq(p_subst_s_Eq, q_subst_s_Eq))
+        PathEq(p_subst_s_Eq, q_subst_s_Eq)
       )
     ))
 
@@ -219,12 +204,12 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       ),
       Implies(
         And(
-          Apply(FunctionPathEquivalence, Seq(sSubstOf, rSubstOf)),
-          Apply(FunctionSubstitution, Seq(pSubstOf, xSubstOf, rSubstOf, p_subst_r_Of)),
-          Apply(FunctionSubstitution, Seq(pSubstOf, xSubstOf, sSubstOf, p_subst_s_Of)),
-          Apply(FunctionInstanceOf, Seq(p_subst_r_Of, clsSubstOf))
+          PathEq(sSubstOf, rSubstOf),
+          SubstEq(pSubstOf, xSubstOf, rSubstOf, p_subst_r_Of),
+          SubstEq(pSubstOf, xSubstOf, sSubstOf, p_subst_s_Of),
+          InstOf(p_subst_r_Of, clsSubstOf)
         ),
-        Apply(FunctionInstanceOf, Seq(p_subst_s_Of, clsSubstOf))
+        InstOf(p_subst_s_Of, clsSubstOf)
       )
     ))
 
@@ -248,12 +233,12 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
       ),
       Implies(
         And(
-          Apply(FunctionPathEquivalence, Seq(sSubstBy, rSubstBy)),
-          Apply(FunctionSubstitution, Seq(pSubstBy, xSubstBy, rSubstBy, p_subst_r_By)),
-          Apply(FunctionSubstitution, Seq(pSubstBy, xSubstBy, sSubstBy, p_subst_s_By)),
-          Apply(FunctionInstantiatedBy, Seq(p_subst_r_By, clsSubstBy))
+          PathEq(sSubstBy, rSubstBy),
+          SubstEq(pSubstBy, xSubstBy, rSubstBy, p_subst_r_By),
+          SubstEq(pSubstBy, xSubstBy, sSubstBy, p_subst_s_By),
+          InstBy(p_subst_r_By, clsSubstBy)
         ),
-        Apply(FunctionInstantiatedBy, Seq(p_subst_s_By, clsSubstBy))
+        InstBy(p_subst_s_By, clsSubstBy)
       )
     ))
 
@@ -320,7 +305,7 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
     Assert(
       Implies(
         lhs,
-        Apply(FunctionInstanceOf, Seq(PathToSMTLibSymbol(path), IdToSMTLibSymbol(cls)))
+        InstOf(PathToSMTLibSymbol(path), IdToSMTLibSymbol(cls))
       )
     )
   }
@@ -433,9 +418,9 @@ class PathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailmen
   private def PathToSMTLibSymbol(path: Path): SMTLibSymbol = SimpleSymbol(path.toString)
 
   private def ConstraintToTerm(constraint: Constraint): Term = constraint match {
-    case PathEquivalence(p, q) => Apply(FunctionPathEquivalence, Seq(PathToSMTLibSymbol(p), PathToSMTLibSymbol(q)))
-    case InstanceOf(p, cls) => Apply(FunctionInstanceOf, Seq(PathToSMTLibSymbol(p), IdToSMTLibSymbol(cls)))
-    case InstantiatedBy(p, cls) => Apply(FunctionInstantiatedBy, Seq(PathToSMTLibSymbol(p), IdToSMTLibSymbol(cls)))
+    case PathEquivalence(p, q) => PathEq(PathToSMTLibSymbol(p), PathToSMTLibSymbol(q))
+    case InstanceOf(p, cls) => InstOf(PathToSMTLibSymbol(p), IdToSMTLibSymbol(cls))
+    case InstantiatedBy(p, cls) => InstBy(PathToSMTLibSymbol(p), IdToSMTLibSymbol(cls))
   }
 
   private var varCounter = 0

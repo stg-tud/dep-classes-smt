@@ -4,8 +4,9 @@ import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{Constraint, ConstraintEntailment, Declaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClassNames, DefinedFieldNames, Program}
 import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{Apply, Assert, DeclareFun, SMTLibSymbol, SimpleSymbol, Sort, Sugar, Term, Unsat}
+import smt.smtlib.syntax.{Apply, Assert, DeclareFun, SMTLibSymbol, SimpleSymbol, Sort, Term, Unsat}
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Implies, Not, True}
+import smt.smtlib.theory.DCCPredefined.{FunctionInstanceOf, FunctionInstantiatedBy, FunctionPathEquivalence, InstBy, InstOf, PathEq, SortClass, SortNameClass, SortNamePath, SortNameVariable, SortPath, SortVariable}
 import smt.solver.Z3Solver
 
 import scala.collection.mutable
@@ -14,21 +15,6 @@ import scala.language.postfixOps
 class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Entailment {
   // Path prefix to be used for the basename in the SMT encoding
   private val PathPrefix: String = "pth_"
-
-  // Sort names
-  private val SortNameClass: String = "Class"
-  private val SortNameVariable: String = "Variable"
-  private val SortNamePath: String = "Path"
-
-  // Sorts
-  private val SortClass: Sort = SimpleSymbol(SortNameClass)
-  private val SortVariable: Sort = SimpleSymbol(SortNameVariable)
-  private val SortPath: Sort = SimpleSymbol(SortNamePath)
-
-  // Function names
-  private val FunctionPathEquivalence: SMTLibSymbol = SimpleSymbol("path-equivalence")
-  private val FunctionInstanceOf: SMTLibSymbol = SimpleSymbol("instance-of")
-  private val FunctionInstantiatedBy: SMTLibSymbol = SimpleSymbol("instantiated-by")
 
   override def typ: EntailmentSort = EntailmentSort.GroundPathDepthLimit
 
@@ -79,15 +65,6 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     val cProgRules = constructCProgRules(paths, depthLimit, classDatatypeExists)
 
     val entailmentJudgement = constructEntailmentJudgement(context, conclusion)
-
-/*    println("datatypes:")
-    datatypeDeclarations.commands foreach (x => println(s"\t${x.pretty}"))
-    println("constraints:")
-    constraintPropositionDeclarations.commands foreach (x => println(s"\t${x.pretty}"))
-    println("substitution:")
-    substitutionFunctionDeclaration.commands foreach (x => println(s"\t${x.pretty}"))
-    println("refl rules:")
-    cReflRules.commands foreach (x => println(s"\t${x.pretty}"))*/
 
     datatypeDeclarations ++
       constraintPropositionDeclarations ++
@@ -246,7 +223,7 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
   private val cSubstPathEqTemplate: PartialFunction[(Path, Path, Id, Path, Path, Int), SMTLibCommand] = {
     case (p, q, x, r, s, limit)
       if prefixSubst(p, x, r).depth <= limit && // TODO: move check to call site to avoid calculating the substitution twice?
-        prefixSubst(q, x, r).depth <= limit &&
+        prefixSubst(q, x, r).depth <= limit &&  //  or add
         prefixSubst(p, x, s).depth <= limit &&
         prefixSubst(q, x, s).depth <= limit =>
       val rSMTLib = PathToSMTLibSymbol(r)
@@ -376,12 +353,6 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     ))
   }
 
-  private def PathEq(p: Term, q: Term): Term = Sugar.Op(FunctionPathEquivalence)(p, q)
-
-  private def InstOf(p: Term, cls: Term): Term = Sugar.Op(FunctionInstanceOf)(p, cls)
-
-  private def InstBy(p: Term, cls: Term): Term = Sugar.Op(FunctionInstantiatedBy)(p, cls)
-
   def enumeratePaths(vars: List[String], fields: List[String], depthLimit: Int): List[Path] = {
     // Initialize paths with variables
     var paths: List[Path] = vars.map(s => Id(Symbol(s"$PathPrefix$s"))) // prefix to not have ambiguous names between variables and paths
@@ -409,9 +380,9 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
   private def PathToSMTLibSymbol(path: Path): SMTLibSymbol = SimpleSymbol(path.toString)
 
   private def ConstraintToTerm(constraint: Constraint): Term = constraint match {
-    case PathEquivalence(p, q) => Apply(FunctionPathEquivalence, Seq(PathToSMTLibSymbol(p), PathToSMTLibSymbol(q)))
-    case InstanceOf(p, cls) => Apply(FunctionInstanceOf, Seq(PathToSMTLibSymbol(p), IdToSMTLibSymbol(cls)))
-    case InstantiatedBy(p, cls) => Apply(FunctionInstantiatedBy, Seq(PathToSMTLibSymbol(p), IdToSMTLibSymbol(cls)))
+    case PathEquivalence(p, q) => PathEq(PathToSMTLibSymbol(p), PathToSMTLibSymbol(q))
+    case InstanceOf(p, cls) => InstOf(PathToSMTLibSymbol(p), IdToSMTLibSymbol(cls))
+    case InstantiatedBy(p, cls) => InstBy(PathToSMTLibSymbol(p), IdToSMTLibSymbol(cls))
   }
 
   private val prefixSubst = (source: Path, target: Id, replace: Path) => prefixedSubstitute(PathPrefix)(source, target, replace)
