@@ -28,3 +28,91 @@ a=b |- b=a                a=b |- b=b
 
 In both cases we replicate the same proof goal
 we wanted to show initially in one of the branches.
+
+
+How would this look like for transitivity?
+
+   CA-Ident               CA-Ident
+---------------       ---------------
+a=b, b=c |- b=c       a=b, b=c |- a=b
+------------------------------------- CA-Subst3 with p=b
+          a=b, b=c |- a=c
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+If we update rule CA-Subst3 as follows
+
+
+          p < as
+as |- p2=p      as |- p1=p
+--------------------------- CA-Subst3Fixed1
+         as |- p1=p2
+
+
+We have two possibilities to satisfy p < a=b, namely p=a and p=b
+resulting in the following deviations:
+
+
+                              ...
+---------- CA-Refl        ----------- same as below
+a=b |- a=a                a=b |- b=a
+------------------------------------- CA-Subst3Fixed1 with p=a
+            a=b |- b=a
+
+
+
+---------- Ca-Ident       ----------- CA-Refl
+a=b |- a=b                a=b |- b=b
+------------------------------------- CA-Subst3Fixed1 with p=b
+            a=b |- b=a
+
+We can successfully show the entailment using CA-Subst3Fixed with p=b.
+
+And we can still show transitivity:
+
+    CA-Ident          CA-Refl
+---------------   ---------------
+a=b, b=c |- b=c   a=b, b=c |- c=c
+--------------------------------- CA-Subst3Fixed1 with p=c   --------------- CA-Ident
+       a=b, b=c |- c=b                                       a=b, b=c |- a=b
+------------------------------------------------------------------------------ CA-Subst3Fixed1 with p=b
+            a=b, b=c |- a=c
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+If we update rule CA-Subst3 as follows
+
+
+          p < as
+as |- p=p2      as |- p=p1
+--------------------------- CA-Subst3Fixed2
+         as |- p1=p2
+
+
+We have two possibilities to satisfy p < a=b, namely p=a and p=b
+resulting in the following deviations:
+
+
+---------- CA-Refl        ----------- Ca-Ident
+a=b |- a=a                a=b |- a=b
+------------------------------------- CA-Subst3Fixed2 with p=a
+            a=b |- b=a
+
+
+
+---------- same as below  ----------- CA-Refl
+a=b |- b=a                a=b |- b=b
+------------------------------------- CA-Subst3Fixed2 with p=b
+            a=b |- b=a
+
+We can successfully show the entailment using CA-Subst3Fixed with p=a.
+
+And we can still show transitivity:
+
+                                   CA-Refl           CA-Ident
+                              ----------------   ---------------
+                              a=b, b=c |- a=a    a=b, b=c |- a=b
+---------------- CA-Ident     ---------------------------------- CA-Subst3Fixed2 with p=a
+a=b, b=c |- b=c                         a=b, b=c |- b=a
+---------------------------------------------------------------- CA-Subst3Fixed2 with p=b
+                    a=b, b=c |- a=c
