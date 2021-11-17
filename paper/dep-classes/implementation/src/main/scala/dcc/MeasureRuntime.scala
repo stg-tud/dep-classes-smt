@@ -1,6 +1,6 @@
 package dcc
 
-import dcc.entailment.{Entailment, EntailmentFactory, EntailmentSort}
+import dcc.entailment.{AlgorithmicFix1, Entailment, EntailmentFactory, EntailmentSort}
 import dcc.program.NaturalNumbers
 import dcc.syntax.{Constraint, Id, PathEquivalence}
 
@@ -81,7 +81,7 @@ object MeasureRuntime extends App {
         val vars = (start to end).map(_.toString).toList
         val ctx = constructTransitiveContext(vars)
         val conclusion = PathEquivalence(Id(Symbol(start.toString)), Id(Symbol(end.toString)))
-//        print(s"measure '${constraintsToString(ctx)} |- $conclusion' using $repeats iterations: ")
+        print(s"measure '${constraintsToString(ctx)} |- $conclusion' using $repeats iterations: ")
         val (result, time) = measureAvgTime(entailment.entails(ctx, conclusion), repeats)
 
         if (time >= 10L*1000L*1000000L) {
@@ -97,15 +97,17 @@ object MeasureRuntime extends App {
           // only perform iterations/2 iterations going forwards
           repeats = iterations/2
         }
-//        println(if (result) "✓" else "×")
-//        println(s"\ttook ${NanoTimeToStringRounded(time)} on avg")
-//        println(s"\t    (${NanoTimeToMilliSeconds(time)} ms)")
+        println(if (result) "✓" else "×")
+        println(s"\ttook ${NanoTimeToStringRounded(time)} on avg")
+        println(s"\t    (${NanoTimeToMilliSeconds(time)} ms)")
 
         println(f"${entailment.typ};$conclusion;${NanoTimeToMilliSeconds(time)}")
     }
   }
 
-  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.Algorithmic)(NaturalNumbers.program, 0), 'h')
+  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.Algorithmic)(NaturalNumbers.program, 0), 'f')
+  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.AlgorithmicFix1)(NaturalNumbers.program, 0), 'f')
+  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.AlgorithmicFix2)(NaturalNumbers.program, 0), 'f')
 //  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.PathDepthLimit)(NaturalNumbers.program, 0), 'h')
 //  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.GroundPathDepthLimit)(NaturalNumbers.program, 0), 'h')
 }

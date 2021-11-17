@@ -66,7 +66,7 @@ a=b |- a=b                a=b |- b=b
 ------------------------------------- CA-Subst3Fixed1 with p=b
             a=b |- b=a
 
-We can successfully show the entailment using CA-Subst3Fixed with p=b.
+We can successfully show the entailment using CA-Subst3Fixed1 with p=b.
 
 And we can still show transitivity:
 
@@ -105,7 +105,7 @@ a=b |- b=a                a=b |- b=b
 ------------------------------------- CA-Subst3Fixed2 with p=b
             a=b |- b=a
 
-We can successfully show the entailment using CA-Subst3Fixed with p=a.
+We can successfully show the entailment using CA-Subst3Fixed2 with p=a.
 
 And we can still show transitivity:
 
