@@ -225,4 +225,9 @@ object Foo extends App {
     Xor(True, Eq(True, Not(True)))
   ).pretty)
   println(Ite(Not(False), False, True).pretty)
+
+  println(s"\n\n-----------------------------------\n")
+  println(groundEnc.encode(List(InstantiatedBy("x", "Succ"), InstantiatedBy(FieldPath("x", "p"), "Zero"), PathEquivalence("x", "y")), InstanceOf("y", "Nat")).pretty)
+//  println(groundEnc.encode(List(InstantiatedBy("x", "Zero")), InstanceOf("x", "Nat")).pretty)
+//  println(groundEnc.encode(Nil, PathEquivalence("x", "x")).pretty)
 }

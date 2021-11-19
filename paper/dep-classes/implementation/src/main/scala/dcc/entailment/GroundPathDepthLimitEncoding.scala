@@ -122,6 +122,17 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     declarations
   }
 
+//  TODO: filter obviously true stuff out of enumerated rules e.g:
+//   @(named, subst-inst-by)
+//   ((pth_x ≡ pth_x ∧ pth_x.cls = Nat) → pth_x.cls = Nat)
+//     -------------
+//           obv
+//     reduce
+//     (pth_x.cls = Nat → pth_x.cls = Nat)
+//    ---------------------------------
+//                   obv
+//
+//  TODO: filter also those where substitution doesn't has an effect?
   // rule generation with only one iteration:
   //  ✓ C-Refl
   //  ✓ C-Class

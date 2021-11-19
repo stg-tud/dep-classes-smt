@@ -1,6 +1,6 @@
 package dcc
 
-import dcc.entailment.{AlgorithmicFix1, Entailment, EntailmentFactory, EntailmentSort}
+import dcc.entailment.{Entailment, EntailmentFactory, EntailmentSort}
 import dcc.program.NaturalNumbers
 import dcc.syntax.{Constraint, Id, PathEquivalence}
 
