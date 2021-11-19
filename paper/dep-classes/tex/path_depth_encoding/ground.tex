@@ -32,6 +32,9 @@
 \usepackage{adjustbox}
 \usepackage{cleveref}
 
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
 \input{macros}
 %\input{tikz}
 
@@ -174,17 +177,126 @@ turns into
   \pathEq{\mathtt{x}}{\mathtt{y}} \land \instOf{\mathtt{y}}{Nat} \rightarrow \instOf{\mathtt{x}}{\Nat}
 \]
 
-% TODO: scala: filter obvously true stuff out of enumerated rules
-% e.g
-% @(named, subst-inst-by)
-% ((pth_x ≡ pth_x ∧ pth_x.cls = Nat) → pth_x.cls = Nat)
-%   -------------
-%       obv
-% reduce
-% (pth_x.cls = Nat → pth_x.cls = Nat)
-%  ---------------------------------
-%               obv
-%
-% filter also those where substitution doesn't has an effect?
+\section{Algorithmic Symmetry}
+\label[Algorithmic Symmetry]{sec:algo-symmetry}
+We rely on the equivalency between the declarative- and the algorithmic system
+to set our depth limit for path enumeration
+as well as on the decidability of the declarative system to even have such a limit in place.\\
+\\
+The entailment $\entails{\pathEq{a}{b}}{\pathEq{b}{a}}$ is a counterexample
+to Lemma \ref{lem:2} (more precisely \ref{lem:1})
+and \autoref{thm:1} as it relies on Lemma 5.5.16.
+
+\begin{lemma}[5.5.15]
+  \label[Algorithmic equivalency]{lem:1}
+  If \wf{P} and \entails{\ovl{a}}{a} then \entailsA{\ovl{a}}{a}.
+\end{lemma}
+
+\begin{lemma}[5.5.16]
+  \label[Equivalency]{lem:2}
+  If \wf{P} then \entails{\ovl{a}}{a} iff \entailsA{\ovl{a}}{a}.
+\end{lemma}
+
+\begin{theorem}[5.5.1]
+  \label[Decidable entailment]{thm:1}
+  If \wf{P} then derivation of \entails{\ovl{a}}{a} is decidable.
+\end{theorem}
+
+Counterexample for Lemma \ref{lem:1}.
+Choose any well-formed program.
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{C-Refl}
+  \UnaryInfC{\entails{\cdot}{\pathEq{b}{b}}}
+  \RightLabel{C-Weak}
+  \UnaryInfC{\entails{\pathEq{a}{b}}{ \pathEq{b}{a}_{\sub{a}{b}} }}
+  \AxiomC{}
+  \RightLabel{C-Ident}
+  \UnaryInfC{\entails{\pathEq{a}{b}}{\pathEq{a}{b}}}
+  \RightLabel{C-Subst}
+  \BinaryInfC{\entails{\pathEq{a}{b}}{ \pathEq{b}{a}_{\sub{a}{a}} }}
+\end{prooftree}
+
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{CA-Refl}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{a}{a}}}
+  \AxiomC{$a \sqsubset \pathEq{a}{b}$}
+  \AxiomC{...}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+  \RightLabel{CA-Subst3}
+  \TrinaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+\end{prooftree}
+
+\begin{prooftree}
+  \AxiomC{...}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+  \AxiomC{$b \sqsubset \pathEq{a}{b}$}
+  \AxiomC{}
+  \RightLabel{CA-Refl}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{b}}}
+  \RightLabel{CA-Subst3}
+  \TrinaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+\end{prooftree}
+
+\subsection{Symmetry Fix}
+\label[Symmetry Fix]{sec:symmetry-fix}
+We can update rule CA-Subst3 to allow the entailment used as a counterexample
+to Lemma \ref{lem:1} to have a derivation.
+
+There are two feasible ways to update the rule:
+\begin{enumerate}
+  \item
+  \begin{prooftree}
+    \AxiomC{\entailsA{\ovl{a}}{\pathEq{p}{p''}}}
+    \AxiomC{$p \sqsubset \ovl{a}$}
+    \AxiomC{\entailsA{\ovl{a}}{\pathEq{p}{p'}}}
+    \RightLabel{CA-Subst3Fix1}
+    \TrinaryInfC{\entailsA{\ovl{a}}{\pathEq{p'}{p''}}}
+  \end{prooftree}
+  \item
+  \begin{prooftree}
+    \AxiomC{\entailsA{\ovl{a}}{\pathEq{p''}{p}}}
+    \AxiomC{$p \sqsubset \ovl{a}$}
+    \AxiomC{\entailsA{\ovl{a}}{\pathEq{p'}{p}}}
+    \RightLabel{CA-Subst3Fix2}
+    \TrinaryInfC{\entailsA{\ovl{a}}{\pathEq{p'}{p''}}}
+  \end{prooftree}
+\end{enumerate}
+
+\subsubsection{Fix 1 derivation}
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{CA-Refl}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{a}{a}}}
+  \AxiomC{$a \sqsubset \pathEq{a}{b}$}
+  \AxiomC{}
+  \RightLabel{CA-Ident}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{a}{b}}}
+  \RightLabel{CA-Subst3Fix1}
+  \TrinaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+\end{prooftree}
+
+\subsubsection{Fix 2 derivation}
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{CA-Ident}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{a}{b}}}
+  \AxiomC{$b \sqsubset \pathEq{a}{b}$}
+  \AxiomC{}
+  \RightLabel{CA-Refl}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{b}}}
+  \RightLabel{CA-Subst3Fix2}
+  \TrinaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+\end{prooftree}
+
+\subsection{What to do with this?}
+\begin{itemize}
+  \item Update rule CA-Subst3 with one of the solutions from \autoref{sec:symmetry-fix}.
+  \item Redo the proofs?
+\end{itemize}
+
+%\section{Runtime Comparison}
+%add table
 
 \end{document}

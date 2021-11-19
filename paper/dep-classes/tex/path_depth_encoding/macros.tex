@@ -15,6 +15,7 @@
 \newcommand{\instantiatedBy}[2]{\ensuremath{\mathit{#1}.\textbf{cls} \equiv \mathit{#2}}}
 \newcommand{\instBy}[2]{\instantiatedBy{#1}{#2}}
 \newcommand{\entails}[2]{\ensuremath{#1 \vdash #2}}
+\newcommand{\entailsA}[2]{\ensuremath{#1 \vdash_{\!\!\!A} #2}}
 \newcommand*{\ldblbrace}{\{\mskip-6.9mu\{} % left double brace
 \newcommand*{\rdblbrace}{\}\mskip-6.9mu\}} % right double brace
 \newcommand{\sub}[2]{\ensuremath{\ldblbrace #1 \mapsto #2 \rdblbrace}}
@@ -47,7 +48,7 @@
 \newcommand{\pair}[2]{\ensuremath{\langle #1;#2 \rangle}}
 \newcommand{\eval}[4]{\ensuremath{\pair{#1}{#2} \rightarrow \pair{#3}{#4}}}
 \newcommand{\typeass}[3]{\ensuremath{#1 \vdash #2 : #3}}
-\newcommand{\wf}[1]{\ensuremath{\text{wf }#1}}
+\newcommand{\wf}[1]{\ensuremath{\mathsf{wf }#1}}
 \newcommand{\FV}[1]{\ensuremath{FV(#1)}}
 \newcommand{\FVeq}[2]{\ensuremath{\FV{#1} = \{#2\}}}
 
