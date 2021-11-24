@@ -1,0 +1,310 @@
+\documentclass[a4paper]{article}
+
+%% packages
+%%%%%%%%%%%
+\usepackage[utf8x]{inputenc}
+\usepackage[USenglish]{babel}
+\usepackage{amsbsy,amscd,amsfonts,amssymb,amstext,amsmath,amsthm,latexsym}
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{dot2texi}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage[nottoc]{tocbibind}
+\usepackage{pdfpages}
+
+\usepackage{syntax} % for bnf grammar
+\usepackage{bussproofs} % for type rules
+\usepackage{todonotes}
+
+\usepackage{float} % for figures
+\floatstyle{boxed}
+\restylefloat{figure}
+
+\usepackage{listings}
+\usepackage{xcolor}
+%\usepackage{tikz}
+\usetikzlibrary{positioning,chains,shapes.arrows,shapes.geometric,fit,calc,arrows,decorations.pathmorphing}
+
+%\usepackage{subfig}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{adjustbox}
+\usepackage{cleveref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\input{macros}
+%\input{tikz}
+
+\begin{document}
+
+\section{Overview}
+\section{An Implementation}
+\section{Towards an SMT encoding}
+\section{SMT solver limitations}
+- recursion + quantifiers + infinite (abstractt) datatypes bad
+- need to limit the use of them
+
+\section{Path Depth Limit Encoding}
+To encode: $\entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}}$
+with $\mathit{depth\!\!-\!\!limit}=1$
+\begin{align}
+  &\texttt{\Variable} := \{\mathtt{x}, \mathtt{y}\}\\
+  &\texttt{\Class} := \{\Zero,\Succ,\Nat\}\\
+  &\texttt{\Path} := \{\mathtt{x}, \mathtt{x}.\mathtt{p}, \mathtt{y}, \mathtt{y}.\mathtt{p}\}\\
+  % def subst
+  &\subst{p}{v}{q} = s :=\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{x} \land s=\mathtt{x})~\lor\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{x.p} \land s=\mathtt{x.p})~\lor\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{y} \land s=\mathtt{y})~\lor\\
+  &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{y.p} \land s=\mathtt{y.p})~\lor\\
+  %&\quad (p=\mathtt{x} \land v=\mathtt{y} \land q=\mathtt{x} \land s=\mathtt{x})~\lor\\
+  %&\quad (p=\mathtt{x} \land v=\mathtt{y} \land q=\mathtt{x.p} \land s=\mathtt{x})~\lor\\
+  %&\quad (p=\mathtt{x} \land v=\mathtt{y} \land q=\mathtt{y} \land s=\mathtt{x})~\lor\\
+  %&\quad (p=\mathtt{x} \land v=\mathtt{y} \land q=\mathtt{y.p} \land s=\mathtt{x})~\lor\\
+  &\quad (p=\mathtt{x.p} \land v=\mathtt{x} \land q=\mathtt{x} \land s=\mathtt{x.p})~\lor\\
+  &\quad (p=\mathtt{x.p} \land v=\mathtt{x} \land q=\mathtt{y} \land s=\mathtt{y.p})~\lor\\
+  &\quad~...\\
+  % C-Refl
+  &\forall p.~\pathEq{p}{p} && \text{(C-Refl)}\\
+  % C-Class
+  &\forall p, c.~\instBy{p}{c} \rightarrow \instOf{p}{c} && \text{(C-Class)}\\
+  % C-Subst: pathEq
+  &\forall p, q, v, r, s, a, b, c, d. && \text{(C-Subst)}\\
+  &\quad \pathEq{s}{r} \land \subst{p}{v}{r}=a \land \subst{q}{v}{r}=b~\land\\
+  &\quad \pathEq{a}{b} \land
+         \subst{p}{v}{s}=c \land \subst{q}{v}{s}=d\\
+  &\qquad \rightarrow \pathEq{c}{d}\\
+  % C-Subst: instOf
+  &\forall p, c, v, r, s, a, b. && \text{(C-Subst)}\\
+  &\quad \pathEq{s}{r} \land \subst{p}{v}{r}=a~\land\\
+  &\quad \instOf{a}{c} \land
+         \subst{p}{v}{s}=b\\
+  &\qquad \rightarrow \instOf{b}{c}\\
+  % C-Subst: instBy
+  &\forall p, c, v, r, s, a, b. && \text{(C-Subst)}\\
+  &\quad \pathEq{s}{r} \land \subst{p}{v}{r}=a~\land\\
+  &\quad \instBy{a}{c} \land
+         \subst{p}{v}{s}=b\\
+  &\qquad \rightarrow \instBy{b}{c}\\
+  % C-Prog
+  &\instOf{\mathtt{x}}{\Zero} \rightarrow \instOf{\mathtt{x}}{\Nat} && \text{(C-Prog)}\\
+  &\instOf{\mathtt{x.p}}{\Zero} \rightarrow \instOf{\mathtt{x.p}}{\Nat} && \text{(C-Prog)}\\
+  &\instOf{\mathtt{x}}{\Succ} \land \instOf{\mathtt{x.p}}{\Nat} \rightarrow \instOf{\mathtt{x}}{\Nat} && \text{(C-Prog)}\\
+  &\instOf{\mathtt{y}}{\Zero} \rightarrow \instOf{\mathtt{y}}{\Nat} && \text{(C-Prog)}\\
+  &\instOf{\mathtt{y.p}}{\Zero} \rightarrow \instOf{\mathtt{y.p}}{\Nat} && \text{(C-Prog)}\\
+  &\instOf{\mathtt{y}}{\Succ} \land \instOf{\mathtt{y.p}}{\Nat} \rightarrow \instOf{\mathtt{y}}{\Nat} && \text{(C-Prog)}\\
+  % Entailment
+  &\neg (\instBy{\mathtt{x}}{\Succ} \land \instBy{\mathtt{x.p}}{\Zero} \land \pathEq{\mathtt{x}}{\mathtt{y}} \rightarrow \instOf{\mathtt{y}}{\Nat})
+\end{align}
+\newpage
+
+\section{Ground Encoding}
+To encode: $\entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}}$
+with $\mathit{depth\!\!-\!\!limit}=1$
+\setcounter{equation}{0}
+% Alternatively for each align block
+% \usepackage{etoolbox}
+% \AtBeginEnvironment{align}{\setcounter{equation}{0}}
+\begin{align}
+  &\texttt{\Variable} := \{\mathtt{x}, \mathtt{y}\}\\
+  &\texttt{\Class} := \{\Zero,\Succ,\Nat\}\\
+  &\texttt{\Path} := \{\mathtt{x}, \mathtt{x.p}, \mathtt{y}, \mathtt{y.p}\}\\
+  % C-Refl
+  &\pathEq{\mathtt{x}}{\mathtt{x}} \land
+  \pathEq{\mathtt{x.p}}{\mathtt{x.p}} \land
+  \pathEq{\mathtt{y}}{\mathtt{y}} \land
+  \pathEq{\mathtt{y.p}}{\mathtt{y.p}} && \text{(C-Refl)}\\
+  % C-Class
+  &\instBy{\mathtt{x}}{\Zero} \rightarrow \instOf{\mathtt{x}}{\Zero} && \text{(C-Class)}\\
+  &\instBy{\mathtt{x.p}}{\Zero} \rightarrow \instOf{\mathtt{x.p}}{\Zero} && \text{(C-Class)}\\
+  & ...  && \text{(C-Class)}\\
+  % C-Subst
+  & \pathEq{\mathtt{x}}{\mathtt{y}} \land \pathEq{\mathtt{y}}{\mathtt{y}} \rightarrow \pathEq{\mathtt{y}}{\mathtt{x}} && \text{(C-Subst)}\\
+  & \pathEq{\mathtt{x}}{\mathtt{y}} \land \instOf{\mathtt{y}}{Nat} \rightarrow \instOf{\mathtt{x}}{\Nat} && \text{(C-Subst)}\\
+  & \pathEq{\mathtt{x}}{\mathtt{y}} \land \instBy{\mathtt{y}}{Nat} \rightarrow \instBy{\mathtt{x}}{\Nat} && \text{(C-Subst)}\\
+  & ... && \text{(C-Subst)}\\
+  % C-Prog
+  &\instOf{\mathtt{x}}{\Zero} \rightarrow \instOf{\mathtt{x}}{\Nat} && \text{(C-Prog)}\\
+  &\instOf{\mathtt{x.p}}{\Zero} \rightarrow \instOf{\mathtt{x.p}}{\Nat} && \text{(C-Prog)}\\
+  &\instOf{\mathtt{x}}{\Succ} \land \instOf{\mathtt{x.p}}{\Nat} \rightarrow \instOf{\mathtt{x}}{\Nat} && \text{(C-Prog)}\\
+  &\instOf{\mathtt{y}}{\Zero} \rightarrow \instOf{\mathtt{y}}{\Nat} && \text{(C-Prog)}\\
+  &\instOf{\mathtt{y.p}}{\Zero} \rightarrow \instOf{\mathtt{y.p}}{\Nat} && \text{(C-Prog)}\\
+  &\instOf{\mathtt{y}}{\Succ} \land \instOf{\mathtt{y.p}}{\Nat} \rightarrow \instOf{\mathtt{y}}{\Nat} && \text{(C-Prog)}\\
+  % Many more
+  &...\\
+  % Entailment
+  &\neg (\instBy{\mathtt{x}}{\Succ} \land
+        \instBy{\mathtt{x.p}}{\Zero} \land
+        \pathEq{\mathtt{x}}{\mathtt{y}} \rightarrow
+          \instOf{y}{\Nat})
+\end{align}
+
+\newpage
+\subsection{Substitution in the Ground Encoding}
+We want to finitely enumerate the quantified rule:
+\begin{align*}
+  % C-Subst: instOf
+  &\forall p, c, v, r, s, a, b. && \text{(C-Subst)}\\
+  &\quad \pathEq{s}{r} \land \subst{p}{v}{r}=a~\land\\
+  &\quad \instOf{a}{c} \land
+         \subst{p}{v}{s}=b\\
+  &\qquad \rightarrow \instOf{b}{c}
+\end{align*}
+The na\"ive approach would be to take the cross product of all quantified variables.
+This would leave us with a lot of meaningless implications,
+e.g. if we instantiate the rule with
+$p=\mathtt{x}, v=\mathtt{y}, r=\mathtt{x}, a=\mathtt{y}, s=\mathtt{x}, b=\mathtt{x}, c=\Nat$
+\begin{align*}
+  % C-Subst: instOf
+  &\pathEq{\mathtt{x}}{\mathtt{x}} \land {\color{red}\subst{\mathtt{x}}{\mathtt{y}}{\mathtt{x}}=\mathtt{y}}~\land
+  \instOf{\mathtt{y}}{\Nat} \land \subst{\mathtt{x}}{\mathtt{y}}{\mathtt{x}}=\mathtt{x}\\
+  &\quad \rightarrow \instOf{\mathtt{x}}{\Nat}
+\end{align*}
+Since we know the substitution to be false,
+we do not have to include this instantiation into the encoding.
+Since we only need to include rule instantiations where the substitution
+predicate holds and we can calculate the substitution prior
+since all quantified variables are known,
+we can get rid of the substitution predicate in the encoding altogether.\\
+\\
+E.g. the inatantiation with
+$p=\mathtt{x}, v=\mathtt{x}, r=\mathtt{y}, a=\mathtt{y}, s=\mathtt{x}, b=\mathtt{x}, c=\Nat$
+\begin{align*}
+  % C-Subst: instOf
+  &\pathEq{\mathtt{x}}{\mathtt{y}} \land
+   {\color{blue}\subst{\mathtt{x}}{\mathtt{x}}{\mathtt{y}}=\mathtt{y}}~\land
+   \instOf{\mathtt{y}}{\Nat} \land
+   {\color{blue}\subst{\mathtt{x}}{\mathtt{x}}{\mathtt{x}}=\mathtt{x}}\\
+  &\quad \rightarrow \instOf{\mathtt{x}}{\Nat}
+\end{align*}
+turns into
+\[
+  \pathEq{\mathtt{x}}{\mathtt{y}} \land \instOf{\mathtt{y}}{Nat} \rightarrow \instOf{\mathtt{x}}{\Nat}
+\]
+
+\section{Algorithmic Symmetry}
+\label[Algorithmic Symmetry]{sec:algo-symmetry}
+We rely on the equivalency between the declarative- and the algorithmic system
+to set our depth limit for path enumeration
+as well as on the decidability of the declarative system to even have such a limit in place.\\
+\\
+The entailment $\entails{\pathEq{a}{b}}{\pathEq{b}{a}}$ is a counterexample
+to Lemma \ref{lem:2} (more precisely \ref{lem:1})
+and \autoref{thm:1} as it relies on Lemma 5.5.16.
+
+\begin{lemma}[5.5.15]
+  \label[Algorithmic equivalency]{lem:1}
+  If \wf{P} and \entails{\ovl{a}}{a} then \entailsA{\ovl{a}}{a}.
+\end{lemma}
+
+\begin{lemma}[5.5.16]
+  \label[Equivalency]{lem:2}
+  If \wf{P} then \entails{\ovl{a}}{a} iff \entailsA{\ovl{a}}{a}.
+\end{lemma}
+
+\begin{theorem}[5.5.1]
+  \label[Decidable entailment]{thm:1}
+  If \wf{P} then derivation of \entails{\ovl{a}}{a} is decidable.
+\end{theorem}
+
+Counterexample for Lemma \ref{lem:1}.
+Choose any well-formed program.
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{C-Refl}
+  \UnaryInfC{\entails{\cdot}{\pathEq{b}{b}}}
+  \RightLabel{C-Weak}
+  \UnaryInfC{\entails{\pathEq{a}{b}}{ \pathEq{b}{a}_{\sub{a}{b}} }}
+  \AxiomC{}
+  \RightLabel{C-Ident}
+  \UnaryInfC{\entails{\pathEq{a}{b}}{\pathEq{a}{b}}}
+  \RightLabel{C-Subst}
+  \BinaryInfC{\entails{\pathEq{a}{b}}{ \pathEq{b}{a}_{\sub{a}{a}} }}
+\end{prooftree}
+
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{CA-Refl}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{a}{a}}}
+  \AxiomC{$a \sqsubset \pathEq{a}{b}$}
+  \AxiomC{...}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+  \RightLabel{CA-Subst3}
+  \TrinaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+\end{prooftree}
+
+\begin{prooftree}
+  \AxiomC{...}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+  \AxiomC{$b \sqsubset \pathEq{a}{b}$}
+  \AxiomC{}
+  \RightLabel{CA-Refl}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{b}}}
+  \RightLabel{CA-Subst3}
+  \TrinaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+\end{prooftree}
+
+\subsection{Symmetry Fix}
+\label[Symmetry Fix]{sec:symmetry-fix}
+We can update rule CA-Subst3 to allow the entailment used as a counterexample
+to Lemma \ref{lem:1} to have a derivation.
+
+There are two feasible ways to update the rule:
+\begin{enumerate}
+  \item
+  \begin{prooftree}
+    \AxiomC{\entailsA{\ovl{a}}{\pathEq{p}{p''}}}
+    \AxiomC{$p \sqsubset \ovl{a}$}
+    \AxiomC{\entailsA{\ovl{a}}{\pathEq{p}{p'}}}
+    \RightLabel{CA-Subst3Fix1}
+    \TrinaryInfC{\entailsA{\ovl{a}}{\pathEq{p'}{p''}}}
+  \end{prooftree}
+  \item
+  \begin{prooftree}
+    \AxiomC{\entailsA{\ovl{a}}{\pathEq{p''}{p}}}
+    \AxiomC{$p \sqsubset \ovl{a}$}
+    \AxiomC{\entailsA{\ovl{a}}{\pathEq{p'}{p}}}
+    \RightLabel{CA-Subst3Fix2}
+    \TrinaryInfC{\entailsA{\ovl{a}}{\pathEq{p'}{p''}}}
+  \end{prooftree}
+\end{enumerate}
+
+\subsubsection{Fix 1 derivation}
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{CA-Refl}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{a}{a}}}
+  \AxiomC{$a \sqsubset \pathEq{a}{b}$}
+  \AxiomC{}
+  \RightLabel{CA-Ident}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{a}{b}}}
+  \RightLabel{CA-Subst3Fix1}
+  \TrinaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+\end{prooftree}
+
+\subsubsection{Fix 2 derivation}
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{CA-Ident}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{a}{b}}}
+  \AxiomC{$b \sqsubset \pathEq{a}{b}$}
+  \AxiomC{}
+  \RightLabel{CA-Refl}
+  \UnaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{b}}}
+  \RightLabel{CA-Subst3Fix2}
+  \TrinaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
+\end{prooftree}
+
+\subsection{What to do with this?}
+\begin{itemize}
+  \item Update rule CA-Subst3 with one of the solutions from \autoref{sec:symmetry-fix}.
+  \item Redo the proofs?
+\end{itemize}
+
+%\section{Runtime Comparison}
+%add table
+
+\end{document}
