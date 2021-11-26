@@ -13,24 +13,25 @@
 \usepackage[nottoc]{tocbibind}
 \usepackage{pdfpages}
 
-\usepackage{syntax} % for bnf grammar
+\usepackage{syntax}     % for bnf grammar
 \usepackage{bussproofs} % for type rules
 \usepackage{todonotes}
 
-\usepackage{float} % for figures
+\usepackage{float}      % for figures
 \floatstyle{boxed}
 \restylefloat{figure}
 
 \usepackage{listings}
 \usepackage{xcolor}
 %\usepackage{tikz}
-\usetikzlibrary{positioning,chains,shapes.arrows,shapes.geometric,fit,calc,arrows,decorations.pathmorphing}
+%\usetikzlibrary{positioning,chains,shapes.arrows,shapes.geometric,fit,calc,arrows,decorations.pathmorphing}
 
 %\usepackage{subfig}
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{adjustbox}
-\usepackage{cleveref}
+\usepackage{cleveref}   % for better references with \Cref
+\usepackage{parskip}    % line breaks in texts
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}
@@ -253,8 +254,8 @@ we do not have to include this instantiation into the encoding.
 Since we only need to include rule instantiations where the substitution
 predicate holds and we can calculate the substitution prior
 since all quantified variables are known,
-we can get rid of the substitution predicate in the encoding altogether.\\
-\\
+we can get rid of the substitution predicate in the encoding altogether.
+
 E.g. the inatantiation with
 $p=\mathtt{x}, v=\mathtt{x}, r=\mathtt{y}, a=\mathtt{y}, s=\mathtt{x}, b=\mathtt{x}, c=\Nat$
 \begin{align*}
@@ -272,10 +273,10 @@ turns into
 
 \section{Algorithmic Symmetry}
 \label{sec:algo-symmetry}
-We rely on the equivalency between the declarative- and the algorithmic system
+We rely on the equivalency between the declarative and the algorithmic system
 to set our depth limit for path enumeration
-as well as on the decidability of the declarative system to even have such a limit in place.\\
-\\
+as well as on the decidability of the declarative system to even have such a limit in place.
+
 The entailment $\entails{\pathEq{a}{b}}{\pathEq{b}{a}}$ is a counterexample
 to \Cref{lem:2} (more precisely \Cref{lem:1})
 and \Cref{thm:1} as it relies on \Cref{lem:2}.
@@ -382,6 +383,13 @@ There are two feasible ways to update the rule:
   \RightLabel{CA-Subst3Fix2}
   \TrinaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
 \end{prooftree}
+
+\subsubsection{Fix Implications}
+\todo[inline]{%
+  - Termination conserns\\
+    - could just infinitely symmetric switch with CA-Subst3\\
+    - need to limit it, s.t. path equivalencies might only be symmetrically switched once (using a "memory" context?)
+}
 
 \subsection{What to do with this?}
 \begin{itemize}
