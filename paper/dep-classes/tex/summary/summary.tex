@@ -41,11 +41,96 @@
 \begin{document}
 
 \section{Overview}
+\section{DCC recap}
+%\subsection{Syntax}
+\begin{figure}[h]
+\begin{align*}
+  P &::= \ovl{D} && \text{(Program)}\\
+  D &::= \constructorDeclaration{C}{x}{\ovl{a}}
+    \mid \programEntailment{x}{\ovl{a}}{a}
+    \mid \abstractMethodDeclaration{m}{x}{\ovl{a}}{t}
+    \mid \methodImplementation{m}{x}{\ovl{a}}{t}{e} && \text{(Decl)}\\
+  t &::= \type{x}{\ovl{a}} && \text{(Type)}\\
+  a &::= \pathEq{p}{p}
+    \mid \instOf{p}{C}
+    \mid \instBy{p}{C} && \text{(Constr)}\\
+  p &::= x \mid p.f && \text{(Path)}\\
+  e &::= x
+    \mid e.f
+    \mid \objConstr{C}{\pathEq{\ovl{f}}{\ovl{e}}} && \text{(Expr)}
+\end{align*}
+\caption{DCC Syntax}
+\label{fig:syntax}
+\end{figure}
+
+%\subsection{Constraint Entailment}
+\begin{figure}[h]
+  \begin{mathpar}
+    \inferrule[C-Ident]{}{
+      \entails{a}{a}
+    }
+    \and
+    \inferrule[C-Refl]{}{
+      \entails{\epsilon}{\pathEq{p}{p}}
+    }
+    \and
+    \inferrule[C-Class]{
+      \entails{\ovl{a}}{\instBy{p}{C}}
+    }{
+      \entails{\ovl{a}}{\instOf{p}{C}}
+    }
+    \and
+    \inferrule[C-Cut]{
+      \entails{\ovl{a}}{c}\\
+      \entails{\ovl{a'},c}{b}
+    }{
+      \entails{\ovl{a},\ovl{a'}}{b}
+    }
+    \and
+    \inferrule[C-Subst]{
+      \entails{\ovl{a}}{a_{\sub{x}{p}}}\\
+      \entails{\ovl{a}}{\pathEq{p'}{p}}
+    }{
+      \entails{\ovl{a}}{a_{\sub{x}{p'}}}
+    }
+    \and
+    \inferrule[C-Prog]{
+      (\programEntailment{x}{\ovl{a}}{a}) \in P\\
+      \entails{\ovl{b}}{\ovl{a}_{\sub{x}{p}}}
+    }{
+      \entails{\ovl{a}}{a_{\sub{x}{p}}}
+    }
+  \end{mathpar}
+  \caption{Constraint Entailment}
+  \label{fig:constraint-entailment}
+\end{figure}
+
 \section{An Implementation}
+\todo[inline]{%
+  - interpreter for operational semantics\\
+  - type inference for type assignments for expressions\\
+  - type checking through inferring type and check subtype with annotated/expected type\\
+  - constraint entailment via SMT solving
+}
+
 \section{Towards an SMT encoding}
+\todo[inline]{%
+  - idea (of master thesis): use smt solver\\
+  - first approach: resemble syntax based reasoning to stay close to \Cref{fig:constraint-entailment}\\
+    - unefficient (massive amount of ADTs and recursion needed, not what a SMT solver is good at)\\
+  - second approach: use semantic reasoning, encode into FO with constraints being simple boolean predicates\\
+    - infinite datatypes are problematic, we will never be able to reject an entailment\\
+  - third approach: get rid of the infinite structures\\
+    - limit path depth\\
+    - decidable encoding, we could just finitely enumerate all quantifiers\\
+  - 4th approach: ground encoding to see if it's more efficient\\
+}
+
 \section{SMT solver limitations}
-- recursion + quantifiers + infinite (abstractt) datatypes bad
-- need to limit the use of them
+\todo[inline]{%
+  - recursion + quantifiers + infinite (abstractt) datatypes bad\\
+  - need to limit the use of them
+}
 
 \section{Path Depth Limit Encoding}
 To encode: $\entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}}$
@@ -186,31 +271,31 @@ turns into
 \]
 
 \section{Algorithmic Symmetry}
-\label[Algorithmic Symmetry]{sec:algo-symmetry}
+\label{sec:algo-symmetry}
 We rely on the equivalency between the declarative- and the algorithmic system
 to set our depth limit for path enumeration
 as well as on the decidability of the declarative system to even have such a limit in place.\\
 \\
 The entailment $\entails{\pathEq{a}{b}}{\pathEq{b}{a}}$ is a counterexample
-to Lemma \ref{lem:2} (more precisely \ref{lem:1})
-and \autoref{thm:1} as it relies on Lemma 5.5.16.
+to \Cref{lem:2} (more precisely \Cref{lem:1})
+and \Cref{thm:1} as it relies on \Cref{lem:2}.
 
 \begin{lemma}[5.5.15]
-  \label[Algorithmic equivalency]{lem:1}
+  \label{lem:1}
   If \wf{P} and \entails{\ovl{a}}{a} then \entailsA{\ovl{a}}{a}.
 \end{lemma}
 
 \begin{lemma}[5.5.16]
-  \label[Equivalency]{lem:2}
+  \label{lem:2}
   If \wf{P} then \entails{\ovl{a}}{a} iff \entailsA{\ovl{a}}{a}.
 \end{lemma}
 
 \begin{theorem}[5.5.1]
-  \label[Decidable entailment]{thm:1}
+  \label{thm:1}
   If \wf{P} then derivation of \entails{\ovl{a}}{a} is decidable.
 \end{theorem}
 
-Counterexample for Lemma \ref{lem:1}.
+Counterexample for \Cref{lem:1}.
 Choose any well-formed program.
 \begin{prooftree}
   \AxiomC{}
@@ -248,9 +333,9 @@ Choose any well-formed program.
 \end{prooftree}
 
 \subsection{Symmetry Fix}
-\label[Symmetry Fix]{sec:symmetry-fix}
+\label{sec:symmetry-fix}
 We can update rule CA-Subst3 to allow the entailment used as a counterexample
-to Lemma \ref{lem:1} to have a derivation.
+to \Cref{lem:1} to have a derivation.
 
 There are two feasible ways to update the rule:
 \begin{enumerate}
@@ -300,7 +385,7 @@ There are two feasible ways to update the rule:
 
 \subsection{What to do with this?}
 \begin{itemize}
-  \item Update rule CA-Subst3 with one of the solutions from \autoref{sec:symmetry-fix}.
+  \item Update rule CA-Subst3 with one of the solutions from \Cref{sec:symmetry-fix}.
   \item Redo the proofs?
 \end{itemize}
 
