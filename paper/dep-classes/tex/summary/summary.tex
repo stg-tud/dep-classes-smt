@@ -43,29 +43,31 @@
 
 \section{Overview}
 \section{DCC recap}
-%\subsection{Syntax}
-\begin{figure}[h]
-\begin{align*}
-  P &::= \ovl{D} && \text{(Program)}\\
-  D &::= \constructorDeclaration{C}{x}{\ovl{a}}
-    \mid \programEntailment{x}{\ovl{a}}{a}
-    \mid \abstractMethodDeclaration{m}{x}{\ovl{a}}{t}
-    \mid \methodImplementation{m}{x}{\ovl{a}}{t}{e} && \text{(Decl)}\\
-  t &::= \type{x}{\ovl{a}} && \text{(Type)}\\
-  a &::= \pathEq{p}{p}
-    \mid \instOf{p}{C}
-    \mid \instBy{p}{C} && \text{(Constr)}\\
-  p &::= x \mid p.f && \text{(Path)}\\
-  e &::= x
-    \mid e.f
-    \mid \objConstr{C}{\pathEq{\ovl{f}}{\ovl{e}}} && \text{(Expr)}
-\end{align*}
-\caption{DCC Syntax}
-\label{fig:syntax}
-\end{figure}
+\subsection{Syntax}
+\label{sec:syntax}
+%\begin{figure}[h]
+  \begin{align*}
+    P &::= \ovl{D} && \text{(Program)}\\
+    D &::= \constructorDeclaration{C}{x}{\ovl{a}}
+      \mid \programEntailment{x}{\ovl{a}}{a}
+      \mid \abstractMethodDeclaration{m}{x}{\ovl{a}}{t}
+      \mid \methodImplementation{m}{x}{\ovl{a}}{t}{e} && \text{(Decl)}\\
+    t &::= \type{x}{\ovl{a}} && \text{(Type)}\\
+    a &::= \pathEq{p}{p}
+      \mid \instOf{p}{C}
+      \mid \instBy{p}{C} && \text{(Constr)}\\
+    p &::= x \mid p.f && \text{(Path)}\\
+    e &::= x
+      \mid e.f
+      \mid \objConstr{C}{\pathEq{\ovl{f}}{\ovl{e}}} && \text{(Expr)}
+  \end{align*}
+%\caption{DCC Syntax}
+%\label{fig:syntax}
+%\end{figure}
 
-%\subsection{Constraint Entailment}
-\begin{figure}[h]
+\subsection{Constraint Entailment}
+\label{sec:constraint-entailment}
+%\begin{figure}[h]
   \begin{mathpar}
     \inferrule[C-Ident]{}{
       \entails{a}{a}
@@ -102,11 +104,13 @@
       \entails{\ovl{a}}{a_{\sub{x}{p}}}
     }
   \end{mathpar}
-  \caption{Constraint Entailment}
-  \label{fig:constraint-entailment}
-\end{figure}
+%  \caption{Constraint Entailment}
+%  \label{fig:constraint-entailment}
+%\end{figure}
 
-\begin{figure}[h]
+\subsection{Operational Semantics}
+\label{sec:operational-semantics}
+%\begin{figure}[h]
   \begin{mathpar}
     \inferrule[R-New]{
       x \not \in \mathit{dom}(h)\\
@@ -158,11 +162,13 @@
         \pair{h'}{\objConstr{C}{\pathEq{\ovl{f}}{\ovl{x}}, \pathEq{f}{e'}, \pathEq{\ovl{f'}}{\ovl{e'}}}}
     }
   \end{mathpar}
-  \caption{Operational Semantics}
-  \label{fig:operational-semantics}
-\end{figure}
+%  \caption{Operational Semantics}
+%  \label{fig:operational-semantics}
+%\end{figure}
 
-\begin{figure}[h]
+\subsection{Type Assignment}
+\label{sec:type-assignment}
+%\begin{figure}[h]
   \begin{mathpar}
     \inferrule[T-Field]{
       \typeass{\ovl{c}}{e}{\type{x}{\ovl{a}}}\\
@@ -205,22 +211,94 @@
       \typeass{\ovl{c}}{\objConstr{C}{\pathEq{\ovl{f}}{\ovl{e}}}}{\type{x}{\ovl{b}}}
     }
   \end{mathpar}
-  \caption{Type Assignment}
-  \label{fig:type-assignment}
-\end{figure}
+%  \caption{Type Assignment}
+%  \label{fig:type-assignment}
+%\end{figure}
+
+\subsection{Type Checking}
+\label{sec:type-checking}
+%\begin{figure}[h]
+  \begin{mathpar}
+    \inferrule[WF-CD]{
+      \mIt{FV}(\ovl{a}) = \{ x \}
+    }{
+      \wf{\constructorDeclaration{C}{x}{\ovl{a}}}
+    }
+    \and
+    \inferrule[WF-MS]{
+      \mIt{FV}(\ovl{a}) = \{ x \}\\
+      \mIt{FV}(\ovl{b}) = \{ x, y \}
+    }{
+      \wf{\abstractMethodDeclaration{m}{x}{\ovl{a}}{\type{y}{\ovl{b}}}}
+    }
+    \and
+    \inferrule[WF-RD]{
+      \mIt{FV}(\ovl{a}) = \{ x \}\\
+      \instanceOf{x}{C'} \in \ovl{a}
+    }{
+      \wf{\programEntailment{x}{\ovl{a}}{\instanceOf{x}{C}}}
+    }
+    \and
+    \inferrule[WF-MI]{
+      \mIt{FV}(\ovl{a}) = \{ x \}\\
+      \mIt{FV}(\ovl{b}) = \{ x, y \}\\
+      \typeass{\ovl{a}}{e}{\type{y}{\ovl{b}}}
+    }{
+      \wf{\methodImplementation{m}{x}{\ovl{a}}{\type{y}{\ovl{b}}}{e}}
+    }
+    \and
+    \inferrule[WF-Prog]{
+      \forall D \in P.~\wf{D}\\
+      \forall m.~\forall \pair{\ovl{a}}{\ovl{b}}, \pair{\ovl{a'}}{\ovl{b'}} \in \mIt{MType}(m, x, y).~\ovl{b}=\ovl{b'}\\
+      \forall m.~\forall \pair{\ovl{a}}{\ovl{b}} \in \mIt{MType}(m, x, y).~\mathrm{complete}(m, \type{x}{\ovl{a}})\\
+      \forall m. \mathrm{unique}(m)
+    }{
+      \wf{P}
+    }
+  \end{mathpar}
+%  \caption{Type Checking}
+%  \label{fig:type-checking}
+%\end{figure}
 
 \section{An Implementation}
-\todo[inline]{%
-  - interpreter for operational semantics\\
-  - type inference for type assignments for expressions\\
-  - type checking through inferring type and check subtype with annotated/expected type\\
-  - constraint entailment via SMT solving
-}
+% \todo[inline]{%
+%   - interpreter for operational semantics\\
+%   - type inference for type assignments for expressions\\
+%   - type checking through inferring type and check subtype with annotated/expected type\\
+%   - constraint entailment via SMT solving
+% }
+
+%One of our main goals is to provide an implementation for DCC. % TODO: what is/are the other/s? extend DCC?
+We provide an implementation of
+\begin{itemize}
+  \item the constraint entailment,
+  \item the operational semantics,
+  \item the type assignment and
+  \item the type checking excepting the completeness- and unique check for programs.
+\end{itemize}
+
+The implementation of the operational semantics is straightforward and resembles
+the rules as seen in \Cref{sec:operational-semantics}.
+
+The implementation of type assignment infers a suitable type for a given expression
+(based on the rules of \Cref{sec:type-assignment}).
+Checking if a given expression has a suspected type is done via
+first inferring a type for the expression and then checking if the inferred type
+is a subtype of the suspected type (rule T-Sub).
+
+The implementation of type checking (well-formedness, \Cref{sec:type-checking}) is straightforward,
+with the limitation that we skip the completeness- and unique check for programs.
+
+Our approach for the implementation of the constraint entailment rules
+from \Cref{sec:constraint-entailment} is to use a SMT solver to solve the constraint system,
+s.t. for each entailment to solve we make a query to the solver.
+This requires us to provide an encoding of the rules into (first-order) logic
+to feed as input into the solver.
 
 \section{Towards an SMT encoding}
 \todo[inline]{%
   - idea (of master thesis): use smt solver\\
-  - first approach: resemble syntax based reasoning to stay close to \Cref{fig:constraint-entailment}\\
+  - first approach: resemble syntax based reasoning to stay close to \Cref{sec:constraint-entailment}\\
     - unefficient (massive amount of ADTs and recursion needed, not what a SMT solver is good at)\\
   - second approach: use semantic reasoning, encode into FO with constraints being simple boolean predicates\\
     - infinite datatypes are problematic, we will never be able to reject an entailment\\
