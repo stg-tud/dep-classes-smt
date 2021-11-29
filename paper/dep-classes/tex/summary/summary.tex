@@ -326,6 +326,34 @@ we did:
 }
 
 \section{Path Depth Limit Encoding}
+\todo[inline]{%
+  - avoid problems identified in SMT limitations\\
+  - need to get rid of the infinite domain of PATHS as well as avoid recursive computations in the solver\\
+  - idea: set a maximum path depth limit (the max amount of which a path might be expanded)\\
+    - e.g.: if the depth limit is set to 1, path x.f is within the limit while x.f.g is not.\\
+    - with the depth limit in place we can now enumerate all possible paths\\
+  - until now: we did rely on the solver to compute path substitutions\\
+  - this cannot be cleanly transformed with the path enumeration type\\
+    - also we want to avoid encoding recursive functions into the SMT solver\\
+  - the enumeration type however allows us to transform the computive substitution function into a predicate\\
+    - we can even compute all the cases in which this predicate will be true externally,
+      thus not relying on the solver for these computations anymore\\
+    - substitution function signature: $\Path \times \Variable \times \Path \times \Path$\\
+    - for $\mIt{substitute}(p,x,q,r)$ we write $\subst{p}{x}{q}=s$\\
+  - the quantifiers encoding the rules need to be updated to the new substitution style\\
+    - we need to check if the Substitution predicate holds in the lhs of the implications\\
+  % this is for a possibly later decidability section
+  - decidability of path depth encoding:\\
+    - all declared datatypes have a finite domain\\
+    - all quantifiers range over variables from the declared datatypes\\
+    - the encoding is decidable as we can finitely enumerate the quantifiers\\
+  - decidability of the ground path depth encoding:
+    - all declared datatypes have a finite domain\\
+    - the encoding is quantifier free\\
+    - hence, trivially decidable
+}
+
+\subsection{Example Encoding}
 To encode: $\entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}}$
 with $\mathit{depth\!\!-\!\!limit}=1$
 \begin{align}
@@ -377,9 +405,32 @@ with $\mathit{depth\!\!-\!\!limit}=1$
   % Entailment
   &\neg (\instBy{\mathtt{x}}{\Succ} \land \instBy{\mathtt{x.p}}{\Zero} \land \pathEq{\mathtt{x}}{\mathtt{y}} \rightarrow \instOf{\mathtt{y}}{\Nat})
 \end{align}
+
+\subsection{Decidability}
+\todo[inline]{%
+  - decidability of path depth encoding:\\
+    - all declared datatypes have a finite domain\\
+    - all quantifiers range over variables from the declared datatypes\\
+    - the encoding is decidable as we can finitely enumerate the quantifiers\\
+}
+
 \newpage
 
-\section{Ground Encoding}
+\section{Grounding the Path Depth Limit Encoding}
+\todo[inline]{%
+  - goal: get a quantifier free encoding s.t. we can use one of the QF theories (and maybe even a different solver)\\
+  - approach: as discussed in the decidability section of the path depth limit encoding we can\\
+    - finitely enumerate the quantified variables\\
+  - put observations about substitution before the final encoding example\\
+  - with the observations about Substitution from the previous section
+    we can remove the substitution predicate from the encoding altogether\\
+  - also we only instantiate the quantifiers with interpretations that fulfill the substitution predicate\\
+  - this removes the complexity of the encoding,
+    as the solver doesnt have to check if the predicate holds for each individual assert
+    as well as reducing the overall number of assertions
+}
+
+\subsection{Example Encoding}
 To encode: $\entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}}$
 with $\mathit{depth\!\!-\!\!limit}=1$
 \setcounter{equation}{0}
