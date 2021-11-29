@@ -106,6 +106,109 @@
   \label{fig:constraint-entailment}
 \end{figure}
 
+\begin{figure}[h]
+  \begin{mathpar}
+    \inferrule[R-New]{
+      x \not \in \mathit{dom}(h)\\
+      o = \stdobj\\\\
+      \constructorDeclaration{C}{x}{\ovl{b}} \in P\\
+      \entails{\mIt{HC}(h), \mIt{OC}(x, o)}{\ovl{b}}
+    }{
+      \pair{h}{\objConstr{C}{\pathEq{\ovl{f}}{\ovl{x}}}} \rightarrow
+        \pair{h, x \mapsto o}{x}
+    }
+    \and
+    \inferrule[R-Field]{
+      (\pathEq{x.f}{y}) \in \mIt{HC}(h)
+    }{
+      \pair{h}{x.f} \rightarrow
+        \pair{h}{y}
+    }
+    \and
+    \inferrule[R-Call]{
+      S = \{ \pair{\ovl{a}}{e} | \pair{\ovl{a}}{e} \in \mIt{mImpl}(m, x) \land \entails{\mIt{HC}(h)}{\ovl{a}} \}\\
+      \pair{\ovl{a}}{e} \in S\\
+      \forall \pair{\ovl{a'}}{e'} \in S.~(e' \neq e) \longrightarrow \entails{\ovl{a'}}{\ovl{a}} \land \neg \entails{\ovl{a}}{\ovl{a'}}
+    }{
+      \pair{h}{m(x)} \rightarrow
+        \pair{h}{e}
+    }
+    \and
+    \inferrule[RC-Field]{
+      \pair{h}{e} \rightarrow
+        \pair{h'}{e'}
+    }{
+      \pair{h}{e.f} \rightarrow
+        \pair{h'}{e'.f}
+    }
+    \and
+    \inferrule[RC-Call]{
+      \pair{h}{e} \rightarrow
+        \pair{h'}{e'}
+    }{
+      \pair{h}{m(e)} \rightarrow
+        \pair{h'}{m(e')}
+    }
+    \and
+    \inferrule[RC-New]{
+      \pair{h}{e} \rightarrow
+        \pair{h'}{e'}
+    }{
+      \pair{h}{\objConstr{C}{\pathEq{\ovl{f}}{\ovl{x}}, \pathEq{f}{e}, \pathEq{\ovl{f'}}{\ovl{e'}}}} \rightarrow
+        \pair{h'}{\objConstr{C}{\pathEq{\ovl{f}}{\ovl{x}}, \pathEq{f}{e'}, \pathEq{\ovl{f'}}{\ovl{e'}}}}
+    }
+  \end{mathpar}
+  \caption{Operational Semantics}
+  \label{fig:operational-semantics}
+\end{figure}
+
+\begin{figure}[h]
+  \begin{mathpar}
+    \inferrule[T-Field]{
+      \typeass{\ovl{c}}{e}{\type{x}{\ovl{a}}}\\
+      \entails{\ovl{c}, \ovl{a}}{\instanceOf{x.f}{C}}\\\\
+      \entails{\ovl{c}, \ovl{a}, \pathEq{x.f}{y}}{\ovl{b}}\\
+      x \not \in \mIt{FV}(\ovl{b})
+    }{
+      \typeass{\ovl{c}}{e.f}{\type{y}{\ovl{b}}}
+    }
+    \and
+    \inferrule[T-Call]{
+      \typeass{\ovl{c}}{e}{\type{x}{\ovl{a}}}\\
+      \pair{\ovl{a'}}{\ovl{b}} \in \mIt{MType}(m, x, y)\\\\
+      \entails{\ovl{c}, \ovl{a}}{\ovl{a'}}\\
+      \entails{\ovl{c}, \ovl{a}, \ovl{b}}{\ovl{b'}}\\
+      x \not \in \mIt{FV}(\ovl{b'})
+    }{
+      \typeass{\ovl{c}}{m(e)}{\type{y}{\ovl{b'}}}
+    }
+    \and
+    \inferrule[T-Var]{
+      \entails{\ovl{c}}{\instanceOf{x}{C}}
+    }{
+      \typeass{\ovl{c}}{x}{\type{y}{\pathEq{y}{x}}}
+    }
+    \and
+    \inferrule[T-Sub]{
+      \typeass{\ovl{c}}{e}{\type{x}{\ovl{a'}}}\\\\
+      \entails{\ovl{c},\ovl{a'}}{\ovl{a}}
+    }{
+      \typeass{\ovl{c}}{e}{\type{x}{\ovl{a}}}
+    }
+    \and
+    \inferrule[T-New]{
+      \forall i.~\typeass{\ovl{c}}{e_i}{\type{x_i}{\ovl{a_i}}}\\\\
+      \ovl{b} = (\instantiatedBy{x}{C}), \cup_{i} \ovl{a_i}_{\sub{x_i}{x.f_i}}\\\\
+      \constructorDeclaration{C}{x}{\ovl{b'}} \in P\\
+      \entails{\ovl{c}, \ovl{b}}{\ovl{b'}}
+    }{
+      \typeass{\ovl{c}}{\objConstr{C}{\pathEq{\ovl{f}}{\ovl{e}}}}{\type{x}{\ovl{b}}}
+    }
+  \end{mathpar}
+  \caption{Type Assignment}
+  \label{fig:type-assignment}
+\end{figure}
+
 \section{An Implementation}
 \todo[inline]{%
   - interpreter for operational semantics\\
