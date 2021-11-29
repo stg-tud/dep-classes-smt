@@ -300,13 +300,24 @@ to feed as input into the solver.
   - idea (of master thesis): use smt solver\\
   - first approach: resemble syntax based reasoning to stay close to \Cref{sec:constraint-entailment}\\
     - unefficient (massive amount of ADTs and recursion needed, not what a SMT solver is good at)\\
+    - multiple infinite domains with ADTs\\
   - second approach: use semantic reasoning, encode into FO with constraints being simple boolean predicates\\
     - infinite datatypes are problematic, we will never be able to reject an entailment\\
+  - put solver limitations subsection here?\\
   - third approach: get rid of the infinite structures\\
     - limit path depth\\
     - decidable encoding, we could just finitely enumerate all quantifiers\\
   - 4th approach: ground encoding to see if it's more efficient\\
 }
+Since we want to use a SMT solver for solving constraint entailments we need to
+encode the calculus into (first-order) logic.
+Creating this encoding is an iterative process for which we sketch the individual steps
+we did:
+% dont do this with an enumeration, instead use multiple paragraphs
+% this would also allow the limitations section to be insertet inbetween
+\begin{enumerate}
+  \item \todo{TODO}
+\end{enumerate}
 
 \section{SMT solver limitations}
 \todo[inline]{%
