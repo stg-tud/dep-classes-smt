@@ -322,6 +322,11 @@ we did:
 \section{SMT solver limitations}
 \todo[inline]{%
   - recursion + quantifiers + infinite (abstractt) datatypes bad\\
+  - implications of this (see stack overflow answer)\\
+    - the encoding won't be able to accept a query,
+      as it could just unroll the recusive definitions once more and might encounter a counterexample
+      (infinite domain)\\
+    - but it might find a solution to reject a query, as it might encounter a counterexample\\ 
   - need to limit the use of them
 }
 
@@ -637,9 +642,11 @@ There are two feasible ways to update the rule:
 
 \subsubsection{Fix Implications}
 \todo[inline]{%
-  - Termination conserns\\
+  - Termination concerns\\
     - could just infinitely symmetric switch with CA-Subst3\\
-    - need to limit it, s.t. path equivalencies might only be symmetrically switched once (using a "memory" context?)
+    - need to limit it, s.t. path equivalencies might only be symmetrically switched once (using a "memory" context?)\\
+    - need some sort of memory anyways, even in the original version, as we could just choose the same path over and over again\\
+      - need to memoize already tested paths per branch
 }
 
 \subsection{What to do with this?}
