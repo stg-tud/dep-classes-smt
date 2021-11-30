@@ -361,35 +361,77 @@ We might encounter a counterexample during unrolling of the recursive definition
 but if none exists we will get looping behaviour during e-matching.
 
 \section{Path Depth Limit Encoding}
-\todo[inline]{%
-  - avoid problems identified in SMT limitations\\
-  - need to get rid of the infinite domain of PATHS as well as avoid recursive computations in the solver\\
-  - idea: set a maximum path depth limit (the max amount of which a path might be expanded)\\
-    - e.g.: if the depth limit is set to 1, path x.f is within the limit while x.f.g is not.\\
-    - with the depth limit in place we can now enumerate all possible paths\\
-  - until now: we did rely on the solver to compute path substitutions\\
-  - this cannot be cleanly transformed with the path enumeration type\\
-    - also we want to avoid encoding recursive functions into the SMT solver\\
-  - the enumeration type however allows us to transform the computive substitution function into a predicate\\
-    - we can even compute all the cases in which this predicate will be true externally,
-      thus not relying on the solver for these computations anymore\\
-    - substitution function signature: $\Path \times \Variable \times \Path \times \Path$\\
-    - for $\mIt{substitute}(p,x,q,r)$ we write $\subst{p}{x}{q}=s$\\
-  - the quantifiers encoding the rules need to be updated to the new substitution style\\
-    - we need to check if the Substitution predicate holds in the lhs of the implications\\
-  % this is for a possibly later decidability section
-  - decidability of path depth encoding:\\
-    - all declared datatypes have a finite domain\\
-    - all quantifiers range over variables from the declared datatypes\\
-    - the encoding is decidable as we can finitely enumerate the quantifiers\\
-  - decidability of the ground path depth encoding:\\
-    - all declared datatypes have a finite domain\\
-    - the encoding is quantifier free\\
-    - hence, trivially decidable
-}
+% \todo[inline]{%
+%   - avoid problems identified in SMT limitations\\
+%   - need to get rid of the infinite domain of PATHS as well as avoid recursive computations in the solver\\
+%   - idea: set a maximum path depth limit (the max amount of which a path might be expanded)\\
+%     - e.g.: if the depth limit is set to 1, path x.f is within the limit while x.f.g is not.\\
+%     - with the depth limit in place we can now enumerate all possible paths\\
+%   - until now: we did rely on the solver to compute path substitutions\\
+%   - this cannot be cleanly transformed with the path enumeration type\\
+%     - also we want to avoid encoding recursive functions into the SMT solver\\
+%   - the enumeration type however allows us to transform the computive substitution function into a predicate\\
+%     - we can even compute all the cases in which this predicate will be true externally,
+%       thus not relying on the solver for these computations anymore\\
+%     - substitution function signature: $\Path \times \Variable \times \Path \times \Path$\\
+%     - for $\mIt{substitute}(p,x,q,r)$ we write $\subst{p}{x}{q}=r$\\
+%   - the quantifiers encoding the rules need to be updated to the new substitution style\\
+%     - we need to check if the Substitution predicate holds in the lhs of the implications\\
+%   %this is for a possibly later decidability section
+%   - decidability of path depth encoding:\\
+%     - all declared datatypes have a finite domain\\
+%     - all quantifiers range over variables from the declared datatypes\\
+%     - the encoding is decidable as we can finitely enumerate the quantifiers\\
+%   - decidability of the ground path depth encoding:\\
+%     - all declared datatypes have a finite domain\\
+%     - the encoding is quantifier free\\
+%     - hence, trivially decidable
+% }
 
 As mentioned previously, the use of recursive definitions in the encoding has
 the effect that the SMT solver will in general not be able to find a solution.
+The recusive definitions that remain in the encoding are the path datatype (infinite domain)
+and the computation of substitutions.
+The idea to get rid of these is to set a limit to the path depth,
+meaning a restricting to witch point paths might be expanded.
+E.g. if we set the depth limit to one the path $\mathtt{x.f}$ would be within the limit while
+$\mathtt{x.f.g}$ would exceed the limit.
+With a limit on the maximum path depth in place we can enumerate all possible paths
+and transform the path datatype from an ADT to an enumeration type.
+
+Until now we relied on the SMT solver to compute substitutions, but
+the path enumeration type allows us to change how we deal with substitutions.
+We can now transform the computive substitution function into a boolean predicate,
+like we did with the constraints.
+We define the predicate with the signature:
+\[ \mIt{substitute}: \Path \times \Variable \times \Path \times \Path \]
+For $\mIt{substitute}(p, x, q, r)$ we write $\subst{p}{x}{q}=r$,
+giving us the notion that the predicate should be true if $r$ is the result
+of the substitution of $x$ with $q$ in $p$.
+
+Since all existing paths are now known prior to the solver,
+we can compute each possible substitution externally and define the substitution predicate
+to be true for exactly these inputs.
+
+The quantified calculus rules need to be updated to respect the new substitution style,
+e.g. we must check for correct substitutions in the premise of the rule.
+
+\todo[inline]{example of comparison of previous (semantic) rule with new (depth limit) rule}
+
+\subsection{C-Prog Rule}
+\todo[inline]{%
+  - C-Prog rule needs to be enumerated\\
+  - this is because the rule instantiates a declaration from the program\\
+  - this declaration introduces a variable and the rule would need to substitute this variable with a path\\
+  - since this variable introduced through the declaration
+    is not (neccecarily) part of the variables valid in the entailment context,
+    we cannot defer this substitution check to the SMT solver\\
+    - as this would require us to add the variable to be a possible variable for the entailment
+      and to be a valid path\\
+    - but it only is a intermediate variable used in the declaration and should not be present anywhere else\\
+  - so we need to compute the result of this substitution prior to the solver\\
+  - which is possible, since all valid paths are known a priory
+}
 
 \subsection{Example Encoding}
 To encode: $\entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}}$
@@ -445,14 +487,17 @@ with $\mathit{depth\!\!-\!\!limit}=1$
 \end{align}
 
 \subsection{Decidability}
-\todo[inline]{%
-  - decidability of path depth encoding:\\
-    - all declared datatypes have a finite domain\\
-    - all quantifiers range over variables from the declared datatypes\\
-    - the encoding is decidable as we can finitely enumerate the quantifiers\\
-}
-
-\newpage
+% \todo[inline]{%
+%   - decidability of path depth encoding:\\
+%     - all declared datatypes have a finite domain\\
+%     - all quantifiers range over variables from the declared datatypes\\
+%     - the encoding is decidable as we can finitely enumerate the quantifiers\\
+% }
+The encoding is decidable since we can finitely enumerate the quantifiers,
+as all quantified variables range over a finite domain.
+This is because all declared datatypes are enumeration types
+with a finite amount of constructors and all quantified variables
+range over one of the declared enumeration types.
 
 \section{Grounding the Path Depth Limit Encoding}
 \todo[inline]{%
