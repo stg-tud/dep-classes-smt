@@ -55,16 +55,7 @@
 % FO
 \mathchardef\mhyphen="2D
 % \newcommand\nuniq{\mathit{non\mhyphen unique}} example command
-\newcommand*{\pleft}{\ensuremath{\mathit{p\mhyphen left}}}
-\newcommand*{\pright}{\ensuremath{\mathit{p\mhyphen right}}}
-\newcommand*{\inprog}{\ensuremath{\mathit{in\mhyphen program}}}
-\newcommand*{\substp}{\ensuremath{\mathit{subst\mhyphen path}}}
-\newcommand*{\substc}{\ensuremath{\mathit{subst\mhyphen constraint}}}
-\newcommand*{\substcs}{\ensuremath{\mathit{subst\mhyphen constraints}}}
-\newcommand{\substpath}[3]{\ensuremath{\substp(\mathit{#1}, \mathit{#2}, \mathit{#3})}}
-\newcommand{\substconstr}[3]{\ensuremath{\substc(\mathit{#1}, \mathit{#2}, \mathit{#3})}}
-\newcommand{\substconstrs}[3]{\ensuremath{\substcs(\mathit{#1}, \mathit{#2}, \mathit{#3})}}
-\newcommand{\subst}[3]{\ensuremath{\mathit{#1}_{\mathit{#2} \mapsto \mathit{#3}}}}
+\newcommand{\subst}[3]{\ensuremath{#1_{\sub{#2}{#3}}}}
 \newcommand*{\genp}{\ensuremath{\mathit{gen\mhyphen path}}}
 \newcommand*{\genc}{\ensuremath{\mathit{gen\mhyphen constraint}}}
 \newcommand{\gen}[3]{\ensuremath{\subst{#1}{#2}{#3}}}
@@ -77,20 +68,16 @@
 \newcommand*{\In}{\textbf{in }}
 \newcommand*{\match}{\textbf{ match}}
 \newcommand{\case}[2]{\ensuremath{\mathit{#1} \Rightarrow \mathit{#2}}}
-\newcommand*{\nil}{\ensuremath{\mathit{nil}}}
+\newcommand*{\nil}{\ensuremath{\mathsf{nil}}}
 \newcommand*{\Variable}{\ensuremath{\mathtt{Variable}}}
 \newcommand*{\Field}{\ensuremath{\mathtt{Field}}}
 \newcommand*{\Class}{\ensuremath{\mathtt{Class}}}
 \newcommand*{\Path}{\ensuremath{\mathtt{Path}}}
-\newcommand*{\Constr}{\ensuremath{\mathit{Constraint}}}
-\newcommand*{\Constrs}{\ensuremath{\mathit{List[\Constr]}}}
-\newcommand*{\Constrss}{\ensuremath{\mathit{List[\Constrs]}}}
-\newcommand*{\String}{\ensuremath{\mathit{String}}}
+\newcommand*{\String}{\ensuremath{\mathsf{String}}}
 \newcommand{\sortedVar}[2]{\ensuremath{#1\!:\!#2}}
-\newcommand\conc{\ensuremath{\mathbin{+\mkern-10mu+}}}
+\newcommand*{\conc}{\ensuremath{\mathbin{+\mkern-10mu+}}}
 \newcommand{\str}[1]{\texttt{"#1"}}
 \newcommand*{\hole}{\ensuremath{\_}}
-\newcommand*{\helper}{\ensuremath{\mathit{helper}}}
 
 % Natural Numbers Program
 \newcommand*{\Nat}{\ensuremath{\mathtt{Nat}}}
@@ -106,12 +93,16 @@
   morekeywords={ite,let},
   morekeywords={true,false,and,or,forall,exists},
   sensitive=false, % keywords are not case-sensitive
-  morecomment=[l]{//}, % l is for line comment
+  morecomment=[l]{;}, % l is for line comment
   morestring=[b]", % defines that strings are enclosed in double quotes
   basicstyle=\small % or \small, \tiny, \footnotesize, etc: sets text size
 }
 \newcommand{\smtlib}[1]{\lstinline[language=smtlib,basicstyle=\normalsize]{#1}}
 \newcommand{\scala}[1]{\lstinline[language=scala,basicstyle=\normalsize]{#1}}
+
+\newcommand*{\sat}{\ensuremath{\mathtt{sat}}}
+\newcommand*{\unsat}{\ensuremath{\mathtt{unsat}}}
+\newcommand*{\unknown}{\ensuremath{\mathtt{unknown}}}
 
 %% misc
 %%%%%%%%%

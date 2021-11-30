@@ -312,12 +312,26 @@ to feed as input into the solver.
 Since we want to use a SMT solver for solving constraint entailments we need to
 encode the calculus into (first-order) logic.
 Creating this encoding is an iterative process for which we sketch the individual steps
-we did:
+we did.
+
 % dont do this with an enumeration, instead use multiple paragraphs
 % this would also allow the limitations section to be insertet inbetween
-\begin{enumerate}
-  \item \todo{TODO}
-\end{enumerate}
+% maybe use \paragraph{SMT Solver Limitations} instead of subsection
+
+Our first approach was to resemble the syntactic-reasoning of the sequent calculus with the encoding.
+For this we defined ADTs for the three constraint types as well as for paths and lists
+and we used strings for representing variables, fields and classes.
+This enabled us to encode the calculus rules in a highly computational form,
+which made extensive use of recursive definitions ranging over the ADTs.
+This performed badly. We were able to successfully show simple valid entailments,
+but the solver gave up and returned \unknown~on more complex valid entailments.
+Also the solver was not able to reject invalid entailments.
+% TODO: point towards problems with this (heavy computational focus, many infinite ADTs)
+
+% TODO: second approach: semantics based reasoning
+%       problems: still retains one infinite ADT (path) as well as recursive computation of substitutions
+% TODO: after this, solver limitations
+% TODO: then depth limit approach
 
 \section{SMT solver limitations}
 \todo[inline]{%
