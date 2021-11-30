@@ -345,6 +345,7 @@ but the solver is still not able to reject invalid entailments.
 % but if none exists we will get looping behaviour during e-matching.
 
 \section{SMT solver limitations}
+\label{sec:smt-limitations}
 % \todo[inline]{%
 %   - recursion + quantifiers + infinite (abstractt) datatypes bad\\
 %   - implications of this (see stack overflow answer)\\
@@ -388,7 +389,7 @@ but if none exists we will get looping behaviour during e-matching.
 %     - hence, trivially decidable
 % }
 
-As mentioned previously, the use of recursive definitions in the encoding has
+As mentioned in \Cref{sec:smt-limitations}, the use of recursive definitions in the encoding has
 the effect that the SMT solver will in general not be able to find a solution.
 The recusive definitions that remain in the encoding are the path datatype (infinite domain)
 and the computation of substitutions.
@@ -418,20 +419,33 @@ e.g. we must check for correct substitutions in the premise of the rule.
 
 \todo[inline]{example of comparison of previous (semantic) rule with new (depth limit) rule}
 
-\subsection{C-Prog Rule}
-\todo[inline]{%
-  - C-Prog rule needs to be enumerated\\
-  - this is because the rule instantiates a declaration from the program\\
-  - this declaration introduces a variable and the rule would need to substitute this variable with a path\\
-  - since this variable introduced through the declaration
-    is not (neccecarily) part of the variables valid in the entailment context,
-    we cannot defer this substitution check to the SMT solver\\
-    - as this would require us to add the variable to be a possible variable for the entailment
-      and to be a valid path\\
-    - but it only is a intermediate variable used in the declaration and should not be present anywhere else\\
-  - so we need to compute the result of this substitution prior to the solver\\
-  - which is possible, since all valid paths are known a priory
-}
+\subsection{Rule C-Prog}
+% \todo[inline]{%
+%   - C-Prog rule needs to be enumerated\\
+%   - this is because the rule instantiates a declaration from the program\\
+%   - this declaration introduces a variable and the rule would need to substitute this variable with a path\\
+%   - since this variable introduced through the declaration
+%     is not (neccecarily) part of the variables valid in the entailment context,
+%     we cannot defer this substitution check to the SMT solver\\
+%     - as this would require us to add the variable to be a possible variable for the entailment
+%       and to be a valid path\\
+%     - but it only is a intermediate variable used in the declaration and should not be present anywhere else\\
+%   - so we need to compute the result of this substitution prior to the solver\\
+%   - which is possible, since all valid paths are known a priory\\
+%   - show C-Prog template
+% }
+With the path depth limit in place, we need to enumerate the C-Prog rule.
+This is because the rule instantiates a declaration of the program
+and this declaration introduces a variable that gets substituted in the rule.
+We cannot defer the substitution check to the SMT solver (like we did in the other rules),
+since the variable introduced by the declaration is only used as an intermediate value.
+This variable should therefore not be present outside of this rule,
+but having the substitution check in the solver would require exactly this.
+
+This requires us to compute the substitution (think of it as intantiating the declaration with a concrete path)
+prior to the solver, which is possible since all valid paths are known a priori.
+
+\todo[inline]{C-Prog rule template}
 
 \subsection{Example Encoding}
 To encode: $\entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}}$
@@ -590,7 +604,7 @@ predicate holds and we can calculate the substitution prior
 since all quantified variables are known,
 we can get rid of the substitution predicate in the encoding altogether.
 
-E.g. the inatantiation with
+E.g. the instantiation with
 $p=\mathtt{x}, v=\mathtt{x}, r=\mathtt{y}, a=\mathtt{y}, s=\mathtt{x}, b=\mathtt{x}, c=\Nat$
 \begin{align*}
   % C-Subst: instOf
