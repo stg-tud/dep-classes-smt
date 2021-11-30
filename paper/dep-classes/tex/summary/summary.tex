@@ -296,29 +296,25 @@ This requires us to provide an encoding of the rules into (first-order) logic
 to feed as input into the solver.
 
 \section{Towards an SMT encoding}
-\todo[inline]{%
-  - idea (of master thesis): use smt solver\\
-  - first approach: resemble syntax based reasoning to stay close to \Cref{sec:constraint-entailment}\\
-    - unefficient (massive amount of ADTs and recursion needed, not what a SMT solver is good at)\\
-    - multiple infinite domains with ADTs\\
-  - second approach: use semantic reasoning, encode into FO with constraints being simple boolean predicates\\
-    - infinite datatypes are problematic, we will never be able to reject an entailment\\
-  - put solver limitations subsection here?\\
-  - third approach: get rid of the infinite structures\\
-    - limit path depth\\
-    - decidable encoding, we could just finitely enumerate all quantifiers\\
-  - 4th approach: ground encoding to see if it's more efficient\\
-}
+% \todo[inline]{%
+%   - idea (of master thesis): use smt solver\\
+%   - first approach: resemble syntax based reasoning to stay close to \Cref{sec:constraint-entailment}\\
+%     - unefficient (massive amount of ADTs and recursion needed, not what a SMT solver is good at)\\
+%     - multiple infinite domains with ADTs\\
+%   - second approach: use semantic reasoning, encode into FO with constraints being simple boolean predicates\\
+%     - infinite datatypes are problematic, we will never be able to reject an entailment\\
+%   - put solver limitations subsection here?\\
+%   - third approach: get rid of the infinite structures\\
+%     - limit path depth\\
+%     - decidable encoding, we could just finitely enumerate all quantifiers\\
+%   - 4th approach: ground encoding to see if it's more efficient\\
+% }
 Since we want to use a SMT solver for solving constraint entailments we need to
 encode the calculus into (first-order) logic.
 Creating this encoding is an iterative process for which we sketch the individual steps
 we did.
 
-% dont do this with an enumeration, instead use multiple paragraphs
-% this would also allow the limitations section to be insertet inbetween
-% maybe use \paragraph{SMT Solver Limitations} instead of subsection
-
-Our first approach was to resemble the syntactic-reasoning of the sequent calculus with the encoding.
+Our first approach was to resemble the syntactic-reasoning of the sequent calculus (\ref{sec:constraint-entailment}) with the encoding.
 For this we defined ADTs for the three constraint types as well as for paths and lists
 and we used strings for representing variables, fields and classes.
 This enabled us to encode the calculus rules in a highly computational form,
@@ -326,23 +322,43 @@ which made extensive use of recursive definitions ranging over the ADTs.
 This performed badly. We were able to successfully show simple valid entailments,
 but the solver gave up and returned \unknown~on more complex valid entailments.
 Also the solver was not able to reject invalid entailments.
-% TODO: point towards problems with this (heavy computational focus, many infinite ADTs)
 
-% TODO: second approach: semantics based reasoning
-%       problems: still retains one infinite ADT (path) as well as recursive computation of substitutions
-% TODO: after this, solver limitations
-% TODO: then depth limit approach
+As it turned out, relying on the SMT solver to perform multiple recursive computations is problematic.
+Hence we want to use a more semantics based approach of reasoning.
+So instead of having lists of constraints which where instantiations of an ADT,
+we want to employ simple boolean reasoning.
+For this we transform the ADTs of the three constraint types into boolean predicates
+and keep them unspecified. We also turn classes and fields and variables into enumeration types
+as they are known from the context of the entailment to check and the program,
+but we keep the ADT for paths as we still need it for computing substitutions.
+
+\todo[inline]{small encoding example? (e.g. for one rule?)}
+
+This improved the capability to accept valid entailments,
+but the solver is still not able to reject invalid entailments.
+
+% \paragraph{SMT Solver Limitations}
+% Dealing with quantifiers and recursive definitions is hard for SMT solvers.
+% Since SMT solvers do not use induction, proving any property that requires induction
+% will fail if we want to use an off-the-shelf SMT solver.
+% We might encounter a counterexample during unrolling of the recursive definitions,
+% but if none exists we will get looping behaviour during e-matching.
 
 \section{SMT solver limitations}
-\todo[inline]{%
-  - recursion + quantifiers + infinite (abstractt) datatypes bad\\
-  - implications of this (see stack overflow answer)\\
-    - the encoding won't be able to accept a query,
-      as it could just unroll the recusive definitions once more and might encounter a counterexample
-      (infinite domain)\\
-    - but it might find a solution to reject a query, as it might encounter a counterexample\\ 
-  - need to limit the use of them
-}
+% \todo[inline]{%
+%   - recursion + quantifiers + infinite (abstractt) datatypes bad\\
+%   - implications of this (see stack overflow answer)\\
+%     - the encoding won't be able to accept a query,
+%       as it could just unroll the recusive definitions once more and might encounter a counterexample
+%       (infinite domain)\\
+%     - but it might find a solution to reject a query, as it might encounter a counterexample\\ 
+%   - need to limit the use of them
+% }
+Dealing with quantifiers and recursive definitions is hard for SMT solvers.
+Since SMT solvers do not use induction, proving any property that requires induction
+will fail if we want to use an off-the-shelf SMT solver.
+We might encounter a counterexample during unrolling of the recursive definitions,
+but if none exists we will get looping behaviour during e-matching.
 
 \section{Path Depth Limit Encoding}
 \todo[inline]{%
@@ -371,6 +387,9 @@ Also the solver was not able to reject invalid entailments.
     - the encoding is quantifier free\\
     - hence, trivially decidable
 }
+
+As mentioned previously, the use of recursive definitions in the encoding has
+the effect that the SMT solver will in general not be able to find a solution.
 
 \subsection{Example Encoding}
 To encode: $\entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}}$
