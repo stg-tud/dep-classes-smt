@@ -448,8 +448,10 @@ prior to the solver, which is possible since all valid paths are known a priori.
 \todo[inline]{C-Prog rule template}
 
 \subsection{Example Encoding}
-To encode: $\entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}}$
-with $\mathit{depth\!\!-\!\!limit}=1$
+Assume the Natural Numbers program.
+We want to encode
+\[ \entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}} \]
+using a depth limit of $1$.
 \begin{align}
   &\texttt{\Variable} := \{\mathtt{x}, \mathtt{y}\}\\
   &\texttt{\Class} := \{\Zero,\Succ,\Nat\}\\
@@ -642,7 +644,8 @@ which with the mentioned modifications turns into the formula
 
 \subsection{Example Encoding}
 Assume the program of Natural Numbers.
-To encode: \[ \entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}} \]
+We want to encode
+\[ \entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}} \]
 using a path depth limit of $1$.
 \setcounter{equation}{0}
 % Alternatively for each align block
@@ -831,7 +834,11 @@ There are two feasible ways to update the rule:
   \item Redo the proofs?
 \end{itemize}
 
-%\section{Runtime Comparison}
+\section{Algorithmic System Implementation}
+\wip
+
+\section{Runtime Comparison}
 %add table
+\wip
 
 \end{document}
