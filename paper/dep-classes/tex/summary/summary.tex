@@ -501,6 +501,7 @@ with $\mathit{depth\!\!-\!\!limit}=1$
 \end{align}
 
 \subsection{Decidability}
+\label{sec:smt-depth-limit-decidability}
 % \todo[inline]{%
 %   - decidability of path depth encoding:\\
 %     - all declared datatypes have a finite domain\\
@@ -514,22 +515,135 @@ with a finite amount of constructors and all quantified variables
 range over one of the declared enumeration types.
 
 \section{Grounding the Path Depth Limit Encoding}
-\todo[inline]{%
-  - goal: get a quantifier free encoding s.t. we can use one of the QF theories (and maybe even a different solver)\\
-  - approach: as discussed in the decidability section of the path depth limit encoding we can\\
-    - finitely enumerate the quantified variables\\
-  - put observations about substitution before the final encoding example\\
-  - with the observations about Substitution from the previous section
-    we can remove the substitution predicate from the encoding altogether\\
-  - also we only instantiate the quantifiers with interpretations that fulfill the substitution predicate\\
-  - this removes the complexity of the encoding,
-    as the solver doesnt have to check if the predicate holds for each individual assert
-    as well as reducing the overall number of assertions
-}
+% \todo[inline]{%
+%   - goal: get a quantifier free encoding s.t. we can use one of the QF theories (and maybe even a different solver)\\
+%   - approach: as discussed in the decidability section of the path depth limit encoding we can\\
+%     - finitely enumerate the quantified variables\\
+%   - put observations about substitution before the final encoding example\\
+%   - with the observations about Substitution from the previous section
+%     we can remove the substitution predicate from the encoding altogether\\
+%   - also we only instantiate the quantifiers with interpretations that fulfill the substitution predicate\\
+%   - this removes the complexity of the encoding,
+%     as the solver doesnt have to check if the predicate holds for each individual assert
+%     as well as reducing the overall number of assertions
+% }
+With the Path Depth Limit we have a (in theory) decidable encoding,
+but we are still using quantifiers.
+An idea is to ground the encoding.
+This could result in a better solving performance, as quantifier instantiation
+in the solver is expensive\todo{is this true in general? it's at least more expensive than not having to do it}
+so using a quantifier free encoding might be beneficial.
+It might also enable us to employ additional optimizations.
+
+As discussed in \Cref{sec:smt-depth-limit-decidability} it is possible
+to finitely enumerate all quantified variables.
+So our first approach to ground the encoding is to do exactly this
+and assert each single quantifier instantiation in a big conjunction.
+
+\paragraph{Example}
+\label{ex:smt-ground-instantiation}
+Given the rule for substitutions over instance-of constraints (see \Cref{???}\todo{add rule as an example in prev section}),
+we instantiate the rule for each combination of paths $p,r,s,a,b$,
+variables $v$ and classes $c$ to obtain a ground formula.
+Assume $p=r=s=b=\mathtt{x}$, $v=a=\mathtt{y}$ for some class $\mathtt{C}$,
+we obtain the instantiation:
+%
+\begin{align*}
+  &\pathEq{\mathtt{x}}{\mathtt{x}} \land \subst{\mathtt{x}}{\mathtt{y}}{\mathtt{x}}=\mathtt{y}~\land
+  \instOf{\mathtt{y}}{\mathtt{C}} \land \subst{\mathtt{x}}{\mathtt{y}}{\mathtt{x}}=\mathtt{x}\\
+  &\quad \rightarrow \instOf{\mathtt{x}}{\mathtt{C}}
+\end{align*}
+
+\subsection{Substitution in the Ground Encoding}
+If we inspect the previous example,
+we can make the following observations:
+\begin{enumerate}
+  \item Some of the substitution checks will be statically known to be false and
+  \item all substitution checks can be statically decided.
+\end{enumerate}
+
+The previous example is an instantiation of the rule:
+\begin{align*}
+  % C-Subst: instOf
+  &\forall p, c, v, r, s, a, b. && \text{(C-Subst)}\\
+  &\quad \pathEq{s}{r} \land \subst{p}{v}{r}=a~\land
+         \instOf{a}{c} \land
+         \subst{p}{v}{s}=b\\
+  &\qquad \rightarrow \instOf{b}{c}
+\end{align*}
+The substitution check marked in red is statically/externally known to be false
+and the one marked in blue is known to be true.
+%
+\begin{align*}
+  % C-Subst: instOf
+  &\pathEq{\mathtt{x}}{\mathtt{x}} \land {\color{red}\subst{\mathtt{x}}{\mathtt{y}}{\mathtt{x}}=\mathtt{y}}~\land
+  \instOf{\mathtt{y}}{\mathtt{C}} \land {\color{blue}\subst{\mathtt{x}}{\mathtt{y}}{\mathtt{x}}=\mathtt{x}}\\
+  &\quad \rightarrow \instOf{\mathtt{x}}{\mathtt{C}}
+\end{align*}
+%
+From this we can conclude that this instantiation will never be used
+in prvoing the property $\instanceOf{\mathtt{x}}{\mathtt{C}}$,
+as the premise of the implication can never be fulfilled.
+
+By inspecting another instantiation of the same rule,
+e.g. with
+$p=\mathtt{x}, v=\mathtt{x}, r=\mathtt{y}, a=\mathtt{y}, s=\mathtt{x}, b=\mathtt{x}, c=\mathtt{C}$
+we obtain the formula:
+\begin{align*}
+  % C-Subst: instOf
+  &\pathEq{\mathtt{x}}{\mathtt{y}} \land
+   {\color{blue}\subst{\mathtt{x}}{\mathtt{x}}{\mathtt{y}}=\mathtt{y}}~\land
+   \instOf{\mathtt{y}}{\mathtt{C}} \land
+   {\color{blue}\subst{\mathtt{x}}{\mathtt{x}}{\mathtt{x}}=\mathtt{x}}\\
+  &\quad \rightarrow \instOf{\mathtt{x}}{\mathtt{C}}
+\end{align*}
+In this instantiation both substitution checks are known to be true
+and the rule might be usable in proving that $\instanceOf{\mathtt{x}}{\mathtt{C}}$.
+
+With these observations we can modify the ground encoding as follows:
+\begin{enumerate}
+  \item We do not have to include formulae in the encoding that are not helping in showing a property.
+        E.g. where the premise of an implication is known to be false.
+  \item Since we can statically decide all substitution checks,
+        we do not have to encode the substitution predicate.
+        This is in synergy with the previous point,
+        as removing the checks in the implications gets possible
+        if we only add those formulae where the checks
+        are guaranteed to be true.
+\end{enumerate}
+
+These changes reduce the complexity for the SMT solver as well as for the
+generation of the query to be sent to the solver (preprocessing).
+The SMT solver complexity is reduced through two steps.
+(1) The removal of the substitution predicate removed the need for
+the solver to check and
+(2) the total amount of possibilities to check is lowered,
+since the rules sent to the solver only include those cases where the
+substitution check would have been true.
+
+The reduction in complexity in the preprocessing is mainly due to the fact
+that we do not have to generate the definition for the substitution predicate anymore,
+which involved iterating over the cross product of the input parameters.
+
+\paragraph{Example}
+If we consider the two shown example instantiations, we would only take the second one
+\begin{align*}
+  % C-Subst: instOf
+  &\pathEq{\mathtt{x}}{\mathtt{y}} \land
+   {\color{blue}\subst{\mathtt{x}}{\mathtt{x}}{\mathtt{y}}=\mathtt{y}}~\land
+   \instOf{\mathtt{y}}{\mathtt{C}} \land
+   {\color{blue}\subst{\mathtt{x}}{\mathtt{x}}{\mathtt{x}}=\mathtt{x}}\\
+  &\quad \rightarrow \instOf{\mathtt{x}}{\mathtt{C}}
+\end{align*}
+which with the mentioned modifications turns into the formula
+\[
+  \pathEq{\mathtt{x}}{\mathtt{y}} \land \instOf{\mathtt{y}}{\mathtt{C}} \rightarrow \instOf{\mathtt{x}}{\mathtt{C}}
+\]
 
 \subsection{Example Encoding}
-To encode: $\entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}}$
-with $\mathit{depth\!\!-\!\!limit}=1$
+Assume the program of Natural Numbers.
+To encode: \[ \entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}} \]
+using a path depth limit of $1$.
 \setcounter{equation}{0}
 % Alternatively for each align block
 % \usepackage{etoolbox}
@@ -569,55 +683,25 @@ with $\mathit{depth\!\!-\!\!limit}=1$
 \end{align}
 
 \subsection{Decidability}
+% \todo[inline]{%
+%   - decidability of the ground path depth encoding:\\
+%     - all declared datatypes have a finite domain\\
+%     - the encoding is quantifier free\\
+%     - hence, trivially decidable
+% }
+The encoding is decidable,
+as all declared datatypes have a finite domain
+and the encoding is quantifier free.
+
+\section{Choosing a suitable depth limit}
 \todo[inline]{%
-  - decidability of the ground path depth encoding:\\
-    - all declared datatypes have a finite domain\\
-    - the encoding is quantifier free\\
-    - hence, trivially decidable
+  - how do we set the path depth limit s.t. we can find a solution to an entailment if one would exists\\
+  - refer to the algorithmic system\\
+  - and the equivalency between the algorithmic and the declarative system\\
+  - lemma in the algorithmic system defines set of variables that can occur in a proof\\
+  - show lemma/set construction?\\
+  - use this set to determine the max possible depth
 }
-
-\newpage
-\subsection{Substitution in the Ground Encoding}
-We want to finitely enumerate the quantified rule:
-\begin{align*}
-  % C-Subst: instOf
-  &\forall p, c, v, r, s, a, b. && \text{(C-Subst)}\\
-  &\quad \pathEq{s}{r} \land \subst{p}{v}{r}=a~\land\\
-  &\quad \instOf{a}{c} \land
-         \subst{p}{v}{s}=b\\
-  &\qquad \rightarrow \instOf{b}{c}
-\end{align*}
-The na\"ive approach would be to take the cross product of all quantified variables.
-This would leave us with a lot of meaningless implications,
-e.g. if we instantiate the rule with
-$p=\mathtt{x}, v=\mathtt{y}, r=\mathtt{x}, a=\mathtt{y}, s=\mathtt{x}, b=\mathtt{x}, c=\Nat$
-\begin{align*}
-  % C-Subst: instOf
-  &\pathEq{\mathtt{x}}{\mathtt{x}} \land {\color{red}\subst{\mathtt{x}}{\mathtt{y}}{\mathtt{x}}=\mathtt{y}}~\land
-  \instOf{\mathtt{y}}{\Nat} \land \subst{\mathtt{x}}{\mathtt{y}}{\mathtt{x}}=\mathtt{x}\\
-  &\quad \rightarrow \instOf{\mathtt{x}}{\Nat}
-\end{align*}
-Since we know the substitution to be false,
-we do not have to include this instantiation into the encoding.
-Since we only need to include rule instantiations where the substitution
-predicate holds and we can calculate the substitution prior
-since all quantified variables are known,
-we can get rid of the substitution predicate in the encoding altogether.
-
-E.g. the instantiation with
-$p=\mathtt{x}, v=\mathtt{x}, r=\mathtt{y}, a=\mathtt{y}, s=\mathtt{x}, b=\mathtt{x}, c=\Nat$
-\begin{align*}
-  % C-Subst: instOf
-  &\pathEq{\mathtt{x}}{\mathtt{y}} \land
-   {\color{blue}\subst{\mathtt{x}}{\mathtt{x}}{\mathtt{y}}=\mathtt{y}}~\land
-   \instOf{\mathtt{y}}{\Nat} \land
-   {\color{blue}\subst{\mathtt{x}}{\mathtt{x}}{\mathtt{x}}=\mathtt{x}}\\
-  &\quad \rightarrow \instOf{\mathtt{x}}{\Nat}
-\end{align*}
-turns into
-\[
-  \pathEq{\mathtt{x}}{\mathtt{y}} \land \instOf{\mathtt{y}}{Nat} \rightarrow \instOf{\mathtt{x}}{\Nat}
-\]
 
 \section{Algorithmic Symmetry}
 \label{sec:algo-symmetry}
