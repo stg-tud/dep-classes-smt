@@ -1,4 +1,5 @@
-import dcc.entailment.{Algorithmic, EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
+import dcc.entailment.algorithmic.AlgorithmicSystem
+import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.program.{BooleanExpressions, NaturalNumbers}
 import dcc.program.NaturalNumbers
 import dcc.syntax._
@@ -7,7 +8,7 @@ import dcc.syntax.Program.Program
 import dcc.types.{FaithfulAdaptionChecker, Type}
 import smt.smtlib.SMTLibScript
 import smt.smtlib.syntax.{Apply, DefineFun, FunctionDef, SimpleSymbol, SortedVar, Term}
-import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, False, Implies, Not, Or, True, Xor, Ite}
+import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, False, Implies, Ite, Not, Or, True, Xor}
 
 object Foo extends App {
   // TODO: is there a way to force the program if the entailment to be the same as the program of the checker/interpreter?
@@ -197,7 +198,7 @@ object Foo extends App {
   println(groundEnc.encode(Nil, PathEquivalence("a", "a")).pretty)
 
   println("\n\nalgorithmic system:")
-  val algo = new Algorithmic(NaturalNumbers.program)
+  val algo = new AlgorithmicSystem(NaturalNumbers.program)
 
   println(s"check x::Zero |- x::Nat: ${algo.entails(
     List(InstanceOf("a", "Zero")),

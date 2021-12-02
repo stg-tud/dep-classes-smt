@@ -1,6 +1,7 @@
 package dcc.entailment
 
 import dcc.entailment.EntailmentSort.{Algorithmic, AlgorithmicFix1, AlgorithmicFix2, EntailmentSort, GroundPathDepthLimit, PathDepthLimit, Semantic, SimplifiedSemantic}
+import dcc.entailment.algorithmic.{AlgorithmicSystem, AlgorithmicSystemFix1, AlgorithmicSystemFix2}
 import dcc.syntax.Program.Program
 
 object EntailmentFactory {
@@ -9,9 +10,9 @@ object EntailmentFactory {
     case SimplifiedSemantic => new SimplifiedSemanticEntailment(program, debug)
     case PathDepthLimit => new PathDepthLimitEncoding(program, debug)
     case GroundPathDepthLimit => new GroundPathDepthLimitEncoding(program, debug)
-    case Algorithmic => new Algorithmic(program, debug)
-    case AlgorithmicFix1 => new AlgorithmicFix1(program, debug)
-    case AlgorithmicFix2 => new AlgorithmicFix2(program, debug)
+    case Algorithmic => new AlgorithmicSystem(program, debug)
+    case AlgorithmicFix1 => new AlgorithmicSystemFix1(program, debug)
+    case AlgorithmicFix2 => new AlgorithmicSystemFix2(program, debug)
   }
 }
 

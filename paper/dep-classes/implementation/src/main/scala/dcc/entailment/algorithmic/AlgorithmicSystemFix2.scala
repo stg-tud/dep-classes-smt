@@ -1,9 +1,11 @@
-package dcc.entailment
-import dcc.entailment.EntailmentSort.EntailmentSort
-import dcc.syntax.Program.{GetMatchingConstraintEntailments, Program}
-import dcc.syntax.{Constraint, ConstraintEntailment, FieldPath, InstanceOf, InstantiatedBy, PathEquivalence}
+package dcc.entailment.algorithmic
 
-class AlgorithmicFix2(program: Program, debug: Int = 0) extends Entailment {
+import dcc.entailment.EntailmentSort.EntailmentSort
+import dcc.entailment.{Entailment, EntailmentSort}
+import dcc.syntax.Program.{GetMatchingConstraintEntailments, Program}
+import dcc.syntax._
+
+class AlgorithmicSystemFix2(program: Program, debug: Int = 0) extends Entailment {
   override def typ: EntailmentSort = EntailmentSort.AlgorithmicFix2
 
   override def entails(context: List[Constraint], constraints: List[Constraint]): Boolean = constraints.forall(entails(context, _))

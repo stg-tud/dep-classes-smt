@@ -4,6 +4,8 @@ import dcc.entailment.{Entailment, EntailmentFactory, EntailmentSort}
 import dcc.program.NaturalNumbers
 import dcc.syntax.{Constraint, Id, PathEquivalence}
 
+// TODO: measure runtime with a list to get min/max/avg/mean values
+//       maybe use multiple classes/or parameter to allow multiple tests in parrallel
 object MeasureRuntime extends App {
   private def measureAvgTime(block: => Boolean, repeats: Int): (Boolean, Double) = {
     var total = 0L
@@ -105,9 +107,9 @@ object MeasureRuntime extends App {
     }
   }
 
-  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.Algorithmic)(NaturalNumbers.program, 0), 'f')
-  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.AlgorithmicFix1)(NaturalNumbers.program, 0), 'f')
-  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.AlgorithmicFix2)(NaturalNumbers.program, 0), 'f')
+//  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.Algorithmic)(NaturalNumbers.program, 0), 'f')
+  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.AlgorithmicFix1)(NaturalNumbers.program, 0), 'z')
+  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.AlgorithmicFix2)(NaturalNumbers.program, 0), 'z')
 //  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.PathDepthLimit)(NaturalNumbers.program, 0), 'h')
 //  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.GroundPathDepthLimit)(NaturalNumbers.program, 0), 'h')
 }
