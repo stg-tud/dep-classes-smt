@@ -770,59 +770,63 @@ which describes one direction of \Cref{lem:constraint-system-equiv}
 and \Cref{thm:declarative-system-decidable}
 as it relies on \Cref{lem:constraint-system-equiv}.
 
-\begin{mathpar}
-  \inferrule[CA-Refl]{}{
-    \entailsA{\ovl{a}}{\pathEq{p}{p}}
-  }
-  \and
-  \inferrule[CA-Ident]{}{
-    \entailsA{\ovl{a}}{a_i}
-  }
-  \and
-  \inferrule[CA-Class]{
-    \entailsA{\ovl{a}}{\instantiatedBy{p}{C}}
-  }{
-    \entailsA{\ovl{a}}{\instanceOf{p}{C}}
-  }
-  \and
-  \inferrule[CA-Prog]{
-    \entailsA{\ovl{a}}{\ovl{b}_{\sub{x}{p}}}\\
-    p \sqsubset \ovl{a}\\\\
-    (\programEntailment{x}{\ovl{b}}{\instanceOf{x}{C}}) \in P
-  }{
-    \entailsA{\ovl{a}}{\instanceOf{p}{C}}
-  }
-  \and
-  \inferrule[CA-Subst1]{
-    p \sqsubset \ovl{a}\\\\
-    \entailsA{\ovl{a}}{\instantiatedBy{p}{C}}\\
-    \entailsA{\ovl{a}}{\pathEq{p}{p'}}
-  }{
-    \entailsA{\ovl{a}}{\instantiatedBy{p'}{C}}
-  }
-  \and
-  \inferrule[CA-Subst2]{
-    p \sqsubset \ovl{a}\\\\
-    \entailsA{\ovl{a}}{\instanceOf{p}{C}}\\
-    \entailsA{\ovl{a}}{\pathEq{p}{p'}}
-  }{
-    \entailsA{\ovl{a}}{\instanceOf{p'}{C}}
-  }
-  \and
-  \inferrule[CA-Subst3]{
-    p \sqsubset \ovl{a}\\\\
-    \entailsA{\ovl{a}}{\pathEq{p}{p''}}\\
-    \entailsA{\ovl{a}}{\pathEq{p'}{p}}
-  }{
-    \entailsA{\ovl{a}}{\pathEq{p'}{p''}}
-  }
-  \and
-  \inferrule[CA-Subst4]{
-    \entailsA{\ovl{a}}{\pathEq{p}{p'}}
-  }{
-    \entailsA{\ovl{a}}{\pathEq{p.f}{p'.f}}
-  }
-\end{mathpar}
+\begin{figure}[h]
+  \begin{mathpar}
+    \inferrule[CA-Refl]{}{
+      \entailsA{\ovl{a}}{\pathEq{p}{p}}
+    }
+    \and
+    \inferrule[CA-Ident]{}{
+      \entailsA{\ovl{a}}{a_i}
+    }
+    \and
+    \inferrule[CA-Class]{
+      \entailsA{\ovl{a}}{\instantiatedBy{p}{C}}
+    }{
+      \entailsA{\ovl{a}}{\instanceOf{p}{C}}
+    }
+    \and
+    \inferrule[CA-Prog]{
+      \entailsA{\ovl{a}}{\ovl{b}_{\sub{x}{p}}}\\
+      p \sqsubset \ovl{a}\\\\
+      (\programEntailment{x}{\ovl{b}}{\instanceOf{x}{C}}) \in P
+    }{
+      \entailsA{\ovl{a}}{\instanceOf{p}{C}}
+    }
+    \and
+    \inferrule[CA-Subst1]{
+      p \sqsubset \ovl{a}\\\\
+      \entailsA{\ovl{a}}{\instantiatedBy{p}{C}}\\
+      \entailsA{\ovl{a}}{\pathEq{p}{p'}}
+    }{
+      \entailsA{\ovl{a}}{\instantiatedBy{p'}{C}}
+    }
+    \and
+    \inferrule[CA-Subst2]{
+      p \sqsubset \ovl{a}\\\\
+      \entailsA{\ovl{a}}{\instanceOf{p}{C}}\\
+      \entailsA{\ovl{a}}{\pathEq{p}{p'}}
+    }{
+      \entailsA{\ovl{a}}{\instanceOf{p'}{C}}
+    }
+    \and
+    \inferrule[CA-Subst3]{
+      p \sqsubset \ovl{a}\\\\
+      \entailsA{\ovl{a}}{\pathEq{p}{p''}}\\
+      \entailsA{\ovl{a}}{\pathEq{p'}{p}}
+    }{
+      \entailsA{\ovl{a}}{\pathEq{p'}{p''}}
+    }
+    \and
+    \inferrule[CA-Subst4]{
+      \entailsA{\ovl{a}}{\pathEq{p}{p'}}
+    }{
+      \entailsA{\ovl{a}}{\pathEq{p.f}{p'.f}}
+    }
+  \end{mathpar}
+  \caption{Algorithmic Rules}
+  \label{fig:algorithmic-system}
+\end{figure}
 
 \paragraph{Counterexample}
 Choose any well-formed program.
