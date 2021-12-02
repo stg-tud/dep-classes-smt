@@ -260,6 +260,18 @@
 %  \label{fig:type-checking}
 %\end{figure}
 
+\subsection{Example Program}
+\label{sec:natural-numbers-program}
+\begin{align*}
+  &\constructorDeclaration{\Zero}{x}{\epsilon}\\
+  &\constructorDeclaration{\Succ}{x}{\instanceOf{x.p}{\Nat}}\\
+  &\programEntailment{x}{\instanceOf{x}{\Zero}}{\instanceOf{x}{\Nat}}\\
+  &\programEntailment{x}{\instanceOf{x}{\Succ}, \instanceOf{x.p}{\Nat}}{\instanceOf{x}{\Nat}}\\
+  &\abstractMethodDeclaration{\mathtt{prev}}{x}{\instanceOf{x}{\Nat}}{\type{y}{\instanceOf{y}{\Nat}}}\\
+  &\methodImplementation{\mathtt{prev}}{x}{\instanceOf{x}{\Zero}}{\type{y}{\instanceOf{y}{\Nat}}}{\objConstr{\Zero}{}}\\
+  &\methodImplementation{\mathtt{prev}}{x}{\instanceOf{x}{\Succ}, \instanceOf{x.p}{\Nat}}{\type{y}{\instanceOf{y}{\Nat}}}{x.p}
+\end{align*}
+
 \section{An Implementation}
 % \todo[inline]{%
 %   - interpreter for operational semantics\\
@@ -448,7 +460,7 @@ prior to the solver, which is possible since all valid paths are known a priori.
 \todo[inline]{C-Prog rule template}
 
 \subsection{Example Encoding}
-Assume the Natural Numbers program.
+Assume the natural numbers program from \Cref{sec:natural-numbers-program}.
 We want to encode
 \[ \entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}} \]
 using a depth limit of $1$.
@@ -643,7 +655,7 @@ which with the mentioned modifications turns into the formula
 \]
 
 \subsection{Example Encoding}
-Assume the program of Natural Numbers.
+Assume the program of natural numbers given in \Cref{sec:natural-numbers-program}.
 We want to encode
 \[ \entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}} \]
 using a path depth limit of $1$.
