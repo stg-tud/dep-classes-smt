@@ -940,21 +940,31 @@ There are two feasible ways to update the rule:
 \end{prooftree}
 
 \subsubsection{Fix Implications}
-\todo[inline]{%
-  - Termination concerns\\
-    - could just infinitely symmetric switch with CA-Subst3\\
-    - need to limit it, s.t. path equivalencies might only be symmetrically switched once (using a "memory" context?)\\
-    - need some sort of memory anyways, even in the original version, as we could just choose the same path over and over again\\
-      - need to memoize already tested paths per branch
-}
+% \todo[inline]{%
+%   - Termination concerns\\
+%     - could just infinitely symmetric switch with CA-Subst3\\
+%     - need to limit it, s.t. path equivalencies might only be symmetrically switched once (using a "memory" context?)\\
+%     - need some sort of memory anyways, even in the original version, as we could just choose the same path over and over again\\
+%       - need to memoize already tested paths per branch
+% }
+Deploying the update to rule CA-Subst3 might have implications
+on the termination of the algorithmic system.
+We could e.g. repeatedly apply rule CA-Subst3 to symmetrically switch
+a path equivalence.
 
-\subsection{What to do with this?}
-\begin{itemize}
-  \item Update rule CA-Subst3 with one of the solutions from \Cref{sec:symmetry-fix}.
-  \item Redo the proofs?
-\end{itemize}
+This can be resolved by having the limitaion that we may apply
+a rule using the same parameters at most once per branch.
+
+This seems sensible, as we (most likely) already need this for termination.
+Otherwise we would also be allowed to satisfy $p \sqsubset \ovl{a}$ for the same $p$.
 
 \section{Algorithmic System Implementation}
+% \todo[inline]{%
+%   - runtime of the algorithmic implementation is presumedly dependent on the order of rule application
+%     and order of path picks in satisfing $p \sqsubset \ovl{a}$
+%   - order of rule application (without path picks) is most likely not really a problem,
+%     as the rules match on different constraint types (is it deterministic?)
+% }
 \wip
 
 \section{Runtime Comparison}
