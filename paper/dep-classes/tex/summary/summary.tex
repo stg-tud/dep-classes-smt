@@ -41,7 +41,7 @@
 
 \begin{document}
 
-\section{Overview}
+% \section{Overview}
 \section{DCC recap}
 \subsection{Syntax}
 \label{sec:syntax}
@@ -272,6 +272,8 @@
   &\methodImplementation{\mathtt{prev}}{x}{\instanceOf{x}{\Succ}, \instanceOf{x.p}{\Nat}}{\type{y}{\instanceOf{y}{\Nat}}}{x.p}
 \end{align*}
 
+\newpage
+%
 \section{An Implementation}
 % \todo[inline]{%
 %   - interpreter for operational semantics\\
@@ -279,7 +281,6 @@
 %   - type checking through inferring type and check subtype with annotated/expected type\\
 %   - constraint entailment via SMT solving
 % }
-
 %One of our main goals is to provide an implementation for DCC. % TODO: what is/are the other/s? extend DCC?
 We provide an implementation of
 \begin{itemize}
@@ -335,6 +336,26 @@ This performed badly. We were able to successfully show simple valid entailments
 but the solver gave up and returned \unknown~on more complex valid entailments.
 Also the solver was not able to reject invalid entailments.
 
+\begin{figure}[ht]
+  \begin{align*}
+    % &\Variable ::= ...\\
+    % &\Field ::= ...\\
+    &\Path ::= \Variable \mid \Path.\Field\\
+    % &{\_}_{\sub{}{}}\!\!: \Path \times \Variable \times \Path \rightarrow \Path\\
+    &\subst{p}{x}{q} := p \match~\{\\
+    &\quad \case{x}{\ite{(p=x)}{q}{p}}\\
+    &\quad \case{p'.f}{\subst{p'}{x}{q}.f}\\
+    &\}\\
+    % C-Subst: instOf
+    % &\forall \sortedVar{p}{\Path}, \sortedVar{c}{\Class}, \sortedVar{r}{\Path}, \sortedVar{s}{\Path}, \sortedVar{x}{\Variable}.\\
+    &\forall p,c,r,s,x.\\
+    &\quad \instOf{p_{\sub{x}{r}}}{c} \land \pathEq{s}{r} \rightarrow\\
+    &\qquad \instOf{p_{\sub{x}{s}}}{c}
+  \end{align*}
+  \caption{Excerpt of Semantics Based Encoding with Computive Substitution}
+  \label{fig:semantic-entailment-excerpt}
+\end{figure}
+
 As it turned out, relying on the SMT solver to perform multiple recursive computations is problematic.
 Hence we want to use a more semantics based approach of reasoning.
 So instead of having lists of constraints which where instantiations of an ADT,
@@ -343,8 +364,7 @@ For this we transform the ADTs of the three constraint types into boolean predic
 and keep them unspecified. We also turn classes and fields and variables into enumeration types
 as they are known from the context of the entailment to check and the program,
 but we keep the ADT for paths as we still need it for computing substitutions.
-
-\todo[inline]{small encoding example? (e.g. for one rule?)}
+An excerpt of this is shown in \Cref{fig:semantic-entailment-excerpt}.
 
 This improved the capability to accept valid entailments,
 but the solver is still not able to reject invalid entailments.
@@ -428,8 +448,27 @@ to be true for exactly these inputs.
 
 The quantified calculus rules need to be updated to respect the new substitution style,
 e.g. we must check for correct substitutions in the premise of the rule.
+This transformation is shown in \Cref{fig:path-depth-limit-encoding-excerpt}.
 
-\todo[inline]{example of comparison of previous (semantic) rule with new (depth limit) rule}
+\begin{figure}[ht]
+  \begin{align*}
+    &\Path := \{ x, y \}\\
+    &\subst{p}{v}{q} = s :=\\
+    &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{y} \land s=\mathtt{y})~\lor\\
+    &\quad (p=\mathtt{x} \land v=\mathtt{y} \land q=\mathtt{y} \land s=\mathtt{x})~\lor\\
+    &\quad (p=\mathtt{y} \land v=\mathtt{x} \land q=\mathtt{x} \land s=\mathtt{x})~\lor\\
+    &\quad (p=\mathtt{y} \land v=\mathtt{y} \land q=\mathtt{x} \land s=\mathtt{y})~\lor\\
+    &\quad ...\\
+    % C-Subst: instOf
+    &\forall p, c, v, r, s, a, b.\\
+    &\quad \pathEq{s}{r} \land \subst{p}{v}{r}=a~\land\\
+    &\quad \instOf{a}{c} \land
+          \subst{p}{v}{s}=b\\
+    &\qquad \rightarrow \instOf{b}{c}
+  \end{align*}
+  \caption{Encoding Excerpt with Enumerated Paths}
+  \label{fig:path-depth-limit-encoding-excerpt}
+\end{figure}
 
 \subsection{Rule C-Prog}
 % \todo[inline]{%
@@ -457,17 +496,33 @@ but having the substitution check in the solver would require exactly this.
 This requires us to compute the substitution (think of it as intantiating the declaration with a concrete path)
 prior to the solver, which is possible since all valid paths are known a priori.
 
-\todo[inline]{C-Prog rule template}
+% \todo[inline]{C-Prog rule template}
 
+\subsection{Decidability}
+\label{sec:smt-depth-limit-decidability}
+% \todo[inline]{%
+%   - decidability of path depth encoding:\\
+%     - all declared datatypes have a finite domain\\
+%     - all quantifiers range over variables from the declared datatypes\\
+%     - the encoding is decidable as we can finitely enumerate the quantifiers\\
+% }
+The encoding is decidable since we can finitely enumerate the quantifiers,
+as all quantified variables range over a finite domain.
+This is because all declared datatypes are enumeration types
+with a finite amount of constructors and all quantified variables
+range over one of the declared enumeration types.
+
+\newpage
+%
 \subsection{Example Encoding}
 Assume the natural numbers program from \Cref{sec:natural-numbers-program}.
 We want to encode
 \[ \entails{\instBy{x}{\Succ}, \instBy{x.p}{\Zero}, \pathEq{x}{y}}{\instOf{y}{\Nat}} \]
 using a depth limit of $1$.
 \begin{align}
-  &\texttt{\Variable} := \{\mathtt{x}, \mathtt{y}\}\\
-  &\texttt{\Class} := \{\Zero,\Succ,\Nat\}\\
-  &\texttt{\Path} := \{\mathtt{x}, \mathtt{x}.\mathtt{p}, \mathtt{y}, \mathtt{y}.\mathtt{p}\}\\
+  &\Variable := \{\mathtt{x}, \mathtt{y}\}\\
+  &\Class := \{\Zero,\Succ,\Nat\}\\
+  &\Path := \{\mathtt{x}, \mathtt{x}.\mathtt{p}, \mathtt{y}, \mathtt{y}.\mathtt{p}\}\\
   % def subst
   &\subst{p}{v}{q} = s :=\\
   &\quad (p=\mathtt{x} \land v=\mathtt{x} \land q=\mathtt{x} \land s=\mathtt{x})~\lor\\
@@ -514,20 +569,6 @@ using a depth limit of $1$.
   &\neg (\instBy{\mathtt{x}}{\Succ} \land \instBy{\mathtt{x.p}}{\Zero} \land \pathEq{\mathtt{x}}{\mathtt{y}} \rightarrow \instOf{\mathtt{y}}{\Nat})
 \end{align}
 
-\subsection{Decidability}
-\label{sec:smt-depth-limit-decidability}
-% \todo[inline]{%
-%   - decidability of path depth encoding:\\
-%     - all declared datatypes have a finite domain\\
-%     - all quantifiers range over variables from the declared datatypes\\
-%     - the encoding is decidable as we can finitely enumerate the quantifiers\\
-% }
-The encoding is decidable since we can finitely enumerate the quantifiers,
-as all quantified variables range over a finite domain.
-This is because all declared datatypes are enumeration types
-with a finite amount of constructors and all quantified variables
-range over one of the declared enumeration types.
-
 \section{Grounding the Path Depth Limit Encoding}
 % \todo[inline]{%
 %   - goal: get a quantifier free encoding s.t. we can use one of the QF theories (and maybe even a different solver)\\
@@ -544,9 +585,11 @@ range over one of the declared enumeration types.
 With the Path Depth Limit we have a (in theory) decidable encoding,
 but we are still using quantifiers.
 An idea is to ground the encoding.
-This could result in a better solving performance, as quantifier instantiation
-in the solver is expensive\todo{is this true in general? it's at least more expensive than not having to do it}
-so using a quantifier free encoding might be beneficial.
+This could result in a better solving performance,
+as having quantifiers in the encoding
+and therefore needing to utilize quantifier instantiation
+in the solver adds complexity.
+Instead, using a quantifier free encoding might be beneficial.
 It might also enable us to employ additional optimizations.
 
 As discussed in \Cref{sec:smt-depth-limit-decidability} it is possible
@@ -556,7 +599,8 @@ and assert each single quantifier instantiation in a big conjunction.
 
 \paragraph{Example}
 \label{ex:smt-ground-instantiation}
-Given the rule for substitutions over instance-of constraints (see \Cref{???}\todo{add rule as an example in prev section}),
+Given the rule for substitutions over instance-of constraints
+(see \Cref{fig:path-depth-limit-encoding-excerpt}),
 we instantiate the rule for each combination of paths $p,r,s,a,b$,
 variables $v$ and classes $c$ to obtain a ground formula.
 Assume $p=r=s=b=\mathtt{x}$, $v=a=\mathtt{y}$ for some class $\mathtt{C}$,
@@ -654,6 +698,19 @@ which with the mentioned modifications turns into the formula
   \pathEq{\mathtt{x}}{\mathtt{y}} \land \instOf{\mathtt{y}}{\mathtt{C}} \rightarrow \instOf{\mathtt{x}}{\mathtt{C}}
 \]
 
+\subsection{Decidability}
+% \todo[inline]{%
+%   - decidability of the ground path depth encoding:\\
+%     - all declared datatypes have a finite domain\\
+%     - the encoding is quantifier free\\
+%     - hence, trivially decidable
+% }
+The encoding is decidable,
+as all declared datatypes have a finite domain
+and the encoding is quantifier free.
+
+\newpage
+%
 \subsection{Example Encoding}
 Assume the program of natural numbers given in \Cref{sec:natural-numbers-program}.
 We want to encode
@@ -697,17 +754,8 @@ using a path depth limit of $1$.
           \instOf{y}{\Nat})
 \end{align}
 
-\subsection{Decidability}
-% \todo[inline]{%
-%   - decidability of the ground path depth encoding:\\
-%     - all declared datatypes have a finite domain\\
-%     - the encoding is quantifier free\\
-%     - hence, trivially decidable
-% }
-The encoding is decidable,
-as all declared datatypes have a finite domain
-and the encoding is quantifier free.
-
+\newpage
+%
 \section{Determining a suitable depth limit}
 \label{sec:determine-depth-limit}
 % \todo[inline]{%
@@ -770,7 +818,7 @@ which describes one direction of \Cref{lem:constraint-system-equiv}
 and \Cref{thm:declarative-system-decidable}
 as it relies on \Cref{lem:constraint-system-equiv}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
   \begin{mathpar}
     \inferrule[CA-Refl]{}{
       \entailsA{\ovl{a}}{\pathEq{p}{p}}
