@@ -696,43 +696,140 @@ The encoding is decidable,
 as all declared datatypes have a finite domain
 and the encoding is quantifier free.
 
-\section{Choosing a suitable depth limit}
-\todo[inline]{%
-  - how do we set the path depth limit s.t. we can find a solution to an entailment if one would exists\\
-  - refer to the algorithmic system\\
-  - and the equivalency between the algorithmic and the declarative system\\
-  - lemma in the algorithmic system defines set of variables that can occur in a proof\\
-  - show lemma/set construction?\\
-  - use this set to determine the max possible depth
-}
-
-\section{Algorithmic Symmetry}
-\label{sec:algo-symmetry}
-We rely on the equivalency between the declarative and the algorithmic system
-to set our depth limit for path enumeration
-as well as on the decidability of the declarative system to even have such a limit in place.
-
-The entailment $\entails{\pathEq{a}{b}}{\pathEq{b}{a}}$ is a counterexample
-to \Cref{lem:2} (more precisely \Cref{lem:1})
-and \Cref{thm:1} as it relies on \Cref{lem:2}.
-
-\begin{lemma}[5.5.15]
-  \label{lem:1}
-  If \wf{P} and \entails{\ovl{a}}{a} then \entailsA{\ovl{a}}{a}.
-\end{lemma}
+\section{Determining a suitable depth limit}
+\label{sec:determine-depth-limit}
+% \todo[inline]{%
+%   - how do we set the path depth limit s.t. we can find a solution to an entailment if one would exists\\
+%   - refer to the algorithmic system\\
+%   - and the equivalency between the algorithmic and the declarative system\\
+%   - lemma in the algorithmic system defines set of variables that can occur in a proof\\
+%   - show lemma/set construction?\\
+%   - use this set to determine the max possible depth
+% }
+We have introduced an encoding that relies on a parameter
+that limits the maximum path depth.
+How do we set this limit and is it possible to set it such
+that the solver finds a solution if one would exists in the sequent calculus.
 
 \begin{lemma}[5.5.16]
-  \label{lem:2}
+  \label{lem:constraint-system-equiv}
   If \wf{P} then \entails{\ovl{a}}{a} iff \entailsA{\ovl{a}}{a}.
 \end{lemma}
 
+\begin{lemma}[5.5.1]
+  \label{lem:algorithmic-system-decidable}
+  \entailsA{\ovl{a}}{a} is decidable.
+\end{lemma}
+
+For this, we rely to the algorithmic system and the equivalency
+between the algorithmic- and the declarative system (\Cref{lem:constraint-system-equiv})
+and the decidability of the algorithmic system (\Cref{lem:algorithmic-system-decidable}).
+
+The proof of \Cref{lem:algorithmic-system-decidable}
+defines a set of paths $S''_{\ovl{a};a}$ and proves that
+all judgements in the derivation contain only paths from this set.
+
+We use this to set the depth limit parameter for the encoding
+of the given entailment to solve.
+For this we determine the path $p \in S''_{\ovl{a};a}$ s.t.
+\[ \forall p' \in S''_{\ovl{a};a}.~\mIt{depth}(p) \geq \mIt{depth}(p') \]
+and set the depth limit used for the encoding to be precisely $\mIt{depth}(p)$.
+
+\section{Algorithmic Symmetry}
+\label{sec:algo-symmetry}
+As emphasized in \Cref{sec:determine-depth-limit}
+we rely on the equivalency between the declarative and the algorithmic system
+to set our depth limit for path enumeration
+as well as on the decidability of the declarative system to even have such a limit in place.
+
+\begin{lemma}[5.5.15]
+  \label{lem:constraints-declarative-implies-algorithmic}
+  If \wf{P} and \entails{\ovl{a}}{a} then \entailsA{\ovl{a}}{a}.
+\end{lemma}
+
 \begin{theorem}[5.5.1]
-  \label{thm:1}
+  \label{thm:declarative-system-decidable}
   If \wf{P} then derivation of \entails{\ovl{a}}{a} is decidable.
 \end{theorem}
 
-Counterexample for \Cref{lem:1}.
+The entailment $\entails{\pathEq{a}{b}}{\pathEq{b}{a}}$ is a counterexample
+to \Cref{lem:constraints-declarative-implies-algorithmic}
+which describes one direction of \Cref{lem:constraint-system-equiv}
+and \Cref{thm:declarative-system-decidable}
+as it relies on \Cref{lem:constraint-system-equiv}.
+
+\begin{mathpar}
+  \inferrule[CA-Refl]{}{
+    \entailsA{\ovl{a}}{\pathEq{p}{p}}
+  }
+  \and
+  \inferrule[CA-Ident]{}{
+    \entailsA{\ovl{a}}{a_i}
+  }
+  \and
+  \inferrule[CA-Class]{
+    \entailsA{\ovl{a}}{\instantiatedBy{p}{C}}
+  }{
+    \entailsA{\ovl{a}}{\instanceOf{p}{C}}
+  }
+  \and
+  \inferrule[CA-Prog]{
+    \entailsA{\ovl{a}}{\ovl{b}_{\sub{x}{p}}}\\
+    p \sqsubset \ovl{a}\\\\
+    (\programEntailment{x}{\ovl{b}}{\instanceOf{x}{C}}) \in P
+  }{
+    \entailsA{\ovl{a}}{\instanceOf{p}{C}}
+  }
+  \and
+  \inferrule[CA-Subst1]{
+    p \sqsubset \ovl{a}\\\\
+    \entailsA{\ovl{a}}{\instantiatedBy{p}{C}}\\
+    \entailsA{\ovl{a}}{\pathEq{p}{p'}}
+  }{
+    \entailsA{\ovl{a}}{\instantiatedBy{p'}{C}}
+  }
+  \and
+  \inferrule[CA-Subst2]{
+    p \sqsubset \ovl{a}\\\\
+    \entailsA{\ovl{a}}{\instanceOf{p}{C}}\\
+    \entailsA{\ovl{a}}{\pathEq{p}{p'}}
+  }{
+    \entailsA{\ovl{a}}{\instanceOf{p'}{C}}
+  }
+  \and
+  \inferrule[CA-Subst3]{
+    p \sqsubset \ovl{a}\\\\
+    \entailsA{\ovl{a}}{\pathEq{p}{p''}}\\
+    \entailsA{\ovl{a}}{\pathEq{p'}{p}}
+  }{
+    \entailsA{\ovl{a}}{\pathEq{p'}{p''}}
+  }
+  \and
+  \inferrule[CA-Subst4]{
+    \entailsA{\ovl{a}}{\pathEq{p}{p'}}
+  }{
+    \entailsA{\ovl{a}}{\pathEq{p.f}{p'.f}}
+  }
+\end{mathpar}
+
+\paragraph{Counterexample}
 Choose any well-formed program.
+
+The entailment $\entails{\pathEq{a}{b}}{\pathEq{b}{a}}$ has
+a derivation in the declarative system.
+% how to typeset the rule names to the rhs?
+% \begin{mathpar}
+%   \inferrule[C-Subst]{
+%     \inferrule[C-Weak]{
+%       \inferrule[C-Refl]{}{\entails{\cdot}{\pathEq{b}{b}}}
+%     }{
+%       \entails{\pathEq{a}{b}}{\pathEq{b}{a}_{\sub{a}{b}}}
+%     }\\
+%     \inferrule[C-Ident]{}{\entails{\pathEq{a}{b}}{\pathEq{a}{b}}}
+%   }{
+%     \entails{\pathEq{a}{b}}{ \pathEq{b}{a}_{\sub{a}{a}} }
+%   }
+% \end{mathpar}
 \begin{prooftree}
   \AxiomC{}
   \RightLabel{C-Refl}
@@ -743,8 +840,11 @@ Choose any well-formed program.
   \RightLabel{C-Ident}
   \UnaryInfC{\entails{\pathEq{a}{b}}{\pathEq{a}{b}}}
   \RightLabel{C-Subst}
-  \BinaryInfC{\entails{\pathEq{a}{b}}{ \pathEq{b}{a}_{\sub{a}{a}} }}
+  \BinaryInfC{\entails{\pathEq{a}{b}}{\pathEq{b}{a}_{\sub{a}{a}}}}
 \end{prooftree}
+
+In the algorithmic system, only rule CA-Subst3 applies.
+We have two possible ways to approach this sequent.
 
 \begin{prooftree}
   \AxiomC{}
@@ -768,10 +868,14 @@ Choose any well-formed program.
   \TrinaryInfC{\entailsA{\pathEq{a}{b}}{\pathEq{b}{a}}}
 \end{prooftree}
 
+We can see that we reproduce the same proof goal
+in one of the branches of both possibilities
+and we cannot close those branches.
+
 \subsection{Symmetry Fix}
 \label{sec:symmetry-fix}
 We can update rule CA-Subst3 to allow the entailment used as a counterexample
-to \Cref{lem:1} to have a derivation.
+to \Cref{lem:constraints-declarative-implies-algorithmic} to have a derivation.
 
 There are two feasible ways to update the rule:
 \begin{enumerate}
