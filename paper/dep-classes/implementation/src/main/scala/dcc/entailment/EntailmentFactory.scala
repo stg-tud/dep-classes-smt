@@ -1,7 +1,7 @@
 package dcc.entailment
 
-import dcc.entailment.EntailmentSort.{Algorithmic, AlgorithmicFix1, AlgorithmicFix2, EntailmentSort, GroundPathDepthLimit, PathDepthLimit, Semantic, SimplifiedSemantic}
-import dcc.entailment.algorithmic.{AlgorithmicSystem, AlgorithmicSystemFix1, AlgorithmicSystemFix2}
+import dcc.entailment.EntailmentSort.{Algorithmic, AlgorithmicFix1, AlgorithmicFix1RandomizedPick, AlgorithmicFix2, AlgorithmicFix2RandomizedPick, EntailmentSort, GroundPathDepthLimit, PathDepthLimit, Semantic, SimplifiedSemantic}
+import dcc.entailment.algorithmic.{AlgorithmicSystem, AlgorithmicSystemFix1, AlgorithmicSystemFix1RandomizedPick, AlgorithmicSystemFix2}
 import dcc.syntax.Program.Program
 
 object EntailmentFactory {
@@ -13,10 +13,12 @@ object EntailmentFactory {
     case Algorithmic => new AlgorithmicSystem(program, debug)
     case AlgorithmicFix1 => new AlgorithmicSystemFix1(program, debug)
     case AlgorithmicFix2 => new AlgorithmicSystemFix2(program, debug)
+    case AlgorithmicFix1RandomizedPick => new AlgorithmicSystemFix1RandomizedPick(program, debug)
+    case AlgorithmicFix2RandomizedPick => new AlgorithmicSystemFix2RandomizedPick(program, debug)
   }
 }
 
 object EntailmentSort extends Enumeration {
   type EntailmentSort = Value
-  val Semantic, SimplifiedSemantic, PathDepthLimit, GroundPathDepthLimit, Algorithmic, AlgorithmicFix1, AlgorithmicFix2 = Value
+  val Semantic, SimplifiedSemantic, PathDepthLimit, GroundPathDepthLimit, Algorithmic, AlgorithmicFix1, AlgorithmicFix1RandomizedPick, AlgorithmicFix2, AlgorithmicFix2RandomizedPick = Value
 }
