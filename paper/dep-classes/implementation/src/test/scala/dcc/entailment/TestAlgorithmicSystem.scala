@@ -128,7 +128,7 @@ class TestAlgorithmicSystem extends AnyFunSuite{
 //        PathEquivalence("q", "r")
 //      ), PathEquivalence("a", "r")), repeats)
 //    println(if (result) "✓" else "×")
-//    println(s"\ttook ${NsToMs(total)}ms")
+//    println(s"\took ${NsToMs(total)}ms")
 //
 //    assert(result)
 //  }
