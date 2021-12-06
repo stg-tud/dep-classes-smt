@@ -1,7 +1,7 @@
 package dcc.entailment
 
 import dcc.entailment.EntailmentSort.{Algorithmic, AlgorithmicFix1, AlgorithmicFix1RandomizedPick, AlgorithmicFix2, AlgorithmicFix2RandomizedPick, EntailmentSort, GroundPathDepthLimit, PathDepthLimit, Semantic, SimplifiedSemantic}
-import dcc.entailment.algorithmic.{AlgorithmicSystem, AlgorithmicSystemFix1, AlgorithmicSystemFix1RandomizedPick, AlgorithmicSystemFix2}
+import dcc.entailment.algorithmic.{AlgorithmicSystem, AlgorithmicSystemFix1, AlgorithmicSystemFix1RandomizedPick, AlgorithmicSystemFix2, AlgorithmicSystemFix2RandomizedPick}
 import dcc.syntax.Program.Program
 
 object EntailmentFactory {

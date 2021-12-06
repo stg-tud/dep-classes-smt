@@ -1,5 +1,6 @@
 package dcc
 
+import dcc.entailment.EntailmentSort._
 import dcc.entailment.{Entailment, EntailmentFactory, EntailmentSort}
 import dcc.program.NaturalNumbers
 import dcc.syntax.{Constraint, Id, PathEquivalence}
@@ -19,6 +20,33 @@ object MeasureRuntime extends App {
     }
 
     (result, total.toDouble/repeats)
+  }
+
+  private def parseEntailment(s: String): Option[EntailmentSort] = s.toLowerCase match {
+    case "semantic" => Some(Semantic)
+    case "simplifiedsemantic" => Some(SimplifiedSemantic)
+    case x if x=="pathdepthlimit" ||
+              x=="quantified-limit" =>
+      Some(PathDepthLimit)
+    case x if x=="groundpathgepthlimit" ||
+              x=="ground-limit" =>
+      Some(GroundPathDepthLimit)
+    case x if x=="algorithmic" => Some(Algorithmic)
+    case x if x=="algorithmicfix1" ||
+              x=="fix1" =>
+      Some(AlgorithmicFix1)
+    case x if x=="algorithmicfix2" ||
+              x=="fix2" =>
+      Some(AlgorithmicFix2)
+    case x if x=="algorithmicfix1randomizedpick" ||
+              x=="fix1-random" ||
+              x=="random1" =>
+      Some(AlgorithmicFix1RandomizedPick)
+    case x if x=="algorithmicfix2randomizedpick" ||
+              x=="fix2-random" ||
+              x=="random2" =>
+      Some(AlgorithmicFix2RandomizedPick)
+    case _ => None
   }
 
   private def constructTransitiveContext(vars: List[String]): List[Constraint] = vars match {
@@ -107,9 +135,16 @@ object MeasureRuntime extends App {
     }
   }
 
+  if (args.length == 2) {
+    // TODO: parse params
+    // TODO: measure based on params
+  }
+
+  println(parseEntailment("random1").getOrElse("none"))
+
 //  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.Algorithmic)(NaturalNumbers.program, 0), 'f')
-  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.AlgorithmicFix1)(NaturalNumbers.program, 0), 'z')
-  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.AlgorithmicFix2)(NaturalNumbers.program, 0), 'z')
+//  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.AlgorithmicFix1)(NaturalNumbers.program, 0), 'z')
+//  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.AlgorithmicFix2)(NaturalNumbers.program, 0), 'z')
 //  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.PathDepthLimit)(NaturalNumbers.program, 0), 'h')
 //  measureTransitivityChainEntailmentRuntime(EntailmentFactory(EntailmentSort.GroundPathDepthLimit)(NaturalNumbers.program, 0), 'h')
 }
