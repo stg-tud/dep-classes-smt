@@ -7,6 +7,7 @@ import dcc.syntax.Program.Program
 import dcc.syntax.{Constraint, Id, PathEquivalence}
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 
 // TODO: measure runtime with a list to get min/max/avg/mean values
 // TODO: refactor name to MeasureTransitivityChainRuntime?
@@ -16,18 +17,18 @@ object MeasureRuntime extends App {
   private val endCharParamNames: List[String] = List("end", "endchar", "goal", "char", "until")
   private val iterationsParamNames: List[String] = List("iterations", "iterate", "iter", "repeat", "repeats", "repetitions", "reps")
 
-  private def measureAvgTime(block: => Boolean, repeats: Int): (Boolean, Double) = {
-    var total = 0L
+  private def measureAvgTime(block: => Boolean, repeats: Int): (Boolean, List[Long]) = {
+    val timings: ListBuffer[Long] = new ListBuffer[Long]
     var result = false
 
     (0 until repeats).foreach { _ =>
       val t0 = System.nanoTime()
       result = block
       val t1 = System.nanoTime()
-      total += t1-t0
+      timings += t1-t0
     }
 
-    (result, total.toDouble/repeats)
+    (result, timings.toList)
   }
 
   // TODO: add iterationsDecreaseFlag param?
@@ -105,12 +106,12 @@ object MeasureRuntime extends App {
   private def findParam(params: Array[String], names:List[String]): Option[String] =
     params.find(checkParamNames(_, names))
 
-  @tailrec
-  private def findParamIndex(params: Array[String], names: List[String], counter: Int = 0): Option[Int] = params match {
-    case Array() => None
-    case Array(param, _*) if checkParamNames(param, names) => Some(counter)
-    case Array(_, rst@_*) => findParamIndex(rst.toArray, names, counter+1)
-  }
+//  @tailrec
+//  private def findParamIndex(params: Array[String], names: List[String], counter: Int = 0): Option[Int] = params match {
+//    case Array() => None
+//    case Array(param, _*) if checkParamNames(param, names) => Some(counter)
+//    case Array(_, rst@_*) => findParamIndex(rst.toArray, names, counter+1)
+//  }
 
   @tailrec
   private def checkParamNames(param: String, names: List[String]): Boolean = names match {
@@ -138,7 +139,8 @@ object MeasureRuntime extends App {
               x=="quantified-limit" =>
       Some(PathDepthLimit)
     case x if x=="groundpathdepthlimit" ||
-              x=="ground-limit" =>
+              x=="ground-limit" ||
+              x=="ground" =>
       Some(GroundPathDepthLimit)
     case x if x=="algorithmic" => Some(Algorithmic)
     case x if x=="algorithmicfix1" ||
@@ -246,6 +248,14 @@ object MeasureRuntime extends App {
     f"$min%1.2f min"
   }
 
+  private def calculateTimings(times: List[Long]): Timings = Timings(
+    series = times,
+    min = times.min,
+    max = times.max,
+    mean = times.sum.toDouble/times.size.toDouble,
+    median = times(times.size/2)
+  )
+
   /***
     * Measures the avg runtime of transitivity chains starting from 'a' until the endpoint reaches `end` using `entailment` over `iterations` iterations.
     * The number iterations of performed iterations may decrease if `decreaseIterationsWithIncreasingRuntime` is set.
@@ -273,26 +283,32 @@ object MeasureRuntime extends App {
         val ctx = constructTransitiveContext(vars)
         val conclusion = PathEquivalence(Id(Symbol(start.toString)), Id(Symbol(end.toString)))
         print(s"measure '${constraintsToString(ctx)} |- $conclusion' using $repeats iterations: ")
-        val (result, time) = measureAvgTime(entailment.entails(ctx, conclusion), repeats)
+        val (result, times) = measureAvgTime(entailment.entails(ctx, conclusion), repeats)
 
-        if (time >= 10L*1000L*1000000L) {
+        val measures = calculateTimings(times)
+
+        if (measures.mean >= 180L*1000L*1000000L) {
+          // if more than 180s avg
+          // only do iterations/32 iteration going forwards
+          repeats = iterations/32
+        } else if (measures.mean >= 60L*1000L*1000000L) {
+          // if more than 60s avg
+          // only do iterations/16 iteration going forwards
+          repeats = iterations/16
+        } else if (measures.mean >= 10L*1000L*1000000L) {
           // if more than 10s avg
-          // only do 1 iteration going forwards
-          repeats = 1
-        } else if (time >= 500*1000000) {
-          // if more than 500ms avg
           // only do iterations/4 iterations going forwards
           repeats = iterations/4
-        } else if (time >= 10*1000000) {
-          // if more than 10ms avg
+        } else if (measures.mean >= 1000*1000000) {
+          // if more than 1000ms avg
           // only perform iterations/2 iterations going forwards
           repeats = iterations/2
         }
         println(if (result) "✓" else "×")
-        println(s"\ttook ${NanoTimeToStringRounded(time)} on avg")
-        println(s"\t    (${NanoTimeToMilliSeconds(time)} ms)")
+        println(s"\ttook ${NanoTimeToStringRounded(measures.mean)} on average")
+        println(s"\t    (${NanoTimeToMilliSeconds(measures.mean)} ms)")
 
-        println(f"${entailment.typ};$conclusion;${NanoTimeToMilliSeconds(time)}")
+        println(s"${entailment.typ};$conclusion;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)}")
     }
   }
 
@@ -312,4 +328,7 @@ object MeasureRuntime extends App {
     println(s"ENTAILMENT: semantic, simplifiedSematic, pathDepthLimit, groundPathDepthLimit, algorithmic, algorithmicFix1, algorithmicFix2, algorithmicFix1RandomizedPick, algorithmicFix2RandomizedPick")
     println(s"PROGRAM: boolean-expressions, natural-numbers")
   }
+
+
+  private case class Timings(series: List[Long], min: Long, max: Long, mean: Double, median: Long)
 }
