@@ -9,7 +9,6 @@ import dcc.syntax.{Constraint, Id, PathEquivalence}
 import scala.annotation.tailrec
 
 // TODO: measure runtime with a list to get min/max/avg/mean values
-//       maybe use multiple classes/or parameter to allow multiple tests in parallel
 // TODO: refactor name to MeasureTransitivityChainRuntime?
 object MeasureRuntime extends App {
   private val entailmentParamNames: List[String] = List("entail", "entails", "entailment", "sort", "test")
@@ -68,7 +67,13 @@ object MeasureRuntime extends App {
         else
           parseEndChar(args.last)
 
-      (entailment, program, endChar, None)
+      val iterations: Option[Int] =
+        if(findParam(args, iterationsParamNames).isDefined)
+          parseIterations(findParam(args, iterationsParamNames).get)
+        else
+          parseIterations(args.last)
+
+      (entailment, program, endChar, iterations)
     case _ =>
       val entailment: Option[EntailmentSort] =
         if (findParam(args, entailmentParamNames).isDefined)
