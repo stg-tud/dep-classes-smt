@@ -7,8 +7,9 @@ import dcc.syntax.Program.{GetMatchingConstraintEntailments, Program}
 
 import scala.util.Random
 
+// TODO: add debug output?
 class AlgorithmicSystemFix2RandomizedPick(program: Program, debug: Int = 0) extends Entailment {
-  override def typ: EntailmentSort = EntailmentSort.AlgorithmicFix2
+  override def typ: EntailmentSort = EntailmentSort.AlgorithmicFix2RandomizedPick
 
   override def entails(context: List[Constraint], constraints: List[Constraint]): Boolean = constraints.forall(entails(context, _))
 
@@ -46,9 +47,10 @@ class AlgorithmicSystemFix2RandomizedPick(program: Program, debug: Int = 0) exte
 
           if (context.flatMap(_.containedPaths).contains(p)) {
             // find matching constraint entailment declarations
-            for (elem@ConstraintEntailment(x, as, _) <- GetMatchingConstraintEntailments(program, cls)) {
-              //              println(s"want to show '$conclusion'")
-              //              println(s"found matching declaration '$elem'")
+            for (ConstraintEntailment(x, as, _) <- GetMatchingConstraintEntailments(program, cls)) {
+//            for (elem@ConstraintEntailment(x, as, _) <- GetMatchingConstraintEntailments(program, cls)) {
+//                            println(s"want to show '$conclusion'")
+//                            println(s"found matching declaration '$elem'")
               if (as.exists(c => search(context, dcc.Util.substitute(x, p, c), visitedClass, conclusion::visitedProg, visitedSubst1, visitedSubst2, visitedSubst3, visitedSubst4))) {
                 return true
               }

@@ -5,6 +5,7 @@ import dcc.entailment.{Entailment, EntailmentSort}
 import dcc.syntax.Program.{GetMatchingConstraintEntailments, Program}
 import dcc.syntax._
 
+// TODO: add debug output?
 class AlgorithmicSystem(program: Program, debug: Int = 0) extends Entailment {
   override def typ: EntailmentSort = EntailmentSort.Algorithmic
 
