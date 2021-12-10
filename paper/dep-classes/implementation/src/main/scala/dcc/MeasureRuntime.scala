@@ -9,7 +9,6 @@ import dcc.syntax.{Constraint, Id, PathEquivalence}
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
-// TODO: measure runtime with a list to get min/max/avg/mean values
 // TODO: refactor name to MeasureTransitivityChainRuntime?
 object MeasureRuntime extends App {
   private val entailmentParamNames: List[String] = List("entail", "entails", "entailment", "sort", "test")
@@ -249,11 +248,11 @@ object MeasureRuntime extends App {
   }
 
   private def calculateTimings(times: List[Long]): Timings = Timings(
-    series = times,
+    series = times.sorted,
     min = times.min,
     max = times.max,
     mean = times.sum.toDouble/times.size.toDouble,
-    median = times(times.size/2)
+    median = times.sorted(Ordering.Long)((times.size/2)+1)
   )
 
   /***
@@ -308,7 +307,7 @@ object MeasureRuntime extends App {
         println(s"\ttook ${NanoTimeToStringRounded(measures.mean)} on average")
         println(s"\t    (${NanoTimeToMilliSeconds(measures.mean)} ms)")
 
-        println(s"${entailment.typ};$conclusion;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)}")
+        println(f"${entailment.typ};$conclusion;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)}")
     }
   }
 
