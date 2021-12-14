@@ -13,10 +13,8 @@ class AlgorithmicSystemFix1(program: Program, debug: Int = 0) extends Entailment
 
   override def entails(context: List[Constraint], constraint: Constraint): Boolean = search(context, constraint, Nil, Nil, Nil, Nil, Nil, Nil)
 
-  // TODO: keep track of already "visited" conclusions? o/w it might happen to test for the same one again leading to non-terminating behaviour
-  //  do this per rule, as they are not mutually exclusive
-  //  ↑ also memoize if the corresponding branch could be closed successfully?
   // TODO: consolidate cases (instance of checks)
+  // TODO: add search function that returns a solution
   def search(context: List[Constraint], conclusion: Constraint,
              visitedClass: List[Constraint],
              visitedProg: List[Constraint],
@@ -60,7 +58,7 @@ class AlgorithmicSystemFix1(program: Program, debug: Int = 0) extends Entailment
           val InstantiatedBy(p1, cls) = conclusion
 
           for (p <- context.flatMap(_.containedPaths)) {
-            if (search(context, PathEquivalence(p, p1), visitedClass, visitedProg, conclusion::visitedSubst1, visitedSubst2, visitedSubst3, visitedSubst4) && // TODO: add to visited in this as well?
+            if (search(context, PathEquivalence(p, p1), visitedClass, visitedProg, conclusion::visitedSubst1, visitedSubst2, visitedSubst3, visitedSubst4) &&
               search(context, InstantiatedBy(p, cls), visitedClass, visitedProg, conclusion::visitedSubst1, visitedSubst2, visitedSubst3, visitedSubst4)
             ) {
               return true

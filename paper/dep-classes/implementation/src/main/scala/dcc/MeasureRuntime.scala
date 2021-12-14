@@ -10,8 +10,10 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
 // TODO: refactor name to MeasureTransitivityChainRuntime?
+// TODO: add tests for invalid entailments
 object MeasureRuntime extends App {
-  private val entailmentParamNames: List[String] = List("entail", "entails", "entailment", "sort", "test")
+  // TODO: add test parameter, to determine which testsuite to run
+  private val entailmentParamNames: List[String] = List("entail", "entails", "entailment", "sort", "algo", "algorithm")
   private val programParamNames: List[String] = List("program", "prog", "p")
   private val endCharParamNames: List[String] = List("end", "endchar", "goal", "char", "until")
   private val iterationsParamNames: List[String] = List("iterations", "iterate", "iter", "repeat", "repeats", "repetitions", "reps")
@@ -31,6 +33,8 @@ object MeasureRuntime extends App {
   }
 
   // TODO: add iterationsDecreaseFlag param?
+  // TODO: params only with pairs 'param=value'?
+  // TODO: which params should be optional?
   private def parseParams: (Option[EntailmentSort], Option[Program], Option[Char], Option[Int]) = args.length match {
     case 0 => (None, None, None, None)
     case 1 => (parseEntailment(args.head), None, None, None)
