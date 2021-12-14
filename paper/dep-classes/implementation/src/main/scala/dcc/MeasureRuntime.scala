@@ -252,11 +252,7 @@ object MeasureRuntime extends App {
   }
 
   private def calculateTimings(times: List[Long]): Timings = Timings(
-    series = times.sorted,
-    min = times.min,
-    max = times.max,
-    mean = times.sum.toDouble/times.size.toDouble,
-    median = times.sorted(Ordering.Long)((times.size/2)+1)
+    series = times.sorted
   )
 
   /***
@@ -290,19 +286,19 @@ object MeasureRuntime extends App {
 
         val measures = calculateTimings(times)
 
-        if (measures.mean >= 180L*1000L*1000000L) {
+        if (decreaseIterationsWithIncreasingRuntime && measures.mean >= 180L*1000L*1000000L) {
           // if more than 180s avg
           // only do iterations/32 iteration going forwards
           repeats = iterations/32
-        } else if (measures.mean >= 60L*1000L*1000000L) {
+        } else if (decreaseIterationsWithIncreasingRuntime && measures.mean >= 60L*1000L*1000000L) {
           // if more than 60s avg
           // only do iterations/16 iteration going forwards
           repeats = iterations/16
-        } else if (measures.mean >= 10L*1000L*1000000L) {
+        } else if (decreaseIterationsWithIncreasingRuntime && measures.mean >= 10L*1000L*1000000L) {
           // if more than 10s avg
           // only do iterations/4 iterations going forwards
           repeats = iterations/4
-        } else if (measures.mean >= 1000*1000000) {
+        } else if (decreaseIterationsWithIncreasingRuntime && measures.mean >= 1000*1000000) {
           // if more than 1000ms avg
           // only perform iterations/2 iterations going forwards
           repeats = iterations/2
@@ -315,8 +311,55 @@ object MeasureRuntime extends App {
     }
   }
 
+  private def measureInvalidTransitivityChainEntailmentRuntime(entailment: Entailment, finalContextEnd: Char, iterations: Int = 20, decreaseIterationsWithIncreasingRuntime: Boolean = true): Unit = {
+    // warmup
+    (1 to 10).foreach(_ => entailment.entails(Nil, PathEquivalence(Id(Symbol("a")), Id(Symbol("a")))))
+
+    // number of iterations
+    var repeats = iterations
+
+    // start variable of the transitivity chain
+    val contextStart: Char = 'a'
+
+    ('a' to finalContextEnd).foreach {
+      contextEnd: Char =>
+        val vars = (contextStart to contextEnd).map(_.toString).toList
+        val context = constructTransitiveContext(vars)
+        val conclusion = PathEquivalence(Id(Symbol("a")), Id(Symbol(s"unreachable")))
+        //val conclusion = PathEquivalence(Id(Symbol("a")), Id(Symbol(s"${contextEnd}1")))
+
+        val (_, times) = measureAvgTime(entailment.entails(context, conclusion), repeats)
+
+        val measures = calculateTimings(times)
+
+        if (decreaseIterationsWithIncreasingRuntime) {
+          if (measures.mean >= 180L*1000L*1000000L) {
+            // if more than 180s avg
+            // only do iterations/32 iteration going forwards
+            repeats = iterations/32
+          } else if (measures.mean >= 60L*1000L*1000000L) {
+            // if more than 60s avg
+            // only do iterations/16 iteration going forwards
+            repeats = iterations/16
+          } else if (measures.mean >= 10L*1000L*1000000L) {
+            // if more than 10s avg
+            // only do iterations/4 iterations going forwards
+            repeats = iterations/4
+          } else if (measures.mean >= 1000*1000000) {
+            // if more than 1000ms avg
+            // only perform iterations/2 iterations going forwards
+            repeats = iterations/2
+          }
+        }
+
+        // TODO: move this printing to a function?
+        println(f"${entailment.typ};$contextEnd;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)}")
+    }
+  }
+
   val (entailmentParam, program, endChar, iterationsParam) = parseParams
 
+  // TODO: update parameter handling and dispatch the test to be performed based on them
   if (entailmentParam.isDefined && program.isDefined) {
     val end = endChar.getOrElse('f')
     val iterations = iterationsParam.getOrElse(20)
@@ -333,5 +376,10 @@ object MeasureRuntime extends App {
   }
 
 
-  private case class Timings(series: List[Long], min: Long, max: Long, mean: Double, median: Long)
+  private case class Timings(series: List[Long]) {
+    val min: Long = series.min
+    val max: Long = series.max
+    val mean: Double = series.sum.toDouble / series.size.toDouble
+    val median: Long = series.sorted(Ordering.Long)((series.size-1)/2)
+  }
 }
