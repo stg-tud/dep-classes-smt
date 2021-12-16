@@ -227,6 +227,28 @@ object MeasureRuntime extends App {
     case x::xs => s"$x, ${constraintsToString(xs)}"
   }
 
+  private def calculateForthcomingRepetitions(iterations: Int, meanTime: Double): Int =
+    if (meanTime >= 180L*1000L*1000000L) {
+      // if more than 180s avg
+      // only do iterations/32 iteration going forwards
+      iterations/32
+    } else if (meanTime >= 60L*1000L*1000000L) {
+      // if more than 60s avg
+      // only do iterations/16 iteration going forwards
+      iterations/16
+    } else if (meanTime >= 10L*1000L*1000000L) {
+      // if more than 10s avg
+      // only do iterations/4 iterations going forwards
+      iterations/4
+    } else if (meanTime >= 1000*1000000) {
+      // if more than 1000ms avg
+      // only perform iterations/2 iterations going forwards
+      iterations/2
+    } else {
+      // otherwise don't decrease
+      iterations
+    }
+
   private def NanoTimeToMilliSeconds(ns: Double): Double = ns/1000000d
 
   private def NanoTimeToStringRounded(ns: Double): String = {
@@ -286,22 +308,8 @@ object MeasureRuntime extends App {
 
         val measures = calculateTimings(times)
 
-        if (decreaseIterationsWithIncreasingRuntime && measures.mean >= 180L*1000L*1000000L) {
-          // if more than 180s avg
-          // only do iterations/32 iteration going forwards
-          repeats = iterations/32
-        } else if (decreaseIterationsWithIncreasingRuntime && measures.mean >= 60L*1000L*1000000L) {
-          // if more than 60s avg
-          // only do iterations/16 iteration going forwards
-          repeats = iterations/16
-        } else if (decreaseIterationsWithIncreasingRuntime && measures.mean >= 10L*1000L*1000000L) {
-          // if more than 10s avg
-          // only do iterations/4 iterations going forwards
-          repeats = iterations/4
-        } else if (decreaseIterationsWithIncreasingRuntime && measures.mean >= 1000*1000000) {
-          // if more than 1000ms avg
-          // only perform iterations/2 iterations going forwards
-          repeats = iterations/2
+        if (decreaseIterationsWithIncreasingRuntime) {
+          repeats = calculateForthcomingRepetitions(iterations, measures.mean)
         }
         println(if (result) "✓" else "×")
         println(s"\ttook ${NanoTimeToStringRounded(measures.mean)} on average")
@@ -333,23 +341,7 @@ object MeasureRuntime extends App {
         val measures = calculateTimings(times)
 
         if (decreaseIterationsWithIncreasingRuntime) {
-          if (measures.mean >= 180L*1000L*1000000L) {
-            // if more than 180s avg
-            // only do iterations/32 iteration going forwards
-            repeats = iterations/32
-          } else if (measures.mean >= 60L*1000L*1000000L) {
-            // if more than 60s avg
-            // only do iterations/16 iteration going forwards
-            repeats = iterations/16
-          } else if (measures.mean >= 10L*1000L*1000000L) {
-            // if more than 10s avg
-            // only do iterations/4 iterations going forwards
-            repeats = iterations/4
-          } else if (measures.mean >= 1000*1000000) {
-            // if more than 1000ms avg
-            // only perform iterations/2 iterations going forwards
-            repeats = iterations/2
-          }
+          repeats = calculateForthcomingRepetitions(iterations, measures.mean)
         }
 
         // TODO: move this printing to a function?
