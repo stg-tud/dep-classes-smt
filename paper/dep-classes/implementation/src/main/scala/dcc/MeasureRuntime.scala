@@ -152,7 +152,7 @@ object MeasureRuntime extends App {
     if (s.contains("=")) {
       val arg = s.split('=')
       if (arg.length == 2)
-        _parseTest(s)
+        _parseTest(arg.last)
       else
         None
     } else {
@@ -403,6 +403,8 @@ object MeasureRuntime extends App {
 
   private val (testParam, entailmentParam, program, endChar, iterationsParam) = parseParams
 
+  println(testParam)
+
   if (testParam.isDefined && entailmentParam.isDefined && program.isDefined) {
     // Default values for optional params
     val end = endChar.getOrElse('f')
@@ -415,7 +417,13 @@ object MeasureRuntime extends App {
       case Test.RandomizedContextTransitiveChain => () // TODO: add test suite
     }
   } else {
-    println("Entailment sort parameter must be defined.")
+    if (testParam.isEmpty)
+      System.err.println(s"test parameter must be set")
+    if (entailmentParam.isEmpty)
+      System.err.println(s"entailment parameter must be set")
+    if (program.isEmpty)
+      System.err.println(s"program parameter must be set")
+
     println("Usage:")
     println(s"\t$this TEST ENTAILMENT PROGRAM [CHAR ITERATIONS]")
     println(s"\t$this entailment=ENTAILMENT program=PROGRAM end=CHAR iterations=NAT")
