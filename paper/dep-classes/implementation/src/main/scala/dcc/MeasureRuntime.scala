@@ -9,10 +9,10 @@ import dcc.syntax.{Constraint, Id, PathEquivalence}
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
-// TODO: refactor name to MeasureTransitivityChainRuntime?
-// TODO: add tests for invalid entailments
 object MeasureRuntime extends App {
-  // TODO: add test parameter, to determine which testsuite to run
+  import Test._
+
+  private val testParamNames: List[String] = List("test", "testsuite", "test-suite", "run")
   private val entailmentParamNames: List[String] = List("entail", "entails", "entailment", "sort", "algo", "algorithm")
   private val programParamNames: List[String] = List("program", "prog", "p")
   private val endCharParamNames: List[String] = List("end", "endchar", "goal", "char", "until")
@@ -32,78 +32,105 @@ object MeasureRuntime extends App {
     (result, timings.toList)
   }
 
+  private val emptyParams = (None, None, None, None, None)
   // TODO: add iterationsDecreaseFlag param?
   // TODO: params only with pairs 'param=value'?
-  // TODO: which params should be optional?
-  private def parseParams: (Option[EntailmentSort], Option[Program], Option[Char], Option[Int]) = args.length match {
-    case 0 => (None, None, None, None)
-    case 1 => (parseEntailment(args.head), None, None, None)
-    case 2 =>
-      val entailment: Option[EntailmentSort] =
-        if (findParam(args, entailmentParamNames).isDefined)
-          parseEntailment(findParam(args, entailmentParamNames).get)
-        else
-          parseEntailment(args.head)
-
-      val program: Option[Program] =
-        if (findParam(args, programParamNames).isDefined)
-          parseProgram(findParam(args, programParamNames).get)
-        else
-          parseProgram(args.last)
-
-      (entailment, program, None, None)
+  private def parseParams: (Option[Test], Option[EntailmentSort], Option[Program], Option[Char], Option[Int]) = args.length match {
+    case 0 => emptyParams
+    case 1 => emptyParams
+    case 2 => emptyParams
+    // We want to have at least 3 params
     case 3 =>
+      val test: Option[Test] =
+        if (findParam(args, testParamNames).isDefined)
+          parseTest(findParam(args, testParamNames).get)
+        else
+          parseTest(args.head)
+
       val entailment: Option[EntailmentSort] =
         if (findParam(args, entailmentParamNames).isDefined)
           parseEntailment(findParam(args, entailmentParamNames).get)
         else
-          parseEntailment(args.head)
+          parseEntailment(args(1))
 
       val program: Option[Program] =
         if (findParam(args, programParamNames).isDefined)
           parseProgram(findParam(args, programParamNames).get)
         else
-          parseProgram(args(1))
+          parseProgram(args(2))
 
-      val endChar: Option[Char] =
-        if (findParam(args, endCharParamNames).isDefined)
-          parseEndChar(findParam(args, endCharParamNames).get)
+      (test, entailment, program, None, None)
+    case 4 =>
+      val test: Option[Test] =
+        if (findParam(args, testParamNames).isDefined)
+          parseTest(findParam(args, testParamNames).get)
         else
-          parseEndChar(args.last)
+          parseTest(args.head)
 
-      val iterations: Option[Int] =
-        if(findParam(args, iterationsParamNames).isDefined)
-          parseIterations(findParam(args, iterationsParamNames).get)
-        else
-          parseIterations(args.last)
-
-      (entailment, program, endChar, iterations)
-    case _ =>
       val entailment: Option[EntailmentSort] =
         if (findParam(args, entailmentParamNames).isDefined)
           parseEntailment(findParam(args, entailmentParamNames).get)
         else
-          parseEntailment(args.head)
+          parseEntailment(args(1))
 
       val program: Option[Program] =
         if (findParam(args, programParamNames).isDefined)
           parseProgram(findParam(args, programParamNames).get)
         else
-          parseProgram(args(1))
+          parseProgram(args(2))
 
       val endChar: Option[Char] =
         if (findParam(args, endCharParamNames).isDefined)
           parseEndChar(findParam(args, endCharParamNames).get)
         else
-          parseEndChar(args(2))
+          parseEndChar(args(3))
 
       val iterations: Option[Int] =
-        if(findParam(args, iterationsParamNames).isDefined)
+        if (findParam(args, iterationsParamNames).isDefined)
           parseIterations(findParam(args, iterationsParamNames).get)
         else
           parseIterations(args(3))
 
-      (entailment, program, endChar, iterations)
+      (test, entailment, program, endChar, iterations)
+    case _ =>
+      val test: Option[Test] =
+        if (findParam(args, testParamNames).isDefined)
+          parseTest(findParam(args, testParamNames).get)
+        else
+          parseTest(args.head)
+
+      val entailment: Option[EntailmentSort] =
+        if (findParam(args, entailmentParamNames).isDefined)
+          parseEntailment(findParam(args, entailmentParamNames).get)
+        else
+          parseEntailment(args(1))
+
+      val program: Option[Program] =
+        if (findParam(args, programParamNames).isDefined)
+          parseProgram(findParam(args, programParamNames).get)
+        else
+          parseProgram(args(2))
+
+      val endChar: Option[Char] =
+        if (findParam(args, endCharParamNames).isDefined)
+          parseEndChar(findParam(args, endCharParamNames).get)
+        // endChar and iterations are optional parameters
+        else if (parseEndChar(args(3)).isDefined)
+          parseEndChar(args(3))
+        else
+          parseEndChar(args(4))
+
+
+      val iterations: Option[Int] =
+        if(findParam(args, iterationsParamNames).isDefined)
+          parseIterations(findParam(args, iterationsParamNames).get)
+        // endChar and iterations are optional parameters
+        else if (parseIterations(args(3)).isDefined)
+          parseIterations(args(3))
+        else
+          parseIterations(args(4))
+
+      (test, entailment, program, endChar, iterations)
   }
 
   private def findParam(params: Array[String], names:List[String]): Option[String] =
@@ -123,13 +150,36 @@ object MeasureRuntime extends App {
     case _ :: rst => checkParamNames(param, rst)
   }
 
+  private def parseTest(s: String): Option[Test] = {
+    if (s.contains("=")) {
+      val arg = s.split('=')
+      if (arg.length == 2)
+        _parseTest(s)
+      else
+        None
+    } else {
+      _parseTest(s)
+    }
+  }
+
+  private val transitiveChainTestNames: List[String] = List("transitive-chain", "transitivechain", "transitive")
+  private val invalidTransitiveChainTestNames: List[String] = List("invalid-transitive-chain", "invalidtransitivechain", "invalidtransitive", "non-transitive", "nontransitive")
+  private val randomizedContextTransitiveChainTestNames: List[String] = List("randomized-transitive-chain", "random-transitive-chain", "randomizedtransitivechain", "randomtransitivechain", "randomized-transitive", "randomizedtransitive", "random-transitive", "randomtransitive")
+  private def _parseTest(s: String): Option[Test] = s match {
+    case _ if transitiveChainTestNames.contains(s.toLowerCase) => Some(TransitiveChain)
+    case _ if invalidTransitiveChainTestNames.contains(s.toLowerCase) => Some(InvalidTransitiveChain)
+    case _ if randomizedContextTransitiveChainTestNames.contains(s.toLowerCase) => Some(RandomizedContextTransitiveChain)
+    case _ => None
+  }
+
   private def parseEntailment(s: String): Option[EntailmentSort] = {
     if (s.contains("=")) {
       val arg = s.split('=')
       if (arg.length == 2)
         _parseEntailment(arg.last)
-      else
+      else {
         None
+      }
     }
     else
       _parseEntailment(s)
@@ -170,8 +220,9 @@ object MeasureRuntime extends App {
         _parseProgram(arg.last)
       else
         None
-    } else
+    } else {
       _parseProgram(s)
+    }
   }
 
   private val booleanExpressionNames: List[String] = List("booleanexpreesions", "boolean-expreesions", "boolean-expr", "boolean-exprs", "boolean", "bool", "boolexpr", "bool-expr", "bool-exprs")
@@ -189,8 +240,9 @@ object MeasureRuntime extends App {
         _parseEndChar(arg.last)
       else
         None
-    } else
+    } else {
       _parseEndChar(s)
+    }
   }
 
   private def _parseEndChar(s: String): Option[Char] = s.length match {
@@ -205,8 +257,9 @@ object MeasureRuntime extends App {
         _parseIterations(arg.last)
       else
         None
-    } else
+    } else {
       _parseIterations(s)
+    }
   }
 
   private def _parseIterations(s: String): Option[Int] = try {
@@ -349,7 +402,7 @@ object MeasureRuntime extends App {
     }
   }
 
-  val (entailmentParam, program, endChar, iterationsParam) = parseParams
+  val (testParam, entailmentParam, program, endChar, iterationsParam) = parseParams
 
   // TODO: update parameter handling and dispatch the test to be performed based on them
   if (entailmentParam.isDefined && program.isDefined) {
@@ -361,10 +414,11 @@ object MeasureRuntime extends App {
   } else {
     println("Entailment sort parameter must be defined.")
     println("Usage:")
-    println(s"\t$this ENTAILMENT PROGRAM [CHAR ITERATIONS]")
+    println(s"\t$this TEST ENTAILMENT PROGRAM [CHAR ITERATIONS]")
     println(s"\t$this entailment=ENTAILMENT program=PROGRAM end=CHAR iterations=NAT")
-    println(s"ENTAILMENT: semantic, simplifiedSematic, pathDepthLimit, groundPathDepthLimit, algorithmic, algorithmicFix1, algorithmicFix2, algorithmicFix1RandomizedPick, algorithmicFix2RandomizedPick")
-    println(s"PROGRAM: boolean-expressions, natural-numbers")
+    println("TEST: transitive, non-transitive, randomized-transitive")
+    println("ENTAILMENT: semantic, simplifiedSemantic, pathDepthLimit, groundPathDepthLimit, algorithmic, algorithmicFix1, algorithmicFix2, algorithmicFix1RandomizedPick, algorithmicFix2RandomizedPick")
+    println("PROGRAM: boolean-expressions, natural-numbers")
   }
 
 
@@ -373,5 +427,10 @@ object MeasureRuntime extends App {
     val max: Long = series.max
     val mean: Double = series.sum.toDouble / series.size.toDouble
     val median: Long = series.sorted(Ordering.Long)((series.size-1)/2)
+  }
+
+  private object Test extends Enumeration {
+    type Test = Value
+    val TransitiveChain, InvalidTransitiveChain, RandomizedContextTransitiveChain = Value
   }
 }
