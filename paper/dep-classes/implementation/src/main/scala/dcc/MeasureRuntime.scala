@@ -10,8 +10,6 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
 object MeasureRuntime extends App {
-  import Test._
-
   private val testParamNames: List[String] = List("test", "testsuite", "test-suite", "run")
   private val entailmentParamNames: List[String] = List("entail", "entails", "entailment", "sort", "algo", "algorithm")
   private val programParamNames: List[String] = List("program", "prog", "p")
@@ -35,13 +33,13 @@ object MeasureRuntime extends App {
   private val emptyParams = (None, None, None, None, None)
   // TODO: add iterationsDecreaseFlag param?
   // TODO: params only with pairs 'param=value'?
-  private def parseParams: (Option[Test], Option[EntailmentSort], Option[Program], Option[Char], Option[Int]) = args.length match {
+  private def parseParams: (Option[Test.Test], Option[EntailmentSort], Option[Program], Option[Char], Option[Int]) = args.length match {
     case 0 => emptyParams
     case 1 => emptyParams
     case 2 => emptyParams
     // We want to have at least 3 params
     case 3 =>
-      val test: Option[Test] =
+      val test: Option[Test.Test] =
         if (findParam(args, testParamNames).isDefined)
           parseTest(findParam(args, testParamNames).get)
         else
@@ -61,7 +59,7 @@ object MeasureRuntime extends App {
 
       (test, entailment, program, None, None)
     case 4 =>
-      val test: Option[Test] =
+      val test: Option[Test.Test] =
         if (findParam(args, testParamNames).isDefined)
           parseTest(findParam(args, testParamNames).get)
         else
@@ -93,7 +91,7 @@ object MeasureRuntime extends App {
 
       (test, entailment, program, endChar, iterations)
     case _ =>
-      val test: Option[Test] =
+      val test: Option[Test.Test] =
         if (findParam(args, testParamNames).isDefined)
           parseTest(findParam(args, testParamNames).get)
         else
@@ -150,7 +148,7 @@ object MeasureRuntime extends App {
     case _ :: rst => checkParamNames(param, rst)
   }
 
-  private def parseTest(s: String): Option[Test] = {
+  private def parseTest(s: String): Option[Test.Test] = {
     if (s.contains("=")) {
       val arg = s.split('=')
       if (arg.length == 2)
@@ -165,10 +163,10 @@ object MeasureRuntime extends App {
   private val transitiveChainTestNames: List[String] = List("transitive-chain", "transitivechain", "transitive")
   private val invalidTransitiveChainTestNames: List[String] = List("invalid-transitive-chain", "invalidtransitivechain", "invalidtransitive", "non-transitive", "nontransitive")
   private val randomizedContextTransitiveChainTestNames: List[String] = List("randomized-transitive-chain", "random-transitive-chain", "randomizedtransitivechain", "randomtransitivechain", "randomized-transitive", "randomizedtransitive", "random-transitive", "randomtransitive")
-  private def _parseTest(s: String): Option[Test] = s match {
-    case _ if transitiveChainTestNames.contains(s.toLowerCase) => Some(TransitiveChain)
-    case _ if invalidTransitiveChainTestNames.contains(s.toLowerCase) => Some(InvalidTransitiveChain)
-    case _ if randomizedContextTransitiveChainTestNames.contains(s.toLowerCase) => Some(RandomizedContextTransitiveChain)
+  private def _parseTest(s: String): Option[Test.Test] = s match {
+    case _ if transitiveChainTestNames.contains(s.toLowerCase) => Some(Test.TransitiveChain)
+    case _ if invalidTransitiveChainTestNames.contains(s.toLowerCase) => Some(Test.InvalidTransitiveChain)
+    case _ if randomizedContextTransitiveChainTestNames.contains(s.toLowerCase) => Some(Test.RandomizedContextTransitiveChain)
     case _ => None
   }
 
@@ -403,7 +401,7 @@ object MeasureRuntime extends App {
     }
   }
 
-  val (testParam, entailmentParam, program, endChar, iterationsParam) = parseParams
+  private val (testParam, entailmentParam, program, endChar, iterationsParam) = parseParams
 
   if (testParam.isDefined && entailmentParam.isDefined && program.isDefined) {
     // Default values for optional params
@@ -412,9 +410,9 @@ object MeasureRuntime extends App {
 
     val entailment = EntailmentFactory(entailmentParam.get)(program.get, 0)
     testParam.get match {
-      case TransitiveChain => measureTransitivityChainEntailmentRuntime(entailment, end, iterations)
-      case InvalidTransitiveChain => measureInvalidTransitivityChainEntailmentRuntime(entailment, end, iterations)
-      case RandomizedContextTransitiveChain => () // TODO: add test suite
+      case Test.TransitiveChain => measureTransitivityChainEntailmentRuntime(entailment, end, iterations)
+      case Test.InvalidTransitiveChain => measureInvalidTransitivityChainEntailmentRuntime(entailment, end, iterations)
+      case Test.RandomizedContextTransitiveChain => () // TODO: add test suite
     }
   } else {
     println("Entailment sort parameter must be defined.")
