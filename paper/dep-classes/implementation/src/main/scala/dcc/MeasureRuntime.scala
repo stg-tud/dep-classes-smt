@@ -355,7 +355,7 @@ object MeasureRuntime extends App {
         val ctx = constructTransitiveContext(vars)
         val conclusion = PathEquivalence(Id(Symbol(start.toString)), Id(Symbol(end.toString)))
 //        print(s"measure '${constraintsToString(ctx)} |- $conclusion' using $repeats iterations: ")
-        val (_, times) = measureAvgTime(entailment.entails(ctx, conclusion), repeats)
+        val (result, times) = measureAvgTime(entailment.entails(ctx, conclusion), repeats)
 
         val measures = calculateTimings(times)
 
@@ -366,7 +366,7 @@ object MeasureRuntime extends App {
 //        println(s"\ttook ${NanoTimeToStringRounded(measures.mean)} on average")
 //        println(s"\t    (${NanoTimeToMilliSeconds(measures.mean)} ms)")
 
-        println(f"transitive;${entailment.typ};$conclusion;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)}")
+        println(f"transitive;${entailment.typ};$conclusion;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)};$result")
     }
   }
 
@@ -388,7 +388,7 @@ object MeasureRuntime extends App {
         val conclusion = PathEquivalence(Id(Symbol("a")), Id(Symbol(s"unreachable")))
         //val conclusion = PathEquivalence(Id(Symbol("a")), Id(Symbol(s"${contextEnd}1")))
 
-        val (_, times) = measureAvgTime(entailment.entails(context, conclusion), repeats)
+        val (result, times) = measureAvgTime(entailment.entails(context, conclusion), repeats)
 
         val measures = calculateTimings(times)
 
@@ -397,7 +397,7 @@ object MeasureRuntime extends App {
         }
 
         // TODO: move this printing to a function?
-        println(f"non-transitive;${entailment.typ};$contextEnd;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)}")
+        println(f"non-transitive;${entailment.typ};$contextEnd;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)};$result")
     }
   }
 
