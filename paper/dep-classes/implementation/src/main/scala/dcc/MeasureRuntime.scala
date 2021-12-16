@@ -366,7 +366,7 @@ object MeasureRuntime extends App {
 //        println(s"\ttook ${NanoTimeToStringRounded(measures.mean)} on average")
 //        println(s"\t    (${NanoTimeToMilliSeconds(measures.mean)} ms)")
 
-        println(f"${entailment.typ};$conclusion;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)}")
+        println(f"transitive;${entailment.typ};$conclusion;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)}")
     }
   }
 
@@ -397,13 +397,11 @@ object MeasureRuntime extends App {
         }
 
         // TODO: move this printing to a function?
-        println(f"${entailment.typ};$contextEnd;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)}")
+        println(f"non-transitive;${entailment.typ};$contextEnd;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)}")
     }
   }
 
   private val (testParam, entailmentParam, program, endChar, iterationsParam) = parseParams
-
-  println(testParam)
 
   if (testParam.isDefined && entailmentParam.isDefined && program.isDefined) {
     // Default values for optional params
