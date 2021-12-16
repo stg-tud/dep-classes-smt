@@ -124,7 +124,7 @@ class Z3Solver(val axioms: SMTLibScript, val options: Seq[SMTLibCommand] = Seq.e
         case Right(error)   => Right(List(error))// Shouldn't be possible.
       }
     } else if (status == 1 && (responses exists {_.isRight})) {
-      val errors: Seq[ErrorResponse] = responses.filter(p => p.isRight).map(x => x.getOrElse().asInstanceOf[ErrorResponse])
+      val errors: Seq[ErrorResponse] = responses.filter(p => p.isRight).map(x => x.right.asInstanceOf[ErrorResponse])
       Right(errors)
     }else {
       // In case of io timeout or non z3 error
