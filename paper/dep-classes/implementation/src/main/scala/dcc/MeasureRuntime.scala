@@ -274,11 +274,11 @@ object MeasureRuntime extends App {
     case l :: r :: tl => PathEquivalence(Id(Symbol(l)),Id(Symbol(r)))::constructTransitiveContext(r::tl)
   }
 
-  private def constraintsToString(cs: List[Constraint]): String = cs match {
-    case Nil => "·"
-    case last::Nil => last.toString
-    case x::xs => s"$x, ${constraintsToString(xs)}"
-  }
+//  private def constraintsToString(cs: List[Constraint]): String = cs match {
+//    case Nil => "·"
+//    case last::Nil => last.toString
+//    case x::xs => s"$x, ${constraintsToString(xs)}"
+//  }
 
   private def calculateForthcomingRepetitions(iterations: Int, meanTime: Double): Int =
     if (meanTime >= 180L*1000L*1000000L) {
@@ -304,27 +304,27 @@ object MeasureRuntime extends App {
 
   private def NanoTimeToMilliSeconds(ns: Double): Double = ns/1000000d
 
-  private def NanoTimeToStringRounded(ns: Double): String = {
-    val ms = ns/1000000d
-
-    if (ms < 1d) {
-      return f"$ns%1.0f ns"
-    }
-
-    val s = ms/1000d
-
-    if (s < 1d) {
-      return f"$ms%1.3f ms"
-    }
-
-    val min = s/60d
-
-    if (min < 2d) {
-      return f"$s%1.3f s"
-    }
-
-    f"$min%1.2f min"
-  }
+//  private def NanoTimeToStringRounded(ns: Double): String = {
+//    val ms = ns/1000000d
+//
+//    if (ms < 1d) {
+//      return f"$ns%1.0f ns"
+//    }
+//
+//    val s = ms/1000d
+//
+//    if (s < 1d) {
+//      return f"$ms%1.3f ms"
+//    }
+//
+//    val min = s/60d
+//
+//    if (min < 2d) {
+//      return f"$s%1.3f s"
+//    }
+//
+//    f"$min%1.2f min"
+//  }
 
   private def calculateTimings(times: List[Long]): Timings = Timings(
     series = times.sorted
@@ -334,12 +334,12 @@ object MeasureRuntime extends App {
     * Measures the avg runtime of transitivity chains starting from 'a' until the endpoint reaches `end` using `entailment` over `iterations` iterations.
     * The number iterations of performed iterations may decrease if `decreaseIterationsWithIncreasingRuntime` is set.
     * @param entailment The entailment to measure the runtime of
-    * @param end The maximum element to wich the transitivity chains will be expanded. Should be between 'b' and 'z'.
+    * @param end The maximum element to which the transitivity chains will be expanded. Should be between 'a' and 'z'.
     * @param iterations The number of iterations to measure
     * @param decreaseIterationsWithIncreasingRuntime If set, decreases the number of iterations to measure the average runtime over
     *                                                if the average runtime exceeds some internal threshold
     */
-  private def measureTransitivityChainEntailmentRuntime(entailment: Entailment, end: Char, iterations: Int = 20, decreaseIterationsWithIncreasingRuntime: Boolean = true): Unit = {
+  private def measureTransitivityChainEntailmentRuntime(entailment: Entailment, end: Char, iterations: Int, decreaseIterationsWithIncreasingRuntime: Boolean = true): Unit = {
     // warmup
     (1 to 10).foreach(_ => entailment.entails(Nil, PathEquivalence(Id(Symbol("a")), Id(Symbol("a")))))
 
@@ -349,30 +349,30 @@ object MeasureRuntime extends App {
     // start variable of the transitivity chain
     val start: Char = 'a'
 
-    println(s"measure avg runtime of transitivity chain entailments with ${entailment.typ}")
+    println(s"measure runtime of transitivity chain entailments with ${entailment.typ}")
     ('a' to end).foreach {
       // end variable of the transitivity chain
       end: Char =>
         val vars = (start to end).map(_.toString).toList
         val ctx = constructTransitiveContext(vars)
         val conclusion = PathEquivalence(Id(Symbol(start.toString)), Id(Symbol(end.toString)))
-        print(s"measure '${constraintsToString(ctx)} |- $conclusion' using $repeats iterations: ")
-        val (result, times) = measureAvgTime(entailment.entails(ctx, conclusion), repeats)
+//        print(s"measure '${constraintsToString(ctx)} |- $conclusion' using $repeats iterations: ")
+        val (_, times) = measureAvgTime(entailment.entails(ctx, conclusion), repeats)
 
         val measures = calculateTimings(times)
 
         if (decreaseIterationsWithIncreasingRuntime) {
           repeats = calculateForthcomingRepetitions(iterations, measures.mean)
         }
-        println(if (result) "✓" else "×")
-        println(s"\ttook ${NanoTimeToStringRounded(measures.mean)} on average")
-        println(s"\t    (${NanoTimeToMilliSeconds(measures.mean)} ms)")
+//        println(if (result) "✓" else "×")
+//        println(s"\ttook ${NanoTimeToStringRounded(measures.mean)} on average")
+//        println(s"\t    (${NanoTimeToMilliSeconds(measures.mean)} ms)")
 
         println(f"${entailment.typ};$conclusion;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)}")
     }
   }
 
-  private def measureInvalidTransitivityChainEntailmentRuntime(entailment: Entailment, finalContextEnd: Char, iterations: Int = 20, decreaseIterationsWithIncreasingRuntime: Boolean = true): Unit = {
+  private def measureInvalidTransitivityChainEntailmentRuntime(entailment: Entailment, finalContextEnd: Char, iterations: Int, decreaseIterationsWithIncreasingRuntime: Boolean = true): Unit = {
     // warmup
     (1 to 10).foreach(_ => entailment.entails(Nil, PathEquivalence(Id(Symbol("a")), Id(Symbol("a")))))
 
@@ -382,6 +382,7 @@ object MeasureRuntime extends App {
     // start variable of the transitivity chain
     val contextStart: Char = 'a'
 
+    println(s"measure runtime of unreachable transitivity chain entailments with ${entailment.typ}")
     ('a' to finalContextEnd).foreach {
       contextEnd: Char =>
         val vars = (contextStart to contextEnd).map(_.toString).toList
@@ -404,13 +405,17 @@ object MeasureRuntime extends App {
 
   val (testParam, entailmentParam, program, endChar, iterationsParam) = parseParams
 
-  // TODO: update parameter handling and dispatch the test to be performed based on them
-  if (entailmentParam.isDefined && program.isDefined) {
+  if (testParam.isDefined && entailmentParam.isDefined && program.isDefined) {
+    // Default values for optional params
     val end = endChar.getOrElse('f')
-    val iterations = iterationsParam.getOrElse(20)
+    val iterations = iterationsParam.getOrElse(32)
 
     val entailment = EntailmentFactory(entailmentParam.get)(program.get, 0)
-    measureTransitivityChainEntailmentRuntime(entailment, end, iterations)
+    testParam.get match {
+      case TransitiveChain => measureTransitivityChainEntailmentRuntime(entailment, end, iterations)
+      case InvalidTransitiveChain => measureInvalidTransitivityChainEntailmentRuntime(entailment, end, iterations)
+      case RandomizedContextTransitiveChain => () // TODO: add test suite
+    }
   } else {
     println("Entailment sort parameter must be defined.")
     println("Usage:")
