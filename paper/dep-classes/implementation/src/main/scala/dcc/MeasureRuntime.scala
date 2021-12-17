@@ -8,6 +8,7 @@ import dcc.syntax.{Constraint, Id, PathEquivalence}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
+import scala.util.Random
 
 object MeasureRuntime extends App {
   private val testParamNames: List[String] = List("test", "testsuite", "test-suite", "run")
@@ -162,7 +163,7 @@ object MeasureRuntime extends App {
 
   private val transitiveChainTestNames: List[String] = List("transitive-chain", "transitivechain", "transitive")
   private val invalidTransitiveChainTestNames: List[String] = List("invalid-transitive-chain", "invalidtransitivechain", "invalidtransitive", "non-transitive", "nontransitive")
-  private val randomizedContextTransitiveChainTestNames: List[String] = List("randomized-transitive-chain", "random-transitive-chain", "randomizedtransitivechain", "randomtransitivechain", "randomized-transitive", "randomizedtransitive", "random-transitive", "randomtransitive")
+  private val randomizedContextTransitiveChainTestNames: List[String] = List("randomized-transitive-chain", "random-transitive-chain", "randomizedtransitivechain", "randomtransitivechain", "randomized-transitive", "randomizedtransitive", "random-transitive", "randomtransitive", "random-context")
   private def _parseTest(s: String): Option[Test.Test] = s match {
     case _ if transitiveChainTestNames.contains(s.toLowerCase) => Some(Test.TransitiveChain)
     case _ if invalidTransitiveChainTestNames.contains(s.toLowerCase) => Some(Test.InvalidTransitiveChain)
@@ -385,7 +386,7 @@ object MeasureRuntime extends App {
       contextEnd: Char =>
         val vars = (contextStart to contextEnd).map(_.toString).toList
         val context = constructTransitiveContext(vars)
-        val conclusion = PathEquivalence(Id(Symbol("a")), Id(Symbol(s"unreachable")))
+        val conclusion = PathEquivalence(Id(Symbol(contextStart.toString)), Id(Symbol(s"unreachable")))
         //val conclusion = PathEquivalence(Id(Symbol("a")), Id(Symbol(s"${contextEnd}1")))
 
         val (result, times) = measureAvgTime(entailment.entails(context, conclusion), repeats)
@@ -401,6 +402,39 @@ object MeasureRuntime extends App {
     }
   }
 
+  private def measureRandomizedContextTransitiveChainEntailmentRuntime(entailments: List[Entailment], finalContextEnd: Char, iterations: Int): Unit = {
+    // warmup
+    entailments.foreach(entailment => (1 to 10).foreach(_ => entailment.entails(List(PathEquivalence(Id(Symbol("a")), Id(Symbol("b"))), PathEquivalence(Id(Symbol("b")), Id(Symbol("c")))), PathEquivalence(Id(Symbol("a")), Id(Symbol("c"))) )))
+
+    // number of iterations
+    var repeats = iterations
+
+    // start variable of the transitivity chain
+    val contextStart: Char = 'a'
+
+    println(s"measure runtime of transitivity chain entailments with randomized context using ${entailments.foldRight("")((x, xs) => s"${x.typ.toString}, $xs").dropRight(2)}")
+
+    ('a' to finalContextEnd).foreach {
+      contextEnd: Char =>
+        val vars = (contextStart to contextEnd).map(_.toString).toList
+        val sortedContext = constructTransitiveContext(vars)
+        val conclusion = PathEquivalence(Id(Symbol(contextStart.toString)), Id(Symbol(contextEnd.toString)))
+
+        (1 to 10).foreach {
+          i =>
+            val shuffledContext = Random.shuffle(sortedContext)
+            entailments.foreach {
+              entailment =>
+                val (result, times) = measureAvgTime(entailment.entails(shuffledContext, conclusion), repeats)
+
+                val measures = Timings(times.sorted)
+
+                println(f"randomized-context;${entailment.typ};$conclusion;shuffle#$i;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)};$result")
+            }
+        }
+    }
+  }
+
   private val (testParam, entailmentParam, program, endChar, iterationsParam) = parseParams
 
   if (testParam.isDefined && entailmentParam.isDefined && program.isDefined) {
@@ -412,7 +446,7 @@ object MeasureRuntime extends App {
     testParam.get match {
       case Test.TransitiveChain => measureTransitivityChainEntailmentRuntime(entailment, end, iterations)
       case Test.InvalidTransitiveChain => measureInvalidTransitivityChainEntailmentRuntime(entailment, end, iterations)
-      case Test.RandomizedContextTransitiveChain => () // TODO: add test suite
+      case Test.RandomizedContextTransitiveChain => measureRandomizedContextTransitiveChainEntailmentRuntime(List(entailment), end, iterations) // TODO: update entailment param parsing to return a list
     }
   } else {
     if (testParam.isEmpty)
