@@ -31,10 +31,10 @@ object MeasureRuntime extends App {
     (result, timings.toList)
   }
 
-  private val emptyParams = (None, None, None, None, None)
+  private val emptyParams = (None, Nil, None, None, None)
   // TODO: add iterationsDecreaseFlag param?
   // TODO: params only with pairs 'param=value'?
-  private def parseParams: (Option[Test.Test], Option[EntailmentSort], Option[Program], Option[Char], Option[Int]) = args.length match {
+  private def parseParams: (Option[Test.Test], List[EntailmentSort], Option[Program], Option[Char], Option[Int]) = args.length match {
     case 0 => emptyParams
     case 1 => emptyParams
     case 2 => emptyParams
@@ -46,11 +46,11 @@ object MeasureRuntime extends App {
         else
           parseTest(args.head)
 
-      val entailment: Option[EntailmentSort] =
+      val entailment: List[EntailmentSort] =
         if (findParam(args, entailmentParamNames).isDefined)
           parseEntailment(findParam(args, entailmentParamNames).get)
         else
-          parseEntailment(args(1))
+          Nil
 
       val program: Option[Program] =
         if (findParam(args, programParamNames).isDefined)
@@ -66,7 +66,7 @@ object MeasureRuntime extends App {
         else
           parseTest(args.head)
 
-      val entailment: Option[EntailmentSort] =
+      val entailment: List[EntailmentSort] =
         if (findParam(args, entailmentParamNames).isDefined)
           parseEntailment(findParam(args, entailmentParamNames).get)
         else
@@ -98,7 +98,7 @@ object MeasureRuntime extends App {
         else
           parseTest(args.head)
 
-      val entailment: Option[EntailmentSort] =
+      val entailment: List[EntailmentSort] =
         if (findParam(args, entailmentParamNames).isDefined)
           parseEntailment(findParam(args, entailmentParamNames).get)
         else
@@ -163,7 +163,7 @@ object MeasureRuntime extends App {
 
   private val transitiveChainTestNames: List[String] = List("transitive-chain", "transitivechain", "transitive")
   private val invalidTransitiveChainTestNames: List[String] = List("invalid-transitive-chain", "invalidtransitivechain", "invalidtransitive", "non-transitive", "nontransitive")
-  private val randomizedContextTransitiveChainTestNames: List[String] = List("randomized-transitive-chain", "random-transitive-chain", "randomizedtransitivechain", "randomtransitivechain", "randomized-transitive", "randomizedtransitive", "random-transitive", "randomtransitive", "random-context")
+  private val randomizedContextTransitiveChainTestNames: List[String] = List("randomized-transitive-chain", "random-transitive-chain", "randomizedtransitivechain", "randomtransitivechain", "randomized-transitive", "randomizedtransitive", "random-transitive", "randomtransitive", "random-context", "randomized-context")
   private def _parseTest(s: String): Option[Test.Test] = s match {
     case _ if transitiveChainTestNames.contains(s.toLowerCase) => Some(Test.TransitiveChain)
     case _ if invalidTransitiveChainTestNames.contains(s.toLowerCase) => Some(Test.InvalidTransitiveChain)
@@ -171,45 +171,49 @@ object MeasureRuntime extends App {
     case _ => None
   }
 
-  private def parseEntailment(s: String): Option[EntailmentSort] = {
+  private def parseEntailment(s: String): List[EntailmentSort] = {
     if (s.contains("=")) {
-      val arg = s.split('=')
-      if (arg.length == 2)
-        _parseEntailment(arg.last)
-      else {
-        None
+      val args = s.split('=')
+      if (args.length == 2) {
+        if (args.last.toLowerCase == "all")
+          List(AlgorithmicFix1, AlgorithmicFix2, AlgorithmicFix1RandomizedPick, AlgorithmicFix2RandomizedPick, PathDepthLimit, GroundPathDepthLimit)
+        else {
+          val arg = args.last.split(',').toList
+          arg.collect(_parseEntailment)
+        }
+      } else {
+        Nil
       }
     }
     else
-      _parseEntailment(s)
+      Nil
   }
 
-  private def _parseEntailment(s: String): Option[EntailmentSort] = s.toLowerCase match {
-    case "semantic" => Some(Semantic)
-    case "simplifiedsemantic" => Some(SimplifiedSemantic)
+  private val _parseEntailment: PartialFunction[String, EntailmentSort] = {
+    case "semantic" => Semantic
+    case "simplifiedsemantic" => SimplifiedSemantic
     case x if x=="pathdepthlimit" ||
-              x=="quantified-limit" =>
-      Some(PathDepthLimit)
+      x=="quantified-limit" =>
+      PathDepthLimit
     case x if x=="groundpathdepthlimit" ||
-              x=="ground-limit" ||
-              x=="ground" =>
-      Some(GroundPathDepthLimit)
-    case x if x=="algorithmic" => Some(Algorithmic)
+      x=="ground-limit" ||
+      x=="ground" =>
+      GroundPathDepthLimit
+    case x if x=="algorithmic" => Algorithmic
     case x if x=="algorithmicfix1" ||
-              x=="fix1" =>
-      Some(AlgorithmicFix1)
+      x=="fix1" =>
+      AlgorithmicFix1
     case x if x=="algorithmicfix2" ||
-              x=="fix2" =>
-      Some(AlgorithmicFix2)
+      x=="fix2" =>
+      AlgorithmicFix2
     case x if x=="algorithmicfix1randomizedpick" ||
-              x=="fix1-random" ||
-              x=="random1" =>
-      Some(AlgorithmicFix1RandomizedPick)
+      x=="fix1-random" ||
+      x=="random1" =>
+      AlgorithmicFix1RandomizedPick
     case x if x=="algorithmicfix2randomizedpick" ||
-              x=="fix2-random" ||
-              x=="random2" =>
-      Some(AlgorithmicFix2RandomizedPick)
-    case _ => None
+      x=="fix2-random" ||
+      x=="random2" =>
+      AlgorithmicFix2RandomizedPick
   }
 
   private def parseProgram(s: String): Option[Program] = {
@@ -407,7 +411,7 @@ object MeasureRuntime extends App {
     entailments.foreach(entailment => (1 to 10).foreach(_ => entailment.entails(List(PathEquivalence(Id(Symbol("a")), Id(Symbol("b"))), PathEquivalence(Id(Symbol("b")), Id(Symbol("c")))), PathEquivalence(Id(Symbol("a")), Id(Symbol("c"))) )))
 
     // number of iterations
-    var repeats = iterations
+    val repeats = iterations
 
     // start variable of the transitivity chain
     val contextStart: Char = 'a'
@@ -437,16 +441,17 @@ object MeasureRuntime extends App {
 
   private val (testParam, entailmentParam, program, endChar, iterationsParam) = parseParams
 
-  if (testParam.isDefined && entailmentParam.isDefined && program.isDefined) {
+  println(entailmentParam)
+
+  if (testParam.isDefined && entailmentParam.nonEmpty && program.isDefined) {
     // Default values for optional params
     val end = endChar.getOrElse('f')
     val iterations = iterationsParam.getOrElse(32)
 
-    val entailment = EntailmentFactory(entailmentParam.get)(program.get, 0)
     testParam.get match {
-      case Test.TransitiveChain => measureTransitivityChainEntailmentRuntime(entailment, end, iterations)
-      case Test.InvalidTransitiveChain => measureInvalidTransitivityChainEntailmentRuntime(entailment, end, iterations)
-      case Test.RandomizedContextTransitiveChain => measureRandomizedContextTransitiveChainEntailmentRuntime(List(entailment), end, iterations) // TODO: update entailment param parsing to return a list
+      case Test.TransitiveChain => entailmentParam.foreach(entailment => measureTransitivityChainEntailmentRuntime(EntailmentFactory(entailment)(program.get, 0), end, iterations))
+      case Test.InvalidTransitiveChain => entailmentParam.foreach(entailment => measureInvalidTransitivityChainEntailmentRuntime(EntailmentFactory(entailment)(program.get, 0), end, iterations))
+      case Test.RandomizedContextTransitiveChain => measureRandomizedContextTransitiveChainEntailmentRuntime(entailmentParam.map(entailment => EntailmentFactory(entailment)(program.get, 0)), end, iterations)
     }
   } else {
     if (testParam.isEmpty)
