@@ -17,11 +17,11 @@ object MeasureRuntime extends App {
   private val endCharParamNames: List[String] = List("end", "endchar", "goal", "char", "until")
   private val iterationsParamNames: List[String] = List("iterations", "iterate", "iter", "repeat", "repeats", "repetitions", "reps")
 
-  private def measureAvgTime(block: => Boolean, repeats: Int): (Boolean, List[Long]) = {
+  private def measureAvgTime(block: => Boolean, repetitions: Int): (Boolean, List[Long]) = {
     val timings: ListBuffer[Long] = new ListBuffer[Long]
     var result = false
 
-    (0 until repeats).foreach { _ =>
+    (0 until repetitions).foreach { _ =>
       val t0 = System.nanoTime()
       result = block
       val t1 = System.nanoTime()
@@ -333,6 +333,9 @@ object MeasureRuntime extends App {
     series = times.sorted
   )
 
+  private def printTimings(test: String, entailment: EntailmentSort, description: String, measures: Timings, result: Boolean): Unit =
+    println(f"$test;$entailment;$description;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)};$result")
+
   /***
     * Measures the avg runtime of transitivity chains starting from 'a' until the endpoint reaches `end` using `entailment` over `iterations` iterations.
     * The number iterations of performed iterations may decrease if `decreaseIterationsWithIncreasingRuntime` is set.
@@ -347,7 +350,7 @@ object MeasureRuntime extends App {
     (1 to 10).foreach(_ => entailment.entails(Nil, PathEquivalence(Id(Symbol("a")), Id(Symbol("a")))))
 
     // number of iterations
-    var repeats = iterations
+    var repetitions = iterations
 
     // start variable of the transitivity chain
     val start: Char = 'a'
@@ -359,19 +362,19 @@ object MeasureRuntime extends App {
         val vars = (start to end).map(_.toString).toList
         val ctx = constructTransitiveContext(vars)
         val conclusion = PathEquivalence(Id(Symbol(start.toString)), Id(Symbol(end.toString)))
-//        print(s"measure '${constraintsToString(ctx)} |- $conclusion' using $repeats iterations: ")
-        val (result, times) = measureAvgTime(entailment.entails(ctx, conclusion), repeats)
+//        print(s"measure '${constraintsToString(ctx)} |- $conclusion' using $repetitions iterations: ")
+        val (result, times) = measureAvgTime(entailment.entails(ctx, conclusion), repetitions)
 
         val measures = calculateTimings(times)
 
         if (decreaseIterationsWithIncreasingRuntime) {
-          repeats = calculateForthcomingRepetitions(iterations, measures.mean)
+          repetitions = calculateForthcomingRepetitions(iterations, measures.mean)
         }
 //        println(if (result) "✓" else "×")
 //        println(s"\ttook ${NanoTimeToStringRounded(measures.mean)} on average")
 //        println(s"\t    (${NanoTimeToMilliSeconds(measures.mean)} ms)")
 
-        println(f"transitive;${entailment.typ};$conclusion;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)};$result")
+        printTimings("transitive", entailment.typ, conclusion.toString, measures, result)
     }
   }
 
@@ -380,7 +383,7 @@ object MeasureRuntime extends App {
     (1 to 10).foreach(_ => entailment.entails(Nil, PathEquivalence(Id(Symbol("a")), Id(Symbol("a")))))
 
     // number of iterations
-    var repeats = iterations
+    var repetitions = iterations
 
     // start variable of the transitivity chain
     val contextStart: Char = 'a'
@@ -393,16 +396,15 @@ object MeasureRuntime extends App {
         val conclusion = PathEquivalence(Id(Symbol(contextStart.toString)), Id(Symbol(s"unreachable")))
         //val conclusion = PathEquivalence(Id(Symbol("a")), Id(Symbol(s"${contextEnd}1")))
 
-        val (result, times) = measureAvgTime(entailment.entails(context, conclusion), repeats)
+        val (result, times) = measureAvgTime(entailment.entails(context, conclusion), repetitions)
 
         val measures = calculateTimings(times)
 
         if (decreaseIterationsWithIncreasingRuntime) {
-          repeats = calculateForthcomingRepetitions(iterations, measures.mean)
+          repetitions = calculateForthcomingRepetitions(iterations, measures.mean)
         }
 
-        // TODO: move this printing to a function?
-        println(f"non-transitive;${entailment.typ};$contextEnd;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)};$result")
+        printTimings("non-transitive", entailment.typ, contextEnd.toString, measures, result)
     }
   }
 
@@ -411,7 +413,7 @@ object MeasureRuntime extends App {
     entailments.foreach(entailment => (1 to 10).foreach(_ => entailment.entails(List(PathEquivalence(Id(Symbol("a")), Id(Symbol("b"))), PathEquivalence(Id(Symbol("b")), Id(Symbol("c")))), PathEquivalence(Id(Symbol("a")), Id(Symbol("c"))) )))
 
     // number of iterations
-    val repeats = iterations
+    val repetitions = iterations
 
     // start variable of the transitivity chain
     val contextStart: Char = 'a'
@@ -429,11 +431,11 @@ object MeasureRuntime extends App {
             val shuffledContext = Random.shuffle(sortedContext)
             entailments.foreach {
               entailment =>
-                val (result, times) = measureAvgTime(entailment.entails(shuffledContext, conclusion), repeats)
+                val (result, times) = measureAvgTime(entailment.entails(shuffledContext, conclusion), repetitions)
 
                 val measures = Timings(times.sorted)
 
-                println(f"randomized-context;${entailment.typ};$conclusion;shuffle#$i;${NanoTimeToMilliSeconds(measures.min)};${NanoTimeToMilliSeconds(measures.max)};${NanoTimeToMilliSeconds(measures.mean)};${NanoTimeToMilliSeconds(measures.median)};$result")
+                printTimings("randomized-context", entailment.typ, s"$conclusion;shuffle#$i", measures, result)
             }
         }
     }
@@ -462,8 +464,8 @@ object MeasureRuntime extends App {
       System.err.println(s"program parameter must be set")
 
     println("Usage:")
-    println(s"\t$this TEST ENTAILMENT PROGRAM [CHAR ITERATIONS]")
-    println(s"\t$this entailment=ENTAILMENT program=PROGRAM end=CHAR iterations=NAT")
+    println(s"\t$this TEST ENTAILMENT* PROGRAM [CHAR NAT]")
+    println(s"\t$this test=TEST entailment=ENTAILMENT* program=PROGRAM [end=CHAR reps=NAT]")
     println("TEST: transitive, non-transitive, randomized-transitive")
     println("ENTAILMENT: semantic, simplifiedSemantic, pathDepthLimit, groundPathDepthLimit, algorithmic, algorithmicFix1, algorithmicFix2, algorithmicFix1RandomizedPick, algorithmicFix2RandomizedPick")
     println("PROGRAM: boolean-expressions, natural-numbers")
