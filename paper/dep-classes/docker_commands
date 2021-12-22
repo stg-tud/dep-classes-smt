@@ -5,8 +5,23 @@ To run an image that doesnt terminate, -d detach
 docker run -d IMAGE sleep infinity
 
 to bindomunt a dir between host and container
-docker run -v PATH/ON/HOST:PATH/ON/CONTAINER
+docker run -v /PATH/ON/HOST:/PATH/ON/CONTAINER
 
 exec to execute a command inside a running container,
      attaches to the terminal session
 docker exec -it CONTAINER /bin/bash
+
+example to mount codebase to container and and run interactive shell in background
+docker run -d \
+> -it \
+> --name=devtest \
+> -v /PATH/TO/HOST/REPO/paper/dep-classes/implementation:/dep-classes \
+> IMAGE
+
+example to mount codebase to container and indefinitely run in background (can attach with exec -it)
+docker run -d \
+> --name=dep-classes-measure \
+> -v /PATH/TO/HOST/REPO/paper/dep-classes/implementation:/dep-classes \
+> -v /PATH/TO/HOST/REPO/paper/dep-classes/measures:/measures \
+> IMAGE sleep infinity
+
