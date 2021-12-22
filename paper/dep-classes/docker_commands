@@ -1,0 +1,12 @@
+To build the dockerfile to a named image
+docker build -t NAME:TAG DIR
+
+To run an image that doesnt terminate, -d detach
+docker run -d IMAGE sleep infinity
+
+to bindomunt a dir between host and container
+docker run -v PATH/ON/HOST:PATH/ON/CONTAINER
+
+exec to execute a command inside a running container,
+     attaches to the terminal session
+docker exec -it CONTAINER /bin/bash
