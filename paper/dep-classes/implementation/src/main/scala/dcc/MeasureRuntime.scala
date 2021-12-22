@@ -10,7 +10,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-object MeasureRuntime extends App {
+case object MeasureRuntime extends App {
   private val testParamNames: List[String] = List("test", "testsuite", "test-suite", "run")
   private val entailmentParamNames: List[String] = List("entail", "entails", "entailment", "sort", "algo", "algorithm")
   private val programParamNames: List[String] = List("program", "prog", "p")
