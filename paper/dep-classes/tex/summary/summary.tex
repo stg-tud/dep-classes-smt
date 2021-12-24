@@ -1011,17 +1011,21 @@ a rule using the same parameters at most once per branch.
 This seems sensible, as we (most likely) already need this for termination.
 Otherwise we would also be allowed to satisfy $p \sqsubset \ovl{a}$ for the same $p$.
 
-% \section{Algorithmic System Implementation}
-% % \todo[inline]{%
-% %   - runtime of the algorithmic implementation is presumedly dependent on the order of rule application
-% %     and order of path picks in satisfing $p \sqsubset \ovl{a}$
-% %   - order of rule application (without path picks) is most likely not really a problem,
-% %     as the rules match on different constraint types (is it deterministic?)
-% % }
-% \wip
+\section{Algorithmic System Implementation}
+% \todo[inline]{%
+%   - runtime of the algorithmic implementation is presumedly dependent on the order of rule application
+%     and order of path picks in satisfing $p \sqsubset \ovl{a}$
+%   - order of rule application (without path picks) is most likely not really a problem,
+%     as the rules match on different constraint types (is it deterministic?)
+%   - implementation memoizes rule applications per branch, in order to terminate
+% }
+\wip
 
-% \section{Runtime Comparison}
-% %add table
-% \wip
+\section{Runtime Comparison}
+%add table
+\wip
+
+\section{Equivalency Proof (declarative/algorithmic system)}
+\wip
 
 \end{document}
