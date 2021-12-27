@@ -10,7 +10,7 @@ import dcc.syntax.Util.commaSeparate
 class SomeInferenceChecker(override val program: Program, entailmentSort: EntailmentSort, debug: Int = 0) extends Checker {
   val entailment: Entailment = EntailmentFactory(entailmentSort)(program, debug)
 
-  override def typeOf(context: List[Constraint], expression: Expression): Either[Type, String] = expression match {
+  override def typeOf(context: List[Constraint], expression: Expression): Either[Type, TError] = expression match {
     case x@Id(_) =>
       classes.find(cls => entailment.entails(context, InstanceOf(x, cls))) match {
         case Some(_) =>

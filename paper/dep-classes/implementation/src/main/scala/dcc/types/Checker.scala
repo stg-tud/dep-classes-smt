@@ -9,7 +9,7 @@ import scala.language.postfixOps
 trait Checker {
   val program: Program
 
-  def typeOf(context: List[Constraint], expression: Expression): Either[Type, String]
+  def typeOf(context: List[Constraint], expression: Expression): Either[Type, TError]
   def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean
   def typeCheck(declaration: Declaration): Boolean
   def typeCheck: Boolean
@@ -33,7 +33,7 @@ trait Checker {
 
   def classes: List[Id] = (program flatMap className) distinct
 
-  // TODO: search for class names in all constraints? nah, abstract classes must be a superclass. concrete classes must have a constructor
+  // search for class names in all constraints? nah, abstract classes must be a superclass. concrete classes must have a constructor
   private def className(d: Declaration): Option[Id] = d match {
     case ConstructorDeclaration(cls, _, _) => Some(cls)
     case ConstraintEntailment(_, _, InstanceOf(_, cls)) => Some(cls)
