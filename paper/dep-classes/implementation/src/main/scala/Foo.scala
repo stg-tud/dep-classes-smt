@@ -5,7 +5,7 @@ import dcc.program.NaturalNumbers
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
-import dcc.types.{FaithfulAdaptionChecker, Type}
+import dcc.types.{SomeInferenceChecker, Type}
 import smt.smtlib.SMTLibScript
 import smt.smtlib.syntax.{Apply, DefineFun, FunctionDef, SimpleSymbol, SortedVar, Term}
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, False, Implies, Ite, Not, Or, True, Xor}
@@ -13,7 +13,7 @@ import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, False, Implies, Ite, Not
 object Foo extends App {
   // TODO: is there a way to force the program if the entailment to be the same as the program of the checker/interpreter?
   val sem3 = new SemanticEntailment(NaturalNumbers.program)
-  val newChecker  = new FaithfulAdaptionChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic)
+  val newChecker  = new SomeInferenceChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic)
 
   val program: Program = List(
     ConstructorDeclaration("Zero", "x", Nil),

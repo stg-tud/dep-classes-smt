@@ -8,7 +8,7 @@ import dcc.types.TypeTests.{testTypeError, testTypeOk}
 import org.scalatest.funsuite.AnyFunSuite
 
 class TestTypeOfNaturalNumbersReuseChecker extends AnyFunSuite {
-  private val checker: Checker = FaithfulAdaptionChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic)
+  private val checker: Checker = SomeInferenceChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic)
 
   test ("type of bound variable") {
     val result = checker.typeOf(List(InstanceOf("x", "Nat")), "x")

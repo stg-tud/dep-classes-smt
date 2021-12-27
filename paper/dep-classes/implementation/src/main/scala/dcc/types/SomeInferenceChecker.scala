@@ -7,7 +7,7 @@ import dcc.syntax.Program.Program
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldAccess, FieldPath, Id, InstanceOf, InstantiatedBy, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
 import dcc.syntax.Util.commaSeparate
 
-class FaithfulAdaptionChecker(override val program: Program, entailmentSort: EntailmentSort, debug: Int = 0) extends Checker {
+class SomeInferenceChecker(override val program: Program, entailmentSort: EntailmentSort, debug: Int = 0) extends Checker {
   val entailment: Entailment = EntailmentFactory(entailmentSort)(program, debug)
 
   override def typeOf(context: List[Constraint], expression: Expression): Either[Type, String] = expression match {
@@ -136,7 +136,7 @@ class FaithfulAdaptionChecker(override val program: Program, entailmentSort: Ent
 //      (freeVariables.size == 2 && freeVariables.contains(x) && freeVariables.contains(y))
 }
 
-object FaithfulAdaptionChecker {
+object SomeInferenceChecker {
   //def apply(program: Program): FaithfulAdaptionChecker = new FaithfulAdaptionChecker(program, new SemanticEntailment(program))
-  def apply(program: Program, entailmentSort: EntailmentSort, debug: Int = 0): FaithfulAdaptionChecker = new FaithfulAdaptionChecker(program, entailmentSort)
+  def apply(program: Program, entailmentSort: EntailmentSort, debug: Int = 0): SomeInferenceChecker = new SomeInferenceChecker(program, entailmentSort)
 }

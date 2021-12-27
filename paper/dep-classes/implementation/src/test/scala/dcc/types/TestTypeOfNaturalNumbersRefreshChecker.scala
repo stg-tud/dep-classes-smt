@@ -9,10 +9,10 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 
 class TestTypeOfNaturalNumbersRefreshChecker extends AnyFunSuite with BeforeAndAfterEach {
-  private var checker: Checker = new FaithfulAdaptionChecker(Empty.program, EntailmentSort.SimplifiedSemantic)
+  private var checker: Checker = new SomeInferenceChecker(Empty.program, EntailmentSort.SimplifiedSemantic)
 
   override protected def beforeEach(): Unit = {
-    checker = new FaithfulAdaptionChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic, debug = 1)
+    checker = new SomeInferenceChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic, debug = 1)
   }
 
   test ("type of bound variable") {

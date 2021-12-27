@@ -5,7 +5,7 @@ import dcc.entailment.Entailment
 import dcc.syntax.Program.Program
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldAccess, FieldPath, Id, InstanceOf, InstantiatedBy, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
 
-class IntegratedSubsumptionChecker(override val program: Program, entailment: Entailment) extends Checker {
+class MasterThesisChecker(override val program: Program, entailment: Entailment) extends Checker {
   override def typeOf(context: List[Constraint], expression: Expression): Either[Type, String] = typeAssignment(context, expression) match {
     case t :: _ => Left(t)
     case Nil => Right(s"could not assign a type for $expression")

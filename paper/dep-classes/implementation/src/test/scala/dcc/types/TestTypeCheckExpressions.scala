@@ -7,7 +7,7 @@ import dcc.syntax.Implicit.StringToId
 import org.scalatest.funsuite.AnyFunSuite
 
 class TestTypeCheckExpressions extends AnyFunSuite {
-  private val checker = FaithfulAdaptionChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic)
+  private val checker = SomeInferenceChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic)
 
   test ("check bound variable") {
     assert(checker.typeCheck(List(InstanceOf("x", "Nat")), "x", Type("y", List(PathEquivalence("x", "y")))))
