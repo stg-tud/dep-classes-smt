@@ -1,19 +1,14 @@
 package dcc.types
 
 import dcc.entailment.EntailmentSort
-import dcc.program.{Empty, NaturalNumbers}
+import dcc.program.NaturalNumbers
 import dcc.syntax.{FieldAccess, FieldPath, InstanceOf, InstantiatedBy, MethodCall, ObjectConstruction, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
 import dcc.types.TypeTests.{testTypeError, testTypeOk}
-import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 
-class TestTypeOfNaturalNumbersRefreshChecker extends AnyFunSuite with BeforeAndAfterEach {
-  private var checker: Checker = new SomeInferenceChecker(Empty.program, EntailmentSort.GroundPathDepthLimit)
-
-  override protected def beforeEach(): Unit = {
-    checker = new SomeInferenceChecker(NaturalNumbers.program, EntailmentSort.GroundPathDepthLimit, debug = 1)
-  }
+class TestTypeOfNaturalNumbersExpressionsReuseChecker extends AnyFunSuite {
+  private val checker: Checker = SomeInferenceChecker(NaturalNumbers.program, EntailmentSort.GroundPathDepthLimit)
 
   test ("type of bound variable") {
     val result = checker.typeOf(List(InstanceOf("x", "Nat")), "x")
