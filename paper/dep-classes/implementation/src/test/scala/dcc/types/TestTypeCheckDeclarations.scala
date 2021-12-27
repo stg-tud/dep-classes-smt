@@ -7,7 +7,7 @@ import dcc.syntax.Implicit.StringToId
 import org.scalatest.funsuite.AnyFunSuite
 
 class TestTypeCheckDeclarations extends AnyFunSuite {
-  private val checker = SomeInferenceChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic)
+  private val checker = SomeInferenceChecker(NaturalNumbers.program, EntailmentSort.GroundPathDepthLimit)
 
   test ("check constructor declaration: Zero") {
     assert(checker.typeCheck(ConstructorDeclaration("Zero", "x", Nil)))

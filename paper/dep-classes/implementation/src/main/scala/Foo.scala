@@ -231,4 +231,14 @@ object Foo extends App {
   println(groundEnc.encode(List(InstantiatedBy("x", "Succ"), InstantiatedBy(FieldPath("x", "p"), "Zero"), PathEquivalence("x", "y")), InstanceOf("y", "Nat")).pretty)
 //  println(groundEnc.encode(List(InstantiatedBy("x", "Zero")), InstanceOf("x", "Nat")).pretty)
 //  println(groundEnc.encode(Nil, PathEquivalence("x", "x")).pretty)
+
+  println("\n\n\n")
+
+  val a = List(1,2,3,4,5)
+  val b = List(8,7,6,9,1,3,2,4,5)
+
+  println(s"a.diff(b) = ${a.diff(b)}")
+  println(s"a.fltr(b) = ${a.filter(!b.contains(_))}")
+  println(s"b.diff(a) = ${b.diff(a)}")
+  println(s"b.fltr(a) = ${b.filter(!a.contains(_))}")
 }
