@@ -74,15 +74,16 @@ class SomeInferenceChecker(override val program: Program, override val ENTAILMEN
   }
 
   override def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean = typeOf(context, expression) match {
-    case Left(actual@Type(y, a1)) =>
-      val Type(x, a) = typ // TODO: unify type variables here, instead of later to have it consistent in the error output? o/w the types are up til variable renaming
+    case Left(Type(y, a1)) =>
+      // unify type variables between expected type `typ` and the inferred type
+      val inferred = Type(typ.x, Util.substitute(y, typ.x, a1))
 
-      if (entailment.entails(context++Util.substitute(y, x, a1), a)) {
+      if (entailment.entails(context++inferred.constraints, typ.constraints)) {
         true
       }
       else {
         if (debug > 0)
-          println(s"type check for $expression failed, expected '$typ' but got '$actual'")
+          println(s"type check for $expression failed, expected '$typ' but got '$inferred'")
 
         false
       }
