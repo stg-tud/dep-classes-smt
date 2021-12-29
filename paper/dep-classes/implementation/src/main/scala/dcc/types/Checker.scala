@@ -1,6 +1,7 @@
 package dcc.types
 
 import dcc.Util.substitute
+import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, Id, InstanceOf, MethodImplementation}
 import dcc.syntax.Program.Program
 
@@ -8,6 +9,7 @@ import scala.language.postfixOps
 
 trait Checker {
   val program: Program
+  val ENTAILMENT: EntailmentSort
 
   def typeOf(context: List[Constraint], expression: Expression): Either[Type, TError]
   def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean

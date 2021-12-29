@@ -1,16 +1,18 @@
 package dcc.types
 import dcc.DCC.{FV, constructorConstraintsSubst}
 import dcc.Util
+import dcc.entailment.EntailmentFactory
 import dcc.entailment.EntailmentSort.EntailmentSort
-import dcc.entailment.{Entailment, EntailmentFactory}
-import dcc.syntax.Program.Program
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldAccess, FieldPath, Id, InstanceOf, InstantiatedBy, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
+import dcc.syntax.Program.Program
 import dcc.syntax.Util.commaSeparate
 
-// Only infers some type for an expression
-class SomeInferenceChecker(override val program: Program, override val ENTAILMENT: EntailmentSort, debug: Int = 0) extends Checker {
-  val entailment: Entailment = EntailmentFactory(ENTAILMENT)(program, debug)
+// infers the most specific/precise type of an expression
+class InferenceChecker(override val program: Program, override val ENTAILMENT: EntailmentSort, debug: Int = 0) extends Checker {
+  private val entailment = EntailmentFactory(ENTAILMENT)(program, debug)
 
+  // TODO: overhaul to return the most specific type
+  //  use subtype checks (T-Sub) to do so
   override def typeOf(context: List[Constraint], expression: Expression): Either[Type, TError] = expression match {
     case x@Id(_) =>
       classes.find(cls => entailment.entails(context, InstanceOf(x, cls))) match {
@@ -49,8 +51,8 @@ class SomeInferenceChecker(override val program: Program, override val ENTAILMEN
     case ObjectConstruction(cls, args) =>
       val x: Id = freshVariable()
       val classConstraints = constructorConstraintsSubst(cls, program, x)
-//      println(s"DEBUG: found ${classConstraints.size} constructors for class $cls")
-      
+      //      println(s"DEBUG: found ${classConstraints.size} constructors for class $cls")
+
       if (classConstraints.isEmpty)
         Right(s"No constructor found for class '$cls'")
       else {
@@ -75,7 +77,7 @@ class SomeInferenceChecker(override val program: Program, override val ENTAILMEN
 
   override def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean = typeOf(context, expression) match {
     case Left(actual@Type(y, a1)) =>
-      val Type(x, a) = typ // TODO: unify type variables here, instead of later to have it consistent in the error output? o/w the types are up til variable renaming
+      val Type(x, a) = typ  // TODO: unify type variables here, instead of later to have it consistent in the error output? o/w the types are up til variable renaming
 
       if (entailment.entails(context++Util.substitute(y, x, a1), a)) {
         true
@@ -86,7 +88,6 @@ class SomeInferenceChecker(override val program: Program, override val ENTAILMEN
 
         false
       }
-
     case Right(err) =>
       if (debug > 0)
         println(s"type check for $expression failed with $err")
@@ -128,9 +129,8 @@ class SomeInferenceChecker(override val program: Program, override val ENTAILMEN
           }
       }
     } &&
-    program.forall(typeCheck)
+      program.forall(typeCheck)
   }
-
 
   private var nameCounter: Int = 0
   private def freshName(): Symbol = {
@@ -145,12 +145,4 @@ class SomeInferenceChecker(override val program: Program, override val ENTAILMEN
 
   private def freeVariablesContainsMax(freeVariables: List[Id], x: Id, y: Id): Boolean =
     freeVariables.forall(v => v==x || v==y)
-//    freeVariables.isEmpty ||
-//      (freeVariables.size == 1 && (freeVariables == List(x) || freeVariables == List(y))) ||
-//      (freeVariables.size == 2 && freeVariables.contains(x) && freeVariables.contains(y))
-}
-
-object SomeInferenceChecker {
-  //def apply(program: Program): FaithfulAdaptionChecker = new FaithfulAdaptionChecker(program, new SemanticEntailment(program))
-  def apply(program: Program, entailmentSort: EntailmentSort, debug: Int = 0): SomeInferenceChecker = new SomeInferenceChecker(program, entailmentSort, debug)
 }
