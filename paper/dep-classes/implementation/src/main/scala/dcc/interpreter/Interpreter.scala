@@ -7,6 +7,8 @@ import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.Program.Program
 import dcc.syntax.{Constraint, Expression, FieldAccess, FieldPath, Id, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
 
+import scala.annotation.tailrec
+
 class Interpreter(program: Program, ENTAILMENT: EntailmentSort) {
   private val entailment = EntailmentFactory(ENTAILMENT)(program, 0)
 
@@ -22,7 +24,7 @@ class Interpreter(program: Program, ENTAILMENT: EntailmentSort) {
       } match {
         case PathEquivalence(FieldPath(`x`, `f`), y@Id(_)) :: _ => (heap, y)
         case PathEquivalence(y@Id(_), FieldPath(`x`, `f`)) :: _ => (heap, y)
-        case _ => (heap, expr) // x does not have field f TODO: return type
+        case _ => (heap, expr) // x does not have field f
       }
     // R-Call
     case MethodCall(m, x@Id(_)) =>
@@ -31,28 +33,13 @@ class Interpreter(program: Program, ENTAILMENT: EntailmentSort) {
       val methods = mImplSubst(m, x)
       val S = methods.filter{ case (as, _) => entailment.entails(HC(heap), as) }
 
-      if (S.isEmpty) // m not in P
-        return (heap, expr)
-
-      println("Applicable:")
-      S.foreach(println)
-
-      // Most specific method
-      var (a, e) = S.head
-
-      S.foreach{
-        case (a1, e1) if e != e1 =>
-          if (entailment.entails(a1, a)) {
-            println(s"Most specific:$a1, $e1")
-            //(a, e) = (a1, e1)
-            a = a1
-            e = e1
-          }
-        case _ => /* noop */
+      val mostSpecific = searchMostSpecificApplicableMethod(S)
+      if (mostSpecific.isDefined) {
+        val (_, e) = mostSpecific.get
+        execute(heap, e)
+      } else {
+        (heap, expr)
       }
-
-      // TODO: execute correct? we don't want intermediate results
-      execute(heap, e)
     // R-New
     case ObjectConstruction(cls, args)
       if args.forall{ // if args are values (Id)
@@ -70,7 +57,7 @@ class Interpreter(program: Program, ENTAILMENT: EntailmentSort) {
       if (entailment.entails(HC(heap) ++ OC(x, o), b1))
         (heap + (x -> o), x)
       else
-        (heap, expr) // stuck TODO: return type
+        (heap, expr) // stuck
     // RC-Field
     case FieldAccess(e, f) =>
       val (h1, e1) = execute(heap, e)
@@ -113,20 +100,25 @@ class Interpreter(program: Program, ENTAILMENT: EntailmentSort) {
 
   //private def boundVars(heap: Heap): List[Id] = heap.map{case (x, _) => x}.toList
 
-  // Method Implementation
-  // TODO: use this in interpreter instead of mImplSubst?
-//  private def mImpl(m: Id): List[(Id, List[Constraint], Expression)] =
-//    program.foldRight(Nil: List[(Id, List[Constraint], Expression)]){
-//      case (MethodImplementation(`m`, x, a, _, e), rst) => (x, a, e) :: rst
-//      case (_, rst) => rst
-//    }
-
   private def mImplSubst(m: Id, x: Id): List[(List[Constraint], Expression)] =
     program.foldRight(Nil: List[(List[Constraint], Expression)]){
       case (MethodImplementation(`m`, xImpl, a, _, e), rst) =>
         (substitute(xImpl, x, a), alphaRename(xImpl, x, e)) :: rst
       case (_, rst) => rst
     }
+
+  @tailrec
+  private def searchMostSpecificApplicableMethod(implementations: List[(List[Constraint], Expression)]): Option[(List[Constraint], Expression)] = implementations match {
+    case Nil => None
+    case (a0, e0) :: rst =>
+      val isMostSpecific: Boolean = implementations.forall { case (a1, e1) => e0 != e1 && entailment.entails(a1, a0) && !entailment.entails(a0, a1) }
+
+      if (isMostSpecific) {
+        Some((a0, e0))
+      } else {
+        searchMostSpecificApplicableMethod(rst)
+      }
+  }
 
   private var nameCounter: Int = 0
   private def freshName(): Symbol = {
