@@ -2,11 +2,14 @@ package dcc.interpreter
 
 import dcc.DCC.{HC, Heap, OC, Obj, classInProgram}
 import dcc.Util.{alphaRename, substitute}
-import dcc.entailment.Entailment
+import dcc.entailment.EntailmentFactory
+import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.Program.Program
 import dcc.syntax.{Constraint, Expression, FieldAccess, FieldPath, Id, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
 
-class Interpreter(program: Program, entailment: Entailment) {
+class Interpreter(program: Program, ENTAILMENT: EntailmentSort) {
+  private val entailment = EntailmentFactory(ENTAILMENT)(program, 0)
+
   // TODO: change return type to Either or Option?
   def execute(heap: Heap, expr: Expression): (Heap, Expression) = expr match {
     case Id(_) => (heap, expr) // variables are values
