@@ -7,6 +7,8 @@ import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, 
 import dcc.syntax.Program.Program
 import dcc.syntax.Util.commaSeparate
 
+import scala.annotation.tailrec
+
 // infers the most specific/precise type of an expression
 class InferenceChecker(override val program: Program, override val ENTAILMENT: EntailmentSort, debug: Int = 0) extends Checker {
   private val entailment = EntailmentFactory(ENTAILMENT)(program, debug)
@@ -25,6 +27,8 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
       typeOf(context, e) match {
         case Left(Type(x, a)) =>
           val y = freshVariable()
+          // b contains all possible instances of x.f
+          // e.g. if x.f is a Zero, it will contain x.f::Zero and x.f::Nat
           val b = classes.filter(cls => entailment.entails(context ++ a, InstanceOf(FieldPath(x, f), cls))) map (cls => InstanceOf(y, cls))
 
           // !FV(b).contains(x) and entailment.entails(context++a:+PathEquivalence(FieldPath(x, f), y), b) by construction of b
@@ -35,13 +39,33 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
             Right(s"'$x.$f' is not available in context ${commaSeparate(context++a)}")
         case error@Right(_) => error
       }
-    case MethodCall(m, e) =>
+    case MethodCall(m, e) => // need to do subtype checks here, find some b' for b.
       typeOf(context, e) match {
         case Left(Type(x, a)) =>
           val y = freshVariable()
 
+//          val applicable = mTypeSubst(m, x, y) filter { case (a1, _) => entailment.entails(context++a, a1)}
+//          val specific = searchMostSpecificApplicableMethod(applicable)
+//          println("applicable methods:")
+//          applicable.foreach(println)
+//          println(s"most specific method: $specific")
+
+          // probably should identify the most specific applicable method here, not the abstract definition but the concrete implementation
+          //   or not? a1 is never used again in the type rule
           mTypeSubst(m, x, y) find { case (a1, _) => entailment.entails(context++a, a1) } match {
             case Some((_, b)) =>
+//              println(s"typeOf $m($e): found applicable method with args ${commaSeparate(a1)} and context ${commaSeparate(context++a)}")
+//
+//              var b1: List[Constraint] = Nil
+//
+//              for (cls <- classes) {
+//                println(s"test for ${commaSeparate(context++a++b)} |– ${InstanceOf(y, cls)}")
+//                if(entailment.entails(context++a++b, InstanceOf(y, cls)))
+//                  b1 = InstanceOf(y, cls) :: b1
+//              }
+
+              //val b1 = classes filter (cls => entailment.entails(context++a++b, InstanceOf(y, cls))) map (cls => InstanceOf(y, cls))
+
               // b should be free of x by construction (mTypeSubst) and b |- b trivially
               Left(Type(y, b))
             case None => Right(s"no method declaration of '$m' applicable to '$e'")
@@ -131,6 +155,24 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
       }
     } &&
       program.forall(typeCheck)
+  }
+
+  @tailrec
+  private def searchMostSpecificApplicableMethod(mTypes: List[(List[Constraint], List[Constraint])]): (List[Constraint], List[Constraint]) = {
+    require(mTypes.nonEmpty)
+
+    mTypes match {
+      case (a0, b0) :: Nil => (a0, b0)
+      case (a0, b0) :: rst =>
+//        val candidate: Option[Boolean] = mTypes.map{ case (a1, b1) => b0==b1 && entailment.entails(a1, a0) && !entailment.entails(a0, a1) }.find(x => !x)
+        val isMostSpecific: Boolean = mTypes.forall{ case (a1, b1) => b0==b1 && entailment.entails(a1, a0) && !entailment.entails(a0, a1) }
+
+        if (isMostSpecific) {
+          (a0, b0)
+        } else {
+          searchMostSpecificApplicableMethod(rst)
+        }
+    }
   }
 
   private var nameCounter: Int = 0

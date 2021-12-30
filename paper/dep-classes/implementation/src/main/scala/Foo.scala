@@ -5,7 +5,7 @@ import dcc.program.NaturalNumbers
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
-import dcc.types.{SomeInferenceChecker, Type}
+import dcc.types.{InferenceChecker, SomeInferenceChecker, Type}
 import smt.smtlib.SMTLibScript
 import smt.smtlib.syntax.{Apply, DefineFun, FunctionDef, SimpleSymbol, SortedVar, Term}
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, False, Implies, Ite, Not, Or, True, Xor}
@@ -241,4 +241,18 @@ object Foo extends App {
   println(s"a.fltr(b) = ${a.filter(!b.contains(_))}")
   println(s"b.diff(a) = ${b.diff(a)}")
   println(s"b.fltr(a) = ${b.filter(!a.contains(_))}")
+
+  println("\n\n\n") // ↓ these are cool examples to put into a test
+  val chk = new InferenceChecker(NaturalNumbers.program, EntailmentSort.GroundPathDepthLimit)
+  // Field accesses
+//  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero")), FieldAccess("x", "p")))
+//  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), FieldAccess("x", "p")))
+
+  // Method calls
+  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero")), MethodCall("prev", "x")))
+  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), MethodCall("prev", "x")))
+  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), MethodCall("prev", "y")))
+  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), MethodCall("prev", FieldAccess("x", "p"))))
+  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), MethodCall("prev", FieldAccess("y", "p"))))
+//  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), MethodCall("prev", FieldAccess(FieldAccess("x", "p"), "p")))) // should be able to call this
 }
