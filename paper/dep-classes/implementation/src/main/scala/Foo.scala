@@ -244,15 +244,32 @@ object Foo extends App {
 
   println("\n\n\n") // ↓ these are cool examples to put into a test
   val chk = new InferenceChecker(NaturalNumbers.program, EntailmentSort.GroundPathDepthLimit)
+  val xZeroContext = List(InstanceOf("x", "Zero"))
+  val xOneContext = List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero"))
+  val xTwoContext = List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"),
+                         InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"),
+                         PathEquivalence("y", FieldPath("x", "p")))
+
   // Field accesses
-//  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero")), FieldAccess("x", "p")))
-//  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), FieldAccess("x", "p")))
+  println(chk.typeOf(xOneContext, FieldAccess("x", "p")))
+  println(chk.typeOf(xTwoContext, FieldAccess("x", "p")))
 
   // Method calls
-  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero")), MethodCall("prev", "x")))
-  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), MethodCall("prev", "x")))
-  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), MethodCall("prev", "y")))
-  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), MethodCall("prev", FieldAccess("x", "p"))))
-  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), MethodCall("prev", FieldAccess("y", "p"))))
-//  println(chk.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"), InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"), PathEquivalence("y", FieldPath("x", "p"))), MethodCall("prev", FieldAccess(FieldAccess("x", "p"), "p")))) // should be able to call this
+  println(chk.typeOf(xOneContext, MethodCall("prev", "x")))
+  println(chk.typeOf(xTwoContext, MethodCall("prev", "x")))
+  println(chk.typeOf(xTwoContext, MethodCall("prev", "y")))
+  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess("x", "p"))))
+  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess("y", "p"))))
+  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess(FieldAccess("x", "p"), "p")))) // should be able to call this(?) TODO: investigate
+
+  // Object Constructions
+  println(chk.typeOf(Nil, ObjectConstruction("Zero", Nil)))
+  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", Nil)))
+  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x")))))
+  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x")))))
+  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
+  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "y")))))
+  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "x")))))
+  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("y", "p"))))))
+  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
 }

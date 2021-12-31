@@ -28,6 +28,7 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
           val y = freshVariable()
           // b contains all possible instances of x.f
           // e.g. if x.f is a Zero, it will contain x.f::Zero and x.f::Nat
+          // TODO: only take the most specific one?
           val b = classes.filter(cls => entailment.entails(context ++ a, InstanceOf(FieldPath(x, f), cls))) map (cls => InstanceOf(y, cls))
           // TODO: for each instance, if it's a concrete class also add the fields?
 
@@ -87,10 +88,9 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
       if (classConstraints.isEmpty)
         Right(s"No constructor found for class '$cls'")
       else {
-        val fieldResults: List[(Id, Either[Type, String])] = args map { case (f, ei) => (f, typeOf(context, ei)) }
-        val fieldErrors = fieldResults filter { case (_, t) => t.isRight }
-        if (fieldErrors.nonEmpty) {
-          Right(s"Class '$cls' can not be created, couldn't assign a type to field " + fieldErrors.foldLeft("") { case (rest, (f,Right(err))) => s"\n\t$f: $err$rest" case (rest, _) => rest}) // exhaustive match not necessarily needed, as Left is already filtered out
+        val fieldResults: List[(Id, Either[Type, String])] = args map { case (f, e) => (f, typeOf(context, e)) }
+        if (fieldResults exists (_._2.isRight)) {
+          Right(s"Class '$cls' can not be created, couldn't assign a type to field " + fieldResults.foldLeft("") { case (rest, (f,Right(err))) => s"\n\t$f: $err$rest" case (rest, _) => rest})
         } else {
           val fieldTypes: List[(Id, Type)] = fieldResults.foldLeft(Nil: List[(Id, Type)]) {
             case (rest, (f, Left(t))) => (f, t) :: rest
