@@ -7,9 +7,8 @@ import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, 
 import dcc.syntax.Program.Program
 import dcc.syntax.Util.commaSeparate
 
-import scala.annotation.tailrec
-
 // infers the most specific/precise type of an expression
+// TODO: add debug output
 class InferenceChecker(override val program: Program, override val ENTAILMENT: EntailmentSort, debug: Int = 0) extends Checker {
   private val entailment = EntailmentFactory(ENTAILMENT)(program, debug)
 
@@ -30,6 +29,7 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
           // b contains all possible instances of x.f
           // e.g. if x.f is a Zero, it will contain x.f::Zero and x.f::Nat
           val b = classes.filter(cls => entailment.entails(context ++ a, InstanceOf(FieldPath(x, f), cls))) map (cls => InstanceOf(y, cls))
+          // TODO: for each instance, if it's a concrete class also add the fields?
 
           // !FV(b).contains(x) and entailment.entails(context++a:+PathEquivalence(FieldPath(x, f), y), b) by construction of b
 
@@ -51,7 +51,14 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
 //          println(s"most specific method: $specific")
 
           // probably should identify the most specific applicable method here, not the abstract definition but the concrete implementation
-          //   or not? a1 is never used again in the type rule
+          //   or not? a1 is never used again in the type rule so it's pretty pointless
+          //   also is seems sensible that we use the annotated return type of the method
+          //   and since b has to be free of x and the context doesn't really connect that well to the b constraints,
+          //   we are not able find a more specific type. (at least in the Nat example)
+          //   This can be assumed to be true for other cases (programs) as well,
+          //   as a program only successfully type-checks if all declarations/implementations of
+          //   a method have the exact same return type annotation.
+          //   Thus, not allowing to annotate more specific (sub-) types as the return type for an implementation.
           mTypeSubst(m, x, y) find { case (a1, _) => entailment.entails(context++a, a1) } match {
             case Some((_, b)) =>
 //              println(s"typeOf $m($e): found applicable method with args ${commaSeparate(a1)} and context ${commaSeparate(context++a)}")
@@ -157,23 +164,23 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
       program.forall(typeCheck)
   }
 
-  @tailrec
-  private def searchMostSpecificApplicableMethod(mTypes: List[(List[Constraint], List[Constraint])]): (List[Constraint], List[Constraint]) = {
-    require(mTypes.nonEmpty)
-
-    mTypes match {
-      case (a0, b0) :: Nil => (a0, b0)
-      case (a0, b0) :: rst =>
-//        val candidate: Option[Boolean] = mTypes.map{ case (a1, b1) => b0==b1 && entailment.entails(a1, a0) && !entailment.entails(a0, a1) }.find(x => !x)
-        val isMostSpecific: Boolean = mTypes.forall{ case (a1, b1) => b0==b1 && entailment.entails(a1, a0) && !entailment.entails(a0, a1) }
-
-        if (isMostSpecific) {
-          (a0, b0)
-        } else {
-          searchMostSpecificApplicableMethod(rst)
-        }
-    }
-  }
+//  @tailrec
+//  private def searchMostSpecificApplicableMethod(mTypes: List[(List[Constraint], List[Constraint])]): (List[Constraint], List[Constraint]) = {
+//    require(mTypes.nonEmpty)
+//
+//    mTypes match {
+//      case (a0, b0) :: Nil => (a0, b0)
+//      case (a0, b0) :: rst =>
+////        val candidate: Option[Boolean] = mTypes.map{ case (a1, b1) => b0==b1 && entailment.entails(a1, a0) && !entailment.entails(a0, a1) }.find(x => !x)
+//        val isMostSpecific: Boolean = mTypes.forall{ case (a1, b1) => b0==b1 && entailment.entails(a1, a0) && !entailment.entails(a0, a1) }
+//
+//        if (isMostSpecific) {
+//          (a0, b0)
+//        } else {
+//          searchMostSpecificApplicableMethod(rst)
+//        }
+//    }
+//  }
 
   private var nameCounter: Int = 0
   private def freshName(): Symbol = {
