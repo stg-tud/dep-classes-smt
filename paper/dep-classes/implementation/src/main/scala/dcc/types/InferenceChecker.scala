@@ -88,19 +88,20 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
       if (classConstraints.isEmpty)
         Right(s"No constructor found for class '$cls'")
       else {
-        val fieldResults: List[(Id, Either[Type, String])] = args map { case (f, e) => (f, typeOf(context, e)) }
-        if (fieldResults exists (_._2.isRight)) {
-          Right(s"Class '$cls' can not be created, couldn't assign a type to field " + fieldResults.foldLeft("") { case (rest, (f,Right(err))) => s"\n\t$f: $err$rest" case (rest, _) => rest})
+        val fieldResults: List[(Id, Either[Type, TError])] = args map { case (f, e) => (f, typeOf(context, e)) }
+        val (fieldTypes: List[(Id, Type)], fieldErrors: List[(Id, TError)]) = fieldResults.foldLeft(Nil: List[(Id, Type)], Nil: List[(Id, TError)]) {
+//        val (fieldTypes, fieldErrors): (List[(Id, Type)], List[(Id, TError)]) = fieldResults.foldLeft(List.empty[(Id, Type)], List.empty[(Id, TError)]) {
+          case ((lhs, rhs), (f, Left(t))) => ( (f, t) :: lhs, rhs )
+          case ((lhs, rhs), (f, Right(err))) => (lhs, (f, err) :: rhs)
+        }
+        if (fieldErrors.nonEmpty) {
+          Right(s"Class '$cls' can not be created, couldn't assign a type to field " + fieldErrors.foldLeft("") { case (rest, (f,err)) => s"\n\t$f: $err$rest" })
         } else {
-          val fieldTypes: List[(Id, Type)] = fieldResults.foldLeft(Nil: List[(Id, Type)]) {
-            case (rest, (f, Left(t))) => (f, t) :: rest
-            case (rest, _) => rest
-          }
           val b: List[Constraint] = InstantiatedBy(x, cls) :: fieldTypes.flatMap {case (f, Type(xi, ai)) => Util.substitute(xi, FieldPath(x, f), ai)}
 
           classConstraints.find{ b1 => entailment.entails(context++b, b1) } match {
             case Some(_) => Left(Type(x, b))
-            case None => Right(s"New object does not fulfill the constraints of class '$cls'")
+            case None => Right(s"New object does not fulfill the constraints of class '$cls'") // TODO: can we find out which constraint is violated? e.g. which field is missing/wrongly assigned
           }
         }
       }

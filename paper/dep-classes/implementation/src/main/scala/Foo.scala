@@ -251,25 +251,28 @@ object Foo extends App {
                          PathEquivalence("y", FieldPath("x", "p")))
 
   // Field accesses
-  println(chk.typeOf(xOneContext, FieldAccess("x", "p")))
-  println(chk.typeOf(xTwoContext, FieldAccess("x", "p")))
+//  println(chk.typeOf(xOneContext, FieldAccess("x", "p")))
+//  println(chk.typeOf(xTwoContext, FieldAccess("x", "p")))
 
   // Method calls
-  println(chk.typeOf(xOneContext, MethodCall("prev", "x")))
-  println(chk.typeOf(xTwoContext, MethodCall("prev", "x")))
-  println(chk.typeOf(xTwoContext, MethodCall("prev", "y")))
-  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess("x", "p"))))
-  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess("y", "p"))))
-  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess(FieldAccess("x", "p"), "p")))) // should be able to call this(?) TODO: investigate
+//  println(chk.typeOf(xOneContext, MethodCall("prev", "x")))
+//  println(chk.typeOf(xTwoContext, MethodCall("prev", "x")))
+//  println(chk.typeOf(xTwoContext, MethodCall("prev", "y")))
+//  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess("x", "p"))))
+//  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess("y", "p"))))
+//  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess(FieldAccess("x", "p"), "p")))) // should be able to call this(?) TODO: investigate
 
   // Object Constructions
-  println(chk.typeOf(Nil, ObjectConstruction("Zero", Nil)))
-  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", Nil)))
-  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x")))))
-  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x")))))
-  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
-  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "y")))))
-  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "x")))))
-  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("y", "p"))))))
-  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
+//  println(chk.typeOf(Nil, ObjectConstruction("Zero", Nil)))
+//  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", Nil)))
+//  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x")))))
+//  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x")))))
+//  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
+//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "y")))))
+//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "x")))))
+//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("y", "p"))))))
+//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
+  // Error Cases
+  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", List(("p", "x"))))) // This should fail but doesn't // TODO: investigate. it actually seems in line with the type rule? maybe add a plausibility check regardless? e.g. empty constructor cannot have fields?
+  println(chk.typeOf(Nil, ObjectConstruction("Succ", Nil)))
 }
