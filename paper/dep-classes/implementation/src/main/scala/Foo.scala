@@ -250,6 +250,10 @@ object Foo extends App {
                          InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"),
                          PathEquivalence("y", FieldPath("x", "p")))
 
+   // Variable access
+//  println(chk.typeOf(xZeroContext, "x"))
+//  println(chk.typeOf(Nil, "x"))
+
   // Field accesses
 //  println(chk.typeOf(xOneContext, FieldAccess("x", "p")))
 //  println(chk.typeOf(xTwoContext, FieldAccess("x", "p")))
@@ -274,5 +278,6 @@ object Foo extends App {
 //  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
   // Error Cases
   println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", List(("p", "x"))))) // This should fail but doesn't // TODO: investigate. it actually seems in line with the type rule? maybe add a plausibility check regardless? e.g. empty constructor cannot have fields?
+//  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x"))))) // This should fail (yield an error), but crashes. This is because 'q' isn't a valid field name (it's not introduced in the program)
   println(chk.typeOf(Nil, ObjectConstruction("Succ", Nil)))
 }
