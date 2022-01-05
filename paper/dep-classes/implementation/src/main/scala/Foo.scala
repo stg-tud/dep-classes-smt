@@ -228,7 +228,7 @@ object Foo extends App {
   println(Ite(Not(False), False, True).pretty)
 
   println(s"\n\n-----------------------------------\n")
-  println(groundEnc.encode(List(InstantiatedBy("x", "Succ"), InstantiatedBy(FieldPath("x", "p"), "Zero"), PathEquivalence("x", "y")), InstanceOf("y", "Nat")).pretty)
+//  println(groundEnc.encode(List(InstantiatedBy("x", "Succ"), InstantiatedBy(FieldPath("x", "p"), "Zero"), PathEquivalence("x", "y")), InstanceOf("y", "Nat")).pretty)
 //  println(groundEnc.encode(List(InstantiatedBy("x", "Zero")), InstanceOf("x", "Nat")).pretty)
 //  println(groundEnc.encode(Nil, PathEquivalence("x", "x")).pretty)
 
@@ -244,6 +244,7 @@ object Foo extends App {
 
   println("\n\n\n") // ↓ these are cool examples to put into a test
   val chk = new InferenceChecker(NaturalNumbers.program, EntailmentSort.GroundPathDepthLimit)
+  val algoChk = new InferenceChecker(NaturalNumbers.program, EntailmentSort.AlgorithmicFix1)
   val xZeroContext = List(InstanceOf("x", "Zero"))
   val xOneContext = List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero"))
   val xTwoContext = List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Succ"),
@@ -267,17 +268,22 @@ object Foo extends App {
 //  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess(FieldAccess("x", "p"), "p")))) // should be able to call this(?) TODO: investigate
 
   // Object Constructions
-//  println(chk.typeOf(Nil, ObjectConstruction("Zero", Nil)))
-//  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", Nil)))
-//  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x")))))
-//  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x")))))
-//  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
-//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "y")))))
-//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "x")))))
-//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("y", "p"))))))
-//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
+  println(chk.typeOf(Nil, ObjectConstruction("Zero", Nil)))
+  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", Nil)))
+  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x")))))
+  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x")))))
+  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
+  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "y")))))
+  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "x")))))
+  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("y", "p"))))))
+  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
   // Error Cases
   println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", List(("p", "x"))))) // This should fail but doesn't // TODO: investigate. it actually seems in line with the type rule? maybe add a plausibility check regardless? e.g. empty constructor cannot have fields?
-//  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x"))))) // This should fail (yield an error), but crashes. This is because 'q' isn't a valid field name (it's not introduced in the program)
+//  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x"))))) // This should fail (yield an error), but crashes. This is because 'q' isn't a valid field name (q not introduced in the program). This fails the smt encoding.
+  println(algoChk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x")))))
   println(chk.typeOf(Nil, ObjectConstruction("Succ", Nil)))
+
+  // This is only useful with the extended Nat program
+//  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("flag", "x"))))) // This should work. It actually does, but does so by accident. (see previous error with constructors with too many arguments)
+//  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x"), ("flag", "x"))))) // This should fail, as usefulProperty is required by the constructor to be a Zero. But it doesn't as of the previous error.
 }
