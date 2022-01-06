@@ -6,10 +6,10 @@ in the context
 The inferred type is:
   [y. y.cls=Zero, y.p=x]
 
-This is because we only check if the class constraints are satisfied by the constraints of the arguments (p=x) of the object construction.
+This succeeds because we check if the class constraints are satisfied by the constraints of the arguments (p=x) of the object construction.
 Since the constraints of Zero are empty, all constraints are fulfilled.
 
-This is also true for rule T-New in the formal system (Fig. 5.16).
+We can do a plausibility check with the formal system (Fig. 5.16).
 
     ∀i. c |- e_i: [x_i. a_i]
  b = x.cls=C, U a_i{x_i -> x.f_i}
@@ -17,7 +17,9 @@ This is also true for rule T-New in the formal system (Fig. 5.16).
 --------------------------------- T-New
     c |- new C(fs=es): [x. b]
 
+Rule T-New introduces, with c,b |- b', exactly the check that we perform in the implementation, where b includes the constraints from the arguments and b' are the declared constraints from the constructor.
 
+In the following derivation we can see that we can indeed check that the expression has the inferred type in the formal system.
 
             x :: Zero |- x : [z. z=x]
  Zero(z. ·) ∈ P     x::Zero, y.cls=Zero, y.p=x |- ·
@@ -27,11 +29,12 @@ This is also true for rule T-New in the formal system (Fig. 5.16).
 
 It seems that we are allowed to create objects with more fields than the constructor declaration requires,
 meaning that the constraints of the constructor declaration can be seen as a minimal requirement for the class to be instantiated.
+E.g. we must fulfill the declared constraints in order to instantiate this class, but we are allowed to provide more if we like to.
+
 This becomes problematic if we have multiple constructors for the same class.
-E.g. assume that we have an additional constructor for Zero that takes an additional paramenter flag of type Zero. (resp. for Succ)
+E.g. assume that we have an additional constructor for Zero that has an additional field 'flag' of type 'Zero': Zero(z. z.flag::Zero). (resp. for Succ)
 
 With rule T-New we can typecheck
   x :: Nat |- new Zero(flag=x): [y. y.cls=Zero, y.flag=x]
 with the empty constructor Zero(z. ·) as of the "minimal requirement" as described previously.
-But with the intended constructor Zero(z. flag::Zero) it wouldn't be possible,
-as the context provides only Nat for x.
+Where with the intended constructor Zero(z. z.flag::Zero) it wouldn't be possible, as the context provides only Nat for x but the constructor requires a Zero.
