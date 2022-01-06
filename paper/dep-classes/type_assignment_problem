@@ -1,0 +1,37 @@
+The problem:
+The implementation of type inference of expressions is able to infer a type for
+  new Zero(p=x)
+in the context
+  x :: Zero
+The inferred type is:
+  [y. y.cls=Zero, y.p=x]
+
+This is because we only check if the class constraints are satisfied by the constraints of the arguments (p=x) of the object construction.
+Since the constraints of Zero are empty, all constraints are fulfilled.
+
+This is also true for rule T-New in the formal system (Fig. 5.16).
+
+    ∀i. c |- e_i: [x_i. a_i]
+ b = x.cls=C, U a_i{x_i -> x.f_i}
+   C(x. b') ∈ P      c,b |- b'
+--------------------------------- T-New
+    c |- new C(fs=es): [x. b]
+
+
+
+            x :: Zero |- x : [z. z=x]
+ Zero(z. ·) ∈ P     x::Zero, y.cls=Zero, y.p=x |- ·
+---------------------------------------------------- T-New
+ x :: Zero |- new Zero(p=x): [y. y.cls=Zero, y.p=x]
+
+
+It seems that we are allowed to create objects with more fields than the constructor declaration requires,
+meaning that the constraints of the constructor declaration can be seen as a minimal requirement for the class to be instantiated.
+This becomes problematic if we have multiple constructors for the same class.
+E.g. assume that we have an additional constructor for Zero that takes an additional paramenter flag of type Zero. (resp. for Succ)
+
+With rule T-New we can typecheck
+  x :: Nat |- new Zero(flag=x): [y. y.cls=Zero, y.flag=x]
+with the empty constructor Zero(z. ·) as of the "minimal requirement" as described previously.
+But with the intended constructor Zero(z. flag::Zero) it wouldn't be possible,
+as the context provides only Nat for x.
