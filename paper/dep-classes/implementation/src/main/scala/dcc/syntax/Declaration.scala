@@ -39,7 +39,8 @@ object Program {
     case _ => Nil
   }
 
-  private def extractFieldNames(constraints: List[Constraint]): List[Id] = constraints flatMap {
+  // TODO: move somewhere else (Util?)
+  def extractFieldNames(constraints: List[Constraint]): List[Id] = constraints flatMap {
     case PathEquivalence(p, q) => p.fields ++ q.fields
     case InstanceOf(p, _) => p.fields
     case InstantiatedBy(p, _) => p.fields

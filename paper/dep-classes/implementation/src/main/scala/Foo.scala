@@ -195,7 +195,7 @@ object Foo extends App {
   println(limitEnc.encode(Nil, PathEquivalence("a", "a")).pretty)
   println("\n---------------------------------------------------------------\n")
   println("ground encoding: · |- a=a")
-  println(groundEnc.encode(Nil, PathEquivalence("a", "a")).pretty)
+  println(groundEnc.encode(Nil, PathEquivalence("a", "a")).get.pretty)
 
   println("\n\nalgorithmic system:")
   val algo = new AlgorithmicSystem(NaturalNumbers.program)
@@ -243,7 +243,7 @@ object Foo extends App {
   println(s"b.fltr(a) = ${b.filter(!a.contains(_))}")
 
   println("\n\n\n") // ↓ these are cool examples to put into a test
-  val chk = new InferenceChecker(NaturalNumbers.program, EntailmentSort.GroundPathDepthLimit)
+  val chk = new InferenceChecker(NaturalNumbers.program, EntailmentSort.GroundPathDepthLimit, debug=2)
   val algoChk = new InferenceChecker(NaturalNumbers.program, EntailmentSort.AlgorithmicFix1)
   val xZeroContext = List(InstanceOf("x", "Zero"))
   val xOneContext = List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero"))
@@ -268,20 +268,21 @@ object Foo extends App {
 //  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess(FieldAccess("x", "p"), "p")))) // should be able to call this(?) TODO: investigate
 
   // Object Constructions
-  println(chk.typeOf(Nil, ObjectConstruction("Zero", Nil)))
-  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", Nil)))
-  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x")))))
-  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x")))))
-  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
-  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "y")))))
-  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "x")))))
-  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("y", "p"))))))
-  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
-  // Error Cases
-  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", List(("p", "x"))))) // This should fail but doesn't // TODO: investigate. it actually seems in line with the type rule? maybe add a plausibility check regardless? e.g. empty constructor cannot have fields?
-//  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x"))))) // This should fail (yield an error), but crashes. This is because 'q' isn't a valid field name (q not introduced in the program). This fails the smt encoding.
-  println(algoChk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x")))))
-  println(chk.typeOf(Nil, ObjectConstruction("Succ", Nil)))
+//  println(chk.typeOf(Nil, ObjectConstruction("Zero", Nil)))
+//  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", Nil)))
+//  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x")))))
+//  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x")))))
+//  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
+//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "y")))))
+//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "x")))))
+//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("y", "p"))))))
+//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
+//  // Error Cases
+  println(chk.typeOf(Nil, ObjectConstruction("Foo", Nil)))
+//  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", List(("p", "x"))))) // This should fail but doesn't // TODO: investigate. it actually seems in line with the type rule? maybe add a plausibility check regardless? e.g. empty constructor cannot have fields?
+  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x"))))) // This should fail (yield an error), but crashes. This is because 'q' isn't a valid field name (q not introduced in the program). This fails the smt encoding.
+//  println(algoChk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x")))))
+//  println(chk.typeOf(Nil, ObjectConstruction("Succ", Nil)))
 
   // This is only useful with the extended Nat program
 //  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("flag", "x"))))) // This should work. It actually does, but does so by accident. (see previous error with constructors with too many arguments)

@@ -2,7 +2,7 @@ package dcc.entailment
 import dcc.Util.{prefixedSubstitute, substitute}
 import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{Constraint, ConstraintEntailment, Declaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
-import dcc.syntax.Program.{DefinedClasses, DefinedFields, Program}
+import dcc.syntax.Program.{DefinedClasses, DefinedFields, Program, extractFieldNames}
 import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
 import smt.smtlib.syntax.{Apply, Assert, DeclareFun, SMTLibSymbol, SimpleSymbol, Sort, Term, Unsat}
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Implies, Not, True}
@@ -22,7 +22,7 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     if (debug > 0)
       println(s"entailment: ${if (context.isEmpty) "·" else Util.commaSeparate(context)} |- $constraint")
 
-    val smt = encode(context, constraint)
+    val smt = encode(context, constraint).getOrElse(return false)
     val solver = new Z3Solver(smt, debug=if (debug>2) true else false)
 
     solver.checkSat match {
@@ -37,7 +37,7 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
 
   override def entails(context: List[Constraint], constraints: List[Constraint]): Boolean = constraints.forall(entails(context, _))
 
-  def encode(context: List[Constraint], conclusion: Constraint): SMTLibScript = {
+  def encode(context: List[Constraint], conclusion: Constraint): Option[SMTLibScript] = {
     //  - functions
     //    - constraints propositions
     //    - substitution function (partial function)
@@ -49,6 +49,19 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
     val variables: List[Id] = extractVariableNames(conclusion :: context)
     val fields: List[Id] = DefinedFields(program)
     val classes: List[Id] = DefinedClasses(program)
+
+    // Check if the arguments contain fields not defined in the program
+    // TODO: remove this check and add fields from the context to val fields? (to be in line with the current formal stuff?)
+    val unknownFields: List[Id] = extractFieldNames(conclusion::context).filter(f => !fields.contains(f))
+//    val unknownClasses: List[Id] = ??? // T-New already filters classes not in the program
+    if (unknownFields.nonEmpty) {
+      if (debug > 1) {
+        println(s"\tencode failed, ${if (unknownFields.tail.isEmpty) "field" else "fields"} '${Util.commaSeparate(unknownFields)}' not defined in program")
+//        println(s"\tclasses '${Util.commaSeparate(unknownClasses)}' not defined in program")
+      }
+
+      return None
+    }
 
     val depthLimit = determineDepthLimit(context, conclusion)
     val paths = enumeratePaths(variables, fields, depthLimit)
@@ -63,11 +76,13 @@ class GroundPathDepthLimitEncoding(program: Program, debug: Int = 0) extends Ent
 
     val entailmentJudgement = constructEntailmentJudgement(context, conclusion)
 
-    datatypeDeclarations ++
+    Some(
+      datatypeDeclarations ++
       constraintPropositionDeclarations ++
       staticRules ++
       cProgRules ++
       entailmentJudgement
+    )
   }
 
   private def determineDepthLimit(context: List[Constraint], conclusion: Constraint): Int = {
