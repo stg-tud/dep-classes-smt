@@ -1,0 +1,88 @@
+I think what i find weird is the discrepancy between the syntax for object construction on the level of expressions
+and the constructor declarations on the level of programs.
+
+For constructor declaration we have
+  C(x. a)
+where 'C' is the classname, 'x' a binder and a 'a' set of constraints over 'x'.
+For constructor declarations we have one set of constraints that describe the class,
+including it's fields.
+
+For object creation we have
+  new C(f=a)
+where 'C' is the classname and 'f=e' is list of field-expression pairs 'f_i=e_i'.
+For object construction expressions we have a finite list of fields (which as far as I can see is not linked in any way to the constructors) we want to construct.
+
+This should highlight the difference between the handling of fields in the two syntactic constructs.
+
+Lets construct a simple example program with three classes X, Y and Z.
+X and Y have no constraints and Z.a is constrained to be an X.
+  X(x. ·)
+  Y(x. ·)
+  Z(x. x.a::X)
+
+If we now want to type check object construction expressions we need to use rule T-New.
+
+1.    ∀i. c |- e_i: [x_i. a_i]
+2.  b = x.cls=C, U a_i{x_i -> x.f_i}
+3.  C(x. b') ∈ P    4. c,b |- b'
+--------------------------------- T-New
+    c |- new C(f=e): [x. b] 
+    
+In the rule we
+1. get the type for each subexpression e_i
+2. construct the type for the new object, which consists of
+  - the declaration that C is the class of the new object and
+  - the type of the fields we obtained in step 1.
+3+4. check that the type of the new object fulfills the constraints of at least one of the constructors of class C in the program.
+
+This works well if we want to construct an object that has the intended amount of fields. E.g.
+  new X()
+Since we did not provide any field arguments we do not need to check any subexpression
+and the type 'b' for the new object will only consist of the constraint that states that the object is of class X 'x.cls=X'.
+We have one empty constructor for X, giving us that the new object fulfills the constraints of the constructor.
+
+We can continue (we now have x.cls=X in the typing context 'c') to construct an object of class Z.
+  new Z(a=x)
+We typecheck the subexpression 'x' of field 'a' and construct the type for the new object to be
+  z.cls=Z, z.a=x
+We now have to check that the object type fulfills the constructor Z(x. x.a::X),
+we do so by checking that
+  x.cls=X,z.cls=Z, z.a=x |- z.a::X
+indeed holds.
+
+If we assume that we created a Y instead if a X in the first step,
+we can reject the expression 'new Z(a=y)' since
+  y.cls=Y,z.cls=Z,z.a=y |- z.a::X
+does not hold.
+
+What we however do not is to check whether the fields we want to create are mentioned in the constraints from the constructor.
+
+This leads to the behaviour that we do not reject expressions that additionally assign unintended fields.
+
+E.g. assume that we already constructed a X and a Y, so the typing context consists of 'x::X, y::Y'.
+Lets type to assign a type to
+  new Z(x. x.a=x, x.b=y)
+the type of the new object will be
+  z.cls=Z, z.a=x, z.b=y
+and we see that
+  x::X,y::Y, z.cls=Z, z.a=x, z.b=y |- z.a::X
+holds and we do not check that there is an additional z.b field that isn't mentioned in the constructor.
+And i think the gist of my confusion is that I believe that the type system should reject those, but doesn't.
+
+I am under the impression that typing of an object construction should be as precise as we can be,
+as it is the point where we (should) know the nature of the new object.
+
+The second problem is basically an implication of this,
+as rule T-New only requires the object to fulfill at least one constructor of the class.
+
+If we extend the program and give Z a second constructor that additionally constraints Z.b to also be a X.
+  X(x. ·)
+  Y(x. ·)
+  Z(x. x.a::X)
+  Z(x. x.a::X, x.b::X)
+  
+Since rule T-New requires the object type to fulfill the constraints of any constructor of the class
+we are still able to typecheck 'new Z(x. x.a=x, x.b=y)' as shown previously,
+essentially making the existence of the second constructor pointless in this case.
+
+I hope I could clarify my confusion over this behaviour.
