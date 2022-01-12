@@ -1,4 +1,4 @@
-I think what i find weird is the discrepancy between the syntax for object construction on the level of expressions
+I think what I find weird is the discrepancy between the syntax for object construction on the level of expressions
 and the constructor declarations on the level of programs.
 
 For constructor declaration we have
@@ -85,4 +85,5 @@ Since rule T-New requires the object type to fulfill the constraints of any cons
 we are still able to typecheck 'new Z(x. x.a=x, x.b=y)' as shown previously,
 essentially making the existence of the second constructor pointless in this case.
 
-I hope I could clarify my confusion over this behaviour.
+I hope I could clarify my confusion over this behaviour,
+and the question is are we ok with this or not?
