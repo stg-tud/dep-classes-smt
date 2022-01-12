@@ -55,7 +55,7 @@ we can reject the expression 'new Z(a=y)' since
   y.cls=Y,z.cls=Z,z.a=y |- z.a::X
 does not hold.
 
-What we however do not is to check whether the fields we want to create are mentioned in the constraints from the constructor.
+What we however do not in T-New is to check whether the fields we want to create are mentioned in the constraints from the constructor.
 
 This leads to the behaviour that we do not reject expressions that additionally assign unintended fields.
 
@@ -69,8 +69,8 @@ and we see that
 holds and we do not check that there is an additional z.b field that isn't mentioned in the constructor.
 And i think the gist of my confusion is that I believe that the type system should reject those, but doesn't.
 
-I am under the impression that typing of an object construction should be as precise as we can be,
-as it is the point where we (should) know the nature of the new object.
+I am under the impression that typing of an object construction should be as precise as it can be,
+as it is the point where we (should) know the nature of the new object (as we want to create it).
 
 The second problem is basically an implication of this,
 as rule T-New only requires the object to fulfill at least one constructor of the class.
