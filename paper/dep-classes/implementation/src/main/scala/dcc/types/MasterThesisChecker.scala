@@ -9,9 +9,9 @@ import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, 
 class MasterThesisChecker(override val program: Program, override val ENTAILMENT: EntailmentSort) extends Checker {
   private val entailment: Entailment = EntailmentFactory(ENTAILMENT)(program, 0)
 
-  override def typeOf(context: List[Constraint], expression: Expression): Either[Type, TError] = typeAssignment(context, expression) match {
+  override def typeOf(context: List[Constraint], expression: Expression): Either[Type, List[TError]] = typeAssignment(context, expression) match {
     case t :: _ => Left(t)
-    case Nil => Right(s"could not assign a type for $expression")
+    case Nil => Right(List(s"could not assign a type for $expression"))
   }
 
   override def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean = typeAssignment(context, expression) exists {

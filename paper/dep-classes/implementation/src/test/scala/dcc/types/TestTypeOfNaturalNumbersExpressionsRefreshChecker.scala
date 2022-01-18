@@ -22,7 +22,7 @@ class TestTypeOfNaturalNumbersExpressionsRefreshChecker extends AnyFunSuite with
 
   test ("type of unbound variable") {
     val result = checker.typeOf(Nil, "x") // error
-    testTypeError(result, "variable 'x' is not available in context")
+    testTypeError(result, List("variable 'x' is not available in context"))
   }
 
   test ("type of field access") {
@@ -67,6 +67,6 @@ class TestTypeOfNaturalNumbersExpressionsRefreshChecker extends AnyFunSuite with
 
   test ("type of 'new Nat") {
     val result = checker.typeOf(Nil, ObjectConstruction("Nat", Nil))  // Error: Nat
-    testTypeError(result, "No constructor found for class 'Nat'")
+    testTypeError(result, List("No constructor found for class 'Nat'"))
   }
 }

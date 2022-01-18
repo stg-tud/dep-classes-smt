@@ -11,7 +11,7 @@ trait Checker {
   val program: Program
   val ENTAILMENT: EntailmentSort
 
-  def typeOf(context: List[Constraint], expression: Expression): Either[Type, TError]
+  def typeOf(context: List[Constraint], expression: Expression): Either[Type, List[TError]]
   def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean
   def typeCheck(declaration: Declaration): Boolean
   def typeCheck: Boolean

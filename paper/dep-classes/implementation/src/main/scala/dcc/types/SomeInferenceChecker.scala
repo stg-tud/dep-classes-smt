@@ -11,13 +11,13 @@ import dcc.syntax.Util.commaSeparate
 class SomeInferenceChecker(override val program: Program, override val ENTAILMENT: EntailmentSort, debug: Int = 0) extends Checker {
   val entailment: Entailment = EntailmentFactory(ENTAILMENT)(program, debug)
 
-  override def typeOf(context: List[Constraint], expression: Expression): Either[Type, TError] = expression match {
+  override def typeOf(context: List[Constraint], expression: Expression): Either[Type, List[TError]] = expression match {
     case x@Id(_) =>
       classes.find(cls => entailment.entails(context, InstanceOf(x, cls))) match {
         case Some(_) =>
           val y = freshVariable()
           Left(Type(y, List(PathEquivalence(y, x))))
-        case None => Right(s"variable '$x' is not available in context ${commaSeparate(context)}")
+        case None => Right(List(s"variable '$x' is not available in context ${commaSeparate(context)}"))
       }
     case FieldAccess(e, f) =>
       typeOf(context, e) match {
@@ -30,7 +30,7 @@ class SomeInferenceChecker(override val program: Program, override val ENTAILMEN
           if (b.nonEmpty)
             Left(Type(y, b))
           else
-            Right(s"'$x.$f' is not available in context ${commaSeparate(context++a)}")
+            Right(List(s"'$x.$f' is not available in context ${commaSeparate(context++a)}"))
         case error@Right(_) => error
       }
     case MethodCall(m, e) =>
@@ -42,7 +42,7 @@ class SomeInferenceChecker(override val program: Program, override val ENTAILMEN
             case Some((_, b)) =>
               // b should be free of x by construction (mTypeSubst) and b |- b trivially
               Left(Type(y, b))
-            case None => Right(s"no method declaration of '$m' applicable to '$e'")
+            case None => Right(List(s"no method declaration of '$m' applicable to '$e'"))
           }
         case error@Right(_) => error
       }
@@ -52,12 +52,21 @@ class SomeInferenceChecker(override val program: Program, override val ENTAILMEN
 //      println(s"DEBUG: found ${classConstraints.size} constructors for class $cls")
       
       if (classConstraints.isEmpty)
-        Right(s"No constructor found for class '$cls'")
+        Right(List(s"No constructor found for class '$cls'"))
       else {
-        val fieldResults: List[(Id, Either[Type, String])] = args map { case (f, ei) => (f, typeOf(context, ei)) }
-        val fieldErrors = fieldResults filter { case (_, t) => t.isRight }
+        val fieldResults: List[(Id, Either[Type, List[TError]])] = args map { case (f, ei) => (f, typeOf(context, ei)) }
+//        val fieldErrors: List[(Id, List[TError])] = (fieldResults filter { case (_, t) => t.isRight }).asInstanceOf[List[(Id, List[TError])]]
+        val fieldErrors: List[(Id, List[TError])] = fieldResults.foldLeft(Nil: List[(Id, List[TError])]) {
+          case (rest, (f, Right(err))) => (f, err) :: rest
+          case (rest, _) => rest
+        }
         if (fieldErrors.nonEmpty) {
-          Right(s"Class '$cls' can not be created, couldn't assign a type to field " + fieldErrors.foldLeft("") { case (rest, (f,Right(err))) => s"\n\t$f: $err$rest" case (rest, _) => rest}) // exhaustive match not necessarily needed, as Left is already filtered out
+          //Right(List(s"Class '$cls' can not be created, couldn't assign a type to field " + fieldErrors.foldLeft("") { case (rest, (f,Right(err))) => s"\n\t$f: $err$rest" case (rest, _) => rest})) // exhaustive match not necessarily needed, as Left is already filtered out
+          Right(
+            fieldErrors.map {
+              case (f, err) => s"Class $cls: couldn't assign a type to field $f, because ${commaSeparate(err)}"
+            }
+          )
         } else {
           val fieldTypes: List[(Id, Type)] = fieldResults.foldLeft(Nil: List[(Id, Type)]) {
             case (rest, (f, Left(t))) => (f, t) :: rest
@@ -67,7 +76,7 @@ class SomeInferenceChecker(override val program: Program, override val ENTAILMEN
 
           classConstraints.find{ b1 => entailment.entails(context++b, b1) } match {
             case Some(_) => Left(Type(x, b))
-            case None => Right(s"New object does not fulfill the constraints of class '$cls'")
+            case None => Right(List(s"New object does not fulfill the constraints of class '$cls'"))
           }
         }
       }

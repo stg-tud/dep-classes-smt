@@ -5,7 +5,7 @@ import org.scalatest.Assertion
 import org.scalatest.Assertions.{fail, succeed}
 
 object TypeTests {
-  def testTypeOk(actual: Either[Type, String], expected: Type): Assertion = actual match {
+  def testTypeOk(actual: Either[Type, List[TError]], expected: Type): Assertion = actual match {
     case Left(Type(x, a)) =>
       val Type(y, expectedConstraints) = expected
       val b = substitute(y, x, expectedConstraints)
@@ -37,13 +37,17 @@ object TypeTests {
     case Right(error) => fail(s"Expected type $expected, but got error '$error'")
   }
 
-  def testTypeError(actual: Either[Type, TError]): Assertion = actual match {
+  def testTypeError(actual: Either[Type, List[TError]]): Assertion = actual match {
     case Left(t) => fail(s"Expected error response, but got type $t")
     case Right(_) => succeed
   }
 
-  def testTypeError(actual: Either[Type, TError], expected: TError): Assertion = actual match {
+  def testTypeError(actual: Either[Type, List[TError]], expected: List[TError]): Assertion = actual match {
     case Left(t) => fail(s"Expected error '$expected', but got type $t")
-    case Right(error) => if (!error.contains(expected)) fail(s"Actual error\n\t$error\ndid not match expected error\n\t$expected") else succeed
+    case Right(error) =>
+      if (error.size == expected.size && error.forall(expected.contains(_)))
+        fail(s"Actual error\n\t$error\ndid not match expected error\n\t$expected")
+      else
+        succeed
   }
 }
