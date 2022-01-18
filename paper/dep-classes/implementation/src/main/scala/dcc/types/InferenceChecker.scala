@@ -4,7 +4,7 @@ import dcc.Util
 import dcc.entailment.EntailmentFactory
 import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldAccess, FieldPath, Id, InstanceOf, InstantiatedBy, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
-import dcc.syntax.Program.Program
+import dcc.syntax.Program.{Program, extractFieldNames}
 import dcc.syntax.Util.commaSeparate
 
 // infers the most specific/precise type of an expression
@@ -118,7 +118,8 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
 //          }
 //          Right("nope")
 
-          classConstraints.find{ b1 => entailment.entails(context++b, b1) } match {
+          // TODO: rewrite to not extract the fields multiple times
+          classConstraints.find{ b1: List[Constraint] => args.forall{ case (f,_) => extractFieldNames(b1).contains(f)} && entailment.entails(context++b, b1) } match {
             case Some(_) =>
               Left(Type(x, b))
             case None =>
@@ -217,4 +218,8 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
 
   private def freeVariablesContainsMax(freeVariables: List[Id], x: Id, y: Id): Boolean =
     freeVariables.forall(v => v==x || v==y)
+}
+
+object InferenceChecker {
+  def apply(program: Program, ENTAILMENT: EntailmentSort, debug: Int = 0): InferenceChecker = new InferenceChecker(program, ENTAILMENT, debug)
 }

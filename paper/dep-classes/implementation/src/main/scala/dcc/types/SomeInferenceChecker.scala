@@ -152,6 +152,5 @@ class SomeInferenceChecker(override val program: Program, override val ENTAILMEN
 }
 
 object SomeInferenceChecker {
-  //def apply(program: Program): FaithfulAdaptionChecker = new FaithfulAdaptionChecker(program, new SemanticEntailment(program))
   def apply(program: Program, entailmentSort: EntailmentSort, debug: Int = 0): SomeInferenceChecker = new SomeInferenceChecker(program, entailmentSort, debug)
 }

@@ -279,10 +279,10 @@ object Foo extends App {
 //  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
 //  // Error Cases
   println(chk.typeOf(Nil, ObjectConstruction("Foo", Nil)))
-//  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", List(("p", "x"))))) // This should fail but doesn't // TODO: investigate. it actually seems in line with the type rule? maybe add a plausibility check regardless? e.g. empty constructor cannot have fields?
+  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", List(("p", "x"))))) // This should fail but doesn't // TODO: investigate. it actually seems in line with the type rule? maybe add a plausibility check regardless? e.g. empty constructor cannot have fields?
   println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x"))))) // This should fail (yield an error), but crashes. This is because 'q' isn't a valid field name (q not introduced in the program). This fails the smt encoding.
-//  println(algoChk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x")))))
-//  println(chk.typeOf(Nil, ObjectConstruction("Succ", Nil)))
+  println(algoChk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x")))))
+  println(chk.typeOf(Nil, ObjectConstruction("Succ", Nil)))
 
   // This is only useful with the extended Nat program
 //  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("flag", "x"))))) // This should work. It actually does, but does so by accident. (see previous error with constructors with too many arguments)
