@@ -121,16 +121,32 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
 //          }
 //          Right("nope")
 
-          classConstraints.find {
-            b1: List[Constraint] =>
-              val constructorFields = extractFieldNames(b1)
-              args.forall{ case (f,_) => constructorFields.contains(f)} && entailment.entails(context++b, b1)
-          } match {
-            case Some(_) =>
-              Left(Type(x, b))
-            case None =>
-              Right(List(s"New object does not fulfill the constraints of class '$cls'")) // TODO: can we find out which constraint is violated? e.g. which field is missing/wrongly assigned
+//          classConstraints.find {
+//            b1: List[Constraint] =>
+//              val constructorFields = extractFieldNames(b1)
+//              args.forall{ case (f,_) => constructorFields.contains(f)} && entailment.entails(context++b, b1)
+//          } match {
+//            case Some(_) =>
+//              Left(Type(x, b))
+//            case None =>
+//              Right(List(s"New object does not fulfill the constraints of class '$cls'")) // TODO: can we find out which constraint is violated? e.g. which field is missing/wrongly assigned
+//          }
+
+          var errors: List[TError] = Nil
+          for (b1 <- classConstraints) {
+            val constructorFields = extractFieldNames(b1)
+            if (args.forall{ case (f, _) => constructorFields.contains(f)}) {
+              val constructorErrors: List[TError] = b1.filter(!entailment.entails(context++b, _)).map(c => s"Class $cls: constructor constraint $c could not be fulfilled")
+
+              if (constructorErrors.isEmpty)
+                return Left(Type(x, b))
+
+              errors = errors ++ constructorErrors
+            } else {
+              errors = s"Class $cls: unexpected field in constructor call" :: errors
+            }
           }
+          Right(errors)
         }
       }
   }
