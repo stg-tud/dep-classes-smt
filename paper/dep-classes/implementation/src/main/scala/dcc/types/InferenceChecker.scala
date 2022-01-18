@@ -118,8 +118,11 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
 //          }
 //          Right("nope")
 
-          // TODO: rewrite to not extract the fields multiple times
-          classConstraints.find{ b1: List[Constraint] => args.forall{ case (f,_) => extractFieldNames(b1).contains(f)} && entailment.entails(context++b, b1) } match {
+          classConstraints.find {
+            b1: List[Constraint] =>
+              val constructorFields = extractFieldNames(b1)
+              args.forall{ case (f,_) => constructorFields.contains(f)} && entailment.entails(context++b, b1)
+          } match {
             case Some(_) =>
               Left(Type(x, b))
             case None =>
