@@ -1028,4 +1028,58 @@ Otherwise we would also be allowed to satisfy $p \sqsubset \ovl{a}$ for the same
 \section{Equivalency Proof (declarative/algorithmic system)}
 \wip
 
+\section{Object Construction}
+With the rules for type assignment as seen in \Cref{sec:type-assignment}
+it is possible to construct objects with more fields than anticipated.
+This is because the constructor declaration defines a set of constraints that
+need to be fulfilled in order to create a new object, but it is possible to "oversatisfy"
+those constraints.
+
+\paragraph{Example}
+\begin{prooftree}
+  % \AxiomC{\typeass{\instanceOf{x}{\Zero}}{x}{\type{z}{\pathEq{z}{x}}}}
+  % ↓ This is not accurate, but with y.p as the binder better understandable of the substitution that happens when constructing b
+  \AxiomC{\typeass{\instanceOf{x}{\Zero}}{x}{\type{y.p}{\pathEq{y.p}{x}}}}
+  \noLine
+  \UnaryInfC{$\constructorDeclaration{\Zero}{y}{\epsilon} \in P$}
+  \AxiomC{$\ovl{b} = \instantiatedBy{y}{\Zero}, \pathEq{y.p}{x}$}
+  \noLine
+  \UnaryInfC{\entails{\instanceOf{x}{\Zero},\ovl{b}}{\epsilon}}
+  \RightLabel{T-New}
+  \BinaryInfC{\typeass{\instanceOf{x}{\Zero}}{\objConstr{\Zero}{\pathEq{p}{x}}}{\type{y}{\instantiatedBy{y}{\Zero}, \pathEq{y.p}{x}}}}
+\end{prooftree}
+
+Since anything entails $\epsilon$, the check for
+$\entails{\instanceOf{x}{\Zero}, \instantiatedBy{y}{\Zero}, \pathEq{y.p}{x}}{\epsilon}$
+succeeds and we can successfully assign a type for $\objConstr{\Zero}{\pathEq{p}{x}}$,
+albeit the constructor for $\Zero$ doesn't constraint any fields.
+
+This is because of the discrepancy between the syntax of object construction $\objConstr{C}{\pathEq{\ovl{f}}{\ovl{e}}}$
+and the syntax of constructor declaration $\constructorDeclaration{C}{x}{\ovl{a}}$ and the way they come together
+in rule T-New.
+In object creation we have a concrete set of fields $\ovl{f}$ we want to assign values to,
+while in constructor declaration we only have a set of constraints $\ovl{a}$
+that describe the class including it's fields.
+
+In rule T-New we check with $\entails{\ovl{c},\ovl{b}}{\ovl{b'}}$ that we supplied enough fields
+to satisfy the constraints of the class, but we do not check the other direction.
+Namely that we provide fields that are unknown to the constraints of the constructor.
+
+\subsection{Update to T-New}
+We add an additional check to rule T-New that checks if the fields $\ovl{f}$ are
+constrained from the constructor.
+
+\begin{mathpar}
+  \inferrule[T-New]{
+    \forall i.~\typeass{\ovl{c}}{e_i}{\type{x_i}{\ovl{a_i}}}\\
+    \ovl{b} = (\instantiatedBy{x}{C}), \cup_{i} \ovl{a_i}_{\sub{x_i}{x.f_i}}\\
+      \constructorDeclaration{C}{x}{\ovl{b'}} \in P\\
+      \entails{\ovl{c}, \ovl{b}}{\ovl{b'}}\\
+      \forall i.~f_i \in \mathsf{FIELDS}(b')
+  }{
+    \typeass{\ovl{c}}{\objConstr{C}{\pathEq{\ovl{f}}{\ovl{e}}}}{\type{x}{\ovl{b}}}
+  }
+\end{mathpar}
+
+
 \end{document}
