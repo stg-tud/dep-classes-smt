@@ -1,0 +1,10 @@
+Regarding refinement types and smt encoding and if we support/can relate the range/expressiveness of other refinement type systems in our system.
+
+1. We can think of constructor declarations in our system as a sort of refinement over a class
+   E.g. C(x. a) to be similar to a refinemen type { x:C | a }
+2. Limitation: Our "refinements" are lists of constraints that all need to be fulfilled.
+               So our "refinements" can only use/contain conjunctions.
+3. So currently our expressiveness in terms of relations between constraints is restricted (to conjunctions).
+4. Using SMT to solve the constraint system neatly encodes these conjunctions (SMT uses logic as its language).
+5. Extending our constraints to support a wider range of operations than only conjunctions should be quite easy with the SMT encoding,
+   as using logic connectors for the constraints would directly translate to the logic used in the SMT encoding.
