@@ -1104,44 +1104,79 @@ or at least state that those behave in a similar way to the semantics
 refinements expressable with refinement types.
 
 \subsection{Constructor Declaration}
-We can think of DCCs constructor declaration as a
-refinement over a class.
+We can think of DCCs constructor declaration as some sort of
+refinement of the objects of a class.
 E.g. the declaration $\constructorDeclaration{C}{x}{\ovl{a}}$
 to semantically express something similar to a potential refinement type
 $\refT{x}{C}{\ovl{a}}$.
 Refining objects of class $C$ to adhere to $\ovl{a}$.
 
-\subsection{Method Call}
+\subsection{Methods}
 
 \subsection{What is an Object in DCC?}
-- usually we have object be structure and behaviour
-- in DCC objects during runtime are only structure
-- behaviour in the form of methods are defined "outsite"
-- we only have constructor declarations instead of class declarations
-- an object $\stdobj$ on the heap consists of
-  - a class $C$ the object was constructed from
-  - a list of pairs $\pathEq{f_i}{x_i}$ of the fields of the object
-    and their corresponding memory location on the heap.
+% - usually we have object be structure and behaviour
+% - in DCC objects during runtime are only structure
+% - behaviour in the form of methods are defined "outsite"
+% - we only have constructor declarations instead of class declarations
+% - an object $\stdobj$ on the heap consists of
+%   - a class $C$ the object was constructed from
+%   - a list of pairs $\pathEq{f_i}{x_i}$ of the fields of the object
+%     and their corresponding memory location on the heap.
+%
+Objects usually consist of structure (fields) and behaviour (methods).
+In DCC objects only consists of structure (fields), while the behaviour (methods)
+is declared outside the scope of classes and their objects.
+More specific, their are only constructor declarations and method declarations
+at the "top level" of the syntax instead of class declarations that encapsulate/incorporate both.
+In DCC an object $\stdobj$ on the heap consists of
+1) a class $C$ from which the object was constructed from and
+2) a list of pairs $\pathEq{f_i}{x_i}$ of the fields of the object
+and their corresponding memory location on the heap.
 
 \subsection{Types}
-- A type in DCC $\type{x}{\ovl{a}}$ consists of
-  - an identifier $x$ and
-  - a set of constraints $\ovl{a}$ over $x$.
-  - This type semantically describes all objects that fulfill
-    $\ovl{a}$.
-- This can be seen like a refinement type over objects.
-  - In the "language" of refinement types: $\refT{x}{\mathtt{Object}}{\ovl{a}}$.
-  - Since in DCC we are on the type level only concerned with objects and their structure
-    the types omit the $\tau$ part that refinement types usually incorporate.
-  - We can do this since that actual class an object belongs to (as well as inheritance)
-    is handled through the constraint system.
-- semantically DCCs types behave similar to refinement types
-- \[ \llbracket \type{x}{\ovl{a}} \rrbracket =    % TODO ↓ the entails check doesn't really make sense, but how can we transport the message of it?
-       \{ o | o \in \mathsf{Object} \land \entails{o}{\ovl{a}_{\sub{x}{o}}} \} \]
-- E.g. $\refT{n}{\mathtt{Int}}{n>0}$ would translate to
-       $\type{n}{\instanceOf{n}{\mathtt{Int}, n>0}}$
-  - ignoring the fact that $n>0$ is not a refinement of the structure of objects
-    and therefore not part of the constraint language used in DCC
+% - A type in DCC $\type{x}{\ovl{a}}$ consists of
+%   - an identifier $x$ and
+%   - a set of constraints $\ovl{a}$ over $x$.
+%   - This type semantically describes all objects that fulfill
+%     $\ovl{a}$.
+% - This can be seen like a refinement type over objects.
+%   - In the "language" of refinement types: $\refT{x}{\mathsf{Object}}{\ovl{a}}$.
+%   - Since in DCC we are on the type level only concerned with objects and their structure
+%     the types omit the $\tau$ part that refinement types usually incorporate.
+%   - We can do this since that actual class an object belongs to (as well as inheritance)
+%     is handled through the constraint system.
+% - semantically DCCs types behave similar to refinement types
+% - \[ \llbracket \type{x}{\ovl{a}} \rrbracket = 
+%        \{ o | o \in \mathsf{Object} \land \entails{OC(x,o)}{\ovl{a}} \} \]
+% - E.g. $\refT{n}{\mathtt{Int}}{n>0}$ would translate to
+%        $\type{n}{\instanceOf{n}{\mathtt{Int}, n>0}}$
+%   - ignoring the fact that $n>0$ is not a refinement of the structure of objects
+%     and therefore not part of the constraint language used in DCC
+%
+In DCC a type $\type{x}{\ovl{a}}$ consist of
+1) an identifier $x$ and
+2) a set of constraints $\ovl{a}$ over $x$.
+Semantically, such a type describes all objects
+that fulfill constraints $\ovl{a}$.
+This can be seen as a refinement type over objects
+$\refT{x}{\mathsf{Object}}{\ovl{a}}$.
+E.g. $\refT{n}{\mathtt{Int}}{n>0}$ would translate to
+$\type{n}{\instanceOf{n}{\mathtt{Int}, n>0}}$,
+ignoring the fact that there is a non-structural constraint $n>0$.
+
+Since DCCs types are only concerned with objects and their structure
+we omit the $\mathsf{Object}$ type in the type syntax
+and instead of a generic formulae $\varphi$
+we have a set of constraints $\ovl{a}$.
+This is possible, since the class an object belongs to (as well as inheritance)
+is handled through the constraint system.
+Semantically, a DCC type behaves similar to a refinement type as statet previously and
+describes objects that conform to the constraints of the type,
+more formally:
+\[
+  \llbracket \type{x}{\ovl{a}} \rrbracket = 
+    \{ o | o \in \mathsf{Object} \land \entails{OC(x,o)}{\ovl{a}} \}
+\]
 
 \subsection{DCC refinement limitations}
 - refinements in refinement types are usually formulae
@@ -1152,6 +1187,14 @@ Refining objects of class $C$ to adhere to $\ovl{a}$.
   - $a_1,a_2,...,a_n$ to $a_1 \land a_2 \land ... \land a_n$
   - more general $\ovl{a}$ to $\bigwedge_i \mathsf{SMT}(a_i)$
     - if $\ovl{a}=\epsilon$, to $true$
+
+\subsection{Subtyping}
+- semnatic subtyping for types
+  - $\tau_1 <: \tau_2$ iff $\llbracket\tau_1\rrbracket \subseteq \llbracket\tau_2\rrbracket$
+- e.g. $\refT{i}{\mathtt{Int}}{i>0} <: \refT{i}{\mathtt{Int}}{i \geq 0}$
+- the same is true for DCCs types
+- e.g. $\type{x}{x.f::\Nat} <: \type{x}{x.f::\Nat, x.g::Nat}$ %TODO: semantically not really?
+- e.g. $\type{x}{x.f::\Zero} <: \type{x}{x.f::\Nat}$ %TODO: if zero <: nat
 
 \subsection{future work}
 - extending the expressiveness of the constraints
