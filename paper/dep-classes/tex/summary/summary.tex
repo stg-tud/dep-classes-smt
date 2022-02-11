@@ -1179,28 +1179,47 @@ more formally:
 \]
 
 \subsection{DCC refinement limitations}
-- refinements in refinement types are usually formulae
-- in DCC we have set of constraints
-- and all of those need to be fulfilled simultaneously
-- this limits refinements in DCC to be a big conjunction
-- interestingly, this is exactly how we translate it in the SMT encoding
-  - $a_1,a_2,...,a_n$ to $a_1 \land a_2 \land ... \land a_n$
-  - more general $\ovl{a}$ to $\bigwedge_i \mathsf{SMT}(a_i)$
-    - if $\ovl{a}=\epsilon$, to $true$
+% - refinements in refinement types are usually formulae
+% - in DCC we have set of constraints
+% - and all of those need to be fulfilled simultaneously
+% - this limits refinements in DCC to be a big conjunction
+% - interestingly, this is exactly how we translate it in the SMT encoding
+%   - $a_1,a_2,...,a_n$ to $a_1 \land a_2 \land ... \land a_n$
+%   - more general $\ovl{a}$ to $\bigwedge_i \mathsf{SMT}(a_i)$
+%     - if $\ovl{a}=\epsilon$, to $true$
+%
+Refinement types usually use formulae for their refinement (with varying restrictions).
+In DCC we the refinements are limited to a set of (structural) constraints
+and all of those need to be fulfilled simultaneously.
+This is equivalent to a big conjunction in the language of predicate logic.
 
-\subsection{Subtyping}
-- semnatic subtyping for types
-  - $\tau_1 <: \tau_2$ iff $\llbracket\tau_1\rrbracket \subseteq \llbracket\tau_2\rrbracket$
-- e.g. $\refT{i}{\mathtt{Int}}{i>0} <: \refT{i}{\mathtt{Int}}{i \geq 0}$
-- the same is true for DCCs types
-- e.g. $\type{x}{x.f::\Nat} <: \type{x}{x.f::\Nat, x.g::Nat}$ %TODO: semantically not really?
-- e.g. $\type{x}{x.f::\Zero} <: \type{x}{x.f::\Nat}$ %TODO: if zero <: nat
+Interestingly, this is exactly how the translation in the SMT encoding works.
+E.g. a set of constraints $(a_1, a_2, a_3)$ gets translated to
+$(\mathsf{SMT}(a_1) \land \mathsf{SMT}(a_2) \land \mathsf{SMT}(a_3))$
+or more generally $\ovl{a}$ translates to $\bigwedge_i \mathsf{SMT}(a_i)$.
+The empty set of constraints $\epsilon$ translates to $true$.
+
+% \subsection{Subtyping}
+% - semnatic subtyping for types
+%   - $\tau_1 <: \tau_2$ iff $\llbracket\tau_1\rrbracket \subseteq \llbracket\tau_2\rrbracket$
+% - e.g. $\refT{i}{\mathtt{Int}}{i>0} <: \refT{i}{\mathtt{Int}}{i \geq 0}$
+% - the same is true for DCCs types
+% - e.g. $\type{x}{x.f::\Nat} <: \type{x}{x.f::\Nat, x.g::Nat}$ %TODO: semantically not really?
+% - e.g. $\type{x}{x.f::\Zero} <: \type{x}{x.f::\Nat}$ %TODO: if zero <: nat
 
 \subsection{future work}
-- extending the expressiveness of the constraints
-  to be more in line with refinement types
-- turn the set of constraints into an actual formulae
-  - allow negation, disjunction, etc
-- add more kinds of constraints to not only have refinements on the structure of objects
+% - extending the expressiveness of the constraints
+%   to be more in line with refinement types
+% - turn the set of constraints into an actual formulae
+%   - allow negation, disjunction, etc
+% - add more kinds of constraints to not only have refinements on the structure of objects
+%
+A possible direction for future work is to extend the expressiveness
+of the refinements (constraint system). There are two paths to extend upon:
+\begin{enumerate}
+  \item transform the strict conjunctive form of the current constraints to
+        support a wider range of operations through support for negation etc.
+  \item add new kinds of constraints that are not neccecarily structural.
+\end{enumerate}
 
 \end{document}
