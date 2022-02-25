@@ -1174,9 +1174,14 @@ Semantically, a DCC type behaves similar to a refinement type as statet previous
 describes objects that conform to the constraints of the type,
 more formally:
 \[
-  \llbracket \type{x}{\ovl{a}} \rrbracket = 
-    \{ o | o \in \mathsf{Object} \land \entails{OC(x,o)}{\ovl{a}} \}
+  \semantics{\type{x}{\ovl{a}}}{h} = 
+    \{ o | o \in \mathsf{Object} \land \entails{HC(h), OC(x,o)}{\ovl{a}} \}
 \]
+% \[
+%   \llbracket \type{x}{\ovl{a}} \rrbracket_{h} = 
+%     \{ o | o \in \mathsf{Object} \land \entails{HC(h[\heap{x}{o})]}{\ovl{a}} \}
+% \]
+where $h$ is a heap under which the type should be evaluated.
 
 \subsection{DCC refinement limitations}
 % - refinements in refinement types are usually formulae
@@ -1199,13 +1204,21 @@ $(\mathsf{SMT}(a_1) \land \mathsf{SMT}(a_2) \land \mathsf{SMT}(a_3))$
 or more generally $\ovl{a}$ translates to $\bigwedge_i \mathsf{SMT}(a_i)$.
 The empty set of constraints $\epsilon$ translates to $true$.
 
-% \subsection{Subtyping}
-% - semnatic subtyping for types
-%   - $\tau_1 <: \tau_2$ iff $\llbracket\tau_1\rrbracket \subseteq \llbracket\tau_2\rrbracket$
-% - e.g. $\refT{i}{\mathtt{Int}}{i>0} <: \refT{i}{\mathtt{Int}}{i \geq 0}$
-% - the same is true for DCCs types
-% - e.g. $\type{x}{x.f::\Nat} <: \type{x}{x.f::\Nat, x.g::Nat}$ %TODO: semantically not really?
-% - e.g. $\type{x}{x.f::\Zero} <: \type{x}{x.f::\Nat}$ %TODO: if zero <: nat
+\subsection{Subtyping}
+We can describe the semantic behaviour of subtyping/subsumption.
+\[
+  c \vdash \type{x}{\ovl{a}} <: \type{x}{\ovl{b}}
+  \Leftrightarrow
+  \entails{c,b}{a}
+\]
+\[
+  c \vdash \type{x}{\ovl{a}} <: \type{x}{\ovl{b}}
+  \Leftrightarrow
+  \forall h.~\entails{c}{HC(h)} \land \semantics{\type{x}{\ovl{a}}}{h} \subseteq \semantics{\type{x}{\ovl{b}}}{h}
+\]
+
+%E.g. $\type{x}{\instanceOf{x.f}{\Nat}} <: \type{x}{\instanceOf{x.f}{\Nat}, \instanceOf{x.g}{\Nat}}$
+%or $\type{x}{\instanceOf{x}{\Zero}} <: \type{x}{\instanceOf{x}{\Nat}}$.
 
 \subsection{future work}
 % - extending the expressiveness of the constraints
