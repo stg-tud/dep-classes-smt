@@ -58,4 +58,10 @@ object Program {
     case ConstraintEntailment(x, ctx, InstanceOf(y, cls1)) :: rest if x==y && cls1==cls => ConstraintEntailment(x, ctx, InstanceOf(x, cls)) :: GetMatchingConstraintEntailments(rest, cls)
     case _ :: rest => GetMatchingConstraintEntailments(rest, cls)
   }
+
+//  def ConstructorDeclarations(p: Program): List[ConstructorDeclaration] =
+//    p.filter(_.isInstanceOf[ConstructorDeclaration]).asInstanceOf[List[ConstructorDeclaration]]
+//
+//  def ConstraintEntailments(p: Program): List[ConstraintEntailment] =
+//    p.filter(_.isInstanceOf[ConstraintEntailment]).asInstanceOf[List[ConstraintEntailment]]
 }

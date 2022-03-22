@@ -1,7 +1,9 @@
+import dcc.DCC
+import dcc.DCC.Heap
 import dcc.entailment.algorithmic.AlgorithmicSystem
 import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
-import dcc.program.{BooleanExpressions, NaturalNumbers}
-import dcc.program.NaturalNumbers
+import dcc.interpreter.Interpreter
+import dcc.program.{BooleanExpressions, NaturalNumbers, NumericExpressions}
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
@@ -287,4 +289,21 @@ object Foo extends App {
   // This is only useful with the extended Nat program
 //  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("flag", "x"))))) // This should work. It actually does, but does so by accident. (see previous error with constructors with too many arguments)
 //  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x"), ("flag", "x"))))) // This should fail, as usefulProperty is required by the constructor to be a Zero. But it doesn't as of the previous error.
+
+  println("\n\n\n approx:")
+  chk.approx(Type("x", List(InstanceOf("x", "Nat"))))
+
+  println("\n\nAST:")
+  NumericExpressions.program.foreach(println)
+
+  val astChecker = new InferenceChecker(NumericExpressions.program, EntailmentSort.GroundPathDepthLimit)
+  val astInterp = new Interpreter(NumericExpressions.program, EntailmentSort.GroundPathDepthLimit)
+
+  val heap: Heap = Map(
+    Id(Symbol("zero")) -> (Id(Symbol("Zero")), List()),
+    Id(Symbol("one")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("zero"))))),
+    Id(Symbol("two")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("one"))))))
+
+//  println(s"AST typechecks: ${astChecker.typeCheck}")
+//  println(s"eval(new |2|): ${astInterp.execute(heap, MethodCall("eval", ObjectConstruction("Lit", List(("value", "two")))))}")
 }

@@ -28,7 +28,7 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
           val y = freshVariable()
           // b contains all possible instances of x.f
           // e.g. if x.f is a Zero, it will contain x.f::Zero and x.f::Nat
-          // TODO: only take the most specific one?
+          // TODO: only take the most specific one? (don't need, as the types can contain more information e.g. all class instances the expression e belongs to)
           val b = classes.filter(cls => entailment.entails(context ++ a, InstanceOf(FieldPath(x, f), cls))) map (cls => InstanceOf(y, cls))
           // TODO: for each instance, if it's a concrete class also add the fields?
 

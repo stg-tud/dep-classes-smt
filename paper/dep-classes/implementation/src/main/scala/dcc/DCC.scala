@@ -9,6 +9,8 @@ object DCC {
   type Obj = (Id, List[(Id, Id)])
   type Heap = Map[Id, Obj]
 
+  def EmptyHeap: Heap = Map()
+
   // Heap Constraints
   def HC(heap: Heap): List[Constraint] = heap.flatMap{case (x, o) => OC(x, o)}.toList
   //heap.map{case (x, o) => OC(x, o)}.flatten.toList

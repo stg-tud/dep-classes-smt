@@ -2,8 +2,8 @@ package dcc.types
 
 import dcc.Util.substitute
 import dcc.entailment.EntailmentSort.EntailmentSort
-import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, Id, InstanceOf, MethodImplementation}
-import dcc.syntax.Program.Program
+import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path}
+import dcc.syntax.Program.{DefinedFields, Program}
 
 import scala.language.postfixOps
 
@@ -15,6 +15,58 @@ trait Checker {
   def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean
   def typeCheck(declaration: Declaration): Boolean
   def typeCheck: Boolean
+
+  def approx(t: Type): Set[Type] = {
+    var S: Set[Type] = Set(t)
+    var P:Set[Path] = Set(t.x)
+
+    var i: Int = 1 // TODO: dev loop break
+
+    while (P.nonEmpty && i <= 1) {
+      i += 1
+
+      for (p <- P) {
+        var R: Set[Id] = Set.empty
+
+        for (cls <- classes) {
+//          if (!R.contains(cls) && S.exists(_.constraints.exists(_.classAppears(cls)))) {
+          if (!R.contains(cls) && S.exists(_.constraints.contains(InstanceOf(p, cls)))) {
+            R = R + cls
+
+            val apprClass: Set[Type] = S.filter(_.constraints.contains(InstanceOf(p, cls)))
+            apprClass.foreach{
+              case Type(x, a) =>
+
+                program.foreach {
+                  case ConstructorDeclaration(`cls`, y, b) =>
+                    S = S + Type(x, InstantiatedBy(p, cls) :: a ++ substitute(y, p, b))
+                  case ConstraintEntailment(y, b, InstanceOf(z, `cls`)) if y==z =>
+                    S = S + Type(x, a ++ substitute(y, p, b))
+                  case _ =>
+                }
+            }
+
+            //val apprEmpty: Set[Type] = ???
+          }
+        }
+      }
+
+      var tmp: Set[Path] = Set.empty
+
+      P.foreach{
+        p =>
+          //val fields: Set[Id] = S.map(_.constraints) // TODO: Constraint.fetFieldsWithBase(p)
+          val fields = DefinedFields(program).filter(f => S.exists(_.constraints.exists(_.containedPaths.contains(FieldPath(p, f)))))
+
+          fields.foreach { f => tmp += FieldPath(p, f) }
+
+      }
+      P = tmp
+    }
+
+    S.foreach(println)
+    S
+  }
 
   // Method Type
   def mType(m: Id): List[(Type, Type)] =
