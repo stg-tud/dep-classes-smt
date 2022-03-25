@@ -33,6 +33,7 @@ trait Checker {
           if (!R.contains(cls) && S.exists(_.constraints.contains(InstanceOf(p, cls)))) {
             R = R + cls
 
+            // refine Appr-Class
             val apprClass: Set[Type] = S.filter(_.constraints.contains(InstanceOf(p, cls)))
             apprClass.foreach{
               case Type(x, a) =>
@@ -46,6 +47,10 @@ trait Checker {
                 }
             }
 
+            // refine Appr-Empty
+            // TODO: remove entry or set S to empty?
+            //  → should be set S to empty set
+            //  → actually not, should be remove type from set if Appr-Empty applies?
             //val apprEmpty: Set[Type] = ???
           }
         }
@@ -55,7 +60,7 @@ trait Checker {
 
       P.foreach{
         p =>
-          //val fields: Set[Id] = S.map(_.constraints) // TODO: Constraint.fetFieldsWithBase(p)
+          //val fields: Set[Id] = S.map(_.constraints) // TODO: Constraint.getFieldsWithBase(p)
           val fields = DefinedFields(program).filter(f => S.exists(_.constraints.exists(_.containedPaths.contains(FieldPath(p, f)))))
 
           fields.foreach { f => tmp += FieldPath(p, f) }
