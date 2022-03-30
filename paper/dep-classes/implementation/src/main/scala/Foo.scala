@@ -290,6 +290,22 @@ object Foo extends App {
 //  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("flag", "x"))))) // This should work. It actually does, but does so by accident. (see previous error with constructors with too many arguments)
 //  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x"), ("flag", "x"))))) // This should fail, as usefulProperty is required by the constructor to be a Zero. But it doesn't as of the previous error.
 
+  val family: Program = List(
+    ConstructorDeclaration("Node", "x", Nil),
+    ConstructorDeclaration("Edge", "x", List(InstanceOf(FieldPath("x", "n1"), "Node"), InstanceOf(FieldPath("x", "n2"), "Node"))),
+    ConstructorDeclaration("Graph", "x", List(InstanceOf(FieldPath("x", "node"), "Node"), InstanceOf(FieldPath("x", "edge"), "Edge")))
+  )
+
+  val family2: Program = List(
+    ConstructorDeclaration("Node", "x", Nil),
+    ConstructorDeclaration("Edge", "x", List(InstanceOf(FieldPath("x", "n1"), "Node"), InstanceOf(FieldPath("x", "n2"), "Node"))),
+    ConstructorDeclaration("OnOffNode", "x", Nil),
+    ConstructorDeclaration("OnOffEdge", "x", List(InstanceOf(FieldPath("x", "n1"), "Node"), InstanceOf(FieldPath("x", "n2"), "Node"), InstanceOf(FieldPath("x", "enabled"), "Boolean"))),
+    ConstraintEntailment("x", List(InstanceOf("x", "OnOffNode"), InstanceOf(FieldPath("x", "n1"), "Node"), InstanceOf(FieldPath("x", "n2"), "Node")), InstanceOf("x", "Node")),
+    ConstraintEntailment("x", List(InstanceOf("x", "OnOffEdge"), InstanceOf(FieldPath("x", "enabled"), "Boolean")), InstanceOf("x", "Edge")),
+    MethodImplementation("touches", "x", List(), Type("y", List(InstanceOf("y", "Boolean"))), "true")
+  )
+
   println("\n\n\n approx:")
   chk.approx(Type("x", List(InstanceOf("x", "Nat"))))
 

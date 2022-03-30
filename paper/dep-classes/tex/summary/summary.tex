@@ -1239,5 +1239,21 @@ of the refinements (constraint system). There are two paths to extend upon:
 %               5.5.4 Checking Method Completeness and Uniqueness
 % TODO: family polymorphism 
 % - what is the system practically good for
+% - path-dependent types vs refinement types
 % TODO: look at examples (unpublished/thesis)
+% add vaidas impl as repo
+% look into vaidas impl -> my impl (java to scala)
+%    features wise
+% (find) motivating example / use case
+% send repo link7
+
+% \section{Family Polymorphism}
+% Example from ernst01
+% \begin{align*}
+%   &\constructorDeclaration{\Node}{x}{\epsilon}\\
+%   &\constructorDeclaration{\Edge}{x}{\instanceOf{x.n_1}{\Node}, \instanceOf{x.n_2}{\Node}}\\
+%   &\constructorDeclaration{\Graph}{x}{\instanceOf{x.node}{\Node}, \instanceOf{x.edge}{\Edge}}\\
+%   &\constructorDeclaration{\OnOffGraph}{x}{}
+% \end{align*}
+
 \end{document}
