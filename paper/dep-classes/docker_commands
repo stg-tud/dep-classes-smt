@@ -25,3 +25,11 @@ docker run -d \
 > -v /PATH/TO/HOST/REPO/paper/dep-classes/measures:/measures \
 > IMAGE sleep infinity
 
+
+# detaching from a running container
+ctrl-p, ctrl-q
+
+# sbt
+sbt compile                  # to compile
+sbt run                      # to run the program, gives a selection of available entrypoints if multiple ones are available
+sbt "runMain path.to.class"  # to run a specific executable class
