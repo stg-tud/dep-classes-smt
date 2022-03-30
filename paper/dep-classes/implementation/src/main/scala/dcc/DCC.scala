@@ -11,6 +11,25 @@ object DCC {
 
   def EmptyHeap: Heap = Map()
 
+  def ObjToString(o: Obj): String = o match {
+    case (cls, Nil) => cls.toString
+//    case (cls, fields) => s"$cls(${fields.foldRight(""){ case (f, rest) => s"${f._1}=${f._2}, $rest"}.dropRight(2)})"
+//    case (cls, fields) => s"$cls(${fields.foldRight("") {
+//      case (f, rest) =>
+//        if (rest.isEmpty)
+//          s"${f._1}=${f._2}"
+//        else
+//          s"${f._1}=${f._2}, $rest"
+//    }})"
+    case (cls, fields) => s"$cls(${fields.foldRight(""){
+      case (f, "") => s"${f._1}=${f._2}"
+      case (f, rest) => s"${f._1}=${f._2}, $rest"
+    }})"
+  }
+
+  def HeapToString(heap: Heap): String =
+    s"{\n${heap.foldRight(""){ case ((x, obj), rest) => s"\t$x → ${ObjToString(obj)}\n$rest" }}}"
+
   // Heap Constraints
   def HC(heap: Heap): List[Constraint] = heap.flatMap{case (x, o) => OC(x, o)}.toList
   //heap.map{case (x, o) => OC(x, o)}.flatten.toList
