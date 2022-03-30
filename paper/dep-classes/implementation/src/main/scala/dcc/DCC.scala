@@ -9,7 +9,9 @@ object DCC {
   type Obj = (Id, List[(Id, Id)])
   type Heap = Map[Id, Obj]
 
-  def EmptyHeap: Heap = Map()
+  def NoArgsObj(cls: Id): Obj = (cls, Nil)
+
+  val EmptyHeap: Heap = Map()
 
   def ObjToString(o: Obj): String = o match {
     case (cls, Nil) => cls.toString
