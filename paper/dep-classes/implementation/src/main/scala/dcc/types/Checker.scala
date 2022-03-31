@@ -1,8 +1,9 @@
 package dcc.types
 
 import dcc.Util.substitute
+import dcc.entailment.EntailmentFactory
 import dcc.entailment.EntailmentSort.EntailmentSort
-import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path}
+import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence}
 import dcc.syntax.Program.{DefinedFields, Program}
 
 import scala.language.postfixOps
@@ -10,6 +11,7 @@ import scala.language.postfixOps
 trait Checker {
   val program: Program
   val ENTAILMENT: EntailmentSort
+  val debug: Int
 
   def typeOf(context: List[Constraint], expression: Expression): Either[Type, List[TError]]
   def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean
@@ -48,10 +50,10 @@ trait Checker {
             }
 
             // refine Appr-Empty
-            // TODO: remove entry or set S to empty?
-            //  → should be set S to empty set
-            //  → actually not, should be remove type from set if Appr-Empty applies?
-            //val apprEmpty: Set[Type] = ???
+            S = S.foldRight(Set.empty: Set[Type]) {
+              case (t, rest) if approxEmptyApplicable(t) => rest
+              case (t, rest) => rest + t
+            }
           }
         }
       }
@@ -71,6 +73,32 @@ trait Checker {
 
     S.foreach(println)
     S
+  }
+
+  private def approxEmptyApplicable(t: Type): Boolean = t match {
+    //case Type(x, a) =>
+    case Type(_, a) =>
+      val instances: List[InstantiatedBy] = a.filter(_.isInstanceOf[InstantiatedBy]).asInstanceOf[List[InstantiatedBy]]
+
+      instances.find(_approxEmptyApplicable(a, instances, _)) match {
+        case None => false
+        case Some(_) => true
+      }
+  }
+
+  private def _approxEmptyApplicable(context: List[Constraint], instances: List[InstantiatedBy], instance: InstantiatedBy): Boolean = instance match {
+    case InstantiatedBy(p, c) =>
+      //val otherInstances = instances.filter(inst => if (inst.cls!=c) true else false)
+
+      val entailment = EntailmentFactory(ENTAILMENT)(program, debug)
+
+      instances.find {
+        case InstantiatedBy(_, `c`) => false
+        case InstantiatedBy(p1, _) if entailment.entails(context, PathEquivalence(p, p1)) => true
+      } match {
+        case None => false
+        case Some(_) => true
+      }
   }
 
   // Method Type

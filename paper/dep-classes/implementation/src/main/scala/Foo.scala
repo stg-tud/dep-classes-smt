@@ -309,16 +309,16 @@ object Foo extends App {
   println("\n\n\n approx:")
   chk.approx(Type("x", List(InstanceOf("x", "Nat"))))
 
-  println("\n\nAST:")
-  NumericExpressions.program.foreach(println)
-
-  val astChecker = new InferenceChecker(NumericExpressions.program, EntailmentSort.GroundPathDepthLimit)
-  val astInterp = new Interpreter(NumericExpressions.program, EntailmentSort.GroundPathDepthLimit)
-
-  val heap: Heap = Map(
-    Id(Symbol("zero")) -> (Id(Symbol("Zero")), List()),
-    Id(Symbol("one")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("zero"))))),
-    Id(Symbol("two")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("one"))))))
+//  println("\n\nAST:")
+//  NumericExpressions.program.foreach(println)
+//
+//  val astChecker = new InferenceChecker(NumericExpressions.program, EntailmentSort.GroundPathDepthLimit)
+//  val astInterp = new Interpreter(NumericExpressions.program, EntailmentSort.GroundPathDepthLimit)
+//
+//  val heap: Heap = Map(
+//    Id(Symbol("zero")) -> (Id(Symbol("Zero")), List()),
+//    Id(Symbol("one")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("zero"))))),
+//    Id(Symbol("two")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("one"))))))
 
 //  println(s"AST typechecks: ${astChecker.typeCheck}")
 //  println(s"eval(new |2|): ${astInterp.execute(heap, MethodCall("eval", ObjectConstruction("Lit", List(("value", "two")))))}")

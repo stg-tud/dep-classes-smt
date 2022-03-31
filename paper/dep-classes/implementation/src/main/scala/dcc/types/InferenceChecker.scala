@@ -9,7 +9,7 @@ import dcc.syntax.Util.commaSeparate
 
 // infers the most specific/precise type of an expression
 // TODO: add debug output
-class InferenceChecker(override val program: Program, override val ENTAILMENT: EntailmentSort, debug: Int = 0) extends Checker {
+class InferenceChecker(override val program: Program, override val ENTAILMENT: EntailmentSort, override val debug: Int = 0) extends Checker {
   private val entailment = EntailmentFactory(ENTAILMENT)(program, debug)
 
   // TODO: overhaul to return the most specific type

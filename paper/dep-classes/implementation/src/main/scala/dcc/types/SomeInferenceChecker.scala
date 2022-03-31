@@ -8,7 +8,7 @@ import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, 
 import dcc.syntax.Util.commaSeparate
 
 // Only infers some type for an expression
-class SomeInferenceChecker(override val program: Program, override val ENTAILMENT: EntailmentSort, debug: Int = 0) extends Checker {
+class SomeInferenceChecker(override val program: Program, override val ENTAILMENT: EntailmentSort, override val debug: Int = 0) extends Checker {
   val entailment: Entailment = EntailmentFactory(ENTAILMENT)(program, debug)
 
   override def typeOf(context: List[Constraint], expression: Expression): Either[Type, List[TError]] = expression match {

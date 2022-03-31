@@ -6,7 +6,7 @@ import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.Program.Program
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldAccess, FieldPath, Id, InstanceOf, InstantiatedBy, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
 
-class MasterThesisChecker(override val program: Program, override val ENTAILMENT: EntailmentSort) extends Checker {
+class MasterThesisChecker(override val program: Program, override val ENTAILMENT: EntailmentSort, override val debug: Int = 0) extends Checker {
   private val entailment: Entailment = EntailmentFactory(ENTAILMENT)(program, 0)
 
   override def typeOf(context: List[Constraint], expression: Expression): Either[Type, List[TError]] = typeAssignment(context, expression) match {
