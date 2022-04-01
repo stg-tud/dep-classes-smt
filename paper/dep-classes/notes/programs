@@ -1,0 +1,50 @@
+AST
+
+Zero(x. ϵ)
+∀x. x :: Zero => x :: Nat
+Succ(x. x.p :: Nat)
+∀x. x :: Succ, x.p :: Nat => x :: Nat
+prev(x. x :: Nat): [y. y :: Nat]
+prev(x. x :: Zero): [y. y :: Nat] := x
+prev(x. x :: Succ, x.p :: Nat): [y. y :: Nat] := x.p
+Lit(x. x.value :: Nat)
+Plus(x. x.l :: Exp, x.r :: Exp)
+∀x. x :: Lit, x.value :: Nat => x :: Exp
+∀x. x :: Plus, x.l :: Exp, x.r :: Exp => x :: Exp
+eval(x. x :: Exp): [y. y :: Exp]
+eval(x. x :: Lit, x.value :: Nat): [y. y :: Exp] :=
+  x
+eval(x. x :: Plus, x.l :: Lit, x.r :: Lit, x.l.value :: Nat, x.l.value :: Zero): [y. y :: Exp] :=
+  x.l
+eval(x. x :: Plus, x.l :: Lit, x.r :: Lit, x.l.value :: Nat, x.l.value :: Succ, x.l.value.p :: Nat): [y. y :: Exp] :=
+  eval(new Plus(l ≡ new Lit(value ≡ new Succ(p ≡ x.l.value)), r ≡ new Lit(value ≡ prev(x.r.value))))
+eval(x. x :: Plus, x.l :: Exp, x.r :: Plus, x.r.l :: Exp, x.r.r :: Exp): [y. y :: Exp] :=
+  eval(new Plus(l ≡ x.l, r ≡ eval(x.r)))
+eval(x. x :: Plus, x.l :: Plus, x.r :: Exp, x.l.l :: Exp, x.l.r :: Exp): [y. y :: Exp] :=
+  eval(new Plus(l ≡ eval(x.l), r ≡ x.r))
+
+
+
+Arith (depclsj1)
+
+Zero(x. ϵ)
+Succ(x. x.p :: Nat)
+Neg(x. x.n :: Succ)
+∀x. x :: Zero => x :: Nat
+∀x. x :: Succ, x.p :: Nat => x :: Nat
+∀x. x :: Neg, x.n :: Succ => x :: Nat
+∀x. x :: Nat => x :: Int
+n0(x. ): [y. y :: Zero] := new Zero()
+n1(x. ): [y. y :: Succ, y.p :: Zero] := new Succ(p ≡ new Zero())
+neg(x. x :: Int): [y. y :: Int]
+neg(x. x :: Zero): [y. y :: Int] := n0(x)
+neg(x. x :: Succ): [y. y :: Int] := new Neg(n ≡ x)
+neg(x. x :: Neg, x.n :: Nat): [y. y :: Int] := x.n
+prev(x. x :: Int): [y. y :: Int]
+prev(x. x :: Zero): [y. y :: Int] := neg(n1(x))
+prev(x. x :: Succ, x.p :: Nat): [y. y :: Int] := x.p
+prev(x. x :: Neg, x.n :: Nat): [y. y :: Int] := neg(new Succ(p ≡ x.n))
+succ(x. x :: Int): [y. y :: Int]
+succ(x. x :: Nat): [y. y :: Int] := new Succ(p ≡ x)
+succ(x. x :: Neg, x.n :: Succ, x.n.p :: Zero): [y. y :: Int] := n0(x)
+succ(x. x :: Neg, x.n :: Succ, x.n.p :: Succ, x.n.p.p :: Nat): [y. y :: Int] := new Neg(n ≡ x.n.p)
