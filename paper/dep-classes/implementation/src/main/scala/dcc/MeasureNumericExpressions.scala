@@ -1,6 +1,6 @@
 package dcc
 
-import dcc.DCC.{Heap, HeapObj, HeapToString, NoArgsObj, ObjToString, UnaryArgObj}
+import dcc.DCC.{Heap, HeapObj, HeapToString, NoArgsObj, ObjToString}
 import dcc.entailment.EntailmentSort
 import dcc.interpreter.Interpreter
 import dcc.program.NumericExpressions
@@ -25,13 +25,13 @@ object MeasureNumericExpressions extends App {
 
   private val litHeap: Heap = Map(
     Id(Symbol("n0")) -> NoArgsObj("Zero"),
-    Id(Symbol("n1")) -> UnaryArgObj("Succ", "p", "n0"),
+    Id(Symbol("n1")) -> HeapObj("Succ")("p")("n0"),
 //    Id(Symbol("n2")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("n1"))))),
 //    Id(Symbol("n3")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("n2"))))),
 //    Id(Symbol("n4")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("n3"))))),
 //    Id(Symbol("n5")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("n4"))))),
 //    Id(Symbol("l0")) -> UnaryArgObj("Lit", "value", "n0"),
-    Id(Symbol("l1")) -> UnaryArgObj("Lit", "value", "n1"),
+    Id(Symbol("l1")) -> HeapObj("Lit")("value")("n1"),
     Id(Symbol("p-l1-l1")) -> HeapObj("Plus")("l", "r")("l1", "l1")
   )
 
