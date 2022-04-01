@@ -23,6 +23,19 @@ eval(x. x :: Plus, x.l :: Exp, x.r :: Plus, x.r.l :: Exp, x.r.r :: Exp): [y. y :
 eval(x. x :: Plus, x.l :: Plus, x.r :: Exp, x.l.l :: Exp, x.l.r :: Exp): [y. y :: Exp] :=
   eval(new Plus(l ≡ eval(x.l), r ≡ x.r))
 
+heap = {
+	n0 → Zero
+}
+interp(heap, new Lit(value ≡ n0)) = x1
+elapsed time = 315057 ms
+
+heap = {
+	n0 → Zero
+	l0 → Lit(value=n0)
+}
+interp(heap, new Plus(l ≡ l0, r ≡ l0)) = x2
+elapsed time = 6007766 ms
+
 
 
 Arith (depclsj1)

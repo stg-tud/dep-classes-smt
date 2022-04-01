@@ -55,7 +55,7 @@ object MeasureNumericExpressions extends App {
 
     if (h!=h1) {
       h1.filter { case (k, _) => !h.contains(k) }.foreach {
-        case (x, obj) => s"$x → ${ObjToString(obj)}"
+        case (x, obj) => println(s"$x → ${ObjToString(obj)}")
       }
     }
 
