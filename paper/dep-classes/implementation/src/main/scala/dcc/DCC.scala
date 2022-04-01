@@ -10,6 +10,22 @@ object DCC {
   type Heap = Map[Id, Obj]
 
   def NoArgsObj(cls: Id): Obj = (cls, Nil)
+  def NoArgsObj(cls: String): Obj = (box(cls), Nil)
+  def UnaryArgObj(cls: Id, field: Id, location: Id): Obj = (cls, List((field, location)))
+  def UnaryArgObj(cls: String, field: String, location: String): Obj = (box(cls), List((box(field), box(location))))
+
+  //def HeapObj(cls: String): Obj = (box(cls), Nil)
+
+  def HeapObj(cls: String)(fields: String*)(locations: String*): Obj = {
+    //require(fields.size == locations.size, "supplied field and location numbers do not match")
+
+    val zip = fields.zip(locations)
+    val args = zip.map(x => (box(x._1), box(x._2)))
+
+    (Id(Symbol(cls)), args.toList)
+  }
+
+  private def box(s: String): Id = Id(Symbol(s))
 
   val EmptyHeap: Heap = Map()
 

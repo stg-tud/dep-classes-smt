@@ -1,10 +1,10 @@
 package dcc
 
-import dcc.DCC.{Heap, HeapToString, ObjToString}
+import dcc.DCC.{Heap, HeapObj, HeapToString, NoArgsObj, ObjToString, UnaryArgObj}
 import dcc.entailment.EntailmentSort
 import dcc.interpreter.Interpreter
 import dcc.program.NumericExpressions
-import dcc.syntax.{Expression, Id, MethodCall}
+import dcc.syntax.{Expression, Id, MethodCall, ObjectConstruction}
 import dcc.types.InferenceChecker
 import dcc.syntax.Implicit.StringToId
 
@@ -21,6 +21,22 @@ object MeasureNumericExpressions extends App {
     Id(Symbol("n3")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("n2"))))),
     Id(Symbol("n4")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("n3"))))),
     Id(Symbol("n5")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("n4")))))
+  )
+
+  private val litHeap: Heap = Map(
+    Id(Symbol("n0")) -> NoArgsObj("Zero"),
+    Id(Symbol("n1")) -> UnaryArgObj("Succ", "p", "n0"),
+//    Id(Symbol("n2")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("n1"))))),
+//    Id(Symbol("n3")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("n2"))))),
+//    Id(Symbol("n4")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("n3"))))),
+//    Id(Symbol("n5")) -> (Id(Symbol("Succ")), List((Id(Symbol("p")), Id(Symbol("n4"))))),
+//    Id(Symbol("l0")) -> UnaryArgObj("Lit", "value", "n0"),
+    Id(Symbol("l1")) -> UnaryArgObj("Lit", "value", "n1"),
+    Id(Symbol("p-l1-l1")) -> HeapObj("Plus")("l", "r")("l1", "l1")
+  )
+
+  private val zeroHeap: Heap = Map(
+    Id(Symbol("n0")) -> (Id(Symbol("Zero")), List())
   )
 
   private val minimalLiteralHeap: Heap = Map(
@@ -50,6 +66,11 @@ object MeasureNumericExpressions extends App {
   interpTest(natHeap, "n5")
   //interpTest(natHeap, ObjectConstruction("Succ", List(("p", "n5"))))
 
+  interpTest(zeroHeap, ObjectConstruction("Lit", List(("value", "n0"))))
+
   interpTest(minimalLiteralHeap, "l0")
   interpTest(minimalLiteralHeap, MethodCall("eval", "l0"))
+  interpTest(minimalLiteralHeap, ObjectConstruction("Plus", List(("l", "l0"), ("r", "l0"))))
+
+  interpTest(litHeap, MethodCall("eval", "p-l1-l1"))
 }

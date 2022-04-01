@@ -1,5 +1,5 @@
 import dcc.DCC
-import dcc.DCC.Heap
+import dcc.DCC.{Heap, HeapObj}
 import dcc.entailment.algorithmic.AlgorithmicSystem
 import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.interpreter.Interpreter
@@ -322,4 +322,25 @@ object Foo extends App {
 
 //  println(s"AST typechecks: ${astChecker.typeCheck}")
 //  println(s"eval(new |2|): ${astInterp.execute(heap, MethodCall("eval", ObjectConstruction("Lit", List(("value", "two")))))}")
+
+  println()
+  println(HeapObj("Foo")("bar")("baz"))
+  println(HeapObj("Foo")("f1", "f2", "f3")("o1", "o2", "o3"))
+
+  val l1 = List(1, 2, 3)
+  val l2 = List("a", "b", "c")
+
+  def foo(a: List[Int], b: List[String]): List[(Int, String)] = a.zip(b)
+  def bar(a: Int*)(b: String*): Seq[(Int, String)] = a.zip(b)
+  def baz(a: Int*)(b: Int*): Seq[(Int, Int)] = a.zip(b)
+
+  println(l1.zip(l2))
+  println(foo(l1, l2))
+  println(bar(l1: _*)(l2: _*))
+  println(bar(1, 2, 3)("a", "b", "c"))
+  println(baz(1,2,3)(4,5,6))
+
+  println(bar()())
+  println(bar(1, 2, 3)("a", "b"))
+  println(bar(1, 2)("a", "b", "c"))
 }
