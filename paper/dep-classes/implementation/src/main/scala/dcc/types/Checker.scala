@@ -18,13 +18,18 @@ trait Checker {
   def typeCheck(declaration: Declaration): Boolean
   def typeCheck: Boolean
 
-  def approx(t: Type): Set[Type] = {
+  /**
+    * Completeness approximation.
+    * @param t The type for which the approximation set will be generated
+    * @return The type approximation set
+    */
+  def generateTypeApproximationSet(t: Type, maxIterations: Int = 5): Set[Type] = {
     var S: Set[Type] = Set(t)
     var P:Set[Path] = Set(t.x)
 
-    var i: Int = 1 // TODO: dev loop break
+    var i: Int = 1
 
-    while (P.nonEmpty && i <= 1) {
+    while (P.nonEmpty && i <= maxIterations) {
       i += 1
 
       for (p <- P) {

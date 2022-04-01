@@ -307,7 +307,7 @@ object Foo extends App {
   )
 
   println("\n\n\n approx:")
-  chk.approx(Type("x", List(InstanceOf("x", "Nat"))))
+  chk.generateTypeApproximationSet(Type("x", List(InstanceOf("x", "Nat"))))
 
 //  println("\n\nAST:")
 //  NumericExpressions.program.foreach(println)
