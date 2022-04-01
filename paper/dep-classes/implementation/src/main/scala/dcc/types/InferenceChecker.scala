@@ -197,6 +197,7 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
     // TODO: add complete/unique
     //  requires some smt (or other) representation, as we would need to quantify over all heaps (inf)
 
+    // TODO: add error/debug output, maybe change result type to Either[True, TError]? or to (Boolean, Option[TError])
     methods.forall{ m =>
       val mTypes = mType(m)
       mTypes.forall{

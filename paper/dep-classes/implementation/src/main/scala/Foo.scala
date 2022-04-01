@@ -324,5 +324,5 @@ object Foo extends App {
 //  println(s"eval(new |2|): ${astInterp.execute(heap, MethodCall("eval", ObjectConstruction("Lit", List(("value", "two")))))}")
 
   val arith = new InferenceChecker(Arithmetic.program, EntailmentSort.GroundPathDepthLimit, debug=2)
-  arith.typeCheck
+  println(arith.typeCheck)
 }

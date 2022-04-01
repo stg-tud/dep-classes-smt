@@ -1,4 +1,7 @@
 object Baz extends App {
+  // https://www.geeksforgeeks.org/scala-parser-combinators/
+  // https://index.scala-lang.org/scala/scala-parser-combinators/scala-parser-combinators/2.1.1
+
   import scala.util.parsing.combinator._
 
   class Arith extends JavaTokenParsers {
