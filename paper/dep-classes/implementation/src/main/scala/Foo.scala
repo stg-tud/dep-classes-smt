@@ -1,9 +1,10 @@
+import collection.{Edge, InheritanceRelation}
 import dcc.DCC
 import dcc.DCC.{Heap, HeapObj}
 import dcc.entailment.algorithmic.AlgorithmicSystem
 import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.interpreter.Interpreter
-import dcc.program.{Arithmetic, BooleanExpressions, NaturalNumbers, NumericExpressions}
+import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions}
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
@@ -323,6 +324,25 @@ object Foo extends App {
 //  println(s"AST typechecks: ${astChecker.typeCheck}")
 //  println(s"eval(new |2|): ${astInterp.execute(heap, MethodCall("eval", ObjectConstruction("Lit", List(("value", "two")))))}")
 
-  val arith = new InferenceChecker(Arithmetic.program, EntailmentSort.GroundPathDepthLimit, debug=2)
-  println(arith.typeCheck)
+//  val arith = new InferenceChecker(Arithmetic.program, EntailmentSort.GroundPathDepthLimit, debug=2)
+//  println(arith.typeCheck)
+
+// TODO: typechecker
+//   - construct inheritance graph from program (entailment declarations)
+//   - use inheritance graph to minimize the needed class instance checks
+  println("\nLt:")
+  val lt = new InferenceChecker(Lt.program, EntailmentSort.GroundPathDepthLimit, debug = 2)
+  //println(lt.typeCheck)
+//  entailment: a.n1 :: Nat, a.n2 :: Zero |- a :: Lt
+//  type check for new Lt(n1 ≡ a.n1, n2 ≡ a.n2, b ≡ new False()) failed with List(Class Lt: couldn't assign a type to field n2, because variable 'a' is not available in context a.n1 :: Nat, a.n2 :: Zero, Class Lt: couldn't assign a type to field n1, because variable 'a' is not available in context a.n1 :: Nat, a.n2 :: Zero)
+//  false
+
+  val ltGraph = lt.inheritanceGraph
+  println("\nlt inheritance graph:\nnodes:")
+  ltGraph.nodes.foreach(node => println(s"\t${node.cls}"))
+  println("edges:")
+  ltGraph.edges.foreach {
+    case Edge(lhs, rhs, InheritanceRelation.Subtype) => println(s"${lhs.cls} <: ${rhs.cls}")
+    case Edge(lhs, rhs, InheritanceRelation.Supertype) => println(s"${lhs.cls} :> ${rhs.cls}")
+  }
 }

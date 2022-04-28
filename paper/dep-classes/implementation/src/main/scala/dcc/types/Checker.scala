@@ -1,11 +1,14 @@
 package dcc.types
 
+import collection.InheritanceRelation.{Subtype, Supertype}
+import collection.{Edge, InheritanceGraph, Node}
 import dcc.Util.substitute
 import dcc.entailment.EntailmentFactory
 import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence}
 import dcc.syntax.Program.{DefinedFields, Program}
 
+import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
 
 trait Checker {
@@ -100,6 +103,7 @@ trait Checker {
       instances.find {
         case InstantiatedBy(_, `c`) => false
         case InstantiatedBy(p1, _) if entailment.entails(context, PathEquivalence(p, p1)) => true
+        case _ => false // match may not be exhaustive. It would fail on the following input: InstantiatedBy(_, Id(_))
       } match {
         case None => false
         case Some(_) => true
@@ -138,5 +142,30 @@ trait Checker {
     case AbstractMethodDeclaration(m, _, _, _) => Some(m)
     case MethodImplementation(m, _, _, _, _) => Some(m)
     case _ => None
+  }
+
+  def inheritanceGraph: InheritanceGraph = {
+    val nodes: List[Node] = classes.map(Node)
+    val edges: ListBuffer[Edge] = new ListBuffer[Edge]()
+
+    for (declaration <- program) {
+      if(declaration.isInstanceOf[ConstraintEntailment]) {
+        val ConstraintEntailment(x: Id, as, InstanceOf(_, supertype)) = declaration
+
+        val subtypeCandidate = as.find {
+          case InstanceOf(`x`, _) => true
+          case _ => false
+        }
+
+        if(subtypeCandidate.isDefined) {
+          val InstanceOf(_, subtype) = subtypeCandidate.get
+
+          edges += Edge(Node(subtype), Node(supertype), Subtype)
+          edges += Edge(Node(supertype), Node(subtype), Supertype)
+        }
+      }
+    }
+
+    InheritanceGraph(nodes.toSet, edges.toSet)
   }
 }
