@@ -4,7 +4,7 @@ import dcc.DCC.{Heap, HeapObj}
 import dcc.entailment.algorithmic.AlgorithmicSystem
 import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.interpreter.Interpreter
-import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions}
+import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions, WitnessMethodCallFails, WitnessMethodCallSucceeds}
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
@@ -331,7 +331,7 @@ object Foo extends App {
 //   - use inheritance graph to minimize the needed class instance checks
   println("\nLt:")
   val lt = new InferenceChecker(Lt.program, EntailmentSort.GroundPathDepthLimit, debug = 2)
-  //println(lt.typeCheck)
+//  println(lt.typeCheck)
 //  entailment: a.n1 :: Nat, a.n2 :: Zero |- a :: Lt
 //  type check for new Lt(n1 ≡ a.n1, n2 ≡ a.n2, b ≡ new False()) failed with List(Class Lt: couldn't assign a type to field n2, because variable 'a' is not available in context a.n1 :: Nat, a.n2 :: Zero, Class Lt: couldn't assign a type to field n1, because variable 'a' is not available in context a.n1 :: Nat, a.n2 :: Zero)
 //  false
@@ -341,7 +341,23 @@ object Foo extends App {
   ltGraph.nodes.foreach(node => println(s"\t${node.cls}"))
   println("edges:")
   ltGraph.edges.foreach {
-    case Edge(lhs, rhs, InheritanceRelation.Subtype) => println(s"${lhs.cls} <: ${rhs.cls}")
-    case Edge(lhs, rhs, InheritanceRelation.Supertype) => println(s"${lhs.cls} :> ${rhs.cls}")
+    case Edge(lhs, rhs, InheritanceRelation.Subtype) => println(s"\t${lhs.cls} <: ${rhs.cls}")
+    case Edge(lhs, rhs, InheritanceRelation.Supertype) => println(s"\t${lhs.cls} :> ${rhs.cls}")
   }
+
+  val witnessFail = new InferenceChecker(WitnessMethodCallFails.program, EntailmentSort.GroundPathDepthLimit)
+  println("\nwitness method call fails:")
+  println(s"program typechecks: ${witnessFail.typeCheck}")
+  println(s"typecheck new Witness(choice=A): ${witnessFail.typeOf(Nil, ObjectConstruction("Witness", List(("choice", ObjectConstruction("A", Nil)))))}")
+  println(s"typecheck property(new A): ${witnessFail.typeOf(Nil, MethodCall("property", ObjectConstruction("A", Nil)))}")
+  println(s"typecheck m(property(new A)): ${witnessFail.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("A", Nil))))}")
+  println(s"typecheck m(property(new B)): ${witnessFail.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("B", Nil))))}")
+
+  val witnessSuccess = new InferenceChecker(WitnessMethodCallSucceeds.program, EntailmentSort.GroundPathDepthLimit)
+  println("\nwitness method call succeeds:")
+  println(s"program typechecks: ${witnessSuccess.typeCheck}")
+  println(s"typecheck new Witness(choice=A): ${witnessSuccess.typeOf(Nil, ObjectConstruction("Witness", List(("choice", ObjectConstruction("A", Nil)))))}")
+  println(s"typecheck property(new A): ${witnessSuccess.typeOf(Nil, MethodCall("property", ObjectConstruction("A", Nil)))}")
+  println(s"typecheck m(property(new A)): ${witnessSuccess.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("A", Nil))))}")
+  println(s"typecheck m(property(new B)): ${witnessSuccess.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("B", Nil))))}")
 }

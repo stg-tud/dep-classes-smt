@@ -27,6 +27,7 @@ case class AbstractMethodDeclaration(m: Id, x: Id, as: List[Constraint], t: Type
     s"$m($x. ${commaSeparate(as)}): $t"
 }
 
+// TODO: change a from Constraint to InstanceOf (well-formedness requires it anyways)
 case class ConstraintEntailment(x: Id, as: List[Constraint], a: Constraint) extends Declaration {
   override def toString: String =
     s"∀$x. ${commaSeparate(as.map(_.toString))} => $a"
