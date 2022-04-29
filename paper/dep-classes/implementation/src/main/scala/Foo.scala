@@ -4,7 +4,7 @@ import dcc.DCC.{Heap, HeapObj}
 import dcc.entailment.algorithmic.AlgorithmicSystem
 import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.interpreter.Interpreter
-import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions, WitnessMethodCallFails, WitnessMethodCallSucceeds}
+import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions, WitnessMethodCallFails, WitnessMethodCallSucceeds, WitnessMethodCallTest}
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
@@ -360,4 +360,13 @@ object Foo extends App {
   println(s"typecheck property(new A): ${witnessSuccess.typeOf(Nil, MethodCall("property", ObjectConstruction("A", Nil)))}")
   println(s"typecheck m(property(new A)): ${witnessSuccess.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("A", Nil))))}")
   println(s"typecheck m(property(new B)): ${witnessSuccess.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("B", Nil))))}")
+
+//  val abstractWitness = new InferenceChecker(WitnessMethodCallTest.program, EntailmentSort.GroundPathDepthLimit, debug=2)
+//  println("\nwitness method call test:")
+//  abstractWitness.typeCheck
+//  println(s"program typechecks: ${abstractWitness.typeCheck}")
+//  println(s"typecheck new WitnessT: ${abstractWitness.typeOf(Nil, ObjectConstruction("WitnessT", Nil))}")
+//  println(s"typecheck property(new A): ${abstractWitness.typeOf(Nil, MethodCall("property", ObjectConstruction("A", Nil)))}")
+//  println(s"typecheck m(property(new A)): ${abstractWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("A", Nil))))}")
+//  println(s"typecheck m(property(new B)): ${abstractWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("B", Nil))))}")
 }

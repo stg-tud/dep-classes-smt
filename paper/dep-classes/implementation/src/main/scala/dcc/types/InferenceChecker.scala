@@ -208,6 +208,25 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
       }
     } &&
       program.forall(typeCheck)
+
+//    val bool1 = methods.forall{ m =>
+//      val mTypes = mType(m)
+//      mTypes.forall{
+//        case (_, Type(_, b)) =>
+//          mTypes.forall{
+//            case (_, Type(_, b1)) => b == b1
+//          }
+//      }
+//    }
+//
+//    var bool2 = true
+//    for (decl <- program) {
+//      val tmp = typeCheck(decl)
+//      if (!tmp)
+//        bool2 = false
+//    }
+//
+//    bool1 && bool2
   }
 
 //  @tailrec
