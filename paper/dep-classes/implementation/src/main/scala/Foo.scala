@@ -369,4 +369,11 @@ object Foo extends App {
 //  println(s"typecheck property(new A): ${abstractWitness.typeOf(Nil, MethodCall("property", ObjectConstruction("A", Nil)))}")
 //  println(s"typecheck m(property(new A)): ${abstractWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("A", Nil))))}")
 //  println(s"typecheck m(property(new B)): ${abstractWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("B", Nil))))}")
+
+  println("\n\n")
+  WitnessMethodCallFails.program.foreach(println)
+  println("\n\n")
+  WitnessMethodCallSucceeds.program.foreach(println)
+  println("\n\n")
+  WitnessMethodCallTest.program.foreach(println)
 }

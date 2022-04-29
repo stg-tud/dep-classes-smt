@@ -18,16 +18,16 @@ object WitnessMethodCallTest {
     ConstructorDeclaration("Result", "x", List()),
     // witness method
     AbstractMethodDeclaration("property", "x", List(InstanceOf("x", "Param")), Type("y", Set(InstanceOf("y", "Witness")))),
-//    MethodImplementation("property", "x", List(InstanceOf("x", "A")), Type("y", Set(InstanceOf("y", "Witness"))),
-//      ObjectConstruction("WitnessT", Nil)
-//    ),
-//    MethodImplementation("property", "x", List(InstanceOf("x", "B")), Type("y", Set(InstanceOf("y", "Witness"))),
-//      ObjectConstruction("WitnessF", Nil)
-//    ),
-//    // method over witness argument
-//    AbstractMethodDeclaration("m", "x", List(InstanceOf("x", "WitnessT")), Type("y", Set(InstanceOf("y", "Result")))),
-//    MethodImplementation("m", "x", List(InstanceOf("x", "WitnessT")), Type("y", Set(InstanceOf("y", "Result"))),
-//      ObjectConstruction("Result", List())
-//    )
+    MethodImplementation("property", "x", List(InstanceOf("x", "A")), Type("y", Set(InstanceOf("y", "Witness"))),
+      ObjectConstruction("WitnessT", Nil)
+    ),
+    MethodImplementation("property", "x", List(InstanceOf("x", "B")), Type("y", Set(InstanceOf("y", "Witness"))),
+      ObjectConstruction("WitnessF", Nil)
+    ),
+    // method over witness argument
+    AbstractMethodDeclaration("m", "x", List(InstanceOf("x", "WitnessT")), Type("y", Set(InstanceOf("y", "Result")))),
+    MethodImplementation("m", "x", List(InstanceOf("x", "WitnessT")), Type("y", Set(InstanceOf("y", "Result"))),
+      ObjectConstruction("Result", List())
+    )
   )
 }

@@ -1,0 +1,44 @@
+A(x. ϵ)
+B(x. ϵ)
+∀x. x :: A => x :: Param
+∀x. x :: B => x :: Param
+Witness(x. x.choice :: Param)
+Result(x. ϵ)
+property(x. x :: Param): [y. y :: Witness, y.choice :: Param]
+property(x. x :: A): [y. y :: Witness, y.choice :: Param] := new Witness(choice ≡ new A())
+property(x. x :: B): [y. y :: Witness, y.choice :: Param] := new Witness(choice ≡ new B())
+m(x. x :: Witness, x.choice :: A): [y. y :: Result]
+m(x. x :: Witness, x.choice :: A): [y. y :: Result] := new Result()
+
+
+A(x. ϵ)
+B(x. ϵ)
+∀x. x :: A => x :: Param
+∀x. x :: B => x :: Param
+Witness(x. x.choice :: Param)
+None(x. ϵ)
+Result(x. ϵ)
+∀x. x :: None => x :: Option
+∀x. x :: Result => x :: Option
+property(x. x :: Param): [y. y :: Witness, y.choice :: Param]
+property(x. x :: A): [y. y :: Witness, y.choice :: Param] := new Witness(choice ≡ new A())
+property(x. x :: B): [y. y :: Witness, y.choice :: Param] := new Witness(choice ≡ new B())
+m(x. x :: Witness, x.choice :: Param): [y. y :: Option]
+m(x. x :: Witness, x.choice :: A): [y. y :: Option] := new Result()
+m(x. x :: Witness, x.choice :: B): [y. y :: Option] := new None()
+
+
+A(x. ϵ)
+B(x. ϵ)
+∀x. x :: A => x :: Param
+∀x. x :: B => x :: Param
+WitnessT(x. ϵ)
+WitnessF(x. ϵ)
+∀x. x :: WitnessT => x :: Witness
+∀x. x :: WitnessF => x :: Witness
+Result(x. ϵ)
+property(x. x :: Param): [y. y :: Witness]
+property(x. x :: A): [y. y :: Witness] := new WitnessT()
+property(x. x :: B): [y. y :: Witness] := new WitnessF()
+m(x. x :: WitnessT): [y. y :: Result]
+m(x. x :: WitnessT): [y. y :: Result] := new Result()
