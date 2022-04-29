@@ -361,7 +361,7 @@ object Foo extends App {
   println(s"typecheck m(property(new A)): ${witnessSuccess.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("A", Nil))))}")
   println(s"typecheck m(property(new B)): ${witnessSuccess.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("B", Nil))))}")
 
-  // TODO: smt encoding givees errors, why?
+  // TODO: smt encoding errors, why?
   val abstractWitness = new InferenceChecker(WitnessMethodCallTest.program, EntailmentSort.AlgorithmicFix1, debug=2)
   println("\nwitness method call test:")
   abstractWitness.typeCheck
