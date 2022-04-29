@@ -361,14 +361,15 @@ object Foo extends App {
   println(s"typecheck m(property(new A)): ${witnessSuccess.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("A", Nil))))}")
   println(s"typecheck m(property(new B)): ${witnessSuccess.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("B", Nil))))}")
 
-//  val abstractWitness = new InferenceChecker(WitnessMethodCallTest.program, EntailmentSort.GroundPathDepthLimit, debug=2)
-//  println("\nwitness method call test:")
-//  abstractWitness.typeCheck
-//  println(s"program typechecks: ${abstractWitness.typeCheck}")
-//  println(s"typecheck new WitnessT: ${abstractWitness.typeOf(Nil, ObjectConstruction("WitnessT", Nil))}")
-//  println(s"typecheck property(new A): ${abstractWitness.typeOf(Nil, MethodCall("property", ObjectConstruction("A", Nil)))}")
-//  println(s"typecheck m(property(new A)): ${abstractWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("A", Nil))))}")
-//  println(s"typecheck m(property(new B)): ${abstractWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("B", Nil))))}")
+  // TODO: smt encoding givees errors, why?
+  val abstractWitness = new InferenceChecker(WitnessMethodCallTest.program, EntailmentSort.AlgorithmicFix1, debug=2)
+  println("\nwitness method call test:")
+  abstractWitness.typeCheck
+  println(s"program typechecks: ${abstractWitness.typeCheck}")
+  println(s"typecheck new WitnessT: ${abstractWitness.typeOf(Nil, ObjectConstruction("WitnessT", Nil))}")
+  println(s"typecheck property(new A): ${abstractWitness.typeOf(Nil, MethodCall("property", ObjectConstruction("A", Nil)))}")
+  println(s"typecheck m(property(new A)): ${abstractWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("A", Nil))))}")
+  println(s"typecheck m(property(new B)): ${abstractWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("B", Nil))))}")
 
   println("\n\n")
   WitnessMethodCallFails.program.foreach(println)
