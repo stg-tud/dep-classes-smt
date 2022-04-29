@@ -1,6 +1,6 @@
 package dcc.types
 import dcc.DCC.{FV, classInProgram}
-import dcc.Util.substitute
+import dcc.Util.{substitute, substituteSet}
 import dcc.entailment.{Entailment, EntailmentFactory}
 import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.Program.Program
@@ -17,7 +17,7 @@ class MasterThesisChecker(override val program: Program, override val ENTAILMENT
   override def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean = typeAssignment(context, expression) exists {
     case Type(z, c) =>
       c.size == typ.constraints.size &&
-        (substitute(z, typ.x, c) forall typ.constraints.contains)
+        (substituteSet(z, typ.x, c) forall typ.constraints.contains)
   }
 
   override def typeCheck: Boolean = {
@@ -51,17 +51,17 @@ class MasterThesisChecker(override val program: Program, override val ENTAILMENT
       }
     // WF-MS
     case AbstractMethodDeclaration(_, x, a, Type(y, b)) =>
-      val vars = FV(b) // TODO: check if x != y for size check?
+      val vars = FV(b.toList) // TODO: check if x != y for size check?
       FV(a) == List(x) && vars.nonEmpty && vars.forall(v => v == x || v == y)
     // WF-MI
     case MethodImplementation(_, x, a, Type(y, b), e) =>
-      val vars = FV(b) // TODO: check if x != y for size check?
+      val vars = FV(b.toList) // TODO: check if x != y for size check?
       FV(a) == List(x) && vars.nonEmpty && vars.forall(v => v == x || v == y) &&
 //        typecheck(a, e, Type(y, b)) // TODO: check if this is what we want
         typeAssignment(a, e).exists {
           case Type(z, c) =>
             c.size == b.size &&
-              substitute(z, y, c).forall(b.contains(_))
+              substituteSet(z, y, c).forall(b.contains)
         }
     case _ => false
   }
@@ -75,12 +75,12 @@ class MasterThesisChecker(override val program: Program, override val ENTAILMENT
           val y = freshVariable()
           //          Type(y, List(PathEquivalence(y, x))) :: Nil// :: classes TODO: no need to find another one, as the type would be the same (after renaming)
           List(
-            Type(y, List(PathEquivalence(y, x)))
-            ,Type(y, List(PathEquivalence(x, y)))
+            Type(y, Set(PathEquivalence(y, x)))
+            ,Type(y, Set(PathEquivalence(x, y)))
           )
         case (_, classes) => classes
       } match {
-        case Nil => List(Type(Id(Symbol("tError")), List(PathEquivalence(x, Id(Symbol("noValidClass"))))))
+        case Nil => List(Type(Id(Symbol("tError")), Set(PathEquivalence(x, Id(Symbol("noValidClass"))))))
         case l => l
       }
     // T-Field
@@ -95,7 +95,7 @@ class MasterThesisChecker(override val program: Program, override val ENTAILMENT
           val instOfs = classes.foldRight(Nil: List[Constraint]) { // TODO: list of vars in entails, like T-Var case
             case (cls, classes) if entailment.entails(context ++ a, InstanceOf(FieldPath(x, f), cls)) =>
               val c = InstanceOf(y, cls)
-              ts = Type(y, List(c)) :: ts
+              ts = Type(y, Set(c)) :: ts
               c :: classes
             case (_, classes) => classes
           }
@@ -126,7 +126,7 @@ class MasterThesisChecker(override val program: Program, override val ENTAILMENT
           }
 
           if (entailsArgs && entailment.entails(context ++ a ++ b, b1))
-            types = Type(y, b1) :: types
+            types = Type(y, b1.toSet) :: types
         }
       }
 
@@ -146,8 +146,8 @@ class MasterThesisChecker(override val program: Program, override val ENTAILMENT
 
       argsTypes match {
         case Nil =>
-          val b = List(InstantiatedBy(x, cls))
-          val (x1, b1) = classInProgram(cls, program).getOrElse(return List(Type(Id(Symbol("tError")), List(PathEquivalence(cls, Id(Symbol("classNotFound")))))))
+          val b: Set[Constraint] = Set(InstantiatedBy(x, cls))
+          val (x1, b1) = classInProgram(cls, program).getOrElse(return List(Type(Id(Symbol("tError")), Set(PathEquivalence(cls, Id(Symbol("classNotFound")))))))
 
           if (entailment.entails(context ++ b, b1))
             types = Type(x, b) :: types
@@ -155,26 +155,26 @@ class MasterThesisChecker(override val program: Program, override val ENTAILMENT
           classes.foreach{
             c =>
               if (entailment.entails(context ++ b, InstanceOf(x, c)))
-                types = Type(x, List(InstanceOf(x, c))) :: types
+                types = Type(x, Set(InstanceOf(x, c))) :: types
           }
         case _ => combinations(argsTypes).foreach {
           argsType =>
             val argsPairs: List[(Id, Type)] = fields.zip(argsType)
             val argsConstraints: List[Constraint] = argsPairs.flatMap{
-              case (fi, Type(xi, ai)) => substitute(xi, FieldPath(x, fi), ai)
+              case (fi, Type(xi, ai)) => substituteSet(xi, FieldPath(x, fi), ai)
             }
 
             val b: List[Constraint] = InstantiatedBy(x, cls) :: argsConstraints
 
-            val (x1, b1) = classInProgram(cls, program).getOrElse(return List(Type(Id(Symbol("tError")), List(PathEquivalence(cls, Id(Symbol("classNotFound")))))))
+            val (x1, b1) = classInProgram(cls, program).getOrElse(return List(Type(Id(Symbol("tError")), Set(PathEquivalence(cls, Id(Symbol("classNotFound")))))))
 
             if (entailment.entails(context ++ b, substitute(x1, x, b1)))
-              types = Type(x, b) :: types
+              types = Type(x, b.toSet) :: types
 
             classes.foreach{
               c =>
                 if (entailment.entails(context ++ b, InstanceOf(x, c)))
-                  types = Type(x, List(InstanceOf(x, c))) :: types
+                  types = Type(x, Set(InstanceOf(x, c))) :: types
             }
         }
       }

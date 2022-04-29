@@ -76,6 +76,7 @@ object DCC {
     case _ :: tail => constructorConstraintsSubst(className, tail, x)
   }
 
+  // TODO: change FV to Set type (argument and return)
   def FV(constraints: List[Constraint]): List[Id] = constraints.flatMap(FV).distinct
 
   def FV(constraint: Constraint): List[Id] = constraint match {

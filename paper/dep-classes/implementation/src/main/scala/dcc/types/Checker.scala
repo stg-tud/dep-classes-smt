@@ -2,7 +2,7 @@ package dcc.types
 
 import collection.InheritanceRelation.{Subtype, Supertype}
 import collection.{Edge, InheritanceGraph, Node}
-import dcc.Util.substitute
+import dcc.Util.{substitute, substituteSet}
 import dcc.entailment.EntailmentFactory
 import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldPath, Id, InstanceOf, InstantiatedBy, MethodImplementation, Path, PathEquivalence}
@@ -50,7 +50,7 @@ trait Checker {
 
                 program.foreach {
                   case ConstructorDeclaration(`cls`, y, b) =>
-                    S = S + Type(x, InstantiatedBy(p, cls) :: a ++ substitute(y, p, b))
+                    S = S + Type(x, a.concat(substitute(y, p, b)) + InstantiatedBy(p, cls)) // concat -> ++ ?
                   case ConstraintEntailment(y, b, InstanceOf(z, `cls`)) if y==z =>
                     S = S + Type(x, a ++ substitute(y, p, b))
                   case _ =>
@@ -86,7 +86,7 @@ trait Checker {
   private def approxEmptyApplicable(t: Type): Boolean = t match {
     //case Type(x, a) =>
     case Type(_, a) =>
-      val instances: List[InstantiatedBy] = a.filter(_.isInstanceOf[InstantiatedBy]).asInstanceOf[List[InstantiatedBy]]
+      val instances: Set[InstantiatedBy] = a.filter(_.isInstanceOf[InstantiatedBy]).asInstanceOf[Set[InstantiatedBy]]
 
       instances.find(_approxEmptyApplicable(a, instances, _)) match {
         case None => false
@@ -94,7 +94,7 @@ trait Checker {
       }
   }
 
-  private def _approxEmptyApplicable(context: List[Constraint], instances: List[InstantiatedBy], instance: InstantiatedBy): Boolean = instance match {
+  private def _approxEmptyApplicable(context: Set[Constraint], instances: Set[InstantiatedBy], instance: InstantiatedBy): Boolean = instance match {
     case InstantiatedBy(p, c) =>
       //val otherInstances = instances.filter(inst => if (inst.cls!=c) true else false)
 
@@ -102,7 +102,7 @@ trait Checker {
 
       instances.find {
         case InstantiatedBy(_, `c`) => false
-        case InstantiatedBy(p1, _) if entailment.entails(context, PathEquivalence(p, p1)) => true
+        case InstantiatedBy(p1, _) if entailment.entails(context.toList, PathEquivalence(p, p1)) => true
         case _ => false // match may not be exhaustive. It would fail on the following input: InstantiatedBy(_, Id(_))
       } match {
         case None => false
@@ -113,8 +113,8 @@ trait Checker {
   // Method Type
   def mType(m: Id): List[(Type, Type)] =
     program.foldRight(Nil: List[(Type, Type)]){
-      case (AbstractMethodDeclaration(`m`, x, a, ret), rst) => (Type(x, a), ret) :: rst
-      case (MethodImplementation(`m`, x, a, ret, _), rst) => (Type(x, a), ret) :: rst
+      case (AbstractMethodDeclaration(`m`, x, a, ret), rst) => (Type(x, a.toSet), ret) :: rst
+      case (MethodImplementation(`m`, x, a, ret, _), rst) => (Type(x, a.toSet), ret) :: rst
       case (_, rst) => rst}
 
   // MType where the bound variables of declared argument and return type constraints are
@@ -122,9 +122,9 @@ trait Checker {
   def mTypeSubst(m: Id, x: Id, y: Id): List[(List[Constraint], List[Constraint])] =
     program.foldRight(Nil: List[(List[Constraint], List[Constraint])]){
       case (AbstractMethodDeclaration(`m`, xDeclaration, a, Type(yDeclaration, b)), rst) =>
-        (substitute(xDeclaration, x, a), substitute(yDeclaration, y, b)) :: rst
+        (substitute(xDeclaration, x, a), substituteSet(yDeclaration, y, b).toList) :: rst  // TODO: .toList (do something with substitute or change mTypeSubst type to Set?)
       case (MethodImplementation(`m`, xImpl, a, Type(yImpl, b), _), rst) =>
-        (substitute(xImpl, x, a), substitute(yImpl, y, b)) :: rst
+        (substitute(xImpl, x, a), substituteSet(yImpl, y, b).toList) :: rst
       case (_, rst) => rst}
 
   def classes: List[Id] = (program flatMap className) distinct

@@ -14,7 +14,6 @@ import smt.smtlib.syntax.{Apply, DefineFun, FunctionDef, SimpleSymbol, SortedVar
 import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, False, Implies, Ite, Not, Or, True, Xor}
 
 object Foo extends App {
-  // TODO: is there a way to force the program if the entailment to be the same as the program of the checker/interpreter?
   val sem3 = new SemanticEntailment(NaturalNumbers.program)
   val newChecker  = new SomeInferenceChecker(NaturalNumbers.program, EntailmentSort.SimplifiedSemantic)
 
@@ -23,10 +22,10 @@ object Foo extends App {
     ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")),
     ConstructorDeclaration("Succ", "x", List(InstanceOf(FieldPath("x", "p"), "Nat"))),
     ConstraintEntailment("x", List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Nat")), InstanceOf("x", "Nat")),
-    AbstractMethodDeclaration("prev", "x", List(InstanceOf("x", "Nat")), Type("y", List(InstanceOf("y", "Nat")))),
-    MethodImplementation("prev", "x", List(InstanceOf("x", "Zero")), Type("y", List(InstanceOf("y", "Nat"))),
+    AbstractMethodDeclaration("prev", "x", List(InstanceOf("x", "Nat")), Type("y", Set(InstanceOf("y", "Nat")))),
+    MethodImplementation("prev", "x", List(InstanceOf("x", "Zero")), Type("y", Set(InstanceOf("y", "Nat"))),
       "x"),
-    MethodImplementation("prev", "x", List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Nat")), Type("y", List(InstanceOf("y", "Nat"))),
+    MethodImplementation("prev", "x", List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Nat")), Type("y", Set(InstanceOf("y", "Nat"))),
       FieldAccess("x", "p"))
   )
 
@@ -304,11 +303,11 @@ object Foo extends App {
     ConstructorDeclaration("OnOffEdge", "x", List(InstanceOf(FieldPath("x", "n1"), "Node"), InstanceOf(FieldPath("x", "n2"), "Node"), InstanceOf(FieldPath("x", "enabled"), "Boolean"))),
     ConstraintEntailment("x", List(InstanceOf("x", "OnOffNode"), InstanceOf(FieldPath("x", "n1"), "Node"), InstanceOf(FieldPath("x", "n2"), "Node")), InstanceOf("x", "Node")),
     ConstraintEntailment("x", List(InstanceOf("x", "OnOffEdge"), InstanceOf(FieldPath("x", "enabled"), "Boolean")), InstanceOf("x", "Edge")),
-    MethodImplementation("touches", "x", List(), Type("y", List(InstanceOf("y", "Boolean"))), "true")
+    MethodImplementation("touches", "x", List(), Type("y", Set(InstanceOf("y", "Boolean"))), "true")
   )
 
   println("\n\n\n approx:")
-  chk.generateTypeApproximationSet(Type("x", List(InstanceOf("x", "Nat"))))
+  chk.generateTypeApproximationSet(Type("x", Set(InstanceOf("x", "Nat"))))
 
 //  println("\n\nAST:")
 //  NumericExpressions.program.foreach(println)

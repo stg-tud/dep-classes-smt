@@ -12,7 +12,7 @@ class TestTypeOfNaturalNumbersExpressionsReuseChecker extends AnyFunSuite {
 
   test ("type of bound variable") {
     val result = checker.typeOf(List(InstanceOf("x", "Nat")), "x")
-    testTypeOk(result, Type("y", List(PathEquivalence("y", "x"))))
+    testTypeOk(result, Type("y", Set(PathEquivalence("y", "x"))))
   }
 
   test ("type of unbound variable") {
@@ -22,42 +22,42 @@ class TestTypeOfNaturalNumbersExpressionsReuseChecker extends AnyFunSuite {
 
   test ("type of field access") {
     val result = checker.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero")), FieldAccess("x", "p"))
-    testTypeOk(result, Type("y", List(InstanceOf("y", "Zero"), InstanceOf("y", "Nat"))))
+    testTypeOk(result, Type("y", Set(InstanceOf("y", "Zero"), InstanceOf("y", "Nat"))))
   }
 
   test ("type of method call 1") {
     val result = checker.typeOf(List(InstanceOf("x", "Zero")), MethodCall("prev", "x"))
-    testTypeOk(result, Type("y", List(InstanceOf("y", "Nat"))))
+    testTypeOk(result, Type("y", Set(InstanceOf("y", "Nat"))))
   }
 
   test ("type of method call 2") {
     val result = checker.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero")), MethodCall("prev", "x"))
-    testTypeOk(result, Type("y", List(InstanceOf("y", "Nat"))))
+    testTypeOk(result, Type("y", Set(InstanceOf("y", "Nat"))))
   }
 
   test ("type of method call 3") {
     val result = checker.typeOf(List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Zero")), MethodCall("prev", FieldAccess("x", "p")))
-    testTypeOk(result, Type("y", List(InstanceOf("y", "Nat"))))
+    testTypeOk(result, Type("y", Set(InstanceOf("y", "Nat"))))
   }
 
   test ("type of 'new Zero'") {
     val result = checker.typeOf(Nil, ObjectConstruction("Zero", Nil))
-    testTypeOk(result, Type("y", List(InstantiatedBy("y", "Zero"))))
+    testTypeOk(result, Type("y", Set(InstantiatedBy("y", "Zero"))))
   }
 
   test ("type of 'new Succ(x)") {
     val result = checker.typeOf(List(InstanceOf("x", "Zero")), ObjectConstruction("Succ", List(("p", "x")))) // unbound x in result type, is this a problem? no, as x is in the context
-    testTypeOk(result, Type("y", List(InstantiatedBy("y", "Succ"), PathEquivalence(FieldPath("y", "p"), "x"))))
+    testTypeOk(result, Type("y", Set(InstantiatedBy("y", "Succ"), PathEquivalence(FieldPath("y", "p"), "x"))))
   }
 
   test ("type of 'new Succ(new Zero)") {
     val result = checker.typeOf(Nil, ObjectConstruction("Succ", List(("p", ObjectConstruction("Zero", Nil)))))
-    testTypeOk(result, Type("y", List(InstantiatedBy("y", "Succ"), InstantiatedBy(FieldPath("y", "p"), "Zero"))))
+    testTypeOk(result, Type("y", Set(InstantiatedBy("y", "Succ"), InstantiatedBy(FieldPath("y", "p"), "Zero"))))
   }
 
   test ("type of 'new Succ(new Succ(new Zero))") {
     val result = checker.typeOf(Nil, ObjectConstruction("Succ", List(("p", ObjectConstruction("Succ", List(("p", ObjectConstruction("Zero", Nil))))))) )
-    testTypeOk(result, Type("y", List(InstantiatedBy("y", "Succ"), InstantiatedBy(FieldPath("y", "p"), "Succ"), InstantiatedBy(FieldPath(FieldPath("y", "p"), "p"), "Zero") )))
+    testTypeOk(result, Type("y", Set(InstantiatedBy("y", "Succ"), InstantiatedBy(FieldPath("y", "p"), "Succ"), InstantiatedBy(FieldPath(FieldPath("y", "p"), "p"), "Zero") )))
   }
 
   test ("type of 'new Nat") {

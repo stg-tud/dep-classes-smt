@@ -19,7 +19,7 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
       classes.find(cls => entailment.entails(context, InstanceOf(x, cls))) match {
         case Some(_) =>
           val y = freshVariable()
-          Left(Type(y, List(PathEquivalence(y, x))))
+          Left(Type(y, Set(PathEquivalence(y, x))))
         case None => Right(List(s"variable '$x' is not available in context ${commaSeparate(context)}"))
       }
     case FieldAccess(e, f) =>
@@ -35,7 +35,7 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
           // !FV(b).contains(x) and entailment.entails(context++a:+PathEquivalence(FieldPath(x, f), y), b) by construction of b
 
           if (b.nonEmpty)
-            Left(Type(y, b))
+            Left(Type(y, b.toSet)) // TODO: change b s.t. it is a Set?
           else
             Right(List(s"'$x.$f' is not available in context ${commaSeparate(context++a)}"))
         case error@Right(_) => error
@@ -75,7 +75,7 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
               //val b1 = classes filter (cls => entailment.entails(context++a++b, InstanceOf(y, cls))) map (cls => InstanceOf(y, cls))
 
               // b should be free of x by construction (mTypeSubst) and b |- b trivially
-              Left(Type(y, b))
+              Left(Type(y, b.toSet))
             case None => Right(List(s"no method declaration of '$m' applicable to '$e'"))
           }
         case error@Right(_) => error
@@ -107,7 +107,7 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
             fieldErrors.map{ case (f, err) => s"Class $cls: couldn't assign a type to field $f, because ${commaSeparate(err)}"}
           )
         } else {
-          val b: List[Constraint] = InstantiatedBy(x, cls) :: fieldTypes.flatMap {case (f, Type(xi, ai)) => Util.substitute(xi, FieldPath(x, f), ai)}
+          val b: List[Constraint] = InstantiatedBy(x, cls) :: fieldTypes.flatMap {case (f, Type(xi, ai)) => Util.substitute(xi, FieldPath(x, f), ai.toList)} // TODO: .toList (Set)
 
 //          println(s"b = $b")
 //          println(s"b' = $classConstraints")
@@ -139,7 +139,7 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
               val constructorErrors: List[TError] = b1.filter(!entailment.entails(context++b, _)).map(c => s"Class $cls: constructor constraint $c could not be fulfilled")
 
               if (constructorErrors.isEmpty)
-                return Left(Type(x, b))
+                return Left(Type(x, b.toSet))
 
               errors = errors ++ constructorErrors
             } else {
@@ -154,9 +154,9 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
   override def typeCheck(context: List[Constraint], expression: Expression, typ: Type): Boolean = typeOf(context, expression) match {
     case Left(Type(y, a1)) =>
       // unify type variables between expected type `typ` and the inferred type
-      val inferred = Type(typ.x, Util.substitute(y, typ.x, a1))
+      val inferred = Type(typ.x, Util.substituteSet(y, typ.x, a1))
 
-      if (entailment.entails(context++inferred.constraints, typ.constraints)) {
+      if (entailment.entails(context++inferred.constraints.toList, typ.constraints.toList)) {
         true
       }
       else {
@@ -178,12 +178,12 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
     case MethodImplementation(_, x, a, typ@Type(y, b), e) =>
       freeVariablesContainsMax(FV(a), x) &&
         x != y &&
-        freeVariablesContainsMax(FV(b), x, y) &&
+        freeVariablesContainsMax(FV(b.toList), x, y) &&
         typeCheck(a, e, typ)
     case AbstractMethodDeclaration(_, x, a, Type(y, b)) =>
       freeVariablesContainsMax(FV(a), x) &&
         x != y &&
-        freeVariablesContainsMax(FV(b), x, y)
+        freeVariablesContainsMax(FV(b.toList), x, y)
     case ConstraintEntailment(x, a, InstanceOf(y, _)) =>
       x == y &&
         FV(a) == List(x) &&

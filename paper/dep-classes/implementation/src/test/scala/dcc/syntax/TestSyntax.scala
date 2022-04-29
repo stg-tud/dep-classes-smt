@@ -25,20 +25,20 @@ class TestSyntax extends AnyFunSuite{
     PathEquivalence("x", "y")
     PathEquivalence(FieldPath("x", "f"), "y")
     PathEquivalence(FieldPath(FieldPath("x", "f"), "g"), "y")
-    val cs: List[Constraint] = List(
+    val cs: Set[Constraint] = Set(
       PathEquivalence("x", "y"),
       PathEquivalence(FieldPath("x", "f"), "y"),
       PathEquivalence(FieldPath(FieldPath("x", "f"), "g"), "y"))
 
     // Types
     Type("x", cs)
-    Type("y", List(PathEquivalence("x", "y"), PathEquivalence(FieldPath("x", "f"), "y")))
+    Type("y", Set(PathEquivalence("x", "y"), PathEquivalence(FieldPath("x", "f"), "y")))
 
     // Declarations
     ConstraintEntailment("x", List(PathEquivalence(FieldPath("x", "f"), "y"), PathEquivalence(FieldPath("y", "f"), "x")), PathEquivalence("y", "x"))
-    AbstractMethodDeclaration("m", "x", cs, ("x", cs))
-    MethodImplementation("m", "x", cs, Type("y", List(PathEquivalence("x", "y"), PathEquivalence(FieldPath("x", "f"), "y"))), "x")
-    ConstructorDeclaration("Class", "x", cs)
+    AbstractMethodDeclaration("m", "x", cs.toList, ("x", cs))
+    MethodImplementation("m", "x", cs.toList, Type("y", Set(PathEquivalence("x", "y"), PathEquivalence(FieldPath("x", "f"), "y"))), "x")
+    ConstructorDeclaration("Class", "x", cs.toList)
   }
 
   // Paths
@@ -61,17 +61,17 @@ class TestSyntax extends AnyFunSuite{
   val c1: Constraint = PathEquivalence("x", "y")
   val c2: Constraint = PathEquivalence(FieldPath("x", "f"), "y")
   val c3: Constraint = PathEquivalence(FieldPath(FieldPath("x", "f"), "g"), "y")
-  val cs: List[Constraint] = List(c1, c2, c3)
+  val cs: Set[Constraint] = Set(c1, c2, c3)
 
   // Types
   val t1: Type = ("x", cs)
-  val t2: Type = ("y", List(c1, c2))
+  val t2: Type = ("y", Set(c1, c2))
 
   // Declarations
   val entail: Declaration = ConstraintEntailment("x", List(PathEquivalence(FieldPath("x", "f"), "y"), PathEquivalence(FieldPath("y", "f"), "x")), PathEquivalence("y", "x"))
-  val abstractMethod: Declaration = AbstractMethodDeclaration("m", "x", cs, ("x", cs))
-  val methodImpl: Declaration = MethodImplementation("m", "x", cs, t2, "x")
-  val constructor: Declaration = ConstructorDeclaration("Class", "x", cs)
+  val abstractMethod: Declaration = AbstractMethodDeclaration("m", "x", cs.toList, ("x", cs))
+  val methodImpl: Declaration = MethodImplementation("m", "x", cs.toList, t2, "x")
+  val constructor: Declaration = ConstructorDeclaration("Class", "x", cs.toList)
 
   test ("Pretty Printing: Paths") {
     assert(p.toString == "x")

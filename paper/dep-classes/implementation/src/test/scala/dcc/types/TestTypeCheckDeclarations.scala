@@ -26,21 +26,21 @@ class TestTypeCheckDeclarations extends AnyFunSuite {
   }
 
   test ("check abstract method declaration: prev") {
-    assert(checker.typeCheck(AbstractMethodDeclaration("prev", "x", List(InstanceOf("x", "Nat")), Type("y", List(InstanceOf("y", "Nat"))))))
+    assert(checker.typeCheck(AbstractMethodDeclaration("prev", "x", List(InstanceOf("x", "Nat")), Type("y", Set(InstanceOf("y", "Nat"))))))
   }
 
   test ("check method implementation: prev Zero case") {
-    assert(checker.typeCheck(MethodImplementation("prev", "x", List(InstanceOf("x", "Zero")), Type("y", List(InstanceOf("y", "Nat"))),
+    assert(checker.typeCheck(MethodImplementation("prev", "x", List(InstanceOf("x", "Zero")), Type("y", Set(InstanceOf("y", "Nat"))),
       "x")))
   }
 
   test ("check method implementation: prev Succ case") {
-    assert(checker.typeCheck(MethodImplementation("prev", "x", List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Nat")), Type("y", List(InstanceOf("y", "Nat"))),
+    assert(checker.typeCheck(MethodImplementation("prev", "x", List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Nat")), Type("y", Set(InstanceOf("y", "Nat"))),
       FieldAccess("x", "p"))))
   }
 
   test ("check method implementation: prev new Zero") {
-    assert(checker.typeCheck(MethodImplementation("prev", "x", List(InstanceOf("x", "Zero")), Type("y", List(InstanceOf("y", "Nat"))),
+    assert(checker.typeCheck(MethodImplementation("prev", "x", List(InstanceOf("x", "Zero")), Type("y", Set(InstanceOf("y", "Nat"))),
       ObjectConstruction("Zero", Nil))))
   }
 }

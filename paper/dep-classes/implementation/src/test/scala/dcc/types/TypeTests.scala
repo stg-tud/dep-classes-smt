@@ -1,6 +1,6 @@
 package dcc.types
 
-import dcc.Util.substitute
+import dcc.Util.substituteSet
 import org.scalatest.Assertion
 import org.scalatest.Assertions.{fail, succeed}
 
@@ -8,7 +8,7 @@ object TypeTests {
   def testTypeOk(actual: Either[Type, List[TError]], expected: Type): Assertion = actual match {
     case Left(Type(x, a)) =>
       val Type(y, expectedConstraints) = expected
-      val b = substitute(y, x, expectedConstraints)
+      val b = substituteSet(y, x, expectedConstraints)
 
       val didExpectThoseToExists = b.diff(a)
 

@@ -5,6 +5,7 @@ import dcc.types.Type
 
 sealed trait Declaration
 
+// TODO: List[Constraint] to Set?
 case class ConstructorDeclaration(cls: Id, x: Id, as: List[Constraint]) extends Declaration {
   override def toString: String = as match {
     case Nil => s"$cls($x. ϵ)"
@@ -12,11 +13,15 @@ case class ConstructorDeclaration(cls: Id, x: Id, as: List[Constraint]) extends 
   }
 }
 
+// TODO: List[Constraint] to Set?
+//    - as is "argument type"
 case class MethodImplementation(m: Id, x: Id, as: List[Constraint], t: Type, e: Expression) extends Declaration {
   override def toString: String =
     s"$m($x. ${commaSeparate(as)}): $t := $e"
 }
 
+// TODO: List[Constraint] to Set?
+//    - as is "argument type"
 case class AbstractMethodDeclaration(m: Id, x: Id, as: List[Constraint], t: Type) extends Declaration {
   override def toString: String =
     s"$m($x. ${commaSeparate(as)}): $t"

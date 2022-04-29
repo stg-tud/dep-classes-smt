@@ -11,10 +11,10 @@ object BooleanExpressions {
     ConstructorDeclaration("False", "b", Nil),
     ConstraintEntailment("b", List(InstanceOf("b", "True")), InstanceOf("b", "Bool")),
     ConstraintEntailment("b", List(InstanceOf("b", "False")), InstanceOf("b", "Bool")),
-    AbstractMethodDeclaration("not", "b", List(InstanceOf("b", "Bool")), Type("y", List(InstanceOf("y", "Bool")))),
-    MethodImplementation("not", "b", List(InstanceOf("b", "False")), Type("y", List(InstanceOf("y", "Bool"))),
+    AbstractMethodDeclaration("not", "b", List(InstanceOf("b", "Bool")), Type("y", Set(InstanceOf("y", "Bool")))),
+    MethodImplementation("not", "b", List(InstanceOf("b", "False")), Type("y", Set(InstanceOf("y", "Bool"))),
       ObjectConstruction("True", Nil)),
-    MethodImplementation("not", "b", List(InstanceOf("b", "True")), Type("y", List(InstanceOf("y", "Bool"))),
+    MethodImplementation("not", "b", List(InstanceOf("b", "True")), Type("y", Set(InstanceOf("y", "Bool"))),
       ObjectConstruction("False", Nil))
   )
 }

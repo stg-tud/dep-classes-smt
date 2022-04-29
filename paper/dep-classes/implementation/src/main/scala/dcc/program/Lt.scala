@@ -18,10 +18,10 @@ object Lt {
     ConstraintEntailment("x", List(InstanceOf("x", "Zero")), InstanceOf("x", "Nat")),
     ConstructorDeclaration("Succ", "x", List(InstanceOf(FieldPath("x", "p"), "Nat"))),
     ConstraintEntailment("x", List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Nat")), InstanceOf("x", "Nat")),
-    AbstractMethodDeclaration("prev", "x", List(InstanceOf("x", "Nat")), Type("y", List(InstanceOf("y", "Nat")))),
-    MethodImplementation("prev", "x", List(InstanceOf("x", "Zero")), Type("y", List(InstanceOf("y", "Nat"))),
+    AbstractMethodDeclaration("prev", "x", List(InstanceOf("x", "Nat")), Type("y", Set(InstanceOf("y", "Nat")))),
+    MethodImplementation("prev", "x", List(InstanceOf("x", "Zero")), Type("y", Set(InstanceOf("y", "Nat"))),
       "x"),
-    MethodImplementation("prev", "x", List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Nat")), Type("y", List(InstanceOf("y", "Nat"))),
+    MethodImplementation("prev", "x", List(InstanceOf("x", "Succ"), InstanceOf(FieldPath("x", "p"), "Nat")), Type("y", Set(InstanceOf("y", "Nat"))),
       FieldAccess("x", "p")),
     // Lt
     ConstructorDeclaration("Lt", "a", List(
@@ -63,11 +63,11 @@ object Lt {
     // Lt (argument Lt type)
     AbstractMethodDeclaration("lt",
       "a", List(InstanceOf("a", "Lt"), InstanceOf(FieldPath("a", "n1"), "Nat"), InstanceOf(FieldPath("a", "n2"), "Nat")),
-      Type("y", List(InstanceOf("y", "Lt")))),
+      Type("y", Set(InstanceOf("y", "Lt")))),
     // nat < zero
     MethodImplementation("lt", "a",
       List(InstanceOf("a", "Lt"), InstanceOf(FieldPath("a", "n1"), "Nat"), InstanceOf(FieldPath("a", "n2"), "Zero")),
-      Type("y", List(InstanceOf("y", "Lt"))),
+      Type("y", Set(InstanceOf("y", "Lt"))),
       ObjectConstruction("Lt", List(
         ("n1", FieldAccess("a", "n1")),
         ("n2", FieldAccess("a", "n2")),
@@ -77,7 +77,7 @@ object Lt {
     // zero < succ
     MethodImplementation("lt", "a",
       List(InstanceOf("a", "Lt"), InstanceOf(FieldPath("a", "n1"), "Zero"), InstanceOf(FieldPath("a", "n2"), "Succ")),
-      Type("y", List(InstanceOf("y", "Lt"))),
+      Type("y", Set(InstanceOf("y", "Lt"))),
       ObjectConstruction("Lt", List(
         ("n1", FieldAccess("a", "n1")),
         ("n2", FieldAccess("a", "n2")),
@@ -87,7 +87,7 @@ object Lt {
     // succ < succ
     MethodImplementation("lt", "a",
       List(InstanceOf("a", "Lt"), InstanceOf(FieldPath("a", "n1"), "Succ"), InstanceOf(FieldPath("a", "n2"), "Succ")),
-      Type("y", List(InstanceOf("y", "Lt"))),
+      Type("y", Set(InstanceOf("y", "Lt"))),
       MethodCall("lt", ObjectConstruction("Lt", List(
         ("n1", FieldAccess(FieldAccess("a", "n1"), "p")),
         ("n2", FieldAccess(FieldAccess("a", "n2"), "p")),

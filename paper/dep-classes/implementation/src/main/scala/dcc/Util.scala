@@ -34,6 +34,10 @@ object Util {
   def substitute(x: Id, p: Path, cs: List[Constraint]): List[Constraint] =
     cs.map(substitute(x, p, _))
 
+  // TODO: fuse with substitute (change all constraints to be Sets instead of Lists?)
+  def substituteSet(x: Id, p: Path, cs: Set[Constraint]): Set[Constraint] =
+    cs.map(substitute(x, p, _))
+
   def alphaRename(x: Id, y: Id, expr: Expression): Expression = expr match {
     case `x` => y
     case z@Id(_) => z
