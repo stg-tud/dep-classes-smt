@@ -1,6 +1,7 @@
 package dcc.types
 import dcc.DCC.{FV, constructorConstraintsSubst}
 import dcc.Util
+import dcc.Util.{alphaRename, substitute}
 import dcc.entailment.EntailmentFactory
 import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{AbstractMethodDeclaration, Constraint, ConstraintEntailment, ConstructorDeclaration, Declaration, Expression, FieldAccess, FieldPath, Id, InstanceOf, InstantiatedBy, MethodCall, MethodImplementation, ObjectConstruction, PathEquivalence}
@@ -77,27 +78,46 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
 //            case None => Right(List(s"no method declaration of '$m' applicable to '$e'"))
 //          }
 
-          // Take return type of method declaration as type (all implementations of the same method have the exact same return type)
-          mTypeSubst(m, x, y) find { case (a1, _) => entailment.entails(context++a, a1) } match {
-            case Some((_, b)) =>
-//              println(s"typeOf $m($e): found applicable method with args ${commaSeparate(a1)} and context ${commaSeparate(context++a)}")
-//
-//              var b1: List[Constraint] = Nil
-//
-//              for (cls <- classes) {
-//                println(s"test for ${commaSeparate(context++a++b)} |– ${InstanceOf(y, cls)}")
-//                if(entailment.entails(context++a++b, InstanceOf(y, cls)))
-//                  b1 = InstanceOf(y, cls) :: b1
-//              }
+          // Typecheck the body of the most specific method and use that type as a result
+          val applicable = mImplSubst(m, x) filter { case (a1, _) => entailment.entails(context++a, a1)}
+          val mostSpecific = searchMostSpecificMethodBody(applicable)
+//          println(s"argument type: $a")
+//          println("applicable methods:")
+//          applicable.foreach(x => println(s"\t$x"))
+//          println(s"most specific method $m applicable: $mostSpecific")
 
-              //val b1 = classes filter (cls => entailment.entails(context++a++b, InstanceOf(y, cls))) map (cls => InstanceOf(y, cls))
-
-              val b1 = a.filter(!FV(_).contains(x)) ++ b
-
-              // b should be free of x by construction (mTypeSubst) and b |- b trivially
-              Left(Type(y, b1))
+          mostSpecific match {
+            case Some((_, body)) =>
+              typeOf(context++a, body) match {
+                case Left(Type(z, tBody)) =>
+                  val b1 = a.filter(!FV(_).contains(x)) ++ Util.substituteSet(z, y, tBody)
+                  Left(Type(y, b1))
+                case error@Right(_) => error
+              }
             case None => Right(List(s"no method declaration of '$m' applicable to '$e'"))
           }
+
+          // Take return type of method declaration as type (all implementations of the same method have the exact same return type)
+//          mTypeSubst(m, x, y) find { case (a1, _) => entailment.entails(context++a, a1) } match {
+//            case Some((_, b)) =>
+////              println(s"typeOf $m($e): found applicable method with args ${commaSeparate(a1)} and context ${commaSeparate(context++a)}")
+////
+////              var b1: List[Constraint] = Nil
+////
+////              for (cls <- classes) {
+////                println(s"test for ${commaSeparate(context++a++b)} |– ${InstanceOf(y, cls)}")
+////                if(entailment.entails(context++a++b, InstanceOf(y, cls)))
+////                  b1 = InstanceOf(y, cls) :: b1
+////              }
+//
+//              //val b1 = classes filter (cls => entailment.entails(context++a++b, InstanceOf(y, cls))) map (cls => InstanceOf(y, cls))
+//
+//              val b1 = a.filter(!FV(_).contains(x)) ++ b
+//
+//              // b should be free of x by construction (mTypeSubst) and b |- b trivially
+//              Left(Type(y, b1))
+//            case None => Right(List(s"no method declaration of '$m' applicable to '$e'"))
+//          }
         case error@Right(_) => error
       }
     case ObjectConstruction(cls, args) =>
@@ -292,6 +312,25 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
       } else {
         searchMostSpecificMethod(rst)
       }
+  }
+
+  def mImplSubst(m: Id, x: Id): List[(List[Constraint], Expression)] =
+    program.foldRight(Nil: List[(List[Constraint], Expression)]){
+      case (MethodImplementation(`m`, xImpl, a, _, e), rst) =>
+        (substitute(xImpl, x, a), alphaRename(xImpl, x, e)) :: rst
+      case (_, rst) => rst
+    }
+
+  @tailrec
+  private def searchMostSpecificMethodBody(implementations: List[(List[Constraint], Expression)]): Option[(List[Constraint], Expression)] = implementations match {
+    case Nil => None
+    case (a0, e0) :: rst =>
+      val isMostSpecific: Boolean = implementations.forall { case (a1, _) => a0==a1 || (entailment.entails(a0, a1) && !entailment.entails(a1, a0)) }
+
+      if (isMostSpecific)
+        Some((a0, e0))
+      else
+        searchMostSpecificMethodBody(rst)
   }
 }
 
