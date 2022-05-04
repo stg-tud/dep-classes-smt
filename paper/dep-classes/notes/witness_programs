@@ -1,3 +1,4 @@
+-- Program 1
 A(x. ϵ)
 B(x. ϵ)
 ∀x. x :: A => x :: Param
@@ -15,6 +16,9 @@ m(property(new B))   -- doesnt typecheck
 
 
 
+
+
+-- Program 2
 A(x. ϵ)
 B(x. ϵ)
 ∀x. x :: A => x :: Param
@@ -32,10 +36,14 @@ m(x. x :: Witness, x.choice :: A): [y. y :: Option] := new Result()
 m(x. x :: Witness, x.choice :: B): [y. y :: Option] := new None()
 
 m(property(new A))   -- does typecheck
+                     -- [y. y :: Option]
 m(property(new B))   -- does typecheck
+                     -- [y. y :: Option]
 
 
 
+
+-- Program 3
 A(x. ϵ)
 B(x. ϵ)
 ∀x. x :: A => x :: Param
@@ -52,4 +60,50 @@ m(x. x :: WitnessT): [y. y :: Result]
 m(x. x :: WitnessT): [y. y :: Result] := new Result()
 
 m(property(new A))   -- doesnt typecheck
+m(property(new B))   -- doesnt typecheck
+
+
+
+
+
+-- change return type of 'property' implementations in program
+A(x. ϵ)
+B(x. ϵ)
+∀x. x :: A => x :: Param
+∀x. x :: B => x :: Param
+Witness(x. x.choice :: Param)
+Result(x. ϵ)
+property(x. x :: Param): [y. y :: Witness, y.choice :: Param]
+property(x. x :: A): [y. y :: Witness, y.choice :: A] := new Witness(choice ≡ new A())
+property(x. x :: B): [y. y :: Witness, y.choice :: B] := new Witness(choice ≡ new B())
+m(x. x :: Witness, x.choice :: A): [y. y :: Result]
+m(x. x :: Witness, x.choice :: A): [y. y :: Result] := new Result()
+
+-- change program checking s.t. it doesn't require all declarations of the same method to have the same return type
+-- method call checking using the return type of the most specific applicable method
+m(property(new A))   -- does typecheck
+                     -- [y. y :: Result]
+m(property(new B))   -- doesnt typecheck
+
+
+
+
+
+-- keep programs as the whereabove
+-- method call checking using the type of the body of the most specific applicable method
+
+-- for program 1
+m(property(new A))   -- does typecheck
+                     -- [y. y.cls=Result]
+m(property(new B))   -- doesnt typecheck
+
+-- for program 2
+m(property(new A))   -- does typecheck
+                     -- [y. y.cls=Result]
+m(property(new B))   -- does typecheck
+                     -- [y. y.cls=None]
+
+-- for program 3
+m(property(new A))   -- does typecheck
+                     -- [y. y.cls=Result]
 m(property(new B))   -- doesnt typecheck
