@@ -4,7 +4,7 @@ import dcc.DCC.{Heap, HeapObj}
 import dcc.entailment.algorithmic.AlgorithmicSystem
 import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.interpreter.Interpreter
-import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions, WitnessMethodCallFails, WitnessMethodCallSucceeds, WitnessMethodCallTest}
+import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions, WitnessMethodCallFails, WitnessMethodCallIncorrectProgram, WitnessMethodCallSucceeds, WitnessMethodCallTest}
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
@@ -377,4 +377,13 @@ object Foo extends App {
   WitnessMethodCallSucceeds.program.foreach(println)
   println("\n\n")
   WitnessMethodCallTest.program.foreach(println)
+
+  val incorrectWitness = new InferenceChecker(WitnessMethodCallIncorrectProgram.program, EntailmentSort.GroundPathDepthLimit)
+  println("\nwitness method call incorrect program:")
+  incorrectWitness.typeCheck
+  println(s"program typechecks: ${incorrectWitness.typeCheck}")
+  println(s"typecheck new WitnessT: ${incorrectWitness.typeOf(Nil, ObjectConstruction("WitnessT", Nil))}")
+  println(s"typecheck property(new A): ${incorrectWitness.typeOf(Nil, MethodCall("property", ObjectConstruction("A", Nil)))}")
+  println(s"typecheck m(property(new A)): ${incorrectWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("A", Nil))))}")
+  println(s"typecheck m(property(new B)): ${incorrectWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("B", Nil))))}")
 }

@@ -10,7 +10,7 @@ property(x. x :: B): [y. y :: Witness, y.choice :: Param] := new Witness(choice 
 m(x. x :: Witness, x.choice :: A): [y. y :: Result]
 m(x. x :: Witness, x.choice :: A): [y. y :: Result] := new Result()
 
-m(property(new A))   -- doesnt typecheck (but would be nice if it did)
+m(property(new A))   -- doesnt typecheck
 m(property(new B))   -- doesnt typecheck
 
 
@@ -51,5 +51,5 @@ property(x. x :: B): [y. y :: Witness] := new WitnessF()
 m(x. x :: WitnessT): [y. y :: Result]
 m(x. x :: WitnessT): [y. y :: Result] := new Result()
 
-m(property(new A))   -- doesnt typecheck (but would be nice if it did)
+m(property(new A))   -- doesnt typecheck
 m(property(new B))   -- doesnt typecheck

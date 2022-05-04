@@ -111,7 +111,7 @@ class Interpreter(program: Program, ENTAILMENT: EntailmentSort) {
   private def searchMostSpecificApplicableMethod(implementations: List[(List[Constraint], Expression)]): Option[(List[Constraint], Expression)] = implementations match {
     case Nil => None
     case (a0, e0) :: rst =>
-      val isMostSpecific: Boolean = implementations.forall { case (a1, e1) => e0 != e1 && entailment.entails(a1, a0) && !entailment.entails(a0, a1) }
+      val isMostSpecific: Boolean = implementations.forall { case (a1, e1) => e0 == e1 || (entailment.entails(a1, a0) && !entailment.entails(a0, a1)) }
 
       if (isMostSpecific) {
         Some((a0, e0))
