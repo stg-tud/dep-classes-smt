@@ -61,41 +61,43 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
           //   a method have the exact same return type annotation.
           //   Thus, not allowing to annotate more specific (sub-) types as the return type for an implementation.
 
-          // find all applicable methods (incl. abstract definition)
-          val applicable = mTypeSubst(m, x, y) filter { case (a1, _) => entailment.entails(context++a, a1)}
-          val mostSpecific = searchMostSpecificMethod(applicable)
-//          println(s"argument type: $a")
-//          println("applicable methods:")
-//          applicable.foreach(x => println(s"\t$x"))
-//          println(s"most specific method $m applicable: $mostSpecific")
-
-          mostSpecific match {
-            case Some((_, b)) =>
-              val b1 = a.filter(!FV(_).contains(x)) ++ b
-              Left(Type(y, b1))
-            case None => Right(List(s"no method declaration of '$m' applicable to '$e'"))
-          }
-
-//          mTypeSubst(m, x, y) find { case (a1, _) => entailment.entails(context++a, a1) } match {
+          // Take the return type of the most specific method that applies (allows witness example if we allow method implementations to have a more specific return type)
+//          // find all applicable methods (incl. abstract definition)
+//          val applicable = mTypeSubst(m, x, y) filter { case (a1, _) => entailment.entails(context++a, a1)}
+//          val mostSpecific = searchMostSpecificMethod(applicable)
+////          println(s"argument type: $a")
+////          println("applicable methods:")
+////          applicable.foreach(x => println(s"\t$x"))
+////          println(s"most specific method $m applicable: $mostSpecific")
+//
+//          mostSpecific match {
 //            case Some((_, b)) =>
-////              println(s"typeOf $m($e): found applicable method with args ${commaSeparate(a1)} and context ${commaSeparate(context++a)}")
-////
-////              var b1: List[Constraint] = Nil
-////
-////              for (cls <- classes) {
-////                println(s"test for ${commaSeparate(context++a++b)} |– ${InstanceOf(y, cls)}")
-////                if(entailment.entails(context++a++b, InstanceOf(y, cls)))
-////                  b1 = InstanceOf(y, cls) :: b1
-////              }
-//
-//              //val b1 = classes filter (cls => entailment.entails(context++a++b, InstanceOf(y, cls))) map (cls => InstanceOf(y, cls))
-//
 //              val b1 = a.filter(!FV(_).contains(x)) ++ b
-//
-//              // b should be free of x by construction (mTypeSubst) and b |- b trivially
 //              Left(Type(y, b1))
 //            case None => Right(List(s"no method declaration of '$m' applicable to '$e'"))
 //          }
+
+          // Take return type of method declaration as type (all implementations of the same method have the exact same return type)
+          mTypeSubst(m, x, y) find { case (a1, _) => entailment.entails(context++a, a1) } match {
+            case Some((_, b)) =>
+//              println(s"typeOf $m($e): found applicable method with args ${commaSeparate(a1)} and context ${commaSeparate(context++a)}")
+//
+//              var b1: List[Constraint] = Nil
+//
+//              for (cls <- classes) {
+//                println(s"test for ${commaSeparate(context++a++b)} |– ${InstanceOf(y, cls)}")
+//                if(entailment.entails(context++a++b, InstanceOf(y, cls)))
+//                  b1 = InstanceOf(y, cls) :: b1
+//              }
+
+              //val b1 = classes filter (cls => entailment.entails(context++a++b, InstanceOf(y, cls))) map (cls => InstanceOf(y, cls))
+
+              val b1 = a.filter(!FV(_).contains(x)) ++ b
+
+              // b should be free of x by construction (mTypeSubst) and b |- b trivially
+              Left(Type(y, b1))
+            case None => Right(List(s"no method declaration of '$m' applicable to '$e'"))
+          }
         case error@Right(_) => error
       }
     case ObjectConstruction(cls, args) =>
