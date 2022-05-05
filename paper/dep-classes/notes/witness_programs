@@ -162,3 +162,12 @@ m(property(A::Nil))     -- does typecheck
 m(property(B::Nil))     -- doesnt typecheck
 m(property(A::B::Nil))  -- doesnt typecheck
 m(property(B::A::Nil))  -- doesnt typecheck
+
+
+-- TODO: change example to encode property into m function
+--       via path dependent types
+--       m(x. x.witness :: Witness, x.param :: Param, x.witness.choice==x.param)
+-- TODO: check method declaration return type annotations
+--       do we really need to be such precide and state the fields?
+-- TODO: https://dl.acm.org/doi/abs/10.1145/3460228#:~:text=Compositional%20Programming%20offers%20an%20alternative,and%20conventional%20OOP%20class%20hierarchies.
+--       can we do something like this in the system?
