@@ -107,3 +107,32 @@ m(property(new B))   -- does typecheck
 m(property(new A))   -- does typecheck
                      -- [y. y.cls=Result]
 m(property(new B))   -- doesnt typecheck
+
+
+
+
+
+-- limitation: recursive properties
+A(x. ϵ)
+B(x. ϵ)
+∀x. x :: A => x :: Param
+∀x. x :: B => x :: Param
+Nil(x. ϵ)
+Cons(x. x.hd :: Param, x.tl :: List)
+∀x. x :: Nil => x :: List
+∀x. x :: Cons, x.hd :: Param, x.tl :: List => x :: List
+Witness(x. x.choice :: Param)
+Result(x. ϵ)
+property(x. x :: List): [y. y :: Witness, y.choice :: Param]
+property(x. x :: Nil): [y. y :: Witness, y.choice :: A] := new Witness(choice ≡ new A())
+property(x. x :: Cons, x.hd :: A, x.tl :: Nil): [y. y :: Witness, y.choice :: A] := new Witness(choice ≡ new A())
+property(x. x :: Cons, x.hd :: B, x.tl :: Nil): [y. y :: Witness, y.choice :: B] := new Witness(choice ≡ new B())
+property(x. x :: Cons, x.hd :: Param, x.tl :: Cons): [y. y :: Witness, y.choice :: Param] := property(x.tl)
+m(x. x :: Witness, x.choice :: A): [y. y :: Result]
+m(x. x :: Witness, x.choice :: A): [y. y :: Result] := new Result()
+
+m(property(Nil))        -- does typecheck
+m(property(A::Nil))     -- does typecheck
+m(property(B::Nil))     -- doesnt typecheck
+m(property(A::B::Nil))  -- doesnt typecheck
+m(property(B::A::Nil))  -- doesnt typecheck (with changed return types in the program)

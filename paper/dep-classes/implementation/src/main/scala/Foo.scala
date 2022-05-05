@@ -4,7 +4,7 @@ import dcc.DCC.{Heap, HeapObj}
 import dcc.entailment.algorithmic.AlgorithmicSystem
 import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.interpreter.Interpreter
-import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions, WitnessMethodCallFails, WitnessMethodCallIncorrectProgram, WitnessMethodCallSucceeds, WitnessMethodCallTest}
+import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions, WitnessMethodCallFails, WitnessMethodCallIncorrectProgram, WitnessMethodCallSucceeds, WitnessMethodCallTest, WitnessMethodRecursiveProperty}
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
@@ -345,6 +345,9 @@ object Foo extends App {
     case Edge(lhs, rhs, InheritanceRelation.Supertype) => println(s"\t${lhs.cls} :> ${rhs.cls}")
   }
 
+  val newA = ObjectConstruction("A", Nil)
+  val newB = ObjectConstruction("B", Nil)
+
   val witnessFail = new InferenceChecker(WitnessMethodCallFails.program, EntailmentSort.GroundPathDepthLimit)
   println("\nwitness method call fails:")
   WitnessMethodCallFails.program.foreach(println)
@@ -384,8 +387,25 @@ object Foo extends App {
   WitnessMethodCallIncorrectProgram.program.foreach(println)
   println()
   println(s"program typechecks: ${incorrectWitness.typeCheck}")
-  println(s"typecheck new WitnessT: ${incorrectWitness.typeOf(Nil, ObjectConstruction("WitnessT", Nil))}")
+  println(s"typecheck new Witness(choice=A): ${incorrectWitness.typeOf(Nil, ObjectConstruction("Witness", List(("choice", ObjectConstruction("A", Nil)))))}")
   println(s"typecheck property(new A): ${incorrectWitness.typeOf(Nil, MethodCall("property", ObjectConstruction("A", Nil)))}")
   println(s"typecheck m(property(new A)): ${incorrectWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("A", Nil))))}")
   println(s"typecheck m(property(new B)): ${incorrectWitness.typeOf(Nil, MethodCall("m", MethodCall("property", ObjectConstruction("B", Nil))))}")
+
+  val newNil = ObjectConstruction("Nil", Nil)
+  def newCons(hd: Expression, tl: Expression) = ObjectConstruction("Cons", List(("hd", hd), ("tl", tl)))
+
+  val recursiveProperty = new InferenceChecker(WitnessMethodRecursiveProperty.program, EntailmentSort.AlgorithmicFix1)
+  println("\nwitness method recursive property:")
+  WitnessMethodRecursiveProperty.program.foreach(println)
+  println()
+  //println(s"program typechecks: ${recursiveProperty.typeCheck}")
+  println(s"typecheck new Witness(choice=A): ${recursiveProperty.typeOf(Nil, ObjectConstruction("Witness", List(("choice", newA))))}")
+  println(s"typecheck property(Nil): ${recursiveProperty.typeOf(Nil, MethodCall("property",newNil))}")
+  println(s"typecheck m(property(Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newNil)))}")
+  println(s"typecheck m(property(A::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newA, newNil))))}")
+  println(s"typecheck m(property(B::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newB, newNil))))}")
+  println(s"typecheck m(property(A::B::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newA, newCons(newB, newNil)))))}")
+  println(s"typecheck m(property(B::A::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newB, newCons(newA, newNil)))))}")
+  println("\n")
 }
