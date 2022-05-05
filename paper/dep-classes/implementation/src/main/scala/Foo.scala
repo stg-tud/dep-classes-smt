@@ -412,7 +412,7 @@ object Foo extends App {
   def nilBox(data: Expression) = ObjectConstruction("Nil", List(("data", data)))
   def consBox(tl: Expression) = ObjectConstruction("Cons", List(("tl", tl)))
 
-  val simplifiedRecursiveProperty = new InferenceChecker(WitnessMethodSimplifiedRecursiveProperty.program, EntailmentSort.GroundPathDepthLimit)
+  val simplifiedRecursiveProperty = new InferenceChecker(WitnessMethodSimplifiedRecursiveProperty.program, EntailmentSort.AlgorithmicFix1)
   println("\nwitness method simplified recursive property:")
   WitnessMethodSimplifiedRecursiveProperty.program.foreach(println)
   println()

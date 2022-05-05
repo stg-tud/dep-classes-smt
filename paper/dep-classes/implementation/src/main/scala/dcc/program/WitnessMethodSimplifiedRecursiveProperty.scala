@@ -25,12 +25,12 @@ object WitnessMethodSimplifiedRecursiveProperty {
     AbstractMethodDeclaration("property", "x", List(InstanceOf("x", "List")), Type("y", Set(InstanceOf("y", "Witness"), InstanceOf(FieldPath("y", "choice"), "Param")))),
     MethodImplementation("property", // case A
       "x", List(InstanceOf("x", "Nil"), InstanceOf(FieldPath("x", "data"), "A")),
-      Type("y", Set(InstanceOf("y", "Witness"), InstanceOf(FieldPath("y", "choice"), "Param"))),
+      Type("y", Set(InstanceOf("y", "Witness"), InstanceOf(FieldPath("y", "choice"), "A"))),
       ObjectConstruction("Witness", List(("choice", ObjectConstruction("A", List()))))
     ),
     MethodImplementation("property", // case B
       "x", List(InstanceOf("x", "Nil"), InstanceOf(FieldPath("x", "data"), "B")),
-      Type("y", Set(InstanceOf("y", "Witness"), InstanceOf(FieldPath("y", "choice"), "Param"))),
+      Type("y", Set(InstanceOf("y", "Witness"), InstanceOf(FieldPath("y", "choice"), "B"))),
       ObjectConstruction("Witness", List(("choice", ObjectConstruction("B", List()))))
     ),
     MethodImplementation("property", // case recursive call

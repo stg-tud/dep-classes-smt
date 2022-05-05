@@ -132,8 +132,8 @@ m(x. x :: Witness, x.choice :: A): [y. y :: Result] := new Result()
 
 m(property(Nil(A)))        -- does typecheck
 m(property(Nil(B)))        -- doesnt typecheck
-m(property(Cons(Nil(B))))  -- 
-
+m(property(Cons(Nil(A))))  -- doesnt typecheck
+m(property(Cons(Nil(B))))  -- doesnt typecheck
 
 
 
@@ -161,4 +161,4 @@ m(property(Nil))        -- does typecheck
 m(property(A::Nil))     -- does typecheck
 m(property(B::Nil))     -- doesnt typecheck
 m(property(A::B::Nil))  -- doesnt typecheck
-m(property(B::A::Nil))  -- doesnt typecheck (with changed return types in the program)
+m(property(B::A::Nil))  -- doesnt typecheck
