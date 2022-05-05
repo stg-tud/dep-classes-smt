@@ -4,7 +4,7 @@ import dcc.DCC.{Heap, HeapObj}
 import dcc.entailment.algorithmic.AlgorithmicSystem
 import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.interpreter.Interpreter
-import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions, WitnessMethodCallFails, WitnessMethodCallIncorrectProgram, WitnessMethodCallSucceeds, WitnessMethodCallTest, WitnessMethodRecursiveProperty}
+import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions, WitnessMethodCallFails, WitnessMethodCallIncorrectProgram, WitnessMethodCallSucceeds, WitnessMethodCallTest, WitnessMethodRecursiveProperty, WitnessMethodSimplifiedRecursiveProperty}
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
@@ -395,17 +395,34 @@ object Foo extends App {
   val newNil = ObjectConstruction("Nil", Nil)
   def newCons(hd: Expression, tl: Expression) = ObjectConstruction("Cons", List(("hd", hd), ("tl", tl)))
 
-  val recursiveProperty = new InferenceChecker(WitnessMethodRecursiveProperty.program, EntailmentSort.AlgorithmicFix1)
-  println("\nwitness method recursive property:")
-  WitnessMethodRecursiveProperty.program.foreach(println)
+//  val recursiveProperty = new InferenceChecker(WitnessMethodRecursiveProperty.program, EntailmentSort.GroundPathDepthLimit)
+//  println("\nwitness method recursive property:")
+//  WitnessMethodRecursiveProperty.program.foreach(println)
+//  println()
+//  //println(s"program typechecks: ${recursiveProperty.typeCheck}")
+//  println(s"typecheck new Witness(choice=A): ${recursiveProperty.typeOf(Nil, ObjectConstruction("Witness", List(("choice", newA))))}")
+//  println(s"typecheck property(Nil): ${recursiveProperty.typeOf(Nil, MethodCall("property",newNil))}")
+//  println(s"typecheck m(property(Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newNil)))}")
+//  println(s"typecheck m(property(A::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newA, newNil))))}")
+//  println(s"typecheck m(property(B::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newB, newNil))))}")
+//  println(s"typecheck m(property(B::A::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newB, newCons(newA, newNil)))))}")
+//  println(s"typecheck m(property(A::B::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newA, newCons(newB, newNil)))))}")
+//  println("\n")
+
+  def nilBox(data: Expression) = ObjectConstruction("Nil", List(("data", data)))
+  def consBox(tl: Expression) = ObjectConstruction("Cons", List(("tl", tl)))
+
+  val simplifiedRecursiveProperty = new InferenceChecker(WitnessMethodSimplifiedRecursiveProperty.program, EntailmentSort.GroundPathDepthLimit)
+  println("\nwitness method simplified recursive property:")
+  WitnessMethodSimplifiedRecursiveProperty.program.foreach(println)
   println()
   //println(s"program typechecks: ${recursiveProperty.typeCheck}")
-  println(s"typecheck new Witness(choice=A): ${recursiveProperty.typeOf(Nil, ObjectConstruction("Witness", List(("choice", newA))))}")
-  println(s"typecheck property(Nil): ${recursiveProperty.typeOf(Nil, MethodCall("property",newNil))}")
-  println(s"typecheck m(property(Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newNil)))}")
-  println(s"typecheck m(property(A::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newA, newNil))))}")
-  println(s"typecheck m(property(B::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newB, newNil))))}")
-  println(s"typecheck m(property(A::B::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newA, newCons(newB, newNil)))))}")
-  println(s"typecheck m(property(B::A::Nil)): ${recursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", newCons(newB, newCons(newA, newNil)))))}")
+  println(s"typecheck new Witness(choice=A): ${simplifiedRecursiveProperty.typeOf(Nil, ObjectConstruction("Witness", List(("choice", newA))))}")
+  println(s"typecheck property(Nil(A)): ${simplifiedRecursiveProperty.typeOf(Nil, MethodCall("property", nilBox(newA)))}")
+  println(s"typecheck property(Cons(Nil(A))): ${simplifiedRecursiveProperty.typeOf(Nil, MethodCall("property", consBox(nilBox(newA))))}")
+  println(s"typecheck m(property(Nil(A))): ${simplifiedRecursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", nilBox(newA))))}")
+  println(s"typecheck m(property(Nil(B))): ${simplifiedRecursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", nilBox(newB))))}")
+  println(s"typecheck m(property(Cons(Nil(A)))): ${simplifiedRecursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", consBox(nilBox(newA)))))}")
+  println(s"typecheck m(property(Cons(Nil(B)))): ${simplifiedRecursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", consBox(nilBox(newB)))))}")
   println("\n")
 }

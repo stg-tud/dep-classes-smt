@@ -117,6 +117,32 @@ A(x. ϵ)
 B(x. ϵ)
 ∀x. x :: A => x :: Param
 ∀x. x :: B => x :: Param
+Nil(x. x.data :: Param)
+Cons(x. x.tl :: List)
+∀x. x :: Nil, x.data :: Param => x :: List
+∀x. x :: Cons, x.tl :: List => x :: List
+Witness(x. x.choice :: Param)
+Result(x. ϵ)
+property(x. x :: List): [y. y :: Witness, y.choice :: Param]
+property(x. x :: Nil, x.data :: A): [y. y :: Witness, y.choice :: Param] := new Witness(choice ≡ new A())
+property(x. x :: Nil, x.data :: B): [y. y :: Witness, y.choice :: Param] := new Witness(choice ≡ new B())
+property(x. x :: Cons, x.tl :: List): [y. y :: Witness, y.choice :: Param] := property(x.tl)
+m(x. x :: Witness, x.choice :: A): [y. y :: Result]
+m(x. x :: Witness, x.choice :: A): [y. y :: Result] := new Result()
+
+m(property(Nil(A)))        -- does typecheck
+m(property(Nil(B)))        -- doesnt typecheck
+m(property(Cons(Nil(B))))  -- 
+
+
+
+
+
+
+A(x. ϵ)
+B(x. ϵ)
+∀x. x :: A => x :: Param
+∀x. x :: B => x :: Param
 Nil(x. ϵ)
 Cons(x. x.hd :: Param, x.tl :: List)
 ∀x. x :: Nil => x :: List
