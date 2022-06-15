@@ -4,7 +4,7 @@ import dcc.DCC.{Heap, HeapObj}
 import dcc.entailment.algorithmic.AlgorithmicSystem
 import dcc.entailment.{EntailmentFactory, EntailmentSort, GroundPathDepthLimitEncoding, PathDepthLimitEncoding, SemanticEntailment, SimplifiedSemanticEntailment}
 import dcc.interpreter.Interpreter
-import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions, WitnessMethodCallFails, WitnessMethodCallIncorrectProgram, WitnessMethodCallSucceeds, WitnessMethodCallTest, WitnessMethodRecursiveProperty, WitnessMethodSimplifiedRecursiveProperty}
+import dcc.program.{Arithmetic, BooleanExpressions, Lt, NaturalNumbers, NumericExpressions, WitnessMethodCallFails, WitnessMethodCallIncorrectProgram, WitnessMethodCallSucceeds, WitnessMethodCallTest, WitnessMethodRecursiveProperty, WitnessMethodSimplifiedRecursiveProperty, WitnessPathDependent}
 import dcc.syntax._
 import dcc.syntax.Implicit._
 import dcc.syntax.Program.Program
@@ -425,4 +425,17 @@ object Foo extends App {
   println(s"typecheck m(property(Cons(Nil(A)))): ${simplifiedRecursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", consBox(nilBox(newA)))))}")
   println(s"typecheck m(property(Cons(Nil(B)))): ${simplifiedRecursiveProperty.typeOf(Nil, MethodCall("m", MethodCall("property", consBox(nilBox(newB)))))}")
   println("\n")
+
+  val pathDependentWitness = new InferenceChecker(WitnessPathDependent.program, EntailmentSort.GroundPathDepthLimit)
+  println("\nwitness method path dependent type:")
+  WitnessPathDependent.program.foreach(println)
+  println()
+//  println(s"program typechecks: ${pathDependentWitness.typeCheck}") // it does, takes some time
+  println(s"typecheck new Witness(choice=A): ${pathDependentWitness.typeOf(Nil, ObjectConstruction("Witness", List(("choice", newA))))}")
+  val pairMatch = ObjectConstruction("Pair", List(("witness", ObjectConstruction("Witness", List(("choice", newA)))), ("param", newA)))
+  val pairMismatch = ObjectConstruction("Pair", List(("witness", ObjectConstruction("Witness", List(("choice", newA)))), ("param", newB)))
+  println(s"typecheck new Pair(witness=new Witness(choice=A), param=A): ${pathDependentWitness.typeOf(Nil, pairMatch)}")
+  println(s"typecheck new Pair(witness=new Witness(choice=A), param=B): ${pathDependentWitness.typeOf(Nil, pairMismatch)}")
+  println(s"typecheck m(Witness(A), A): ${pathDependentWitness.typeOf(Nil, MethodCall("m", pairMatch))}")
+  println(s"typecheck m(Witness(A), B): ${pathDependentWitness.typeOf(Nil, MethodCall("m", pairMismatch))}")
 }
