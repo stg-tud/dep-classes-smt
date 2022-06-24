@@ -438,5 +438,5 @@ object Foo extends App {
   println(s"typecheck new Pair(witness=new Witness(choice=A), param=B): ${pathDependentWitness.typeOf(Nil, pairMismatch)}")
   println(s"typecheck m(Witness(A), A): ${pathDependentWitness.typeOf(Nil, MethodCall("m", pairMatch))}")
   println(s"typecheck m(Witness(A), B): ${pathDependentWitness.typeOf(Nil, MethodCall("m", pairMismatch))}")
-  println(s"typecheck m(Witness(A), A): ${pathDependentWitness.typeOf(List(InstanceOf("foo", "A")), MethodCall("m", ObjectConstruction("Pair", List(("witness", ObjectConstruction("Witness", List(("choice", "foo")))), ("param", "foo")))))}")
+  println(s"typecheck x::A |- m(Witness(x), x): ${pathDependentWitness.typeOf(List(InstanceOf("foo", "A")), MethodCall("m", ObjectConstruction("Pair", List(("witness", ObjectConstruction("Witness", List(("choice", "foo")))), ("param", "foo")))))}")
 }
