@@ -3,11 +3,14 @@ import dcc.Util.substitute
 import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{Constraint, ConstraintEntailment, Declaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClasses, DefinedFields, Program}
-import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{Assert, DeclareFun, DefineFun, Forall, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Term, Unsat}
-import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Not, Or, True}
-import smt.smtlib.theory.DCCPredefined.{SortNameClass, SortNameVariable, SortNamePath, SortClass, SortVariable, SortPath, FunctionPathEquivalence, FunctionInstanceOf, FunctionInstantiatedBy, FunctionSubstitution, PathEq, InstOf, InstBy, SubstEq}
-import smt.solver.Z3Solver
+import com.github.gnush.smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
+import com.github.gnush.smt.smtlib.syntax.{Assert, DeclareFun, DefineFun, Forall, FunctionDef, SMTLibSymbol, SimpleSymbol, Sort, SortedVar, Term, Unsat}
+import com.github.gnush.smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Not, Or, True}
+//import smt.smtlib.theory.DCCPredefined.{SortNameClass, SortNameVariable, SortNamePath, SortClass, SortVariable, SortPath, FunctionPathEquivalence, FunctionInstanceOf, FunctionInstantiatedBy, FunctionSubstitution, PathEq, InstOf, InstBy, SubstEq}
+import com.github.gnush.smt.solver.Z3Solver
+
+import dcc.entailment.smt.DCCStrings._
+import dcc.entailment.smt.DCCSugar._
 
 import scala.language.postfixOps
 

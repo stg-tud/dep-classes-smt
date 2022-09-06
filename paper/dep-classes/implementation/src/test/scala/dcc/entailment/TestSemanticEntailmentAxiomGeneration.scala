@@ -4,9 +4,9 @@ import org.scalatest.funsuite.AnyFunSuite
 import dcc.program.{Empty, NaturalNumbers}
 import dcc.syntax.{FieldPath, InstanceOf, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
-import smt.smtlib.syntax.{Apply, Assert, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, SelectorDec, SortedVar}
-import smt.smtlib.syntax.Implicit.stringToSimpleSymbol
-import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Ite}
+import com.github.gnush.smt.smtlib.syntax.{Apply, Assert, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, SelectorDec, SortedVar}
+import com.github.gnush.smt.smtlib.syntax.Implicit.stringToSimpleSymbol
+import com.github.gnush.smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Ite}
 
 class TestSemanticEntailmentAxiomGeneration extends AnyFunSuite{
   private val Variable: String = "Variable"

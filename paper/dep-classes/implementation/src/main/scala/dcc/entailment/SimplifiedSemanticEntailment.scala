@@ -2,11 +2,11 @@ package dcc.entailment
 import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.Program.{DefinedClasses, DefinedFields, Program}
 import dcc.syntax.{Constraint, ConstraintEntailment, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
-import smt.smtlib.SMTLib.{is, selector}
-import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{Apply, Assert, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
-import smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Ite, Not, True}
-import smt.solver.Z3Solver
+import com.github.gnush.smt.smtlib.SMTLib.{is, selector}
+import com.github.gnush.smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
+import com.github.gnush.smt.smtlib.syntax.{Apply, Assert, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
+import com.github.gnush.smt.smtlib.theory.BoolPredefined.{And, Bool, Eq, Implies, Ite, Not, True}
+import com.github.gnush.smt.solver.Z3Solver
 
 import scala.language.postfixOps
 

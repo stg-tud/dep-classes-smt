@@ -2,15 +2,15 @@ package dcc.entailment
 
 import dcc.Util.substitute
 import dcc.entailment.EntailmentSort.EntailmentSort
-import dcc.entailment.SemanticEntailment.{Class, ConstraintToTerm, Field, IdToSymbol, MetaPath, Path, PathToTerm, Variable, constructorPth, constructorVar, functionInstanceOf, functionInstantiatedBy, functionPathEquivalence, functionSubstitution, selectorField, selectorId, selectorObj, sortClass, sortField, sortPath, sortVariable, substitutePath}
+import dcc.entailment.SemanticEntailment.{SClass, ConstraintToTerm, SField, IdToSymbol, MetaPath, SPath, PathToTerm, SVariable, constructorPth, constructorVar, functionInstanceOf, functionInstantiatedBy, functionPathEquivalence, functionSubstitution, selectorField, selectorId, selectorObj, sortClass, sortField, sortPath, sortVariable, substitutePath}
 import dcc.syntax.{Constraint, ConstraintEntailment, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClasses, DefinedFields, Program}
-import smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
-import smt.smtlib.syntax.Sugar.Op
-import smt.smtlib.{SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{Apply, Assert, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
-import smt.smtlib.theory.BoolPredefined._
-import smt.solver.Z3Solver
+import com.github.gnush.smt.smtlib.SMTLib.{buildEnumerationType, is, selector}
+import com.github.gnush.smt.smtlib.syntax.Sugar.Op
+import com.github.gnush.smt.smtlib.{SMTLibCommand, SMTLibScript}
+import com.github.gnush.smt.smtlib.syntax.{Apply, Assert, ConstructorDatatype, ConstructorDec, DeclareDatatype, DeclareFun, DefineFun, DefineFunRec, Forall, FunctionDef, SMTLibSymbol, SelectorDec, SimpleSymbol, Sort, SortedVar, Term, Unsat}
+import com.github.gnush.smt.smtlib.theory.BoolPredefined._
+import com.github.gnush.smt.solver.Z3Solver
 
 import scala.annotation.tailrec
 import scala.language.postfixOps
@@ -125,20 +125,20 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
 
   private def generatePathDatatype(fields: Boolean): Option[SMTLibCommand] = if (fields) {
     Some(DeclareDatatype(SimpleSymbol(sortPath), ConstructorDatatype(Seq(
-      ConstructorDec(constructorVar, Seq(SelectorDec(selectorId, Variable))),
-      ConstructorDec(constructorPth, Seq(SelectorDec(selectorObj, Path), SelectorDec(selectorField, Field)))
+      ConstructorDec(constructorVar, Seq(SelectorDec(selectorId, SVariable))),
+      ConstructorDec(constructorPth, Seq(SelectorDec(selectorObj, SPath), SelectorDec(selectorField, SField)))
     ))))
   } else {
     None
   }
 
   private def generateFunctionDeclarations(isPathDefined: Boolean, isClassDefined: Boolean): SMTLibScript = {
-    val sort: Sort = if (isPathDefined) Path else Variable
+    val sort: Sort = if (isPathDefined) SPath else SVariable
 
     if (isClassDefined) {
       SMTLibScript(Seq(
-        DeclareFun(functionInstanceOf, Seq(sort, Class), Bool),
-        DeclareFun(functionInstantiatedBy, Seq(sort, Class), Bool),
+        DeclareFun(functionInstanceOf, Seq(sort, SClass), Bool),
+        DeclareFun(functionInstantiatedBy, Seq(sort, SClass), Bool),
         DeclareFun(functionPathEquivalence, Seq(sort, sort), Bool)
       ))
     } else {
@@ -147,7 +147,7 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
   }
 
   def generateConstraintPredicates(context: List[Constraint], isPathDefined: Boolean, isClassDefined: Boolean): SMTLibScript = {
-    val sort: Sort = if (isPathDefined) Path else Variable
+    val sort: Sort = if (isPathDefined) SPath else SVariable
 
     val pathEquivalencePredicate =
       generatePathEquivalencePredicate(
@@ -164,7 +164,7 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
             case (InstantiatedBy(p, cls), rest) => InstantiatedBy(p, cls) :: rest
             case (_, rest) => rest
           }, isPathDefined),
-        DeclareFun(functionInstanceOf, Seq(sort, Class), Bool), // TODO: define instance of constraint
+        DeclareFun(functionInstanceOf, Seq(sort, SClass), Bool), // TODO: define instance of constraint
         pathEquivalencePredicate
       ))
     } else {
@@ -174,13 +174,13 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
   }
 
   private def generateInstantiatedByPredicate(contextInstantiations: List[InstantiatedBy], isPathDefined: Boolean): SMTLibCommand = {
-    val path: Sort = if (isPathDefined) Path else Variable
+    val path: Sort = if (isPathDefined) SPath else SVariable
 
     DefineFun(FunctionDef(
       functionInstantiatedBy,
       Seq(
         SortedVar(SimpleSymbol("path-p"), path),
-        SortedVar(SimpleSymbol("class-c"), Class)
+        SortedVar(SimpleSymbol("class-c"), SClass)
       ),
       Bool,
       contextInstantiations.foldRight(False: Term) {
@@ -197,7 +197,7 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
   }
 
   private def generatePathEquivalencePredicate(contextPathEquivalences: List[PathEquivalence], isPathDefined: Boolean): SMTLibCommand = {
-    val path: Sort = if (isPathDefined) Path else Variable
+    val path: Sort = if (isPathDefined) SPath else SVariable
 
     val symmetricTransitiveClosure: List[Constraint] = buildReflexiveSymmetricTransitiveClosure(contextPathEquivalences.toSet).toList
 
@@ -278,11 +278,11 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
       DefineFunRec(FunctionDef(
         functionSubstitution,
         Seq(
-          SortedVar(p, Path),
-          SortedVar(x, Variable),
-          SortedVar(q, Path)
+          SortedVar(p, SPath),
+          SortedVar(x, SVariable),
+          SortedVar(q, SPath)
         ),
-        Path,
+        SPath,
         Ite(
           is(constructorVar, p),
           Ite(Eq(x, selector(selectorId, p)), q, p),
@@ -299,18 +299,18 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
       DefineFun(FunctionDef(
         functionSubstitution,
         Seq(
-          SortedVar(p, Variable),
-          SortedVar(x, Variable),
-          SortedVar(q, Variable)
+          SortedVar(p, SVariable),
+          SortedVar(x, SVariable),
+          SortedVar(q, SVariable)
         ),
-        Variable,
+        SVariable,
         Ite(Eq(x, p), q, p)
       ))
     }
   }
 
   private def generateCalculusRules(isPathDefined: Boolean, isClassDefined: Boolean): SMTLibScript = {
-    val sort: Sort = if (isPathDefined) Path else Variable
+    val sort: Sort = if (isPathDefined) SPath else SVariable
 
     val p: SMTLibSymbol = SimpleSymbol("path-p")
     val q: SMTLibSymbol = SimpleSymbol("path-q")
@@ -327,7 +327,7 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
       Seq(
         SortedVar(a, Bool),
         SortedVar(p, sort),
-        SortedVar(c, Class)
+        SortedVar(c, SClass)
       ),
       Implies(
         Implies(a, Apply(functionInstantiatedBy, Seq(p, c))),
@@ -342,7 +342,7 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
         SortedVar(q, sort),
         SortedVar(r, sort),
         SortedVar(s, sort),
-        SortedVar(x, Variable)
+        SortedVar(x, SVariable)
       ),
       Implies(
         And(
@@ -362,10 +362,10 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
       Seq(
         SortedVar(a, Bool),
         SortedVar(p, sort),
-        SortedVar(c, Class),
+        SortedVar(c, SClass),
         SortedVar(r, sort),
         SortedVar(s, sort),
-        SortedVar(x, Variable)
+        SortedVar(x, SVariable)
       ),
       Implies(
         And(
@@ -380,10 +380,10 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
       Seq(
         SortedVar(a, Bool),
         SortedVar(p, sort),
-        SortedVar(c, Class),
+        SortedVar(c, SClass),
         SortedVar(r, sort),
         SortedVar(s, sort),
-        SortedVar(x, Variable)
+        SortedVar(x, SVariable)
       ),
       Implies(
         And(
@@ -412,7 +412,7 @@ class SemanticEntailment(program: Program, debug: Int = 0) extends Entailment {
 
 
   private def generateProgRules(constraintEntailments: List[ConstraintEntailment], isPathDefined: Boolean): SMTLibScript = {
-    val sort: Sort = if (isPathDefined) Path else Variable
+    val sort: Sort = if (isPathDefined) SPath else SVariable
     val path: MetaPath = MetaPath("path-p")
     val b: SMTLibSymbol = SimpleSymbol("cs-a")
     val p: SMTLibSymbol = SimpleSymbol(path.baseName)
@@ -481,10 +481,10 @@ object SemanticEntailment {
   }
 
   // Sorts explicitly added in this translation.
-  val Variable: Sort = SimpleSymbol(sortVariable)
-  val Field: Sort = SimpleSymbol(sortField)
-  val Class: Sort = SimpleSymbol(sortClass)
-  val Path: Sort = SimpleSymbol(sortPath)
+  val SVariable: Sort = SimpleSymbol(sortVariable)
+  val SField: Sort = SimpleSymbol(sortField)
+  val SClass: Sort = SimpleSymbol(sortClass)
+  val SPath: Sort = SimpleSymbol(sortPath)
 
 //  object Variable extends Sort {
 //    override def format(): String = sortVariable

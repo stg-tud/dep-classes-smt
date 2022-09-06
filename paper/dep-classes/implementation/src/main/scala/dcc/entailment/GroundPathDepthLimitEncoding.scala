@@ -3,11 +3,14 @@ import dcc.Util.{prefixedSubstitute, substitute}
 import dcc.entailment.EntailmentSort.EntailmentSort
 import dcc.syntax.{Constraint, ConstraintEntailment, Declaration, FieldPath, Id, InstanceOf, InstantiatedBy, Path, PathEquivalence, Util}
 import dcc.syntax.Program.{DefinedClasses, DefinedFields, Program, extractFieldNames}
-import smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
-import smt.smtlib.syntax.{Apply, Assert, DeclareFun, SMTLibSymbol, SimpleSymbol, Sort, Term, Unsat}
-import smt.smtlib.theory.BoolPredefined.{And, Bool, Implies, Not, True}
-import smt.smtlib.theory.DCCPredefined.{FunctionInstanceOf, FunctionInstantiatedBy, FunctionPathEquivalence, InstBy, InstOf, PathEq, SortClass, SortNameClass, SortNamePath, SortNameVariable, SortPath, SortVariable}
-import smt.solver.Z3Solver
+import com.github.gnush.smt.smtlib.{SMTLib, SMTLibCommand, SMTLibScript}
+import com.github.gnush.smt.smtlib.syntax.{Apply, Assert, DeclareFun, SMTLibSymbol, SimpleSymbol, Sort, Term, Unsat}
+import com.github.gnush.smt.smtlib.theory.BoolPredefined.{And, Bool, Implies, Not, True}
+//import smt.smtlib.theory.DCCPredefined.{FunctionInstanceOf, FunctionInstantiatedBy, FunctionPathEquivalence, InstBy, InstOf, PathEq, SortClass, SortNameClass, SortNamePath, SortNameVariable, SortPath, SortVariable} // TODO: either move these to lib or pref. to dcc.entailment.Smtlink or something
+import com.github.gnush.smt.solver.Z3Solver
+
+import dcc.entailment.smt.DCCStrings._
+import dcc.entailment.smt.DCCSugar._
 
 import scala.collection.mutable
 import scala.language.postfixOps

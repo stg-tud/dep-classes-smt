@@ -4,11 +4,11 @@ import dcc.program.{Empty, NaturalNumbers}
 import dcc.syntax.{Constraint, FieldPath, PathEquivalence}
 import dcc.syntax.Implicit.StringToId
 import org.scalatest.funsuite.AnyFunSuite
-import smt.smtlib.SMTLibScript
-import smt.smtlib.syntax.{Apply, Assert, ErrorResponse, Forall, SMTLibString, SortedVar, Unsat, Unknown}
-import smt.smtlib.syntax.Implicit.stringToSimpleSymbol
-import smt.smtlib.theory.BoolPredefined.{And, Implies, Not}
-import smt.solver.Z3Solver
+import com.github.gnush.smt.smtlib.SMTLibScript
+import com.github.gnush.smt.smtlib.syntax.{Apply, Assert, ErrorResponse, Forall, SMTLibString, SortedVar, Unsat, Unknown}
+import com.github.gnush.smt.smtlib.syntax.Implicit.stringToSimpleSymbol
+import com.github.gnush.smt.smtlib.theory.BoolPredefined.{And, Implies, Not}
+import com.github.gnush.smt.solver.Z3Solver
 
 class TestSemanticEntailmentGeneralProperties extends AnyFunSuite{
   private def axioms(entailment: SemanticEntailment)(constraints: Constraint*): SMTLibScript = entailment.axioms(constraints.toList, None)._1

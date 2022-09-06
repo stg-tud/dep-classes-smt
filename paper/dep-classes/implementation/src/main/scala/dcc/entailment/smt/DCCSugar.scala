@@ -1,24 +1,9 @@
-package smt.smtlib.theory
+package dcc.entailment.smt
 
-import smt.smtlib.syntax.{Apply, SMTLibSymbol, SimpleSymbol, Sort, Term}
+import DCCStrings.{FunctionInstanceOf, FunctionInstantiatedBy, FunctionPathEquivalence, FunctionSubstitution}
+import com.github.gnush.smt.smtlib.syntax.{Apply, Term}
 
-object DCCPredefined {
-  // Sort names
-  val SortNameClass: String = "Class"
-  val SortNameVariable: String = "Variable"
-  val SortNamePath: String = "Path"
-
-  // Sorts
-  val SortClass: Sort = SimpleSymbol(SortNameClass)
-  val SortVariable: Sort = SimpleSymbol(SortNameVariable)
-  val SortPath: Sort = SimpleSymbol(SortNamePath)
-
-  // Function names
-  val FunctionPathEquivalence: SMTLibSymbol = SimpleSymbol("path-equivalence")
-  val FunctionInstanceOf: SMTLibSymbol = SimpleSymbol("instance-of")
-  val FunctionInstantiatedBy: SMTLibSymbol = SimpleSymbol("instantiated-by")
-  val FunctionSubstitution: SMTLibSymbol = SimpleSymbol("substitute")
-
+object DCCSugar {
   case class PathEq(lhs: Term, rhs: Term) extends Term {
     def apply(): Term = Apply(FunctionPathEquivalence, Seq(lhs, rhs))
 

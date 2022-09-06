@@ -100,4 +100,24 @@ class TestSyntax extends AnyFunSuite{
     assert(methodImpl.toString == "m(x. x ≡ y, x.f ≡ y, x.f.g ≡ y): [y. x ≡ y, x.f ≡ y] := x")
     assert(constructor.toString == "Class(x. x ≡ y, x.f ≡ y, x.f.g ≡ y)")
   }
+
+  test ("create Path from List") {
+    assert(Path.fromList(List("x")) == Id(Symbol("x")))
+    assert(Path.fromList(List("x", "f")) == FieldPath(Id(Symbol("x")), Id(Symbol("f"))))
+    assert(Path.fromList(List("x", "f", "g")) == FieldPath(FieldPath(Id(Symbol("x")), Id(Symbol("f"))), Id(Symbol("g"))))
+
+    assert(Path.fromList(List("x,:_/")) == Id(Symbol("x,:_/")))
+    assert(Path.fromList(List("x,:_/f")) == Id(Symbol("x,:_/f")))
+    assert(Path.fromList(List("x,:_/", "f")) == FieldPath(Id(Symbol("x,:_/")), Id(Symbol("f"))))
+  }
+
+  test ("parse String to Path") {
+    assert(Path.fromString("x") == Id(Symbol("x")))
+    assert(Path.fromString("x.f") == FieldPath(Id(Symbol("x")), Id(Symbol("f"))))
+    assert(Path.fromString("x.f.g") == FieldPath(FieldPath(Id(Symbol("x")), Id(Symbol("f"))), Id(Symbol("g"))))
+
+    assert(Path.fromString("x,:_/") == Id(Symbol("x,:_/")))
+    assert(Path.fromString("x,:_/f") == Id(Symbol("x,:_/f")))
+    assert(Path.fromString("x,:_/.f") == FieldPath(Id(Symbol("x,:_/")), Id(Symbol("f"))))
+  }
 }
