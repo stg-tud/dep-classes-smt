@@ -1,6 +1,6 @@
 package dcc.entailment
 
-import dcc.program.NaturalNumbers
+import dcc.program.Empty
 import dcc.syntax.{Id, Path}
 import org.scalatest.funsuite.AnyFunSuite
 import dcc.syntax.Implicit.StringToId
@@ -11,7 +11,7 @@ class TestPathEnumeration extends AnyFunSuite {
   private val fields: List[Id] = List("f", "g", "h")
 
   private def enumPaths(depth: Int): List[Path] = {
-    val limitEnc = new PathDepthLimitEncoding(NaturalNumbers.program, debug = 3)
+    val limitEnc = new PathDepthLimitEncoding(Empty.program, debug = 0)
 
     limitEnc.enumeratePaths(vars, fields, depth)
   }
@@ -105,15 +105,16 @@ class TestPathEnumeration extends AnyFunSuite {
   }
 
   test("depth = 3 to 9") {
-    def expectedElements(i: Int): Int = expectedGrowthUntil(i, vars.size).sum
+    def expectedNumberOfElements(i: Int): Int = expectedGrowthPerRoundUntil(i, vars.size).sum
 
-    def expectedGrowthUntil(i: Int, accum: Int): List[Int] = i match {
-      case 0 => List(accum)
-      case _ => accum :: expectedGrowthUntil(i-1, accum*fields.size)
+    def expectedGrowthPerRoundUntil(i: Int, base: Int): List[Int] = i match {
+      case n if n < 0 => Nil
+      case 0 => List(base)
+      case _ => base :: expectedGrowthPerRoundUntil(i-1, base*fields.size)
     }
 
     for (i <- 0 to 9) {
-      assert(enumPaths(i).size == expectedElements(i))
+      assert(enumPaths(i).size == expectedNumberOfElements(i))
     }
   }
 }

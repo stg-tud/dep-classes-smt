@@ -21,6 +21,7 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
         case Some(_) =>
           val y = freshVariable()
           Left(Type(y, Set(PathEquivalence(y, x))))
+        case None if context.isEmpty => Right(List(s"variable '$x' is not available in context ·"))
         case None => Right(List(s"variable '$x' is not available in context ${commaSeparate(context)}"))
       }
     case FieldAccess(e, f) =>
@@ -127,7 +128,7 @@ class InferenceChecker(override val program: Program, override val ENTAILMENT: E
 //            println(s"DEBUG: found ${classConstraints.size} constructors for class $cls")
 
       if (classConstraints.isEmpty)
-        Right(List(s"No constructor found for class '$cls'"))
+        Right(List(s"no constructor found for class '$cls'"))
       else {
         val fieldResults: List[(Id, Either[Type, List[TError]])] = args map { case (f, e) => (f, typeOf(context, e)) }
 

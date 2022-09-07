@@ -81,39 +81,6 @@ object Foo extends App {
                          InstanceOf("y", "Succ"), InstanceOf(FieldPath("y", "p"),"Zero"),
                          PathEquivalence("y", FieldPath("x", "p")))
 
-   // Variable access
-//  println(chk.typeOf(xZeroContext, "x"))
-//  println(chk.typeOf(Nil, "x"))
-
-  // Field accesses
-//  println(chk.typeOf(xOneContext, FieldAccess("x", "p")))
-//  println(chk.typeOf(xTwoContext, FieldAccess("x", "p")))
-
-  // Method calls
-//  println(chk.typeOf(xOneContext, MethodCall("prev", "x")))
-//  println(chk.typeOf(xTwoContext, MethodCall("prev", "x")))
-//  println(chk.typeOf(xTwoContext, MethodCall("prev", "y")))
-//  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess("x", "p"))))
-//  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess("y", "p"))))
-//  println(chk.typeOf(xTwoContext, MethodCall("prev", FieldAccess(FieldAccess("x", "p"), "p")))) // should be able to call this(?) TODO: investigate
-
-  // Object Constructions
-//  println(chk.typeOf(Nil, ObjectConstruction("Zero", Nil)))
-//  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", Nil)))
-//  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x")))))
-//  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x")))))
-//  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
-//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "y")))))
-//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", "x")))))
-//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("y", "p"))))))
-//  println(chk.typeOf(xTwoContext, ObjectConstruction("Succ", List(("p", FieldAccess("x", "p"))))))
-//  // Error Cases
-  println(chk.typeOf(Nil, ObjectConstruction("Foo", Nil)))
-  println(chk.typeOf(xZeroContext, ObjectConstruction("Zero", List(("p", "x"))))) // This should fail but doesn't // TODO: investigate. it actually seems in line with the type rule? maybe add a plausibility check regardless? e.g. empty constructor cannot have fields?
-  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x"))))) // This should fail (yield an error), but crashes. This is because 'q' isn't a valid field name (q not introduced in the program). This fails the smt encoding.
-  println(algoChk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("q", "x")))))
-  println(chk.typeOf(Nil, ObjectConstruction("Succ", Nil)))
-
   // This is only useful with the extended Nat program
 //  println(chk.typeOf(xZeroContext, ObjectConstruction("Succ", List(("p", "x"), ("flag", "x"))))) // This should work. It actually does, but does so by accident. (see previous error with constructors with too many arguments)
 //  println(chk.typeOf(xOneContext, ObjectConstruction("Succ", List(("p", "x"), ("flag", "x"))))) // This should fail, as usefulProperty is required by the constructor to be a Zero. But it doesn't as of the previous error.
